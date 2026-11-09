@@ -110,10 +110,22 @@ if ($SandboxTest) {
     [IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json), $utf8)
 
     # Publicação: GitHub (código + Release). Falha não apaga a entrega local; fica como pendência no log.
+    $published = $false
     try {
         & (Join-Path $PSScriptRoot 'publicar-github.ps1') -Version $version -Build $updateBuild -Setup $target -Manifest $manifestPath
+        $published = $true
     } catch {
         Write-Warning "Instalador gerado em Instalador, mas a publicação no GitHub ficou pendente: $($_.Exception.Message)"
+    }
+
+    # winget (WinStatusBar.WinStatusBar): só em versão MINOR ou MAJOR. PATCH fica no GitHub (os PCs se atualizam sozinhos).
+    if ($published) {
+        $previous = @(git -C $root tag --list 'v*' --sort=-v:refname | Where-Object { $_ -ne "v$version" })[0]
+        $minorChanged = -not $previous -or ([version]$previous.TrimStart('v')).ToString(2) -ne ([version]$version).ToString(2)
+        if ($minorChanged) {
+            try { & (Join-Path $PSScriptRoot 'winget\publicar-winget.ps1') -Version $version }
+            catch { Write-Warning "Release publicada no GitHub, mas o pedido do winget ficou pendente: $($_.Exception.Message)" }
+        } else { Write-Host "winget: versão PATCH ($previous → v$version), pacote não atualizado." }
     }
 }
 
