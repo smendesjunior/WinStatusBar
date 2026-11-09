@@ -98,8 +98,15 @@ if ($SandboxTest) {
     Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force $testDir | Out-Null
     Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $testDir 'WinStatusBar-Setup.exe') -Force
-    # Configuração do Sandbox gerada aqui (o caminho é deste PC e não vai para o repositório): pasta só leitura em C:\Teste, rede ligada.
-    $wsb = "<Configuration>`r`n  <MappedFolders>`r`n    <MappedFolder>`r`n      <HostFolder>$testDir</HostFolder>`r`n      <SandboxFolder>C:\Teste</SandboxFolder>`r`n      <ReadOnly>true</ReadOnly>`r`n    </MappedFolder>`r`n  </MappedFolders>`r`n  <Networking>Enable</Networking>`r`n</Configuration>`r`n"
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'sandbox\monitor-sandbox.ps1') -Destination $testDir -Force
+    $outDir = Join-Path $root 'tools\sandbox\saida'
+    Remove-Item -LiteralPath $outDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force $outDir | Out-Null
+    # Configuração do Sandbox gerada aqui (os caminhos são deste PC e não vão para o repositório): C:\Teste só leitura,
+    # C:\Saida gravável (estado e fotos do monitor, lidos daqui de fora), rede ligada e o monitor iniciado no logon.
+    $wsb = "<Configuration>`r`n  <MappedFolders>`r`n    <MappedFolder>`r`n      <HostFolder>$testDir</HostFolder>`r`n      <SandboxFolder>C:\Teste</SandboxFolder>`r`n      <ReadOnly>true</ReadOnly>`r`n    </MappedFolder>`r`n" +
+           "    <MappedFolder>`r`n      <HostFolder>$outDir</HostFolder>`r`n      <SandboxFolder>C:\Saida</SandboxFolder>`r`n      <ReadOnly>false</ReadOnly>`r`n    </MappedFolder>`r`n  </MappedFolders>`r`n" +
+           "  <Networking>Enable</Networking>`r`n  <LogonCommand>`r`n    <Command>powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Minimized -File C:\Teste\monitor-sandbox.ps1</Command>`r`n  </LogonCommand>`r`n</Configuration>`r`n"
     [IO.File]::WriteAllText((Join-Path $testDir 'teste-instalador.wsb'), $wsb, $utf8)
     Write-Host "Instalador de teste (compilação $updateBuild): $testDir\WinStatusBar-Setup.exe — abra teste-instalador.wsb nessa pasta"
 } else {

@@ -40,6 +40,8 @@ winget install winstatusbar
 
 Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://github.com/smendesjunior/WinStatusBar/releases/latest) and run it: a 3-step wizard installs the bar for the current user, with no administrator rights. The installer is not code-signed yet, so Windows may show a SmartScreen prompt the first time (More info › Run anyway). winget installs don't show it.
 
+<p align="center"><img src="docs/screenshots/setup.png" width="480" alt="Setup wizard, step 1: what WinStatusBar is, what the installation does and the Install button"></p>
+
 **Requirements:** Windows 10 (19041) or Windows 11, 64-bit. The .NET runtime and Windows App SDK are bundled; the Microsoft Edge WebView2 Runtime is installed automatically if it is missing.
 
 ---

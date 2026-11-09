@@ -11,6 +11,7 @@ desktop.ini
 tools/diag/
 tools/dev/*.txt
 tools/sandbox/teste/
+tools/sandbox/saida/
 tools/accounts/*.json
 tools/qira-ponte/resultado.txt
 tools/readme/raw/
