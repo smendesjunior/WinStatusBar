@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.3] - 2026-11-09 · build BUILD
+## [1.4.3] - 2026-11-09 · build 20261109201912
 
 ### Fixed
 - Closing the bar (tray menu, update, uninstall or `tools\stop-bar.ps1`) sometimes did not end the program: the bar disappeared from the screen, but WinStatusBar kept running hidden, without its services, until it was killed (during updates, the installer did that).

@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.3] - 2026-11-09 · compilação BUILD
+## [1.4.3] - 2026-11-09 · compilação 20261109201912
 
 ### Corrigido
 - Fechar a barra (menu da bandeja, atualização, desinstalação ou `tools\stop-bar.ps1`) às vezes não encerrava o programa: a barra sumia da tela, mas o WinStatusBar continuava rodando escondido, sem os serviços, até ser encerrado à força (na atualização, o instalador fazia isso).
