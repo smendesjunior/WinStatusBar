@@ -53,6 +53,9 @@ internal static class MicrosoftCreditsSession
         if (Current?.SignedIn == true ? DateTimeOffset.Now - Current.Updated > TimeSpan.FromMinutes(5) : profile) Refresh();
     }
 
+    /// <summary>Saída da barra: para o timer e não abre mais a janela oculta (recriada depois do Exit, ela mantinha o processo vivo).</summary>
+    public static void Stop() { _timer?.Stop(); _ui = null; }
+
     private static async Task<WebView2> EnsureAsync(bool visible)
     {
         if (_window is null || _web is null)

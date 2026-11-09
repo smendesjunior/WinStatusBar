@@ -28,6 +28,7 @@
     <Compile Include="../../src/WinStatusBar/Services/ContextAttachmentPolicy.cs" Link="ContextAttachmentPolicy.cs" />
     <Compile Include="../../src/WinStatusBar/Services/AdaptiveLogic.cs" Link="AdaptiveLogic.cs" />
     <Compile Include="../../src/WinStatusBar/Services/AppUpdater.cs" Link="AppUpdater.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ExitWatchdog.cs" Link="ExitWatchdog.cs" />
   </ItemGroup>
   <!-- Como no componente das IAs no Codex: só a versão WinForms do WebView2 (a WPF do pacote gera aviso de conflito). -->
   <Target Name="SemWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">

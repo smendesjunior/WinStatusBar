@@ -28,6 +28,9 @@ public partial class App : Application
     private DispatcherQueue? _dispatcher;
     private DispatcherQueueTimer? _displayDebounce;
     private bool _exiting;
+    /// <summary>Prazo da saída: passado isso, a vigia remove a AppBar e encerra o processo à força.</summary>
+    private static readonly TimeSpan ExitTimeout = TimeSpan.FromSeconds(3);
+    private readonly ExitWatchdog _exitWatchdog;
 
     public SettingsService Settings { get; } = new();
     public MonitoringHub Hub { get; private set; } = null!;
@@ -36,6 +39,7 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        _exitWatchdog = new ExitWatchdog(ExitTimeout, ForceExit);
         UnhandledException += (_, e) => { Log(global::WinStatusBar.Services.Localization.T("Exceção não tratada: ") + e.Exception); e.Handled = true; };
         AppDomain.CurrentDomain.UnhandledException += (_, e) => { Log("Falha fatal: " + e.ExceptionObject); ReleaseAppBars(); };
         AppDomain.CurrentDomain.ProcessExit += (_, _) => ReleaseAppBars();
@@ -138,7 +142,8 @@ public partial class App : Application
 
         _exitSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "WinStatusBar.Exit." + suffix);
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "WinStatusBar.Show." + suffix);
-        StartSignalWatcher(_exitSignal, () => ExitApp());
+        // A vigia da saída começa já na thread do sinal: vale mesmo se a thread da interface não responder.
+        StartSignalWatcher(_exitSignal, () => ExitApp(), onSignal: _exitWatchdog.Start);
         StartSignalWatcher(_showSignal, () => ShowSettings());
 
         _displayDebounce = _dispatcher.CreateTimer();
@@ -241,13 +246,17 @@ public partial class App : Application
         catch { return false; }
     }
 
-    private void StartSignalWatcher(EventWaitHandle handle, Action action)
+    private void StartSignalWatcher(EventWaitHandle handle, Action action, Action? onSignal = null)
     {
         var t = new Thread(() =>
         {
             while (!_exiting)
             {
-                if (handle.WaitOne(1000) && !_exiting) _dispatcher!.TryEnqueue(() => action());
+                if (handle.WaitOne(1000) && !_exiting)
+                {
+                    onSignal?.Invoke();
+                    _dispatcher!.TryEnqueue(() => action());
+                }
             }
         }) { IsBackground = true, Name = "WinStatusBar.Signal" };
         t.Start();
@@ -424,22 +433,75 @@ public partial class App : Application
 
     private void ReleaseAppBars()
     {
-        foreach (var b in _bars.ToList()) { try { b.AppBar?.Unregister(); } catch { } }
+        // Também roda fora da thread da interface (vigia da saída, ProcessExit): a lista pode mudar no meio.
+        try { foreach (var b in _bars.ToList()) { try { b.AppBar?.Unregister(); } catch { } } } catch { }
     }
 
     public void ExitApp()
     {
         if (_exiting) return;
         _exiting = true;
+        _exitWatchdog.Start(); // limite de segurança: mesmo que alguma etapa abaixo trave, o processo termina
         Log("Encerrando.");
-        foreach (var b in _bars.ToList()) b.CloseBar();
+        // Primeiro os timers que (re)criam janelas WebView2 ocultas (cotas do Gemini, créditos da Microsoft, painel da
+        // OpenAI e créditos do Qira): depois do "Encerrando." eles recriavam essas janelas e o processo nunca acabava.
+        ExitStep("timers", () =>
+        {
+            _apiUsageTimer?.Stop();
+            _displayDebounce?.Stop();
+            GoogleUsageSession.Stop();
+            MicrosoftCreditsSession.Stop();
+        });
+        foreach (var b in _bars.ToList()) ExitStep("barra", b.CloseBar);
         _bars.Clear();
-        _settingsWindow?.Close();
-        _tray?.Dispose();
-        CodexBridgeHost.Stop();
-        Hub.Dispose();
-        _singleInstance?.ReleaseMutex();
-        Exit();
+        ExitStep("configurações", () => _settingsWindow?.Close());
+        ExitStep("bandeja", () => _tray?.Dispose());
+        ExitStep("ponte do Codex", CodexBridgeHost.Stop);
+        ExitStep("monitoramento", () => Hub.Dispose());
+        ExitStep("instância única", () => _singleInstance?.ReleaseMutex());
+        // No modo padrão (OnLastWindowClose) o Exit() do WinUI só pede para as janelas fecharem e espera a última
+        // fechar para encerrar o laço de mensagens; uma janela oculta que sobra (ou que um timer recria) deixava o
+        // processo vivo para sempre. No modo explícito, o Exit() fecha as janelas e posta WM_QUIT na hora.
+        ExitStep("fechamento das janelas", () =>
+        {
+            DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
+            Exit();
+        });
+        // Tudo o que importa já foi feito (AppBar, bandeja, ponte, preferências, janelas fechadas): o processo termina
+        // aqui. Esperar o WinUI se desmontar deixava continuações atrasadas (WebView2, atualização da barra) rodarem sem
+        // o XAML; uma exceção nelas derrubava o processo (CoreMessagingXP, 0xc000027b) e o relatório de erros do
+        // Windows segurava a saída por 10 a 25 s.
+        Log("Encerrado.");
+        TerminateSelf(0);
+    }
+
+    /// <summary>Termina o processo na hora, sem o desmonte do WinUI nem a descarga das DLLs.</summary>
+    private static void TerminateSelf(uint exitCode)
+    {
+        TerminateProcess(GetCurrentProcess(), exitCode);
+        Environment.Exit((int)exitCode); // só se o Windows recusar o término
+    }
+
+    /// <summary>Onde a saída está, para o registro da saída forçada (a vigia lê de outra thread).</summary>
+    private volatile string _exitStage = "a interface não atendeu ao pedido de saída";
+
+    /// <summary>Uma etapa da saída que falha é registrada e não impede as seguintes nem o fim do processo.</summary>
+    private void ExitStep(string name, Action step)
+    {
+        _exitStage = name;
+        try { step(); }
+        catch (Exception ex) { Log($"Encerrando ({name}): {ex.GetType().Name}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// Saída forçada pela vigia: o processo não terminou no prazo. Remove o registro das barras na AppBar (o espaço
+    /// reservado no topo da tela), com prazo próprio, e encerra o processo.
+    /// </summary>
+    private void ForceExit()
+    {
+        Log($"Saída forçada: o processo não terminou em {ExitTimeout.TotalSeconds:0} s depois do pedido de saída (etapa: {_exitStage}).");
+        Task.Run(ReleaseAppBars).Wait(TimeSpan.FromSeconds(1));
+        TerminateSelf(1);
     }
 
     public static void Log(string message)

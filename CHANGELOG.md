@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.3] - 2026-11-09 · compilação BUILD
+
+### Corrigido
+- Fechar a barra (menu da bandeja, atualização, desinstalação ou `tools\stop-bar.ps1`) às vezes não encerrava o programa: a barra sumia da tela, mas o WinStatusBar continuava rodando escondido, sem os serviços, até ser encerrado à força (na atualização, o instalador fazia isso).
+  - Causa: o WinUI só termina quando a última janela do programa fecha. As leituras de cotas do Gemini e de créditos da Microsoft usam janelas ocultas do WebView2, e os timers delas continuavam ativos depois do pedido de saída e recriavam essas janelas. A última janela nunca fechava.
+  - Agora esses timers param no início da saída, e o programa termina sozinho logo depois de remover a barra, o ícone da bandeja e a ponte do Codex, sem esperar o WinUI se desmontar. Antes, esse desmonte às vezes derrubava o programa com uma IA respondendo, e o relatório de erros do Windows segurava a saída por 10 a 25 segundos.
+  - Limite de segurança: se a saída não terminar em 3 segundos (por exemplo, com a barra ocupada), a própria barra libera o espaço reservado no topo da tela e se encerra. O registro (`winstatusbar.log`) diz em que etapa ela estava.
+
 ## [1.4.2] - 2026-11-09 · compilação 20261109163414
 
 ### Alterado

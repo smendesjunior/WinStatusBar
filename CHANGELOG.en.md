@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.3] - 2026-11-09 · build BUILD
+
+### Fixed
+- Closing the bar (tray menu, update, uninstall or `tools\stop-bar.ps1`) sometimes did not end the program: the bar disappeared from the screen, but WinStatusBar kept running hidden, without its services, until it was killed (during updates, the installer did that).
+  - Cause: WinUI only ends when the program's last window closes. The Gemini quota and Microsoft credits readers use hidden WebView2 windows, and their timers kept running after the exit request and recreated those windows, so the last window never closed.
+  - Those timers now stop as soon as exit starts, and the program ends on its own right after removing the bar, the tray icon and the Codex bridge, without waiting for WinUI to tear down. That teardown could crash the program while an AI was answering, and Windows Error Reporting then held the exit for 10 to 25 seconds.
+  - Safety limit: if exit does not finish within 3 seconds (for example, while the bar is busy), the bar itself releases the space reserved at the top of the screen and ends. The log (`winstatusbar.log`) records which step it was in.
+
 ## [1.4.2] - 2026-11-09 · build 20261109163414
 
 ### Changed
