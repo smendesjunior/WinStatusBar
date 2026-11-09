@@ -36,10 +36,16 @@
 
 The bar blends into whatever is below it. Over a maximized window it takes on that window's title bar, so the app and the bar read as one surface; over the wallpaper it turns transparent, and each part picks light or dark text for contrast.
 
-<p align="center"><sub><b>Over Codex</b></sub><br><img src="docs/screenshots/integration-codex.png" alt="WinStatusBar above a maximized Codex window, matching its title bar"></p>
-<p align="center"><sub><b>Over Claude</b></sub><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (chat content blurred)"></p>
-<p align="center"><sub><b>Over File Explorer</b></sub><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its tab bar"></p>
-<p align="center"><sub><b>Over the desktop</b></sub><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper"></p>
+<table>
+  <tr>
+    <td width="50%" align="center"><b>Over Codex</b><br><img src="docs/screenshots/integration-codex.png" alt="WinStatusBar above a maximized Codex window, matching its title bar (personal items blurred)"></td>
+    <td width="50%" align="center"><b>Over Claude</b><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (personal items blurred)"></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><b>Over File Explorer</b><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its tab bar (personal folders blurred)"></td>
+    <td width="50%" align="center"><b>Over the desktop</b><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper, with text that adapts for contrast"></td>
+  </tr>
+</table>
 
 ## Install
 
