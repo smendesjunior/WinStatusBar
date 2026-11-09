@@ -87,7 +87,10 @@ if ($SandboxTest) {
     Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force $testDir | Out-Null
     Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $testDir 'WinStatusBar-Setup.exe') -Force
-    Write-Host "Instalador de teste (compilação $updateBuild): $testDir\WinStatusBar-Setup.exe"
+    # Configuração do Sandbox gerada aqui (o caminho é deste PC e não vai para o repositório): pasta só leitura em C:\Teste, rede ligada.
+    $wsb = "<Configuration>`r`n  <MappedFolders>`r`n    <MappedFolder>`r`n      <HostFolder>$testDir</HostFolder>`r`n      <SandboxFolder>C:\Teste</SandboxFolder>`r`n      <ReadOnly>true</ReadOnly>`r`n    </MappedFolder>`r`n  </MappedFolders>`r`n  <Networking>Enable</Networking>`r`n</Configuration>`r`n"
+    [IO.File]::WriteAllText((Join-Path $testDir 'teste-instalador.wsb'), $wsb, $utf8)
+    Write-Host "Instalador de teste (compilação $updateBuild): $testDir\WinStatusBar-Setup.exe — abra teste-instalador.wsb nessa pasta"
 } else {
     # Entrega local: este PC se atualiza por Instalador (update-source.json com Mode Local).
     $final = Join-Path $root 'Instalador'

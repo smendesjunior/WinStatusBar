@@ -7,6 +7,19 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.0] - 2026-11-09 · compilação BUILD
+
+### Adicionado
+- Instalador com assistente de 3 etapas (Sobre → Instalando → Concluído) para quem abre o arquivo com dois cliques. As atualizações automáticas continuam sem nenhuma janela.
+- Configurações › Atualizações (aba nova): versão instalada, botão "Verificar atualizações" com o andamento (procurando, baixando, instalando ou o motivo de uma falha) e o que mudou em cada versão.
+- Instalação pelo winget, sem o aviso do SmartScreen: `winget install SidneyJunior.WinStatusBar` (depois que a Microsoft aprovar o pacote).
+
+### Alterado
+- Atualizações automáticas pelas Releases do GitHub (smendesjunior/WinStatusBar), a cada 15 minutos, em silêncio e sem pedir administrador. O instalador baixado é conferido (tamanho e SHA-256) antes de rodar.
+- Esta é a última versão distribuída pelo compartilhamento de rede e pela pasta do OneDrive. Os PCs que a recebem por lá passam a se atualizar pelo GitHub.
+- Sobre: a linha de atualizações foi para a aba Atualizações.
+- Aplicativos instalados: editor "Sidney Junior" e link para a página do projeto.
+
 ## [1.3.2] - 2026-11-09 · compilação 20261109050307
 
 ### Corrigido

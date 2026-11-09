@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in WinStatusBar is not working as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a problem. Please fill in the fields below so it can be reproduced.
+  - type: input
+    id: version
+    attributes:
+      label: Version and build
+      description: From Settings › Updates (or Settings › About), for example "1.4.0 · build 20261109120000".
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: For example "Windows 11 24H2 (26100)". Settings › About › Copy information gives everything at once.
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (optional)
+      description: The last lines of %LOCALAPPDATA%\WinStatusBar\winstatusbar.log (Settings › About › Open data folder). Remove anything private before pasting.
+      render: text
