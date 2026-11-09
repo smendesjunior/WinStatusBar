@@ -46,8 +46,8 @@ public class CodexTests
     public void RolloutLifecycle_RunningToolsCompleted()
     {
         var s = new AgentSession { Kind = AgentKind.Codex, Id = "t" };
-        CodexParsers.ApplyRolloutLine(s, """{"timestamp":"2026-11-04T15:45:58.665Z","type":"session_meta","payload":{"id":"t","cwd":"C:\\proj\\rede"}}""");
-        Assert.Equal("rede", s.ProjectName);
+        CodexParsers.ApplyRolloutLine(s, """{"timestamp":"2026-11-04T15:45:58.665Z","type":"session_meta","payload":{"id":"t","cwd":"C:\\proj\\Obras"}}""");
+        Assert.Equal("Obras", s.ProjectName);
         CodexParsers.ApplyRolloutLine(s, """{"timestamp":"2026-11-04T15:46:00Z","type":"event_msg","payload":{"type":"task_started","turn_id":"x"}}""");
         Assert.Equal(AgentState.Running, s.State);
         CodexParsers.ApplyRolloutLine(s, """{"timestamp":"2026-11-04T15:46:01Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"CommandExecution"}}}""");

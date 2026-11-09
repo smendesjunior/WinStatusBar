@@ -139,7 +139,7 @@ internal static class Program
         {
             key.SetValue("DisplayName", AppName);
             key.SetValue("DisplayVersion", typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
-            // Editor e página do projeto: o winget relaciona a instalação ao pacote SidneyJunior.WinStatusBar por estes dados.
+            // Editor e página do projeto: o winget relaciona a instalação ao pacote WinStatusBar.WinStatusBar por estes dados.
             key.SetValue("Publisher", "Sidney Junior");
             key.SetValue("URLInfoAbout", "https://github.com/smendesjunior/WinStatusBar");
             key.SetValue("DisplayIcon", AppExe + ",0");

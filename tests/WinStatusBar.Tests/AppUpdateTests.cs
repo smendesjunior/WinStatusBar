@@ -52,7 +52,7 @@ public class AppUpdateTests
     [Fact]
     public void ParseAcceptsLegacyManifestWithoutVersionAndUrl()
     {
-        // Arquivo publicado hoje na rede e no OneDrive (Set-Content grava com BOM).
+        // Arquivo publicado hoje no compartilhamento de rede e no OneDrive (Set-Content grava com BOM).
         var m = UpdateRules.Parse("\uFEFF{\"Sha256\":\"" + Sha + "\",\"Build\":\"20261109050307\",\"Size\":261073453}");
         Assert.NotNull(m);
         Assert.Null(m!.Url);

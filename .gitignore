@@ -15,6 +15,7 @@ tools/accounts/*.json
 tools/qira-ponte/resultado.txt
 tools/readme/raw/
 tools/readme/*.txt
+tools/github/nomes-internos.txt
 .superpowers/
 
 # Entregas e material local (não vão para o repositório público)
