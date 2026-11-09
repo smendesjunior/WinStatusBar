@@ -17,12 +17,7 @@
   <img src="docs/screenshots/reel.webp" alt="Animated tour of WinStatusBar: the agent glowing while Claude Code works, the agent menu, Codex and Claude quotas, a request typed in the Ask box, the live CPU panel, the bar over Codex and File Explorer, and light mode (personal items blurred)">
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/bar-left.png" alt="Left side of the bar: AI agent, Codex, Claude and Gemini quotas, current task and the Ask your AI box">
-  <img src="docs/screenshots/bar-right.png" alt="Right side of the bar: network, CPU, RAM, GPU, battery and shortcuts">
-</p>
-
-<p align="center"><sub>Docked at the top of the screen like a native Windows AppBar. Screenshots show the Portuguese (Brazil) interface; English, Spanish, French, Japanese and Simplified Chinese are included.</sub></p>
+<p align="center"><sub>Docked at the top of the screen like a native Windows AppBar. The animation and screenshots show the Portuguese (Brazil) interface; English, Spanish, French, Japanese and Simplified Chinese are included.</sub></p>
 
 ## Why WinStatusBar
 
@@ -42,16 +37,8 @@ The bar blends into whatever is below it. Over a maximized window it takes on th
 
 <table>
   <tr>
-    <td width="50%" align="center"><b>Over Codex</b><br><img src="docs/screenshots/integration-codex.png" alt="WinStatusBar above a maximized Codex window, matching its title bar (personal items blurred)"></td>
-    <td width="50%" align="center"><b>Over Claude</b><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (personal items blurred)"></td>
-  </tr>
-  <tr>
-    <td width="50%" align="center"><b>Over File Explorer</b><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its Mica tab bar (personal folders blurred)"></td>
-    <td width="50%" align="center"><b>Over the desktop</b><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper, with text that adapts for contrast"></td>
-  </tr>
-  <tr>
-    <td width="50%" align="center"><b>Light mode · File Explorer</b><br><img src="docs/screenshots/integration-explorer-light.png" alt="WinStatusBar in light mode above a maximized File Explorer window (personal folders blurred)"></td>
-    <td width="50%" align="center"><b>Light mode · desktop with the CPU panel open</b><br><img src="docs/screenshots/integration-desktop-light.png" alt="WinStatusBar in light mode over the wallpaper, with the CPU detail panel open"></td>
+    <td width="50%" align="center"><b>Over a maximized app (Claude)</b><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (personal items blurred)"></td>
+    <td width="50%" align="center"><b>Over the wallpaper, light mode</b><br><img src="docs/screenshots/integration-desktop-light.png" alt="WinStatusBar in light mode, transparent over the wallpaper, with the CPU detail panel open"></td>
   </tr>
 </table>
 
@@ -63,8 +50,6 @@ winget install winstatusbar
 
 Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://github.com/smendesjunior/WinStatusBar/releases/latest) and run it: a 3-step wizard installs the bar for the current user, with no administrator rights. The installer is not code-signed yet, so Windows may show a SmartScreen prompt the first time (More info › Run anyway). winget installs don't show it.
 
-<p align="center"><img src="docs/screenshots/setup.png" width="480" alt="Setup wizard, step 1: what WinStatusBar is, what the installation does and the Install button"></p>
-
 **Requirements:** Windows 10 (19041) or Windows 11, 64-bit. The .NET runtime and Windows App SDK are bundled; the Microsoft Edge WebView2 Runtime is installed automatically if it is missing.
 
 ---
@@ -72,8 +57,6 @@ Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://githu
 ## Ask your AI from anywhere
 
 One box at the center of the bar talks to **Claude Code, Codex, Gemini, Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
-
-<p align="center"><img src="docs/screenshots/chat.png" width="760" alt="Chat panel with the AI selector, project, model, context chip and the Context, Web and Edit toggles"></p>
 
 ## Run commands on your PC, right from the bar
 
@@ -98,36 +81,15 @@ Every step is verified before the next one, results come back as short text inst
 
 See which agent is working, what it is doing right now and how much of each plan is left — Codex, Claude Code, Gemini, Copilot, Qira and local AI side by side. The bar can follow the busiest agent automatically.
 
-<p align="center"><img src="docs/screenshots/agent.png" width="560" alt="Agent menu with Codex, Claude Code, Gemini, Copilot, Lenovo Qira and local AI, each with status and quota rings"></p>
-
 ## Quotas without opening a browser
 
 Five-hour and weekly windows, reset times, per-product usage and, for the OpenAI API, tokens, spending and requests.
-
-<table>
-  <tr>
-    <td width="65%"><img src="docs/screenshots/codex-quotas.png" alt="Codex quotas with 5-hour and weekly windows and OpenAI API usage charts"></td>
-    <td width="35%"><img src="docs/screenshots/claude-quotas.png" alt="Claude quotas with 5-hour and weekly windows and usage per product"></td>
-  </tr>
-</table>
 
 ## Hardware at a glance
 
 Click any metric for a live panel in the style of Task Manager: usage history, temperatures (when the PC exposes sensors), top apps with **End task**, memory composition, GPU engines, Wi-Fi, Bluetooth, hotspot and a speed test.
 
-<table>
-  <tr>
-    <td><img src="docs/screenshots/cpu.png" alt="CPU panel with usage chart, temperature, specs and top apps"></td>
-    <td><img src="docs/screenshots/gpu.png" alt="GPU panel"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/ram.png" alt="Memory panel with usage and composition"></td>
-    <td><img src="docs/screenshots/network.png" alt="Network panel with Wi-Fi, Bluetooth, hotspot, speed test and traffic chart"></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><img src="docs/screenshots/battery.png" width="50%" alt="Battery panel"></td>
-  </tr>
-</table>
+<p align="center"><img src="docs/screenshots/network.png" width="480" alt="Network panel with Wi-Fi, Bluetooth, hotspot, speed test and traffic chart (network names and addresses blurred)"></p>
 
 ## And more
 
