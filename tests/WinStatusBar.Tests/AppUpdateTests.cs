@@ -121,6 +121,34 @@ public class AppUpdateTests
         finally { File.Delete(file); }
     }
 
+    [Fact]
+    public void CanReuseVerifiedInstallerFromPreviousAttempt()
+    {
+        byte[] data = "instalador"u8.ToArray();
+        string file = TempFile(data);
+        try { Assert.True(UpdateRules.CanReuse(file, M(sha: Convert.ToHexString(SHA256.HashData(data)), size: data.Length))); }
+        finally { File.Delete(file); }
+    }
+
+    [Fact]
+    public void CannotReuseMissingOrDifferentInstaller()
+    {
+        Assert.False(UpdateRules.CanReuse(Path.Combine(Path.GetTempPath(), "nao-existe-" + Guid.NewGuid().ToString("N") + ".exe"), M()));
+        string file = TempFile(new byte[10]);
+        try { Assert.False(UpdateRules.CanReuse(file, M(size: 10))); }
+        finally { File.Delete(file); }
+    }
+
+    [Theory]
+    [InlineData(0, 15)]
+    [InlineData(1, 15)]
+    [InlineData(2, 15)]
+    [InlineData(3, 360)]
+    [InlineData(9, 360)]
+    public void AutomaticRetryBacksOffAfterThreeFailuresOfTheSameBuild(int failures, int minutes) =>
+        // Sem isso, uma falha que se repete baixaria ~270 MB a cada 15 minutos (o botão manual não espera).
+        Assert.Equal(TimeSpan.FromMinutes(minutes), UpdateRules.RetryDelay(failures));
+
     private static string TempFile(byte[] content)
     {
         string file = Path.Combine(Path.GetTempPath(), "WinStatusBar.Tests." + Guid.NewGuid().ToString("N") + ".part");
@@ -180,6 +208,15 @@ public class AppUpdateTests
         // Download parado por 2 minutos: o leitor do fluxo cancela com OperationCanceledException (não TaskCanceledException).
         Assert.Equal("O GitHub demorou demais para responder. A barra tenta de novo sozinha em 15 minutos.",
             UpdateErrorText.Explain(new OperationCanceledException(), UpdateSourceKind.GitHub));
+
+    [Fact]
+    public void ExplainsConnectionDroppedDuringDownload()
+    {
+        // Queda da conexão no meio dos ~270 MB: o .NET lança HttpIOException ou IOException com SocketException dentro.
+        const string Expected = "A conexão com o GitHub caiu durante o download. A barra tenta de novo sozinha em 15 minutos.";
+        Assert.Equal(Expected, UpdateErrorText.Explain(new HttpIOException(HttpRequestError.ResponseEnded), UpdateSourceKind.GitHub));
+        Assert.Equal(Expected, UpdateErrorText.Explain(new IOException("x", new System.Net.Sockets.SocketException(10054)), UpdateSourceKind.GitHub));
+    }
 
     [Fact]
     public void ExplainsDiskFull() =>

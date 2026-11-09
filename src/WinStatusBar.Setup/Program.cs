@@ -20,6 +20,8 @@ internal static class Program
     private const string AppName = "WinStatusBar";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\WinStatusBar";
     private static readonly StringBuilder Log = new();
+    /// <summary>Os arquivos novos já substituíram os antigos (uma falha depois disso não deixa "nada alterado").</summary>
+    private static bool _filesReplaced;
 
     private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     private static string InstallDir => Path.Combine(LocalAppData, "Programs", AppName);
@@ -89,11 +91,18 @@ internal static class Program
         System.Windows.Forms.Application.EnableVisualStyles();
         System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
         string version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+        string? installed = InstalledVersion();
         int result = 1;
-        using var wizard = new SetupWizard(version, InstalledVersion(), step =>
+        using var wizard = new SetupWizard(version, installed, step =>
         {
             try { Install(updateOnly: false, launch: false, step); result = 0; }
-            catch (Exception ex) { Log.AppendLine("ERRO: " + ex.Message); result = 2; throw; }
+            catch (Exception ex)
+            {
+                // O registro guarda o erro técnico; a etapa 3 mostra o motivo em português simples.
+                Log.AppendLine("ERRO: " + ex.GetType().Name + ": " + ex.Message);
+                result = 2;
+                throw new InvalidOperationException(SetupErrorText.Explain(ex, installed is not null, _filesReplaced), ex);
+            }
             finally { WriteLog("install"); }
         }, Path.Combine(DataDir, "setup.log"));
         System.Windows.Forms.Application.Run(wizard);
@@ -119,7 +128,7 @@ internal static class Program
         using var payload = typeof(Program).Assembly.GetManifestResourceStream("payload.zip")
                            ?? throw new InvalidOperationException("Pacote do aplicativo ausente no instalador.");
         step?.Invoke("Copiando os arquivos…");
-        try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); StopRunningApp(); }); }
+        try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); StopRunningApp(); }); _filesReplaced = true; }
         catch
         {
             // A failed update must not leave the previous, preserved installation closed.
@@ -203,7 +212,8 @@ internal static class Program
         string file = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebview2Setup.exe");
         try
         {
-            using (var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(2) })
+            // Proxy corporativo com login do Windows (NTLM/Kerberos): sem as credenciais padrão, o download falharia com 407.
+            using (var http = new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler { DefaultProxyCredentials = System.Net.CredentialCache.DefaultCredentials }) { Timeout = TimeSpan.FromMinutes(2) })
             using (var source = http.GetStreamAsync(Bootstrapper).GetAwaiter().GetResult())
             using (var target = File.Create(file))
                 source.CopyTo(target);

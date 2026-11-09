@@ -21,6 +21,9 @@ internal static class AppUpdater
     private static readonly object Gate = new();
     private static Task<UpdateProgress>? _current;
     private static bool _sourceLogged;
+    // Falhas seguidas da mesma versão (para espaçar as consultas automáticas; ver UpdateRules.RetryDelay).
+    private static string? _failedBuild;
+    private static int _failures;
 
     private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     private static string UpdatesDir => Path.Combine(LocalAppData, "WinStatusBar", "Updates");
@@ -69,7 +72,7 @@ internal static class AppUpdater
             {
                 // Installing só volta com o instalador concluído; normalmente ele já fechou esta barra antes.
                 if ((await CheckNowAsync()).Stage == UpdateStage.Installing) return;
-                await Task.Delay(UpdateRules.CheckInterval);
+                await Task.Delay(UpdateRules.RetryDelay(_failures));
             }
         });
     }
@@ -90,6 +93,7 @@ internal static class AppUpdater
         if (!IsEnabled) return Report(new(UpdateStage.Disabled, DisabledText));
         var kind = UpdateSourceKind.GitHub;
         string part = Path.Combine(UpdatesDir, UpdateRules.SetupFileName + ".part");
+        UpdateManifest? manifest = null;
         try
         {
             Report(new(UpdateStage.Checking, "Procurando…"));
@@ -106,26 +110,31 @@ internal static class AppUpdater
             string json = kind == UpdateSourceKind.Local
                 ? await File.ReadAllTextAsync(Path.Combine(source.LocalDirectory!, UpdateRules.ManifestFileName))
                 : await GetManifestAsync();
-            var manifest = UpdateRules.Parse(json)
+            manifest = UpdateRules.Parse(json)
                 ?? throw new InvalidDataException("O arquivo de controle da atualização está inválido. A barra tenta de novo sozinha em 15 minutos.");
             bool newer = manifest.Build is { Length: 14 } && string.CompareOrdinal(manifest.Build, CurrentBuild) > 0;
-            if (!newer) return Report(new(UpdateStage.UpToDate, $"Você já tem a versão mais recente ({CurrentVersion})"));
+            if (!newer) { _failures = 0; _failedBuild = null; return Report(new(UpdateStage.UpToDate, $"Você já tem a versão mais recente ({CurrentVersion})")); }
             if (!UpdateRules.IsInstallable(manifest, CurrentBuild!, kind))
                 throw new InvalidDataException("A versão encontrada não passou na conferência de segurança e foi ignorada.");
 
             string label = manifest.Version ?? manifest.Build;
             Directory.CreateDirectory(UpdatesDir);
-            Report(new(UpdateStage.Downloading, $"Baixando a versão {label}… 0%"));
-            if (kind == UpdateSourceKind.Local)
-            {
-                // Leitura compartilhada sem escrita: não aceita o instalador enquanto ele ainda está sendo gravado.
-                await using var file = new FileStream(Path.Combine(source.LocalDirectory!, UpdateRules.SetupFileName), FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-                await CopyWithProgressAsync(file, part, manifest.Size, label, stall: null);
-            }
-            else await DownloadAsync(manifest.Url!, part, manifest.Size, label);
-            UpdateRules.VerifyDownload(part, manifest);
             string exe = Path.Combine(UpdatesDir, UpdateRules.SetupFileName);
-            File.Move(part, exe, overwrite: true);
+            // Instalador de uma tentativa anterior que ainda confere: não baixa ~270 MB de novo.
+            if (UpdateRules.CanReuse(exe, manifest)) App.Log($"Atualização: reaproveitando o instalador já baixado da versão {label}.");
+            else
+            {
+                Report(new(UpdateStage.Downloading, $"Baixando a versão {label}… 0%"));
+                if (kind == UpdateSourceKind.Local)
+                {
+                    // Leitura compartilhada sem escrita: não aceita o instalador enquanto ele ainda está sendo gravado.
+                    await using var file = new FileStream(Path.Combine(source.LocalDirectory!, UpdateRules.SetupFileName), FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
+                    await CopyWithProgressAsync(file, part, manifest.Size, label, stall: null);
+                }
+                else await DownloadAsync(manifest.Url!, part, manifest.Size, label);
+                UpdateRules.VerifyDownload(part, manifest);
+                File.Move(part, exe, overwrite: true);
+            }
 
             var installing = Report(new(UpdateStage.Installing, $"Instalando a versão {label}. A barra vai fechar e abrir de novo sozinha."));
             App.Log($"Atualização: instalando {label} (compilação {manifest.Build}).");
@@ -141,6 +150,11 @@ internal static class AppUpdater
         catch (Exception ex)
         {
             try { if (File.Exists(part)) File.Delete(part); } catch { }
+            if (manifest is not null)
+            {
+                if (_failedBuild == manifest.Build) _failures++;
+                else { _failedBuild = manifest.Build; _failures = 1; }
+            }
             var failed = Report(new(UpdateStage.Failed, UpdateErrorText.Explain(ex, kind)));
             App.Log($"Atualização: {failed.Text} ({ex.GetType().Name}: {ex.Message})");
             return failed;
@@ -196,7 +210,12 @@ internal static class AppUpdater
     private static HttpClient CreateClient()
     {
         // Proxy do sistema e redirecionamentos (github.com → servidor de arquivos do GitHub) ficam no padrão.
-        var http = new HttpClient(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(10) })
+        var http = new HttpClient(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            // Proxy corporativo com login do Windows (NTLM/Kerberos): sem isto, toda consulta falharia com 407.
+            DefaultProxyCredentials = CredentialCache.DefaultCredentials,
+        })
             { Timeout = TimeSpan.FromSeconds(30) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("WinStatusBar-Updater/" + CurrentVersion);
         return http;

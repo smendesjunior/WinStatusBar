@@ -131,8 +131,7 @@ internal sealed class SetupWizard : Form
         else
         {
             _title.Text = "A instalação não foi concluída";
-            AddText(error.Message, _text, bottom: 10);
-            if (_installedVersion is not null) AddText("Nada foi alterado na instalação anterior.", _secondary);
+            AddText(error.Message, _text, bottom: 10); // já vem explicado pelo Program (SetupErrorText)
             SetButtons(("Ver registro", false, OpenLog), ("Fechar", true, Close));
         }
     }

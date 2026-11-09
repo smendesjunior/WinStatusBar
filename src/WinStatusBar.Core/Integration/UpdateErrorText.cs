@@ -21,6 +21,8 @@ public static class UpdateErrorText
             OperationCanceledException or TimeoutException => (local ? "A pasta local de atualização demorou demais para responder." : "O GitHub demorou demais para responder.") + Retry,
             DirectoryNotFoundException or FileNotFoundException or IOException or UnauthorizedAccessException when local =>
                 "A pasta local de atualização não está acessível." + Retry,
+            // Queda no meio do download: HttpIOException (fim prematuro) ou IOException com SocketException dentro.
+            HttpIOException or IOException { InnerException: SocketException } => "A conexão com o GitHub caiu durante o download." + Retry,
             _ => "Não foi possível verificar atualizações: " + ex.Message,
         };
     }

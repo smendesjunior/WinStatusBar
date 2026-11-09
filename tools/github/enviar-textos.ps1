@@ -18,7 +18,7 @@ try {
     if ($pending) { throw "Há mudanças sem commit; faça o commit antes de enviar:`n$($pending -join "`n")" }
     Invoke-Native git @('fetch', 'origin', 'main') 'git fetch' | Out-Null
     $changed = @(Invoke-Native git @('diff', '--name-only', '--diff-filter=ACMR', 'origin/main..HEAD') 'git diff')
-    if ($changed) { & (Join-Path $PSScriptRoot 'verificar-segredos.ps1') -Paths $changed }
+    if ($changed) { & (Join-Path $PSScriptRoot 'verificar-segredos.ps1') -Range 'origin/main..HEAD' }
     Invoke-Native git @('push', 'origin', 'main') 'git push (main)' | Out-Null
     Say "main enviado ($($changed.Count) arquivo(s) alterado(s))."
     # Descrição, página e tópicos do repositório (inglês), sempre iguais aos daqui.

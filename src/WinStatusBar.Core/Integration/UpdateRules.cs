@@ -48,6 +48,18 @@ public static class UpdateRules
         return kind == UpdateSourceKind.Local || (m.Url is not null && m.Url.StartsWith(GitHubDownloadPrefix, StringComparison.Ordinal));
     }
 
+    /// <summary>Espera da consulta automática: 15 min; depois de 3 falhas seguidas da mesma versão, 6 h (evita baixar
+    /// ~270 MB a cada 15 min quando a instalação falha sempre do mesmo jeito). O botão "Verificar atualizações" não espera.</summary>
+    public static TimeSpan RetryDelay(int consecutiveFailures) => consecutiveFailures >= 3 ? TimeSpan.FromHours(6) : CheckInterval;
+
+    /// <summary>Instalador de uma tentativa anterior que ainda confere com o manifesto: dispensa novo download.</summary>
+    public static bool CanReuse(string file, UpdateManifest m)
+    {
+        if (!File.Exists(file)) return false;
+        try { VerifyDownload(file, m); return true; }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException) { return false; }
+    }
+
     /// <summary>Confere tamanho e SHA-256 do arquivo baixado antes de qualquer execução.</summary>
     public static void VerifyDownload(string file, UpdateManifest m)
     {

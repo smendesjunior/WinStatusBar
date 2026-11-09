@@ -20,11 +20,22 @@ $inst = Join-Path $art 'installer'
 # Cada compilação usa uma pasta nova; -KeepIntermediates também preserva builds anteriores.
 New-Item -ItemType Directory -Force $app, $col, $inst | Out-Null
 Write-Host "== WinStatusBar $version (compilação $updateBuild)"
+$utf8 = New-Object Text.UTF8Encoding $false
+
+if (-not $SandboxTest) {
+    # Versão já publicada? Confere ANTES de mexer nos CHANGELOGs e de entregar em Instalador (que este PC instala).
+    $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    $remoteTag = @(& git -C $root ls-remote --tags origin "refs/tags/v$version" 2>&1); $lsCode = $LASTEXITCODE
+    $localTag = @(& git -C $root tag --list "v$version")
+    $ErrorActionPreference = $old
+    if ($lsCode -ne 0) { throw "Não foi possível consultar as versões publicadas no GitHub (git ls-remote): $($remoteTag -join ' ')" }
+    if ($remoteTag -or $localTag) { throw "A versão $version já foi publicada. Suba a versão em Directory.Build.props e registre-a nos dois CHANGELOGs." }
+}
 
 # A compilação entra no CHANGELOG antes do publish (o app leva o CHANGELOG.md para Configurações › Atualizações).
-# Aceita o marcador BUILD ou o número de um build anterior que não chegou a ser publicado.
-$utf8 = New-Object Text.UTF8Encoding $false
-foreach ($name in 'CHANGELOG.md', 'CHANGELOG.en.md') {
+# Só na publicação real (a versão acabou de ser conferida como nova); aceita o marcador BUILD ou o número de um build
+# anterior desta mesma versão que não chegou a ser publicado. O teste do Sandbox não mexe nos CHANGELOGs.
+foreach ($name in $(if ($SandboxTest) { @() } else { 'CHANGELOG.md', 'CHANGELOG.en.md' })) {
     $file = Join-Path $root $name
     if (-not (Test-Path -LiteralPath $file)) { continue }
     $text = [IO.File]::ReadAllText($file)

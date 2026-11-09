@@ -34,9 +34,12 @@ try {
     $notes = Get-ReleaseNotes $root $Version
     [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
 
-    # Código: commit de tudo que não está no .gitignore, depois da busca de segredos.
+    # Código: commit de tudo que não está no .gitignore, depois da busca de segredos no que foi preparado E nas linhas
+    # adicionadas pelos commits ainda não enviados (inclusive nomes internos).
     Invoke-Native git @('add', '-A') 'git add' | Out-Null
+    Invoke-Native git @('fetch', 'origin', 'main') 'git fetch' | Out-Null
     & (Join-Path $root 'tools\github\verificar-segredos.ps1')
+    & (Join-Path $root 'tools\github\verificar-segredos.ps1') -Range 'origin/main..HEAD'
     $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
     & git diff --cached --quiet; $hasChanges = $LASTEXITCODE -ne 0
     $ErrorActionPreference = $old
