@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="WinStatusBar.Clip.ClipWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:WinStatusBar.Clip"
+    Title="Windows Clipmanager">
+
+    <!-- Margem horizontal unica (16) para todos os elementos: abas, pesquisa, filtros e cards ficam alinhados -->
+    <Grid x:Name="Root">
+        <Grid.Resources>
+            <!-- Botao discreto (sem fundo, com realce arredondado ao passar o mouse) -->
+            <Style x:Key="SubtleButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
+            </Style>
+
+            <!-- Cabecalho de secao: Fixados / Recentes -->
+            <DataTemplate x:Key="HeaderTemplate" x:DataType="local:SectionHeader">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="2,4,0,0">
+                    <FontIcon Glyph="{x:Bind Glyph}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Bind Title}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- Card de um item do historico -->
+            <DataTemplate x:Key="CardTemplate" x:DataType="local:ClipVM">
+                <Grid MinHeight="84" CornerRadius="8"
+                      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                      PointerEntered="{x:Bind PointerIn}" PointerExited="{x:Bind PointerOut}" PointerCanceled="{x:Bind PointerOut}"
+                      PointerPressed="{x:Bind PointerDown}" PointerReleased="{x:Bind PointerUp}"
+                      AutomationProperties.Name="{x:Bind CategoryName}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="28" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="46" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Realce ao passar o mouse / pressionar (com transicao suave, como nos controles do WinUI) -->
+                    <Border Grid.ColumnSpan="4" CornerRadius="7" IsHitTestVisible="False"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}" Opacity="{x:Bind HoverOpacity, Mode=OneWay}">
+                        <Border.OpacityTransition>
+                            <ScalarTransition Duration="0:0:0.167" />
+                        </Border.OpacityTransition>
+                    </Border>
+                    <!-- Faixa lateral e icone da categoria -->
+                    <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="5,12,0,12" HorizontalAlignment="Left"
+                               Fill="{x:Bind CategoryBrush}" />
+                    <FontIcon Grid.Column="1" Glyph="{x:Bind CategoryGlyph}" FontFamily="{x:Bind CategoryFont}" FontSize="16"
+                              Foreground="{x:Bind CategoryBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,13,0,0"
+                              ToolTipService.ToolTip="{x:Bind CategoryName}" />
+                    <!-- Conteudo -->
+                    <StackPanel Grid.Column="2" Margin="0,12,4,12" Spacing="6">
+                        <TextBlock Text="{x:Bind PreviewText}" Visibility="{x:Bind TextVisibility}"
+                                   TextWrapping="Wrap" MaxLines="4" TextTrimming="CharacterEllipsis" />
+                        <Border Visibility="{x:Bind ImageVisibility}" CornerRadius="4" HorizontalAlignment="Left">
+                            <Image Source="{x:Bind Thumbnail, Mode=OneWay}" MaxHeight="150" Stretch="Uniform" />
+                        </Border>
+                        <ItemsControl ItemsSource="{x:Bind FileRows}" Visibility="{x:Bind FilesVisibility}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:FileRow">
+                                    <Grid ColumnSpacing="8" Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image Width="20" Height="20" Source="{x:Bind Icon, Mode=OneWay}" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis"
+                                                   Opacity="{x:Bind NameOpacity}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{x:Bind Status}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <!-- "..." e alfinete, como no painel nativo -->
+                    <Button x:Uid="U925e339da38d10" Grid.Column="3" Style="{StaticResource SubtleButton}" VerticalAlignment="Top" Margin="0,6,6,0"
+                            Click="{x:Bind MoreClick}" ToolTipService.ToolTip="Mais opções" AutomationProperties.Name="Mais opções">
+                        <FontIcon Glyph="&#xE712;" FontSize="14" />
+                    </Button>
+                    <Button Grid.Column="3" Style="{StaticResource SubtleButton}" VerticalAlignment="Bottom" Margin="0,0,6,6"
+                            Click="{x:Bind PinClick}" ToolTipService.ToolTip="{x:Bind PinTip, Mode=OneWay}">
+                        <FontIcon Glyph="{x:Bind PinGlyph, Mode=OneWay}" FontSize="14" />
+                    </Button>
+                    <!-- Borda de foco com o mesmo arredondamento do card (a do contêiner da lista e quadrada) -->
+                    <Border Grid.ColumnSpan="4" Margin="-1" CornerRadius="8" BorderThickness="2" IsHitTestVisible="False"
+                            BorderBrush="{ThemeResource FocusStrokeColorOuterBrush}" Visibility="{x:Bind FocusVisibility, Mode=OneWay}" />
+                </Grid>
+            </DataTemplate>
+
+            <local:ClipTemplateSelector x:Key="ClipSelector" Card="{StaticResource CardTemplate}" Header="{StaticResource HeaderTemplate}" />
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Topo: abas (SelectorBar do WinUI 3) + fechar -->
+        <Grid Grid.Row="0" Padding="12,8,8,0">
+            <SelectorBar x:Name="TabBar" SelectionChanged="TabBar_SelectionChanged">
+                <SelectorBarItem x:Uid="U46e1e473b91d07" x:Name="TabEmoji" Text="Emoji" ToolTipService.ToolTip="Emoji (Win+.)">
+                    <SelectorBarItem.Icon><FontIcon Glyph="&#xE76E;" /></SelectorBarItem.Icon>
+                </SelectorBarItem>
+                <SelectorBarItem x:Uid="Uc9043c2875f4ea" x:Name="TabClip" Text="Área de transferência" ToolTipService.ToolTip="Área de transferência (Win+V)">
+                    <SelectorBarItem.Icon><FontIcon Glyph="&#xE77F;" /></SelectorBarItem.Icon>
+                </SelectorBarItem>
+            </SelectorBar>
+            <Button x:Uid="U7ec6662b3e53fd" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource SubtleButton}" Width="36" Height="32"
+                    Click="Close_Click" ToolTipService.ToolTip="Fechar" AutomationProperties.Name="Fechar">
+                <FontIcon Glyph="&#xE8BB;" FontSize="11" />
+            </Button>
+        </Grid>
+
+        <!-- ============================ Area de transferencia ============================ -->
+        <Grid x:Name="ClipView" Grid.Row="1" Padding="16,10,16,0" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <AutoSuggestBox x:Uid="U9ec3e25e442733" x:Name="ClipSearch" PlaceholderText="Pesquisar" QueryIcon="Find"
+                                TextChanged="ClipSearch_TextChanged" KeyDown="ClipSearch_KeyDown" AutomationProperties.Name="Pesquisar no histórico" />
+                <Button x:Uid="U6bc257076878c4" Grid.Column="1" Content="Limpar tudo" Click="ClearAll_Click" VerticalAlignment="Stretch"
+                        ToolTipService.ToolTip="Excluir os itens não fixados" />
+            </Grid>
+            <!-- Filtros por categoria (so as categorias presentes no historico) -->
+            <Grid x:Name="ClipCategoryBar" Grid.Row="1" Margin="-4,0,-4,0" ColumnSpacing="2" />
+            <ListView x:Name="ClipList" Grid.Row="2" SelectionMode="None" IsItemClickEnabled="True" ItemClick="ClipList_ItemClick"
+                      ItemTemplateSelector="{StaticResource ClipSelector}" Padding="0,2,0,12" Margin="-4,0,-4,0">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="4,0,4,8" />
+                        <Setter Property="MinHeight" Value="0" />
+                        <Setter Property="CornerRadius" Value="8" />
+                        <Setter Property="UseSystemFocusVisuals" Value="False" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <StackPanel x:Name="ClipEmpty" Grid.Row="2" VerticalAlignment="Center" Spacing="6" Visibility="Collapsed">
+                <FontIcon Glyph="&#xE77F;" FontSize="32" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                <TextBlock x:Name="ClipEmptyTitle" HorizontalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock x:Name="ClipEmptyText" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ============================ Emojis ============================ -->
+        <Grid x:Name="EmojiView" Grid.Row="1" Padding="16,10,16,8" RowSpacing="8" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <AutoSuggestBox x:Uid="Udcba6c997eb06d" x:Name="EmojiSearch" PlaceholderText="Pesquisar emojis" QueryIcon="Find"
+                                TextChanged="EmojiSearch_TextChanged" AutomationProperties.Name="Pesquisar emojis" />
+                <Button x:Uid="U6615e5f2fbe3ec" x:Name="ToneButton" Grid.Column="1" Width="40" Padding="0" VerticalAlignment="Stretch"
+                        ToolTipService.ToolTip="Tom de pele" AutomationProperties.Name="Tom de pele">
+                    <TextBlock x:Name="ToneButtonText" FontFamily="Segoe UI Emoji" FontSize="16" Text="✋" />
+                    <Button.Flyout>
+                        <Flyout x:Name="ToneFlyout">
+                            <StackPanel x:Name="TonePanel" Orientation="Horizontal" Spacing="4" />
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+            <!-- Emojis vêm da folha pré-desenhada (EmojiAtlas): rolar só move imagens prontas. O texto fica como reserva
+                 até a folha existir. Sem placeholders de rolagem (nada de células brancas). -->
+            <GridView x:Name="EmojiGrid" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="True" ItemClick="EmojiGrid_ItemClick"
+                      Padding="0" Margin="-4,0,-4,0" ShowsScrollingPlaceholders="False">
+                <GridView.ItemContainerTransitions><TransitionCollection /></GridView.ItemContainerTransitions>
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="local:EmojiVM">
+                        <Grid Width="30" Height="30" ToolTipService.ToolTip="{x:Bind Name}" AutomationProperties.Name="{x:Bind Name}">
+                            <Rectangle Fill="{x:Bind Sprite, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind Display, Mode=OneWay}" FontFamily="Segoe UI Emoji" FontSize="22"
+                                       Visibility="{x:Bind TextVisibility, Mode=OneWay}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+                <GridView.ItemContainerStyle>
+                    <Style TargetType="GridViewItem">
+                        <Setter Property="Margin" Value="1" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="MinWidth" Value="40" />
+                        <Setter Property="MinHeight" Value="40" />
+                        <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
+                    </Style>
+                </GridView.ItemContainerStyle>
+                <GridView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsWrapGrid Orientation="Horizontal" ItemWidth="42" ItemHeight="42" AreStickyGroupHeadersEnabled="True"
+                                       HorizontalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </GridView.ItemsPanel>
+                <GridView.GroupStyle>
+                    <GroupStyle HidesIfEmpty="True">
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate x:DataType="local:EmojiGroup">
+                                <TextBlock Text="{x:Bind Title}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </GridView.GroupStyle>
+            </GridView>
+            <!-- Categorias de emoji -->
+            <Grid x:Name="EmojiCategoryBar" Grid.Row="2" Margin="-4,0,-4,0" ColumnSpacing="2" />
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>WinStatusBar.Collector</RootNamespace>
+    <AssemblyName>WinStatusBar.Collector</AssemblyName>
+    <TieredPGO>true</TieredPGO>
+    <TieredCompilationQuickStartForLoops>true</TieredCompilationQuickStartForLoops>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <ApplicationIcon>..\WinStatusBar\Assets\WinStatusBar.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WinStatusBar.Core\WinStatusBar.Core.csproj" />
+  </ItemGroup>
+</Project>

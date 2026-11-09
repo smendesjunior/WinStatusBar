@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="WinStatusBar.Views.BarWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:WinStatusBar.ViewModels"
+    xmlns:services="using:WinStatusBar.Services"
+    xmlns:local="using:WinStatusBar.Views"
+    Title="WinStatusBar">
+
+    <Grid x:Name="Root" Background="Transparent" UseLayoutRounding="True">
+        <Grid.Resources>
+            <!-- Lightweight styling: botões sem fundo/borda; realce sutil no hover/pressionado (como a taskbar) -->
+            <ResourceDictionary>
+                <ResourceDictionary.ThemeDictionaries>
+                    <ResourceDictionary x:Key="Default">
+                        <SolidColorBrush x:Key="ButtonBackground" Color="Transparent" />
+                        <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
+                        <SolidColorBrush x:Key="ButtonBorderBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="Transparent" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="Transparent" />
+                        <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                    <ResourceDictionary x:Key="Light">
+                        <SolidColorBrush x:Key="ButtonBackground" Color="Transparent" />
+                        <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
+                        <SolidColorBrush x:Key="ButtonBorderBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="Transparent" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="Transparent" />
+                        <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                </ResourceDictionary.ThemeDictionaries>
+
+                <!-- Menu de agentes: material Acrylic (o conteúdo atrás aparece desfocado, como nos menus do Windows 11) -->
+                <Flyout x:Key="SessionsFlyout" Placement="BottomEdgeAlignedLeft" ShouldConstrainToRootBounds="False">
+                    <Flyout.SystemBackdrop>
+                        <DesktopAcrylicBackdrop />
+                    </Flyout.SystemBackdrop>
+                    <Flyout.FlyoutPresenterStyle>
+                        <Style TargetType="FlyoutPresenter">
+                            <Setter Property="MinWidth" Value="440" />
+                            <Setter Property="MaxWidth" Value="680" />
+                            <Setter Property="Padding" Value="6,10,6,6" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="CornerRadius" Value="8" />
+                        </Style>
+                    </Flyout.FlyoutPresenterStyle>
+                    <StackPanel Spacing="4">
+                        <!-- Cabeçalho: título e modo das cotas (Restante | Usado) -->
+                        <Grid Margin="14,2,10,6">
+                            <TextBlock x:Uid="U7584ac0ba1ad38" Text="Tarefa exibida na barra" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                            <StackPanel x:Name="QuotaModeSwitch" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <ListView ItemsSource="{x:Bind VM.AgentOptions, Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="OnAgentOptionClick" Padding="0"
+                                  ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Width="620">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                    <Setter Property="Padding" Value="14,10" />
+                                    <Setter Property="Margin" Value="0,1" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AgentOptionSlot">
+                                    <Grid ColumnSpacing="14" x:DefaultBindMode="OneWay">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="36" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="164" />
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Opção escolhida: linha preenchida na cor de destaque, com a barrinha de seleção do WinUI -->
+                                        <Border Grid.ColumnSpan="3" Margin="-12,-8,-12,-8" CornerRadius="6" Background="{ThemeResource AccentFillColorDefaultBrush}" Opacity="0.2"
+                                                Visibility="{x:Bind Option.CheckVisible}" IsHitTestVisible="False" />
+                                        <Border Grid.ColumnSpan="3" Width="3" HorizontalAlignment="Left" Margin="-12,8,0,8" CornerRadius="1.5" Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                Visibility="{x:Bind Option.CheckVisible}" IsHitTestVisible="False" />
+                                        <!-- Divisor sutil entre serviços, começando depois do logo -->
+                                        <Border Grid.Column="1" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Margin="0,-11,0,0" Opacity="0.6"
+                                                Background="{ThemeResource DividerStrokeColorDefaultBrush}" Visibility="{x:Bind Option.DividerVisible}" />
+                                        <!-- Logo oficial num círculo -->
+                                        <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Center">
+                                            <Grid Width="20" Height="20" services:AgentMotion.Kind="{x:Bind Option.MotionKind}" services:AgentMotion.Active="{x:Bind Option.MotionActive}">
+                                                <Image services:ThemeIcon.Source="{x:Bind Option.Icon}" Width="20" Height="20" Visibility="{x:Bind Option.IconVisible}" />
+                                                <FontIcon Glyph="{x:Bind Option.Glyph}" FontFamily="{StaticResource BarIconFont}" FontSize="17" Visibility="{x:Bind Option.GlyphVisible}" />
+                                                <local:OpenAiLogo Width="20" Height="20" IsWorking="True" Visibility="{x:Bind Option.CodexAnimVisible}" />
+                                                <local:ClaudeWorkingDots Width="20" Height="20" Visibility="{x:Bind Option.ClaudeAnimVisible}" />
+                                                <local:OllamaLogo Width="20" Height="20" IsWorking="True" Visibility="{x:Bind Option.OllamaAnimVisible}" />
+                                            </Grid>
+                                        </Border>
+                                        <!-- Nome + selo; estado · atividade · quando; plano · API -->
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{x:Bind Option.Name}" Style="{StaticResource BarTitleText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                <Border CornerRadius="9" Padding="8,1,9,2" Background="{x:Bind Option.StatusBackground}" Visibility="{x:Bind Option.StatusVisible}" VerticalAlignment="Center">
+                                                    <TextBlock Text="{x:Bind Option.Status}" FontSize="11" FontWeight="SemiBold" Foreground="{x:Bind Option.StatusForeground}" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{x:Bind Option.Line1}" Style="{StaticResource BarValueText}" TextTrimming="CharacterEllipsis" MaxLines="1" />
+                                            <TextBlock Text="{x:Bind Option.Summary}" Style="{StaticResource BarCaptionText}" MaxLines="1" TextTrimming="CharacterEllipsis" Visibility="{x:Bind Option.SummaryVisible}" />
+                                            <TextBlock Text="{x:Bind Option.Line2}" Style="{StaticResource BarCaptionText}" TextTrimming="CharacterEllipsis" MaxLines="1" Visibility="{x:Bind Option.Line2Visible}" />
+                                            <HyperlinkButton Content="Configurar" FontSize="12" Padding="0,2,0,0" Click="OnAgentConfigureClick" Visibility="{x:Bind Option.ConfigureVisible}" />
+                                        </StackPanel>
+                                        <!-- Anéis de cota em duas colunas fixas (78 px): janela embaixo e quando renova -->
+                                        <Grid Grid.Column="2" ColumnSpacing="8" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind Option.QuotaTip}">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78" /><ColumnDefinition Width="78" /></Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="1" Visibility="{x:Bind Option.Ring1Visible}">
+                                                <Grid Width="54" Height="54" HorizontalAlignment="Center">
+                                                    <ProgressRing IsIndeterminate="False" Minimum="0" Maximum="100" Value="{x:Bind Option.Ring1Value}" Width="54" Height="54"
+                                                                  Foreground="{x:Bind Option.Ring1Brush}" Background="{ThemeResource ControlStrongStrokeColorDisabledBrush}" />
+                                                    <TextBlock Text="{x:Bind Option.Ring1Center}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Grid>
+                                                <TextBlock Text="{x:Bind Option.Ring1Label}" Style="{StaticResource BarCaptionText}" HorizontalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Option.Ring1Reset}" FontSize="11" Opacity="0.75" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="1" Visibility="{x:Bind Option.Ring2Visible}">
+                                                <Grid Width="54" Height="54" HorizontalAlignment="Center">
+                                                    <ProgressRing IsIndeterminate="False" Minimum="0" Maximum="100" Value="{x:Bind Option.Ring2Value}" Width="54" Height="54"
+                                                                  Foreground="{x:Bind Option.Ring2Brush}" Background="{ThemeResource ControlStrongStrokeColorDisabledBrush}" />
+                                                    <TextBlock Text="{x:Bind Option.Ring2Center}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Grid>
+                                                <TextBlock Text="{x:Bind Option.Ring2Label}" Style="{StaticResource BarCaptionText}" HorizontalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Option.Ring2Reset}" FontSize="11" Opacity="0.75" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <TextBlock Grid.ColumnSpan="2" Text="{x:Bind Option.RingNote}" Style="{StaticResource BarCaptionText}" TextAlignment="Right" HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center" TextWrapping="Wrap" MaxLines="2" Visibility="{x:Bind Option.RingNoteVisible}" />
+                                        </Grid>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Flyout>
+            </ResourceDictionary>
+        </Grid.Resources>
+
+        <!-- Hospedeiro escalável (opção "Escala de elementos") -->
+        <Grid x:Name="ScaleHost" HorizontalAlignment="Left" VerticalAlignment="Top" Height="48">
+            <!-- Três colunas iguais nas laterais: a barra de comando fica exatamente no centro e os módulos se distribuem dos dois lados -->
+            <Grid x:Name="BarLayout" VerticalAlignment="Stretch">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Center">
+            <Grid x:Name="ModulesGrid" Height="48" Padding="8,0,0,0" ColumnSpacing="0" VerticalAlignment="Stretch">
+
+                <!-- A. Agente de IA -->
+                <!-- Mesmo visual da pílula "Pergunte à sua IA" (fundo e contorno pintados em PaintAgentCard). -->
+                <Border x:Name="AgentModule" Margin="0,4,2,4" CornerRadius="18" BorderThickness="1">
+                    <Grid>
+                        <Border CornerRadius="17" Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                Opacity="{x:Bind VM.AgentTintOpacity, Mode=OneWay}" IsHitTestVisible="False" />
+                        <Button x:Uid="U24ffaad224b550" Style="{StaticResource BarButton}" Flyout="{StaticResource SessionsFlyout}"
+                                Margin="0" Padding="12,2" CornerRadius="17" HorizontalAlignment="Stretch"
+                                ToolTipService.ToolTip="{x:Bind VM.AgentTooltip, Mode=OneWay}" AutomationProperties.Name="Agente de IA">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Grid Width="17" Height="17" VerticalAlignment="Center">
+                                    <Image x:Name="AgentIconImage" services:ThemeIcon.Source="{x:Bind VM.AgentIcon, Mode=OneWay}" Width="17" Height="17" Visibility="{x:Bind VM.AgentIconVisible, Mode=OneWay}" />
+                                    <local:OpenAiLogo Width="17" Height="17" Visibility="{x:Bind VM.OpenAiLogoVisible, Mode=OneWay}"
+                                                      IsWorking="{x:Bind VM.CodexWorking, Mode=OneWay}" />
+                                    <FontIcon Glyph="&#xE99A;" Style="{StaticResource BarIcon}" FontSize="17" Visibility="{x:Bind VM.AgentGlyphVisible, Mode=OneWay}" />
+                                    <local:ClaudeWorkingDots Visibility="{x:Bind VM.ClaudeDotsVisible, Mode=OneWay}" />
+                                    <local:OllamaLogo Width="17" Height="17" Visibility="{x:Bind VM.OllamaLogoVisible, Mode=OneWay}"
+                                                      IsWorking="{x:Bind VM.OllamaWorking, Mode=OneWay}" />
+                                </Grid>
+                                <StackPanel VerticalAlignment="Center" MinWidth="74">
+                                    <TextBlock Text="{x:Bind VM.AgentName, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Ellipse Width="7" Height="7" Fill="{x:Bind VM.AgentDot, Mode=OneWay}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{x:Bind VM.AgentState, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- B. Tarefa atual (metade esquerda) + barra de comando da IA (metade direita) -->
+                <Grid x:Name="TaskArea">
+                <Button x:Uid="U5ead3ca99a5c30" x:Name="TaskModule" Style="{StaticResource BarButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                        Flyout="{StaticResource SessionsFlyout}" ToolTipService.ToolTip="{x:Bind VM.TaskTooltip, Mode=OneWay}" AutomationProperties.Name="Tarefa atual">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <!-- Círculo de atividade: gira sem porcentagem; com as etapas do plano, mostra o arco real e o número no centro. -->
+                        <Grid Width="32" Height="32" VerticalAlignment="Center">
+                            <Grid.Resources>
+                                <!-- Traço ~10% mais grosso que o padrão (4). -->
+                                <x:Double x:Key="ProgressRingStrokeThickness">3</x:Double>
+                            </Grid.Resources>
+                            <ProgressRing Width="32" Height="32" MinWidth="0" MinHeight="0" IsActive="True" local:RingSpeed.Rate="0.8"
+                                          Visibility="{x:Bind VM.ProgressVisible, Mode=OneWay}"
+                                          IsIndeterminate="{x:Bind VM.ProgressIndeterminate, Mode=OneWay}" Minimum="0" Maximum="100"
+                                          Value="{x:Bind VM.ProgressValue, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind VM.ProgressText, Mode=OneWay}" Visibility="{x:Bind VM.ProgressTextVisible, Mode=OneWay}"
+                                       FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       TextLineBounds="Tight" IsHitTestVisible="False" />
+                        </Grid>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="60">
+                            <TextBlock Text="{x:Bind VM.TaskTitle, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
+                            <TextBlock Text="{x:Bind VM.TaskCaption, Mode=OneWay}" Style="{StaticResource BarCaptionText}" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                </Grid>
+
+                <!-- C. Rede -->
+                <Button x:Uid="Ua9f86281525d7f" x:Name="NetworkModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da rede" ToolTipService.ToolTip="{x:Bind VM.NetTooltip, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <!-- Tipo de conexão (Wi-Fi / cabo / banda larga móvel), mesmo tamanho dos ícones de CPU/RAM/GPU -->
+                        <FontIcon Glyph="{x:Bind VM.NetGlyph, Mode=OneWay}" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
+                        <StackPanel x:Name="NetTextPanel" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon Glyph="&#xF0AD;" Style="{StaticResource BarIcon}" FontSize="9" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind VM.NetUp, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon Glyph="&#xF0AE;" Style="{StaticResource BarIcon}" FontSize="9" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Bind VM.NetDown, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- D. CPU -->
+                <Button x:Uid="U7310eb3d7e67ee" x:Name="CpuModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da CPU" ToolTipService.ToolTip="{x:Bind VM.CpuTooltip, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xEEA1;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
+                        <StackPanel x:Name="CpuTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="CPU" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuTemperature, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind VM.CpuTemperatureSource, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
+                            <TextBlock Text="{x:Bind VM.CpuText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- E. RAM -->
+                <Button x:Uid="U09172986791745" x:Name="RamModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da memória" ToolTipService.ToolTip="{x:Bind VM.RamTooltip, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xEEA0;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
+                        <StackPanel x:Name="RamTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
+                            <TextBlock Text="{x:Bind VM.RamTitle, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
+                            <TextBlock Text="{x:Bind VM.RamText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- F. GPU -->
+                <Button x:Uid="U945ef6200e518b" x:Name="GpuModule" Style="{StaticResource BarButton}" Padding="8,0" ToolTipService.ToolTip="{x:Bind VM.GpuTooltip, Mode=OneWay}" AutomationProperties.Name="Detalhes da GPU">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xE950;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
+                        <StackPanel x:Name="GpuTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="{x:Bind VM.GpuLabel, Mode=OneWay}" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.GpuTemperature, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
+                            <TextBlock Text="{x:Bind VM.GpuText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="BatteryModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da bateria" ToolTipService.ToolTip="{x:Bind VM.BatteryTooltip, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <local:BatteryIcon Plugged="{x:Bind VM.BatteryPlugged, Mode=OneWay}" Percent="{x:Bind VM.BatteryPercent, Mode=OneWay}" Charging="{x:Bind VM.BatteryCharging, Mode=OneWay}" Saver="{x:Bind VM.BatterySaver, Mode=OneWay}" VerticalAlignment="Center" />
+                        <!-- Porcentagem em destaque e o estado em duas linhas curtas, maiores (pedido de 08/11/2026) -->
+                        <TextBlock Text="{x:Bind VM.BatteryText, Mode=OneWay}" FontFamily="{StaticResource BarFont}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,0,1" />
+                        <StackPanel x:Name="BatteryTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
+                            <TextBlock Text="{x:Bind VM.BatteryLine1, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
+                            <TextBlock Text="{x:Bind VM.BatteryLine2, Mode=OneWay}" Style="{StaticResource BarTitleText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- G. Cotas de IA -->
+                <StackPanel x:Name="QuotasModule" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <Button x:Uid="Ucb79ceec0dd495" x:Name="CodexQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.CodexQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.CodexQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Cotas do Codex">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image Grid.RowSpan="2" services:ThemeIcon.Source="{x:Bind VM.CodexIcon, Mode=OneWay}" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="U9214c78c1796c7" Grid.Column="1" Text="Codex 5h" Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.Codex5h, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+
+                        <TextBlock x:Uid="U769e6415e0da92" Grid.Row="1" Grid.Column="1" Text="Codex 7d" Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.Codex7d, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
+                    <Button x:Uid="U21c55b93f553e6" x:Name="ClaudeQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.ClaudeQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.ClaudeQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Cotas do Claude">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image Grid.RowSpan="2" services:ThemeIcon.MonoLogo="claude" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="Ua37e81bcd9498c" Grid.Column="1" Text="Claude 5h" Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.Claude5h, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+
+                        <TextBlock x:Uid="U66c20a1ea16546" Grid.Row="1" Grid.Column="1" Text="Claude 7d" Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.Claude7d, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
+                                    <Button x:Name="GeminiQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.GeminiQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.GeminiQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Cotas do Gemini">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image x:Name="GeminiQuotaIcon" Grid.RowSpan="2" services:ThemeIcon.MonoLogo="gemini" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Gemini atual" Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.GeminiCurrent, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Gemini sem." Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.GeminiWeekly, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
+                    <Button x:Name="CopilotQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.CopilotQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.CopilotQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Créditos do Copilot">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image x:Name="CopilotQuotaIcon" Grid.RowSpan="2" services:ThemeIcon.MonoLogo="copilot" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Copilot créd." Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.CopilotCredits, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Copilot" Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.CopilotCreditsPercent, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
+                    <Button x:Name="QiraQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.QiraQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.QiraQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Créditos do Qira">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image Grid.RowSpan="2" services:ThemeIcon.MonoLogo="qira" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Qira créd." Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.QiraCredits, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Qira" Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.QiraCreditsPercent, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
+</StackPanel>
+
+                <!-- H. Atalhos -->
+                <StackPanel x:Name="ShortcutsModule" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch">
+                    <Button x:Uid="Ua3b5bea684fef0" x:Name="ClipboardButton" Style="{StaticResource BarIconButton}" Click="OnClipboard" ToolTipService.ToolTip="Área de transferência (Win+V)" AutomationProperties.Name="Área de transferência">
+                        <FontIcon Glyph="&#xE77F;" Style="{StaticResource ShortcutIcon}" />
+                    </Button>
+                    <Button x:Uid="Ub3cdf450fa3528" x:Name="TaskManagerButton" Style="{StaticResource BarIconButton}" Click="OnTaskManager" ToolTipService.ToolTip="Gerenciador de Tarefas" AutomationProperties.Name="Gerenciador de Tarefas">
+                        <Grid>
+                            <FontIcon Glyph="&#xE9D9;" Style="{StaticResource ShortcutIcon}" />
+                        </Grid>
+                    </Button>
+                    <Button x:Uid="Uad393c371cdc79" x:Name="SettingsShortcutButton" Style="{StaticResource BarIconButton}" Click="OnSettings" ToolTipService.ToolTip="Configurações" AutomationProperties.Name="Configurações">
+                        <FontIcon Glyph="&#xE713;" Style="{StaticResource ShortcutIcon}" />
+                    </Button>
+                    <Button x:Uid="U9b9cea2573312c" x:Name="StoreButton" Style="{StaticResource BarIconButton}" Click="OnStore" ToolTipService.ToolTip="Microsoft Store" AutomationProperties.Name="Microsoft Store">
+                        <Viewbox Width="20" Height="20" Stretch="Uniform">
+                            <Canvas Width="17" Height="18">
+                                <!-- Silhueta da Store: sacola de frente, alça e marca de quatro quadrados. -->
+                                <Path Canvas.Left="-1.5" Canvas.Top="-1.5" Data="M3.5,6.5 L16.5,6.5 L16.5,16 Q16.5,18 14.5,18 L5.5,18 Q3.5,18 3.5,16 Z M7,7 L7,3.5 Q7,2.5 8,2.5 L12,2.5 Q13,2.5 13,3.5 L13,7"
+                                      Stroke="{ThemeResource TextFillColorPrimaryBrush}" StrokeThickness="1.35"
+                                      StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Canvas.Left="-1.5" Canvas.Top="-1.5" Data="M6.75,9 L9.4,9 L9.4,11.65 L6.75,11.65 Z M10.6,9 L13.25,9 L13.25,11.65 L10.6,11.65 Z M6.75,12.85 L9.4,12.85 L9.4,15.5 L6.75,15.5 Z M10.6,12.85 L13.25,12.85 L13.25,15.5 L10.6,15.5 Z"
+                                      Fill="{ThemeResource TextFillColorPrimaryBrush}" />
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Button x:Name="ExplorerShortcutButton" Style="{StaticResource BarIconButton}" Click="OnExplorerShortcut" ToolTipService.ToolTip="Explorador de Arquivos" AutomationProperties.Name="Explorador de Arquivos">
+                        <FontIcon Glyph="&#xE8B7;" Style="{StaticResource ShortcutIcon}" />
+                    </Button>
+                    <Button x:Name="DocumentsShortcutButton" Style="{StaticResource BarIconButton}" Click="OnDocumentsShortcut" ToolTipService.ToolTip="Documentos" AutomationProperties.Name="Documentos">
+                        <FontIcon Glyph="&#xE8A5;" Style="{StaticResource ShortcutIcon}" />
+                    </Button>
+                    <Button x:Name="DownloadsShortcutButton" Style="{StaticResource BarIconButton}" Click="OnDownloadsShortcut" ToolTipService.ToolTip="Downloads" AutomationProperties.Name="Downloads">
+                        <FontIcon Glyph="&#xE896;" Style="{StaticResource ShortcutIcon}" />
+                    </Button>
+                    <Button x:Name="PersonalShortcutButton" Style="{StaticResource BarIconButton}" Click="OnPersonalShortcut" ToolTipService.ToolTip="Pasta pessoal" AutomationProperties.Name="Pasta pessoal">
+                        <Grid Width="20" Height="20">
+                            <FontIcon Glyph="&#xE8B7;" Style="{StaticResource ShortcutIcon}" HorizontalAlignment="Left" />
+                            <FontIcon Glyph="&#xE77B;" Style="{StaticResource BarIcon}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                        </Grid>
+                    </Button>
+                    <Button x:Uid="U7601af73ee20e8" x:Name="MoreButton" Style="{StaticResource BarIconButton}" ToolTipService.ToolTip="Mais opções" AutomationProperties.Name="Mais opções">
+                        <FontIcon Glyph="&#xE712;" Style="{StaticResource ShortcutIcon}" />
+                        <Button.Flyout>
+                            <MenuFlyout x:Name="MoreMenu" Placement="BottomEdgeAlignedRight" />
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+            </Grid>
+            </ScrollViewer>
+            <Grid x:Name="CommandHost" Grid.Column="1" VerticalAlignment="Center" Margin="8,0" />
+            <ScrollViewer Grid.Column="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Center">
+                <Grid x:Name="RightModulesGrid" Height="48" Padding="0,0,8,0" ColumnSpacing="0" VerticalAlignment="Stretch" />
+            </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

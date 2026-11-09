@@ -1,0 +1,31 @@
+# Compilação
+bin/
+obj/
+artifacts/
+.vs/
+*.user
+
+# Temporários, registros e saídas de diagnóstico
+*.log
+desktop.ini
+tools/diag/
+tools/dev/*.txt
+tools/sandbox/teste/
+tools/accounts/*.json
+tools/qira-ponte/resultado.txt
+.superpowers/
+
+# Entregas e material local (não vão para o repositório público)
+Instalador/
+docs/*
+!docs/winstatusbar-dark.png
+output/
+Store/
+AGENTS.md
+recriar.json
+
+# Certificados e chaves nunca entram
+*.pfx
+*.p12
+*.pem
+*.key

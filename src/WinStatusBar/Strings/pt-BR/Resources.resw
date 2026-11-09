@@ -1,0 +1,3765 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <data name="AiTasks.Content" xml:space="preserve">
+    <value>IA e tarefas</value>
+  </data>
+  <data name="AiTasks_Label" xml:space="preserve">
+    <value>IA e tarefas</value>
+  </data>
+  <data name="Appearance.Content" xml:space="preserve">
+    <value>Aparência</value>
+  </data>
+  <data name="Appearance_Label" xml:space="preserve">
+    <value>Aparência</value>
+  </data>
+  <data name="Apply.Content" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Apply.Text" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Apply_Label" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Cancel.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Cancel.Text" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Cancel_Label" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Clipboard.Content" xml:space="preserve">
+    <value>Área de transferência</value>
+  </data>
+  <data name="Clipboard_Label" xml:space="preserve">
+    <value>Área de transferência</value>
+  </data>
+  <data name="Close.Content" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="Close.Text" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="Close_Label" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="Diagnostics.Content" xml:space="preserve">
+    <value>Diagnóstico</value>
+  </data>
+  <data name="Diagnostics_Label" xml:space="preserve">
+    <value>Diagnóstico</value>
+  </data>
+  <data name="Disabled.Content" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Disabled.Text" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Disabled_Label" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Enabled.Content" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Enabled.Text" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Enabled_Label" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="General.Content" xml:space="preserve">
+    <value>Geral</value>
+  </data>
+  <data name="General_Label" xml:space="preserve">
+    <value>Geral</value>
+  </data>
+  <data name="HardwareNetwork.Content" xml:space="preserve">
+    <value>Hardware e rede</value>
+  </data>
+  <data name="HardwareNetwork_Label" xml:space="preserve">
+    <value>Hardware e rede</value>
+  </data>
+  <data name="S002470787DB9E6E1" xml:space="preserve">
+    <value>Brilho no agente em atividade</value>
+  </data>
+  <data name="S010D70279A12813E" xml:space="preserve">
+    <value>Codex rollout</value>
+  </data>
+  <data name="S01539CB7DFB4B24F" xml:space="preserve">
+    <value>Sessões de IA</value>
+  </data>
+  <data name="S020CDCE113A72C42" xml:space="preserve">
+    <value>Efeitos</value>
+  </data>
+  <data name="S0265B4ECCA38AE51" xml:space="preserve">
+    <value>Aparência da barra</value>
+  </data>
+  <data name="S0289F93D6D1AF7EC" xml:space="preserve">
+    <value>Em espera</value>
+  </data>
+  <data name="S03147DBEA1FA061F" xml:space="preserve">
+    <value>Núcleos</value>
+  </data>
+  <data name="S03FCEF2A9CC81A69" xml:space="preserve">
+    <value>Teste concluído</value>
+  </data>
+  <data name="S04768F9A2FFC2556" xml:space="preserve">
+    <value>: hardware ou driver não disponibilizou leitura</value>
+  </data>
+  <data name="S04F9F0A78DBE13BE" xml:space="preserve">
+    <value>Aparência</value>
+  </data>
+  <data name="S056C8D8923609D8F" xml:space="preserve">
+    <value>Temperaturas</value>
+  </data>
+  <data name="S0615570F9EA13694" xml:space="preserve">
+    <value>Claude</value>
+  </data>
+  <data name="S066B5780B4038E2A" xml:space="preserve">
+    <value>Pessoas</value>
+  </data>
+  <data name="S06B631462284E9A3" xml:space="preserve">
+    <value>Abrir pasta do histórico</value>
+  </data>
+  <data name="S071F649ADB472B88" xml:space="preserve">
+    <value>Conversas</value>
+  </data>
+  <data name="S0758C00E6EA0CA61" xml:space="preserve">
+    <value>Padrão</value>
+  </data>
+  <data name="S078C0CD1D8BF3E27" xml:space="preserve">
+    <value>GPU: {0}</value>
+  </data>
+  <data name="S078F4EE8156D34C7" xml:space="preserve">
+    <value>Atualizar relatório</value>
+  </data>
+  <data name="S07B2958773DEC4C4" xml:space="preserve">
+    <value>Zero usa o padrão do Windows. Esta opção não se aplica ao fundo sólido.</value>
+  </data>
+  <data name="S07F792285123D0F8" xml:space="preserve">
+    <value>Apps conectados</value>
+  </data>
+  <data name="S082B81F3A2B1CE31" xml:space="preserve">
+    <value>Leitura da temperatura da CPU Lenovo para o WinStatusBar. Somente dados; não aceita comandos.</value>
+  </data>
+  <data name="S0900CDBA696231ED" xml:space="preserve">
+    <value>Destino inválido.</value>
+  </data>
+  <data name="S09174FE345E10F13" xml:space="preserve">
+    <value>Mica Alt · mais contraste</value>
+  </data>
+  <data name="S0953EB8566DDCC50" xml:space="preserve">
+    <value>— Codex</value>
+  </data>
+  <data name="S097D48073E1FD3C3" xml:space="preserve">
+    <value>Arrastar módulo</value>
+  </data>
+  <data name="S09B94DCB8A781522" xml:space="preserve">
+    <value>Configurar atividade das sessões</value>
+  </data>
+  <data name="S0A0111FBE456B183" xml:space="preserve">
+    <value>
+Utilização da GPU: {0}</value>
+  </data>
+  <data name="S0A19F6BC613AB089" xml:space="preserve">
+    <value>Falha ao salvar configurações: </value>
+  </data>
+  <data name="S0B91CD53081E2638" xml:space="preserve">
+    <value>Smileys e emoções</value>
+  </data>
+  <data name="S0C5B769CF293442B" xml:space="preserve">
+    <value>  Rede: ↑ {0} ↓ {1} · interfaces: {2}</value>
+  </data>
+  <data name="S0D25E1157E8C2A89" xml:space="preserve">
+    <value>Codex — percentual {0}{1}
+</value>
+  </data>
+  <data name="S0DBA9C7F2D380A33" xml:space="preserve">
+    <value>Outros limites da conta</value>
+  </data>
+  <data name="S0DCB53808C960190" xml:space="preserve">
+    <value>Banda larga móvel</value>
+  </data>
+  <data name="S0DF424BC0A11121D" xml:space="preserve">
+    <value>Reset de limite</value>
+  </data>
+  <data name="S0E61B1302C5CA957" xml:space="preserve">
+    <value>Gerando para </value>
+  </data>
+  <data name="S0EF35CE838864DA5" xml:space="preserve">
+    <value>Seu histórico está vazio</value>
+  </data>
+  <data name="S0F2BD88EF0ACBDA9" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="S0F383B5E2C3BB41A" xml:space="preserve">
+    <value>2 segundos é o padrão. A coleta acontece junto dos ciclos de CPU, memória e rede.</value>
+  </data>
+  <data name="S0F4BB6CD4EA945B7" xml:space="preserve">
+    <value>Ajuste fino do fundo</value>
+  </data>
+  <data name="S101855D7D04EF3E8" xml:space="preserve">
+    <value>Ociosa</value>
+  </data>
+  <data name="S10D7F0B4D114721C" xml:space="preserve">
+    <value>Detalhes da GPU</value>
+  </data>
+  <data name="S10E8AA2D49A694C0" xml:space="preserve">
+    <value>{0}
+{1} processadores lógicos
+Utilização: {2}
+</value>
+  </data>
+  <data name="S11F7D76F89D4C521" xml:space="preserve">
+    <value>Excluir os itens não fixados</value>
+  </data>
+  <data name="S122FE63C943A3378" xml:space="preserve">
+    <value>Reinicie o aplicativo para aplicar o idioma selecionado.</value>
+  </data>
+  <data name="S126B6DD3C2E94D79" xml:space="preserve">
+    <value>Claude — percentual {0}
+</value>
+  </data>
+  <data name="S12F0BDA7321110CD" xml:space="preserve">
+    <value>Fraca</value>
+  </data>
+  <data name="S12FCD0C7B77C94F2" xml:space="preserve">
+    <value>Nunca</value>
+  </data>
+  <data name="S1370C13187A12B44" xml:space="preserve">
+    <value>Moderado</value>
+  </data>
+  <data name="S13DE7AE7CA368D26" xml:space="preserve">
+    <value>Identificadores</value>
+  </data>
+  <data name="S14A4F591FF0D0407" xml:space="preserve">
+    <value>Arquivo de imagem</value>
+  </data>
+  <data name="S159194D5757AE945" xml:space="preserve">
+    <value>Atualização e coleta avançada</value>
+  </data>
+  <data name="S15AE1F5C02DAA776" xml:space="preserve">
+    <value>Sensor Lenovo (GetCPUTemp)</value>
+  </data>
+  <data name="S1606E9D0BD8EB348" xml:space="preserve">
+    <value>Pele escura</value>
+  </data>
+  <data name="S161B48DB9CCC696C" xml:space="preserve">
+    <value>resets disponíveis</value>
+  </data>
+  <data name="S16AB079FE2B9F62E" xml:space="preserve">
+    <value>Consulta Claude: </value>
+  </data>
+  <data name="S16DD2040CBFD9C8C" xml:space="preserve">
+    <value>Somente no monitor principal</value>
+  </data>
+  <data name="S16F947C92136F184" xml:space="preserve">
+    <value>Abrir link</value>
+  </data>
+  <data name="S1772D1F9295F8685" xml:space="preserve">
+    <value>Escolha as leituras exibidas. Valores indisponíveis aparecem como um traço.</value>
+  </data>
+  <data name="S18685946D8D4D88A" xml:space="preserve">
+    <value>Números</value>
+  </data>
+  <data name="S18B33DED78B8A8FE" xml:space="preserve">
+    <value>Imagens e cópias de arquivos. Ao passar do limite, saem as mais antigas.</value>
+  </data>
+  <data name="S1A5229B5AF72E6AB" xml:space="preserve">
+    <value>Memória física em uso: {0} GB
+Disponível: {1} GB
+</value>
+  </data>
+  <data name="S1B3AD1AEAE6AC939" xml:space="preserve">
+    <value>Medir atividade da GPU</value>
+  </data>
+  <data name="S1B6F194B750B4B33" xml:space="preserve">
+    <value>Velocidade base</value>
+  </data>
+  <data name="S1D3DF331F48130DD" xml:space="preserve">
+    <value>Utilização</value>
+  </data>
+  <data name="S1D4CBAF1DF31B18E" xml:space="preserve">
+    <value>Imagens maiores não entram no histórico.</value>
+  </data>
+  <data name="S1D772C7F2456ED54" xml:space="preserve">
+    <value>Inicialização automática: </value>
+  </data>
+  <data name="S1DA62B73275BEA8D" xml:space="preserve">
+    <value>Tarefa atual</value>
+  </data>
+  <data name="S1DAD3A69DD18BE6D" xml:space="preserve">
+    <value>Painel CPU (aplicativos): </value>
+  </data>
+  <data name="S1E525467FE6A7708" xml:space="preserve">
+    <value>Local: </value>
+  </data>
+  <data name="S1E5A2CAFE17723AD" xml:space="preserve">
+    <value>Aguardando o aplicativo fechar…</value>
+  </data>
+  <data name="S1E986E796F8A13AC" xml:space="preserve">
+    <value>Escolha o que acompanhar e o que pode aparecer na sua tela.</value>
+  </data>
+  <data name="S1ECF1475363D687C" xml:space="preserve">
+    <value>Frequência atual: {0}
+Fonte: {1}</value>
+  </data>
+  <data name="S1EE31ACEFCD5E7D8" xml:space="preserve">
+    <value>Cotas do Codex</value>
+  </data>
+  <data name="S1F15FBAFD733CF7C" xml:space="preserve">
+    <value>Quanto já foi usado</value>
+  </data>
+  <data name="S1F8B619FC9710AFC" xml:space="preserve">
+    <value>Semana (7 dias)</value>
+  </data>
+  <data name="S1FD48EB77BBAD735" xml:space="preserve">
+    <value>Composição da memória</value>
+  </data>
+  <data name="S2001AE104253F2D9" xml:space="preserve">
+    <value>Fator forma</value>
+  </data>
+  <data name="S2005EF5EF9D9C522" xml:space="preserve">
+    <value>Endereço IPv6</value>
+  </data>
+  <data name="S2077A96257A8597F" xml:space="preserve">
+    <value>Megabits por segundo</value>
+  </data>
+  <data name="S2078BFDF550F985F" xml:space="preserve">
+    <value>Claude Code statusLine</value>
+  </data>
+  <data name="S2117BAE4B60091CA" xml:space="preserve">
+    <value>CPU, memória e rede (segundos)</value>
+  </data>
+  <data name="S2130A3B5E09E419F" xml:space="preserve">
+    <value>Geral</value>
+  </data>
+  <data name="S22168C64F9DCEED8" xml:space="preserve">
+    <value>Capturas de tela e imagens copiadas.</value>
+  </data>
+  <data name="S2247BF870BDC1845" xml:space="preserve">
+    <value>  Temperatura: CPU {0} · GPU {1}</value>
+  </data>
+  <data name="S23060DECF8CD5C53" xml:space="preserve">
+    <value>7 dias</value>
+  </data>
+  <data name="S23E56D7B839A4C8A" xml:space="preserve">
+    <value>Placa acompanhada</value>
+  </data>
+  <data name="S24565D9F671D7BAA" xml:space="preserve">
+    <value>Aguardando sua resposta</value>
+  </data>
+  <data name="S246EF8C1130D56F5" xml:space="preserve">
+    <value>Claude Code</value>
+  </data>
+  <data name="S2475DFD57FADB4BD" xml:space="preserve">
+    <value>Atualização das cotas do Claude</value>
+  </data>
+  <data name="S24AD409B71B5A5BC" xml:space="preserve">
+    <value>Alterações salvas automaticamente</value>
+  </data>
+  <data name="S24C60BD5EAC7FA3D" xml:space="preserve">
+    <value>Mbps download</value>
+  </data>
+  <data name="S256189F0291C96D6" xml:space="preserve">
+    <value>Em uso</value>
+  </data>
+  <data name="S258AACBBBBE55659" xml:space="preserve">
+    <value>Tempo real: atualiza a cada resposta e consulta a conta periodicamente (Codex 1 min, Claude 3 min — o serviço do Claude bloqueia consultas por minuto)</value>
+  </data>
+  <data name="S25C0623B1A614C44" xml:space="preserve">
+    <value>Português (Brasil)</value>
+  </data>
+  <data name="S25C7658BB9289D92" xml:space="preserve">
+    <value>Rede</value>
+  </data>
+  <data name="S25DC62083DE363A8" xml:space="preserve">
+    <value>Executando tarefa</value>
+  </data>
+  <data name="S2647A05F0DD91656" xml:space="preserve">
+    <value>Espaço máximo em disco</value>
+  </data>
+  <data name="S279D195C6E33D10C" xml:space="preserve">
+    <value>Local: {0}</value>
+  </data>
+  <data name="S27A342AC5EB2CD4B" xml:space="preserve">
+    <value>{0} modelo(s) carregado(s) na memória</value>
+  </data>
+  <data name="S27B31926B3EB13F0" xml:space="preserve">
+    <value>Nenhuma tarefa recente</value>
+  </data>
+  <data name="S27EC8C5AB21308F8" xml:space="preserve">
+    <value>Arquivos e pastas</value>
+  </data>
+  <data name="S2801CB53F1FA6F08" xml:space="preserve">
+    <value>Concluído</value>
+  </data>
+  <data name="S2A086B4F697F8FFD" xml:space="preserve">
+    <value>Bandeiras</value>
+  </data>
+  <data name="S2A0AFBEDF0AB8ED1" xml:space="preserve">
+    <value>Detalhes da memória</value>
+  </data>
+  <data name="S2A141529C3961A41" xml:space="preserve">
+    <value>Cache L1</value>
+  </data>
+  <data name="S2A6DEEE7118DCA93" xml:space="preserve">
+    <value>Atividade da GPU</value>
+  </data>
+  <data name="S2B99FF853AC34786" xml:space="preserve">
+    <value>Cabo (Ethernet)</value>
+  </data>
+  <data name="S2D268C8D2BB9825F" xml:space="preserve">
+    <value>Pesquisar no histórico</value>
+  </data>
+  <data name="S2D32F71579E1C8E9" xml:space="preserve">
+    <value>A cada {0} minutos</value>
+  </data>
+  <data name="S2D8480969213050A" xml:space="preserve">
+    <value>  Pipe: {0} · mensagens {1} · último evento {2} · erro {3}</value>
+  </data>
+  <data name="S2DB683EA00DE13C8" xml:space="preserve">
+    <value>
+Contexto da sessão: {0}% (não é cota)</value>
+  </data>
+  <data name="S2E058E3D0F583EB9" xml:space="preserve">
+    <value>Mostrar CPU e GPU</value>
+  </data>
+  <data name="S2E16954654B86E29" xml:space="preserve">
+    <value>Programas e atalhos</value>
+  </data>
+  <data name="S2E1C89473DCF4E97" xml:space="preserve">
+    <value>Ative o Claude para acompanhar as cotas.</value>
+  </data>
+  <data name="S2E5EB6A8FDD01D86" xml:space="preserve">
+    <value>Em todos os monitores</value>
+  </data>
+  <data name="S2E95801388218EF9" xml:space="preserve">
+    <value>Claude 5h</value>
+  </data>
+  <data name="S2EB4BD0962EEE97E" xml:space="preserve">
+    <value>O Windows não concluiu a alteração da autorização. Nenhuma proteção do sistema foi desativada.</value>
+  </data>
+  <data name="S2EBF790AC76EB368" xml:space="preserve">
+    <value>Memória física</value>
+  </data>
+  <data name="S2F26DD16E64AACFE" xml:space="preserve">
+    <value>Memória da GPU</value>
+  </data>
+  <data name="S2F3E8DCC24649850" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="S2F9510A74A15EDED" xml:space="preserve">
+    <value>
+Último dado: {0:dd/MM HH:mm} · {1}</value>
+  </data>
+  <data name="S2FC429DB7583438F" xml:space="preserve">
+    <value>Tipo de conexão</value>
+  </data>
+  <data name="S2FFE866E8D861BB9" xml:space="preserve">
+    <value>A permissão atual vale somente para esta execução. Autorize abaixo para manter o acesso após reiniciar.</value>
+  </data>
+  <data name="S3028B43CBE612EB1" xml:space="preserve">
+    <value>Atualizado. Backup: {0}</value>
+  </data>
+  <data name="S3056DBD2F557443D" xml:space="preserve">
+    <value>ms latência</value>
+  </data>
+  <data name="S3068EBA03D591C16" xml:space="preserve">
+    <value>Recentes</value>
+  </data>
+  <data name="S30A43E015BA9BF79" xml:space="preserve">
+    <value>Aguardando autorização</value>
+  </data>
+  <data name="S30FE96D0F6FA21EF" xml:space="preserve">
+    <value>
+Progresso numérico não informado pelo agente</value>
+  </data>
+  <data name="S31056106CE607411" xml:space="preserve">
+    <value>Resultados</value>
+  </data>
+  <data name="S31F1C7F2C3015097" xml:space="preserve">
+    <value>Pausar captura</value>
+  </data>
+  <data name="S33652F4C241C51B0" xml:space="preserve">
+    <value>Atualização das cotas do Codex</value>
+  </data>
+  <data name="S347038837FD13875" xml:space="preserve">
+    <value>O que mostrar na barra</value>
+  </data>
+  <data name="S34837C50213C81F5" xml:space="preserve">
+    <value>Virtualização</value>
+  </data>
+  <data name="S349A75E7035059B7" xml:space="preserve">
+    <value>Executando comandos…</value>
+  </data>
+  <data name="S34E6784612E5F850" xml:space="preserve">
+    <value>Codex 7d</value>
+  </data>
+  <data name="S352688206E55D25F" xml:space="preserve">
+    <value>Ícone do Shell indisponível ({0}): {1}</value>
+  </data>
+  <data name="S3628FEDBD1578655" xml:space="preserve">
+    <value>Limites indisponíveis</value>
+  </data>
+  <data name="S3692216E63EE535E" xml:space="preserve">
+    <value>O que o percentual representa</value>
+  </data>
+  <data name="S37845BDA5CEA6681" xml:space="preserve">
+    <value>Ative o Codex para acompanhar as cotas.</value>
+  </data>
+  <data name="S37BEDCEC34664796" xml:space="preserve">
+    <value>Limites indisponíveis para esta conta</value>
+  </data>
+  <data name="S3868D2843D5924C1" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="S39CFD753F2AB7074" xml:space="preserve">
+    <value>Data do driver</value>
+  </data>
+  <data name="S39DCF1CBEB5ADBD0" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="S3A05C1C99FFB51C8" xml:space="preserve">
+    <value>Dedicada (dGPU)</value>
+  </data>
+  <data name="S3ACBC2781DD14586" xml:space="preserve">
+    <value>Pele clara</value>
+  </data>
+  <data name="S3AE96FA2972D61A2" xml:space="preserve">
+    <value>CPU: {0}     GPU: {1}</value>
+  </data>
+  <data name="S3BA0A93934EF977E" xml:space="preserve">
+    <value>Automático (idioma do Windows)</value>
+  </data>
+  <data name="S3BDD002FDB9098FA" xml:space="preserve">
+    <value>Atualiza a cada 10 segundos. O nome da fonte aparece ao passar o mouse sobre a temperatura.</value>
+  </data>
+  <data name="S3D2D8AEE63DB78DB" xml:space="preserve">
+    <value>Título e atividade da tarefa</value>
+  </data>
+  <data name="S3D7FAF82C23BB41A" xml:space="preserve">
+    <value>  GPU: {0} · contadores de memória {1}</value>
+  </data>
+  <data name="S3D8EAACDFAA80170" xml:space="preserve">
+    <value>Windows Clipmanager</value>
+  </data>
+  <data name="S3E05A7E51E0A9F37" xml:space="preserve">
+    <value>Tente outra pesquisa ou categoria.</value>
+  </data>
+  <data name="S3E264B5C03C7D178" xml:space="preserve">
+    <value>Forçar</value>
+  </data>
+  <data name="S3E42E385075B9B56" xml:space="preserve">
+    <value>Threads</value>
+  </data>
+  <data name="S3EDAF6921BB5A5D3" xml:space="preserve">
+    <value>{0} não respondeu. Forçar o encerramento?</value>
+  </data>
+  <data name="S3F0BF33BD316D853" xml:space="preserve">
+    <value>O login do Claude Code não está disponível. Entre novamente na sua conta.</value>
+  </data>
+  <data name="S3F10502A8C09EB1A" xml:space="preserve">
+    <value>Configurações do WinStatusBar</value>
+  </data>
+  <data name="S3F16C644774C196C" xml:space="preserve">
+    <value>Excelente</value>
+  </data>
+  <data name="S3FDC9D132976F9AF" xml:space="preserve">
+    <value>Receber</value>
+  </data>
+  <data name="S40743192537B7252" xml:space="preserve">
+    <value>Uso da memória</value>
+  </data>
+  <data name="S40EA77AEC8DC5170" xml:space="preserve">
+    <value>não instalada</value>
+  </data>
+  <data name="S4126DCAFF5FF12B3" xml:space="preserve">
+    <value>Reiniciar integração</value>
+  </data>
+  <data name="S41A486EA67C6F67B" xml:space="preserve">
+    <value>Rede: ↑ {0}  ↓ {1}</value>
+  </data>
+  <data name="S41A9CA7E0CD44764" xml:space="preserve">
+    <value>Painel CPU: </value>
+  </data>
+  <data name="S42E6F406D4FBFB59" xml:space="preserve">
+    <value>Renovar autorização permanente…</value>
+  </data>
+  <data name="S43744405808958ED" xml:space="preserve">
+    <value>Vários arquivos</value>
+  </data>
+  <data name="S438EFFD75C7C3CA4" xml:space="preserve">
+    <value>Processador</value>
+  </data>
+  <data name="S4410F3299961B9B5" xml:space="preserve">
+    <value>Nenhum resultado</value>
+  </data>
+  <data name="S4421602AB713B7BE" xml:space="preserve">
+    <value>Automático prefere a placa dedicada quando ela está disponível.</value>
+  </data>
+  <data name="S4478EF5D29CC452B" xml:space="preserve">
+    <value>Não foi possível consultar as cotas do Claude. Verifique a conexão e o login no Claude Code.</value>
+  </data>
+  <data name="S44F781BD0595E0E1" xml:space="preserve">
+    <value>Sessão escolhida anteriormente (sem atividade recente)</value>
+  </data>
+  <data name="S454E27645EE54B45" xml:space="preserve">
+    <value>Prioriza pedidos de autorização ou resposta, depois tarefas em execução e a atividade mais recente</value>
+  </data>
+  <data name="S4660FB58E9DD4C56" xml:space="preserve">
+    <value>Nenhum emoji encontrado</value>
+  </data>
+  <data name="S46757BAC6D43BF56" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="S468E0857D82499C3" xml:space="preserve">
+    <value>Teste cancelado.</value>
+  </data>
+  <data name="S46C3F20B7E37497B" xml:space="preserve">
+    <value>Quanto ainda posso usar</value>
+  </data>
+  <data name="S471EEC34F8800A82" xml:space="preserve">
+    <value>Ao entrar no Windows</value>
+  </data>
+  <data name="S476D30432637A484" xml:space="preserve">
+    <value>Sessão ({0})</value>
+  </data>
+  <data name="S48753415A79A051A" xml:space="preserve">
+    <value>Fundo da barra</value>
+  </data>
+  <data name="S48AD327F9995D470" xml:space="preserve">
+    <value>Imagem PNG</value>
+  </data>
+  <data name="S4971F41ED83A2E41" xml:space="preserve">
+    <value>Integrada (iGPU)</value>
+  </data>
+  <data name="S49987D943C430C15" xml:space="preserve">
+    <value>Copie algo e ele aparecerá aqui — salvo para sempre.</value>
+  </data>
+  <data name="S4A1DE7B0186AFB33" xml:space="preserve">
+    <value>Adaptativo · cor da janela maximizada</value>
+  </data>
+  <data name="S4AB8F6DC1350E0D5" xml:space="preserve">
+    <value>Botões de atalho</value>
+  </data>
+  <data name="S4AC612F84023C5ED" xml:space="preserve">
+    <value>indisponível</value>
+  </data>
+  <data name="S4AC995E29245723D" xml:space="preserve">
+    <value>Intensidade da cor em porcentagem</value>
+  </data>
+  <data name="S4B4C3E81938B98F4" xml:space="preserve">
+    <value>{0}: indisponível</value>
+  </data>
+  <data name="S4B543732B65404F0" xml:space="preserve">
+    <value>Sessão iniciada</value>
+  </data>
+  <data name="S4BE14A3356E00B63" xml:space="preserve">
+    <value>Linha de 1 pixel, bem sutil, entre a barra e a janela maximizada. Some na área de trabalho e com janelas menores.</value>
+  </data>
+  <data name="S4D6CDBBAB70B2D5E" xml:space="preserve">
+    <value>A área de transferência está desligada.</value>
+  </data>
+  <data name="S4D6D4AFBD2377110" xml:space="preserve">
+    <value> · CPU {0:0.0} núcleos</value>
+  </data>
+  <data name="S4DC25299C9E233F8" xml:space="preserve">
+    <value>Abrir configurações</value>
+  </data>
+  <data name="S4E3ACE3F77BB2E16" xml:space="preserve">
+    <value>{0}: sessão ({1})</value>
+  </data>
+  <data name="S4EDFCA57DD1A4220" xml:space="preserve">
+    <value>Local físico</value>
+  </data>
+  <data name="S4EDFE700C203E7B6" xml:space="preserve">
+    <value>Testar</value>
+  </data>
+  <data name="S4EFD399F24A8C56D" xml:space="preserve">
+    <value>Nenhum aplicativo com janela aberta.</value>
+  </data>
+  <data name="S4F1BEA6FF9EDA643" xml:space="preserve">
+    <value>Detalhes do processador</value>
+  </data>
+  <data name="S4F30B1F869E56FCB" xml:space="preserve">
+    <value>Atalhos</value>
+  </data>
+  <data name="S4F72C04370D0C063" xml:space="preserve">
+    <value>Acompanhar o Windows</value>
+  </data>
+  <data name="S4F7B55007D300962" xml:space="preserve">
+    <value>Desafixar</value>
+  </data>
+  <data name="S4F9CD65647CB5AF0" xml:space="preserve">
+    <value>Claude: </value>
+  </data>
+  <data name="S501640472C976DD6" xml:space="preserve">
+    <value>Executando subagente…</value>
+  </data>
+  <data name="S502783B3A9E965EB" xml:space="preserve">
+    <value>Codex 5h {0} · 7d {1}  |  Claude 5h {2} · 7d {3}</value>
+  </data>
+  <data name="S50569F5C60F3BC54" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="S51562621954BEF2E" xml:space="preserve">
+    <value>Janela de {0} horas</value>
+  </data>
+  <data name="S518E479153A320DF" xml:space="preserve">
+    <value>Pasta</value>
+  </data>
+  <data name="S519014DA95F6C0BE" xml:space="preserve">
+    <value>Guarda uma cópia para você colar mesmo se o original for movido ou apagado.</value>
+  </data>
+  <data name="S523C4C3CE03E1E54" xml:space="preserve">
+    <value>Intensidade da cor</value>
+  </data>
+  <data name="S52CE6B1271875934" xml:space="preserve">
+    <value>CPU Package</value>
+  </data>
+  <data name="S52DA2AE2782DB0F3" xml:space="preserve">
+    <value>Não foi possível salvar a alteração. Tente novamente.</value>
+  </data>
+  <data name="S5363C3E36725F3A2" xml:space="preserve">
+    <value>Aguardando o primeiro dado…</value>
+  </data>
+  <data name="S53A7EEF94981B230" xml:space="preserve">
+    <value>Autorização permanente removida. A tarefa de leitura foi encerrada e excluída.</value>
+  </data>
+  <data name="S53FA28098867857C" xml:space="preserve">
+    <value>Mbps upload</value>
+  </data>
+  <data name="S54249A113C7A3A37" xml:space="preserve">
+    <value>Automático (prioridade e atividade recente)</value>
+  </data>
+  <data name="S54A54A384FFB6CF0" xml:space="preserve">
+    <value>Objetos</value>
+  </data>
+  <data name="S56F092C4382DDF05" xml:space="preserve">
+    <value>Codex app-server</value>
+  </data>
+  <data name="S5715285D473610CC" xml:space="preserve">
+    <value>Pastas</value>
+  </data>
+  <data name="S57256E8650DD2DC0" xml:space="preserve">
+    <value>Até 25 MB</value>
+  </data>
+  <data name="S5781E03828FD0734" xml:space="preserve">
+    <value>Modo de privacidade ativo</value>
+  </data>
+  <data name="S59C86FB6958ADC3F" xml:space="preserve">
+    <value>30 dias</value>
+  </data>
+  <data name="S59D80E659AB95530" xml:space="preserve">
+    <value>Nomes dos processos, separados por vírgula. Nada copiado neles entra no histórico. Conteúdo marcado como sensível pelo próprio app já é ignorado sempre.</value>
+  </data>
+  <data name="S59D98295DDBDA8E5" xml:space="preserve">
+    <value>A cada 60 minutos</value>
+  </data>
+  <data name="S59DC926760D04AEA" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
+  <data name="S5A3084689DA053B0" xml:space="preserve">
+    <value>Pele morena clara</value>
+  </data>
+  <data name="S5B6669F1EA161B84" xml:space="preserve">
+    <value>Comidas e bebidas</value>
+  </data>
+  <data name="S5B69BD741079AAEF" xml:space="preserve">
+    <value>Sem atividade recente</value>
+  </data>
+  <data name="S5BA3CEA99095F674" xml:space="preserve">
+    <value>Outro</value>
+  </data>
+  <data name="S5C8E29278240BD21" xml:space="preserve">
+    <value>O sensor Lenovo já presente neste computador exige permissão de administrador. O botão reinicia somente o WinStatusBar após autorização do Windows; não instala componentes.</value>
+  </data>
+  <data name="S5C8EBFFE08EA984A" xml:space="preserve">
+    <value>Assinatura Claude (Claude Code e app)</value>
+  </data>
+  <data name="S5CD251117748E7B7" xml:space="preserve">
+    <value>Processadores lógicos</value>
+  </data>
+  <data name="S5D20F729CE24B0F6" xml:space="preserve">
+    <value>Uso extra: {0} de {1} créditos no mês</value>
+  </data>
+  <data name="S5D951376C42F3CF3" xml:space="preserve">
+    <value>Mais opções</value>
+  </data>
+  <data name="S5DC8861A9CC4BFDF" xml:space="preserve">
+    <value>Frequência das leituras</value>
+  </data>
+  <data name="S5DE2B94EE1412240" xml:space="preserve">
+    <value>Durante jogos e vídeos em tela cheia</value>
+  </data>
+  <data name="S5E32F16B80A3F697" xml:space="preserve">
+    <value>Linha de separação no fundo adaptativo</value>
+  </data>
+  <data name="S5EC4404B4CCEC469" xml:space="preserve">
+    <value>Preferências salvas, mas não foi possível atualizar a inicialização do Windows.</value>
+  </data>
+  <data name="S5ECB9EA10E804083" xml:space="preserve">
+    <value>Hardware e rede</value>
+  </data>
+  <data name="S5F0DAC1B6959A60D" xml:space="preserve">
+    <value>Entre na sua conta pelo Claude Code para consultar as cotas.</value>
+  </data>
+  <data name="S5F47089326B5C220" xml:space="preserve">
+    <value>Codex não encontrado</value>
+  </data>
+  <data name="S5FB048C560CAE9E9" xml:space="preserve">
+    <value>Pasta de sensores inválida.</value>
+  </data>
+  <data name="S5FC7E20F01A4A3ED" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="S5FD28910EDE78C6E" xml:space="preserve">
+    <value>válido até {0:dd/MM/yyyy}</value>
+  </data>
+  <data name="S601BDB0F7B23D034" xml:space="preserve">
+    <value>Executando</value>
+  </data>
+  <data name="S60302D612641A31E" xml:space="preserve">
+    <value>Fixar</value>
+  </data>
+  <data name="S606782BF6DF26D2D" xml:space="preserve">
+    <value>Telas e tela cheia</value>
+  </data>
+  <data name="S6078558A4CF8C95D" xml:space="preserve">
+    <value>Configurações do Windows</value>
+  </data>
+  <data name="S608114E2C5732A6B" xml:space="preserve">
+    <value>Detecta atividade de Ollama, LM Studio e outros servidores no computador.</value>
+  </data>
+  <data name="S60CF6B61C55F4A3F" xml:space="preserve">
+    <value>Indisponível</value>
+  </data>
+  <data name="S611F7245797C44DD" xml:space="preserve">
+    <value>Usa os servidores públicos de teste da Cloudflare (speed.cloudflare.com). Só dados de teste são trafegados; o teste consome alguns MB.</value>
+  </data>
+  <data name="S616EFBE96852D8C9" xml:space="preserve">
+    <value>Codex</value>
+  </data>
+  <data name="S61AD8976E650E153" xml:space="preserve">
+    <value>Emoji</value>
+  </data>
+  <data name="S62401FC974EB294D" xml:space="preserve">
+    <value>Resets disponíveis</value>
+  </data>
+  <data name="S62A7BD8BC9B555E4" xml:space="preserve">
+    <value>Memória compartilhada</value>
+  </data>
+  <data name="S62AD1EA504118A51" xml:space="preserve">
+    <value>A cada 2 minutos</value>
+  </data>
+  <data name="S63A43AA647FBBAAA" xml:space="preserve">
+    <value>Execução interrompida</value>
+  </data>
+  <data name="S63AD3CC0EB8B6C18" xml:space="preserve">
+    <value>O que guardar</value>
+  </data>
+  <data name="S63E13B76023AE3AD" xml:space="preserve">
+    <value>Consultar agora (não é necessário)</value>
+  </data>
+  <data name="S64834C177BFEAA39" xml:space="preserve">
+    <value>Cola direto no aplicativo que estava em uso. Desligado, o item só vai para a área de transferência (cole com Ctrl+V).</value>
+  </data>
+  <data name="S6498BA25FF3AD842" xml:space="preserve">
+    <value>Não informado pela conta nesta consulta.</value>
+  </data>
+  <data name="S649C8630E72E06B3" xml:space="preserve">
+    <value>Escolha entre um fundo discreto, translúcido ou de cor uniforme.</value>
+  </data>
+  <data name="S65474B884E1263F2" xml:space="preserve">
+    <value>Codex 5h</value>
+  </data>
+  <data name="S65796B4B9AC0EFE8" xml:space="preserve">
+    <value>Cache L3</value>
+  </data>
+  <data name="S67355B55239AAA77" xml:space="preserve">
+    <value>Permitir finalizar tarefas</value>
+  </data>
+  <data name="S67CC08845057C06C" xml:space="preserve">
+    <value>Sensor Lenovo (autorização persistente)</value>
+  </data>
+  <data name="S67E494D69C2D20D0" xml:space="preserve">
+    <value>Número</value>
+  </data>
+  <data name="S67EC08990407495A" xml:space="preserve">
+    <value>  Prioritária: {0} {1}</value>
+  </data>
+  <data name="S683F39333BC34EA6" xml:space="preserve">
+    <value>Usados recentemente</value>
+  </data>
+  <data name="S684CE22675578329" xml:space="preserve">
+    <value>  CPU: {0} · {1} · {2} · fonte {3}</value>
+  </data>
+  <data name="S685EE23CC2C10F0B" xml:space="preserve">
+    <value>renovação desconhecida</value>
+  </data>
+  <data name="S69499985D6D0E540" xml:space="preserve">
+    <value>Alternar para</value>
+  </data>
+  <data name="S69DEE306C89663FC" xml:space="preserve">
+    <value>Abre o histórico logo abaixo do botão. Win+V continua funcionando mesmo sem o botão.</value>
+  </data>
+  <data name="S69E2E79248768FEC" xml:space="preserve">
+    <value>Arquivos não encontrados</value>
+  </data>
+  <data name="S6A0FAB89D138547B" xml:space="preserve">
+    <value>Automático (preferir GPU dedicada)</value>
+  </data>
+  <data name="S6A4DB8388099E610" xml:space="preserve">
+    <value>Abrir automaticamente</value>
+  </data>
+  <data name="S6A6281E42FE71BC2" xml:space="preserve">
+    <value>Onde mostrar a barra</value>
+  </data>
+  <data name="S6C2729A2D1C69CE1" xml:space="preserve">
+    <value>Executável: {0}</value>
+  </data>
+  <data name="S6C2CAF71233C7685" xml:space="preserve">
+    <value>indisponível (contadores ausentes)</value>
+  </data>
+  <data name="S6CA3765D136B2086" xml:space="preserve">
+    <value>Aviso de boas-vindas</value>
+  </data>
+  <data name="S6DBA8EC2689FBC05" xml:space="preserve">
+    <value>Erro</value>
+  </data>
+  <data name="S6DF3D6661C095CE7" xml:space="preserve">
+    <value>Texto</value>
+  </data>
+  <data name="S6E3A7123B1149629" xml:space="preserve">
+    <value>Boa</value>
+  </data>
+  <data name="S6EC69F9E27E0F462" xml:space="preserve">
+    <value>Memória de vídeo ocupada</value>
+  </data>
+  <data name="S6F1E1E8AAC3ABBA9" xml:space="preserve">
+    <value>Compartilhada</value>
+  </data>
+  <data name="S6F60EAE1B81502F5" xml:space="preserve">
+    <value>  GPU monitorada: {0} ({1}) · dedicada {2} GB · compartilhada {3} GB · uso {4}%</value>
+  </data>
+  <data name="S6F7783091BAAD40F" xml:space="preserve">
+    <value>Desabilitado</value>
+  </data>
+  <data name="S6F7B99E45F63C351" xml:space="preserve">
+    <value>Ilimitada</value>
+  </data>
+  <data name="S6F9C1834E6C80BA5" xml:space="preserve">
+    <value>Botão no painel de rede. Só roda quando você clica em Testar e usa os servidores públicos de teste da Cloudflare (alguns MB por teste).</value>
+  </data>
+  <data name="S700AE1103D30E677" xml:space="preserve">
+    <value>Continuar visível</value>
+  </data>
+  <data name="S7024FFD2111D50D7" xml:space="preserve">
+    <value>Cotas do Claude</value>
+  </data>
+  <data name="S705B2500B12045C8" xml:space="preserve">
+    <value>Alterações salvas · {0:HH:mm}</value>
+  </data>
+  <data name="S7073C5309724ECCA" xml:space="preserve">
+    <value>Testar novamente</value>
+  </data>
+  <data name="S708E53DC0033BBFC" xml:space="preserve">
+    <value>Codex e Claude Code ociosos</value>
+  </data>
+  <data name="S710BB383BBA5B65D" xml:space="preserve">
+    <value>Confirmado</value>
+  </data>
+  <data name="S71422F329B934195" xml:space="preserve">
+    <value>Cor </value>
+  </data>
+  <data name="S717A312F2E19932D" xml:space="preserve">
+    <value>Geração concluída</value>
+  </data>
+  <data name="S72764A79AB6E90CC" xml:space="preserve">
+    <value>Tarefa em destaque</value>
+  </data>
+  <data name="S736762BB66B7F36B" xml:space="preserve">
+    <value>Nova tarefa: {0}</value>
+  </data>
+  <data name="S7367AAEDC814B62B" xml:space="preserve">
+    <value>Prompt de Comando</value>
+  </data>
+  <data name="S736AF1383A829F0D" xml:space="preserve">
+    <value>Automático · conexões ativas</value>
+  </data>
+  <data name="S76B0FB6AD18939AC" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="S76C1375B1FDBFEE9" xml:space="preserve">
+    <value>Informações e ordem na barra</value>
+  </data>
+  <data name="S7780D60CA0343DCF" xml:space="preserve">
+    <value>Velocidade</value>
+  </data>
+  <data name="S78352DF6F5383262" xml:space="preserve">
+    <value>Acrescenta o uso gráfico aos detalhes. Essa coleta também é necessária para detectar IA local e mostrar a atividade da GPU.</value>
+  </data>
+  <data name="S78A8D37B301C4AB0" xml:space="preserve">
+    <value>Conta Claude</value>
+  </data>
+  <data name="S7930B0CCA22C3A8A" xml:space="preserve">
+    <value>Paginável</value>
+  </data>
+  <data name="S79651E7E684870D0" xml:space="preserve">
+    <value>disponível</value>
+  </data>
+  <data name="S798769AD63A3141E" xml:space="preserve">
+    <value>Não foi possível iniciar o Codex</value>
+  </data>
+  <data name="S7A469B9D57FA5081" xml:space="preserve">
+    <value>Em todas as telas, as barras mostram as mesmas informações.</value>
+  </data>
+  <data name="S7AD8E9C5A7183FF9" xml:space="preserve">
+    <value>Acompanha tarefas, sessões e cotas disponíveis na sua conta.</value>
+  </data>
+  <data name="S7AED18E1387213D6" xml:space="preserve">
+    <value>: sensor Lenovo requer executar como administrador; nenhum driver é instalado</value>
+  </data>
+  <data name="S7B5BEB6250646564" xml:space="preserve">
+    <value>Conexão acompanhada</value>
+  </data>
+  <data name="S7BC176DB56AA7064" xml:space="preserve">
+    <value>Os arquivos deste item não existem mais e não há cópia salva.</value>
+  </data>
+  <data name="S7BD5F07354F27017" xml:space="preserve">
+    <value>Uso desta semana por produto</value>
+  </data>
+  <data name="S7BFF6181ADD2231B" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="S7CABBA6634A192E3" xml:space="preserve">
+    <value>  RAM: {0} · instalada {1} GB · carga {2}%</value>
+  </data>
+  <data name="S7D2434081BA52265" xml:space="preserve">
+    <value>Apagar</value>
+  </data>
+  <data name="S7EA50660B422D05C" xml:space="preserve">
+    <value>Emojis  (Win+.)</value>
+  </data>
+  <data name="S7EEC233FCACE4C67" xml:space="preserve">
+    <value>Emojis: </value>
+  </data>
+  <data name="S7FAE184552EE9205" xml:space="preserve">
+    <value>A cada 10 minutos</value>
+  </data>
+  <data name="S8042A7342136A68E" xml:space="preserve">
+    <value>Itens copiados no Explorador de Arquivos (o histórico guarda o caminho).</value>
+  </data>
+  <data name="S80A5037A33B80200" xml:space="preserve">
+    <value>Finalizar</value>
+  </data>
+  <data name="S81411148DC9CB207" xml:space="preserve">
+    <value>Livre</value>
+  </data>
+  <data name="S815441916F7AC894" xml:space="preserve">
+    <value>Coleta de dados</value>
+  </data>
+  <data name="S817D1527DAD8A625" xml:space="preserve">
+    <value>Símbolos</value>
+  </data>
+  <data name="S818B52AC10A8254F" xml:space="preserve">
+    <value>Limpar histórico…</value>
+  </data>
+  <data name="S821FC1E116215146" xml:space="preserve">
+    <value>Ocioso</value>
+  </data>
+  <data name="S825A9EA8EB0124CE" xml:space="preserve">
+    <value>Abrir painel ao clicar</value>
+  </data>
+  <data name="S82690B8DE2920B8D" xml:space="preserve">
+    <value>Aplicativos ignorados</value>
+  </data>
+  <data name="S82A25364A404584A" xml:space="preserve">
+    <value>Créditos ilimitados</value>
+  </data>
+  <data name="S8309E06D2083383F" xml:space="preserve">
+    <value>  Tipo de instalação: {0} · coletor: {1}</value>
+  </data>
+  <data name="S830A732B5DC067D0" xml:space="preserve">
+    <value>Imagem ignorada: {0:0.0} MB (limite {1} MB)</value>
+  </data>
+  <data name="S83229F4FB36B8A55" xml:space="preserve">
+    <value>Colar</value>
+  </data>
+  <data name="S832AB1872CDF0D3E" xml:space="preserve">
+    <value>Quantidade máxima de itens</value>
+  </data>
+  <data name="S832AC7D6CC0A09D5" xml:space="preserve">
+    <value>Processo: CPU total {0:0.0}s · memória privada {1:0} MB · working set {2:0} MB · custo do ciclo {3:0.0} ms</value>
+  </data>
+  <data name="S8367891F8602C2FA" xml:space="preserve">
+    <value>Criado.</value>
+  </data>
+  <data name="S83E7C12B4AC286DC" xml:space="preserve">
+    <value>Conta a partir da última vez que o item foi copiado ou colado.</value>
+  </data>
+  <data name="S84AAC487F6E34D42" xml:space="preserve">
+    <value>Modificada</value>
+  </data>
+  <data name="S84F071DFCA624F3E" xml:space="preserve">
+    <value>Automático soma Ethernet e Wi-Fi ativos. A lista mostra apenas conexões físicas; filtros internos do Windows ficam ocultos.</value>
+  </data>
+  <data name="S8552F69B6F700D69" xml:space="preserve">
+    <value>Detalhes da CPU</value>
+  </data>
+  <data name="S8584DD5D084A188D" xml:space="preserve">
+    <value>Executando: {0}</value>
+  </data>
+  <data name="S85E2ADEF7EDEE9E0" xml:space="preserve">
+    <value>Alto</value>
+  </data>
+  <data name="S865E89DE78D94C74" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="S867E409C845BCB71" xml:space="preserve">
+    <value>Padrão do Windows</value>
+  </data>
+  <data name="S877F66CDF9EAE56C" xml:space="preserve">
+    <value>Tempo esgotado ao consultar o Codex</value>
+  </data>
+  <data name="S881F0F155DD5E5C6" xml:space="preserve">
+    <value>Tarefa exibida na barra</value>
+  </data>
+  <data name="S8826F8E4F6F72B2F" xml:space="preserve">
+    <value>IA local</value>
+  </data>
+  <data name="S88D664A596058B74" xml:space="preserve">
+    <value>WinStatusBar
+{0}: {1}
+Codex 5h {2} · 7d {3}
+Claude 5h {4} · 7d {5}</value>
+  </data>
+  <data name="S8917E6893EF5CC05" xml:space="preserve">
+    <value>{0} {1} — use pelo app Codex quando precisar</value>
+  </data>
+  <data name="S896995F4D4FBD40D" xml:space="preserve">
+    <value>Painel GPU: </value>
+  </data>
+  <data name="S89C56289878FDA05" xml:space="preserve">
+    <value>Gerenciador de Tarefas</value>
+  </data>
+  <data name="S89F6B54B3A862646" xml:space="preserve">
+    <value>Área de transferência · WinStatusBar</value>
+  </data>
+  <data name="S8A5D4CFC84929991" xml:space="preserve">
+    <value>Não foi possível alterar a autorização: </value>
+  </data>
+  <data name="S8B0305438A6C6AF2" xml:space="preserve">
+    <value>Uso da CPU</value>
+  </data>
+  <data name="S8B19518FF49B2E29" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="S8BC0ED4190BE13AD" xml:space="preserve">
+    <value>{0}
+Memória dedicada: {1} / {2} GB</value>
+  </data>
+  <data name="S8D54560E5DA9968C" xml:space="preserve">
+    <value>Tarefa concluída: {0}</value>
+  </data>
+  <data name="S8D6FB4D322D98FF0" xml:space="preserve">
+    <value>
+Atualização pendente: {0}</value>
+  </data>
+  <data name="S8DFF46D09C275669" xml:space="preserve">
+    <value>Slots usados</value>
+  </data>
+  <data name="S8E5E596D60B057EE" xml:space="preserve">
+    <value>
+{0} sessões conhecidas — clique para ver</value>
+  </data>
+  <data name="S8F02EC4DB9251C88" xml:space="preserve">
+    <value>Nenhuma GPU detectada</value>
+  </data>
+  <data name="S8F4A644644FBDE7F" xml:space="preserve">
+    <value>Em uso {0}  ·  Modificada {1:0} MB  ·  Em espera {2}  ·  Livre {3}</value>
+  </data>
+  <data name="S8FC6B8B69804D942" xml:space="preserve">
+    <value>Imagem</value>
+  </data>
+  <data name="S9024C197D84940E4" xml:space="preserve">
+    <value>Links</value>
+  </data>
+  <data name="S907DFF60BC6133CD" xml:space="preserve">
+    <value>Mostra o nome da conversa e uma descrição curta do trabalho atual.</value>
+  </data>
+  <data name="S915CEE9AA485C630" xml:space="preserve">
+    <value>Tempo de atividade</value>
+  </data>
+  <data name="S91633E3828ABDF42" xml:space="preserve">
+    <value>1 segundo é o padrão. Um intervalo maior reduz a frequência das leituras.</value>
+  </data>
+  <data name="S91A9D376E70072E2" xml:space="preserve">
+    <value>Enquanto pausado, nada do que você copiar entra no histórico.</value>
+  </data>
+  <data name="S91D952156C03A885" xml:space="preserve">
+    <value>WinStatusBar · Configurações</value>
+  </data>
+  <data name="S922CD519C8D1AF8D" xml:space="preserve">
+    <value>A consulta ao Claude demorou demais. O app tentará novamente automaticamente.</value>
+  </data>
+  <data name="S92FE536D478C84EF" xml:space="preserve">
+    <value>Agentes de IA ociosos</value>
+  </data>
+  <data name="S9315DD27FAA01A14" xml:space="preserve">
+    <value>A conta não retornou os limites de uso. Nenhum percentual foi estimado.</value>
+  </data>
+  <data name="S931F5F3CB856BC55" xml:space="preserve">
+    <value>Autorização cancelada. As permissões existentes foram mantidas.</value>
+  </data>
+  <data name="S9345E29E21456AFF" xml:space="preserve">
+    <value>Taxa do link</value>
+  </data>
+  <data name="S93CA977C1332D68A" xml:space="preserve">
+    <value>Pausar captura da área de transferência</value>
+  </data>
+  <data name="S945054FC98B2CB54" xml:space="preserve">
+    <value>  Carga do servidor: GPU {0} · CPU {1} núcleos · últimos clientes: {2}</value>
+  </data>
+  <data name="S947BC6A58DB49CD2" xml:space="preserve">
+    <value>Relatório de diagnóstico</value>
+  </data>
+  <data name="S94E0E55484A5CE17" xml:space="preserve">
+    <value>Foundry Local</value>
+  </data>
+  <data name="S95D59946C6827EB4" xml:space="preserve">
+    <value>Cor sólida</value>
+  </data>
+  <data name="S95D6A3C589F45EC1" xml:space="preserve">
+    <value>Soquetes</value>
+  </data>
+  <data name="S9713861871A98346" xml:space="preserve">
+    <value>Sensor indisponível</value>
+  </data>
+  <data name="S9723B69B589A367B" xml:space="preserve">
+    <value>indisponíveis</value>
+  </data>
+  <data name="S9724D6322A1219EE" xml:space="preserve">
+    <value>Escolha se a barra deve continuar à frente do aplicativo.</value>
+  </data>
+  <data name="S97743129B69783FF" xml:space="preserve">
+    <value>há {0} h</value>
+  </data>
+  <data name="S97CA009CD160FE19" xml:space="preserve">
+    <value>Processando a solicitação…</value>
+  </data>
+  <data name="S981831911E96FB2D" xml:space="preserve">
+    <value>O Claude não aceitou o login atual. Abra o Claude Code e entre novamente.</value>
+  </data>
+  <data name="S982642D49543ED2E" xml:space="preserve">
+    <value>Oculta títulos, descrições e nomes de projetos na barra e na lista de sessões.</value>
+  </data>
+  <data name="S9860D91181CD91FE" xml:space="preserve">
+    <value>Desligado, nada é capturado e Win+V / Win+. voltam a abrir os painéis do Windows. O histórico salvo é mantido.</value>
+  </data>
+  <data name="S98E1C9C8FEC7C0A2" xml:space="preserve">
+    <value>Desligada</value>
+  </data>
+  <data name="S98EB235E54DE653C" xml:space="preserve">
+    <value>Animais e natureza</value>
+  </data>
+  <data name="S99102904D49308DA" xml:space="preserve">
+    <value>O período renovou depois do último dado; aguardando nova leitura.</value>
+  </data>
+  <data name="S99F38259233883A9" xml:space="preserve">
+    <value>Apagar itens sem uso há mais de</value>
+  </data>
+  <data name="S9B99805FAF33CDC0" xml:space="preserve">
+    <value>Disponível</value>
+  </data>
+  <data name="S9BB126076DF88E9D" xml:space="preserve">
+    <value>Copiar relatório</value>
+  </data>
+  <data name="S9C56C656375490C5" xml:space="preserve">
+    <value>Gerando resposta</value>
+  </data>
+  <data name="S9C8ED004FFA945C9" xml:space="preserve">
+    <value>Geração concluída ({0})</value>
+  </data>
+  <data name="S9D4208F7C38A6561" xml:space="preserve">
+    <value>Tamanho dos elementos</value>
+  </data>
+  <data name="S9DC4B82BD994EA50" xml:space="preserve">
+    <value>A cada 30 minutos</value>
+  </data>
+  <data name="S9E304A9FA8277635" xml:space="preserve">
+    <value>Percentual das cotas</value>
+  </data>
+  <data name="S9EB78BF334693200" xml:space="preserve">
+    <value>Atividade das sessões: integração configurada. Isso não confirma o recebimento das cotas; veja a consulta da conta acima.</value>
+  </data>
+  <data name="S9F7845D1E197E009" xml:space="preserve">
+    <value>Quando falta espaço na tela, a barra recolhe os itens de menor prioridade para o menu ⋯.</value>
+  </data>
+  <data name="S9FB857CC198B3034" xml:space="preserve">
+    <value>Escolha como ler os limites de uso informados pelas IAs.</value>
+  </data>
+  <data name="SA01A5FCE396EDB61" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="SA1035AC6556CEA01" xml:space="preserve">
+    <value>Nenhuma sessão ativa — clique para escolher o agente exibido</value>
+  </data>
+  <data name="SA1CAEF02EECD599D" xml:space="preserve">
+    <value>Sessão encerrada</value>
+  </data>
+  <data name="SA28627A66A3B7E92" xml:space="preserve">
+    <value> · GPU {0}%</value>
+  </data>
+  <data name="SA2972DB8097F77F1" xml:space="preserve">
+    <value>Endereço IPv4</value>
+  </data>
+  <data name="SA2C612C6F255E92A" xml:space="preserve">
+    <value>Última tentativa: </value>
+  </data>
+  <data name="SA2DBA0A5F650A47F" xml:space="preserve">
+    <value>O login do Claude Code expirou. Abra o Claude Code para renovar a sessão.</value>
+  </data>
+  <data name="SA35D0B595C285E54" xml:space="preserve">
+    <value>Codex: cotas indisponíveis</value>
+  </data>
+  <data name="SA4F6F3A9854A7E59" xml:space="preserve">
+    <value>Servidor local ativo, sem modelo carregado</value>
+  </data>
+  <data name="SA632C3EAEB8A251C" xml:space="preserve">
+    <value>Versão do DirectX</value>
+  </data>
+  <data name="SA6A32DBC5618EA39" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="SA7248EEB45EB1CE2" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="SA7413C47C1754323" xml:space="preserve">
+    <value>Exceção não tratada: </value>
+  </data>
+  <data name="SA75D067FA44BCA81" xml:space="preserve">
+    <value>IA</value>
+  </data>
+  <data name="SA7F224E9723E7EC5" xml:space="preserve">
+    <value>  IAs: Codex {0} · Claude Code {1} · IA local {2}</value>
+  </data>
+  <data name="SA8C0BA4DB0AD28C0" xml:space="preserve">
+    <value>Integração automática do Claude: </value>
+  </data>
+  <data name="SA8D34AE8A9736EAA" xml:space="preserve">
+    <value>Placa acompanhada na barra</value>
+  </data>
+  <data name="SA8FA4D829F0F56B2" xml:space="preserve">
+    <value>O app recebe o pedido de fechar, como no botão X.</value>
+  </data>
+  <data name="SA929D4F0A71677E9" xml:space="preserve">
+    <value>Tudo</value>
+  </data>
+  <data name="SA92C1E5C5B8FFA43" xml:space="preserve">
+    <value>Uso extra: desativado</value>
+  </data>
+  <data name="SA966CA510B325F43" xml:space="preserve">
+    <value>A cada 1 minuto</value>
+  </data>
+  <data name="SA99B680FE3A1B791" xml:space="preserve">
+    <value>Memória de vídeo mede a ocupação da VRAM. Atividade mede o trabalho do processador gráfico.</value>
+  </data>
+  <data name="SA9F4CB2F6C476CE7" xml:space="preserve">
+    <value>Sem alterações necessárias.</value>
+  </data>
+  <data name="SAB6B731A81CB8A8B" xml:space="preserve">
+    <value>Nome DNS</value>
+  </data>
+  <data name="SAD05C22E29D46828" xml:space="preserve">
+    <value>Janela de {0} dias</value>
+  </data>
+  <data name="SADBEBDFF4533BC6E" xml:space="preserve">
+    <value>Aplicando alteração…</value>
+  </data>
+  <data name="SADE79F535B689ABB" xml:space="preserve">
+    <value>Até 100 MB</value>
+  </data>
+  <data name="SAE0E467FE92D1D46" xml:space="preserve">
+    <value>Paleta {0}: texto {1}, secundário {2}</value>
+  </data>
+  <data name="SAF20211C7E9AB457" xml:space="preserve">
+    <value>Mostra o botão "Finalizar tarefa". O app recebe primeiro o pedido de fechar; o encerramento forçado só é oferecido se ele não responder.</value>
+  </data>
+  <data name="SAF9DD7AE41B33700" xml:space="preserve">
+    <value>Cache L2</value>
+  </data>
+  <data name="SAFCC0E0CB46E4E1B" xml:space="preserve">
+    <value>Consulta automaticamente as cotas da conta. A integração abaixo acrescenta a atividade das sessões.</value>
+  </data>
+  <data name="SB00E26417D6227E9" xml:space="preserve">
+    <value>Plano não informado</value>
+  </data>
+  <data name="SB0DB4030668167A2" xml:space="preserve">
+    <value>Clique para escolher o agente exibido</value>
+  </data>
+  <data name="SB1398A16A9C29CAE" xml:space="preserve">
+    <value>  {0}: registrada={1} rect={2} dpi={3} reinícios do Explorer={4} erro={5}</value>
+  </data>
+  <data name="SB13C69621E917F59" xml:space="preserve">
+    <value>Sem conexão</value>
+  </data>
+  <data name="SB1410F82664B8E39" xml:space="preserve">
+    <value>Consulta da conta Claude</value>
+  </data>
+  <data name="SB2368B622C0D2DF3" xml:space="preserve">
+    <value>Tamanho máximo de uma imagem</value>
+  </data>
+  <data name="SB289061F2E4C2656" xml:space="preserve">
+    <value>Fechar WinStatusBar</value>
+  </data>
+  <data name="SB4C9448D0CCA1A4C" xml:space="preserve">
+    <value>Consulta de cotas indisponível (HTTP {0}). Nova tentativa automática em 5 minutos.</value>
+  </data>
+  <data name="SB51F5A79E9B39E91" xml:space="preserve">
+    <value>Placa de vídeo (GPU)</value>
+  </data>
+  <data name="SB5A1961EDC76BB54" xml:space="preserve">
+    <value>Temperaturas ocultas</value>
+  </data>
+  <data name="SB5BDA3FA39CBF7AA" xml:space="preserve">
+    <value>No lugar do histórico nativo do Windows. O painel abre junto ao cursor de texto ou ao mouse.</value>
+  </data>
+  <data name="SB5FF5CE47E2487F2" xml:space="preserve">
+    <value>— Claude Code</value>
+  </data>
+  <data name="SB669BA5781E9ABF9" xml:space="preserve">
+    <value>Sem limite</value>
+  </data>
+  <data name="SB681455D19621519" xml:space="preserve">
+    <value>Sessão </value>
+  </data>
+  <data name="SB6918C1EC6461B7E" xml:space="preserve">
+    <value>Memória dedicada</value>
+  </data>
+  <data name="SB708BEC400AB2EA9" xml:space="preserve">
+    <value>Razoável</value>
+  </data>
+  <data name="SB72ADF8F9246F5DC" xml:space="preserve">
+    <value>Captura: </value>
+  </data>
+  <data name="SB77BCDAC75382B25" xml:space="preserve">
+    <value>Aplicativos</value>
+  </data>
+  <data name="SB7C50341B6782808" xml:space="preserve">
+    <value>  Última consulta oficial: {0} · erro: {1}</value>
+  </data>
+  <data name="SB803F24D52EDD7BC" xml:space="preserve">
+    <value>Automático</value>
+  </data>
+  <data name="SB848035D355CD807" xml:space="preserve">
+    <value>GPU integrada</value>
+  </data>
+  <data name="SB862E71F1EF8C11A" xml:space="preserve">
+    <value>Marque o que deseja ver. Segure a alça ≡ à esquerda e arraste o item até a posição desejada.</value>
+  </data>
+  <data name="SB893109D2A2C4D16" xml:space="preserve">
+    <value>Pesquisar</value>
+  </data>
+  <data name="SB90108DC9322DCA3" xml:space="preserve">
+    <value>Não foi possível concluir o teste.</value>
+  </data>
+  <data name="SB957CF8E6FD0D1B6" xml:space="preserve">
+    <value>Texto formatado</value>
+  </data>
+  <data name="SB9CBEAF427468283" xml:space="preserve">
+    <value>Alterações não salvas serão perdidas.</value>
+  </data>
+  <data name="SBA5F3324EC361D56" xml:space="preserve">
+    <value>Habilitado</value>
+  </data>
+  <data name="SBA8A452F2F839371" xml:space="preserve">
+    <value>Arquivo</value>
+  </data>
+  <data name="SBAFF8E093C52B37B" xml:space="preserve">
+    <value>Teste de velocidade</value>
+  </data>
+  <data name="SBB1DCBB24F2C1E91" xml:space="preserve">
+    <value>Ilimitado</value>
+  </data>
+  <data name="SBB9DBB406DCBD524" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="SBC054E43AFCB3231" xml:space="preserve">
+    <value>Colar: </value>
+  </data>
+  <data name="SBC105D5F8D4F4BC2" xml:space="preserve">
+    <value>Atividade das sessões: integração não configurada. As cotas da conta podem funcionar independentemente desta opção.</value>
+  </data>
+  <data name="SBC1A4D8CBCB3340A" xml:space="preserve">
+    <value>Remover integração do WinStatusBar</value>
+  </data>
+  <data name="SBDDEE593B4BF69D7" xml:space="preserve">
+    <value>Ficar atrás do aplicativo</value>
+  </data>
+  <data name="SBE1F8F281D28DEE4" xml:space="preserve">
+    <value>ex.: meu-servidor, vllm</value>
+  </data>
+  <data name="SBE3AC73AE53379A5" xml:space="preserve">
+    <value>Claude 7d</value>
+  </data>
+  <data name="SBF4B0C03C646ADD9" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="SBFD66CCA14FE8202" xml:space="preserve">
+    <value>Ao passar do limite, sai o item usado há mais tempo.</value>
+  </data>
+  <data name="SC010DA1A76454E15" xml:space="preserve">
+    <value>Mostrar memória compartilhada</value>
+  </data>
+  <data name="SC0334B52F72D4B35" xml:space="preserve">
+    <value>Área de transferência  (Win+V)</value>
+  </data>
+  <data name="SC0431CF961C92C8C" xml:space="preserve">
+    <value>Configurações (extras): </value>
+  </data>
+  <data name="SC0DD01056D37D8F5" xml:space="preserve">
+    <value>Nenhum adaptador DXGI encontrado</value>
+  </data>
+  <data name="SC104F8B8F86254FA" xml:space="preserve">
+    <value>Acrescenta a RAM do computador que a GPU usa, separada da memória dedicada.</value>
+  </data>
+  <data name="SC10597F2231290DC" xml:space="preserve">
+    <value>Processos</value>
+  </data>
+  <data name="SC11445CB4FE129BF" xml:space="preserve">
+    <value>Arquivos</value>
+  </data>
+  <data name="SC13486BFD732DDFD" xml:space="preserve">
+    <value>Não foi possível salvar ou aplicar a alteração. Tente novamente.</value>
+  </data>
+  <data name="SC269A94CE018BC7A" xml:space="preserve">
+    <value>Em cache</value>
+  </data>
+  <data name="SC2C6FADB6684AC19" xml:space="preserve">
+    <value>
+Memória compartilhada: {0} / {1} GB</value>
+  </data>
+  <data name="SC33907F4D87C8D61" xml:space="preserve">
+    <value>não encontrada</value>
+  </data>
+  <data name="SC344B0245C794383" xml:space="preserve">
+    <value>Intensidade do sinal</value>
+  </data>
+  <data name="SC44276CFAE5D01FC" xml:space="preserve">
+    <value>Emojis carregados: {0} (fonte ate a versao {1})</value>
+  </data>
+  <data name="SC50BFE51757C9632" xml:space="preserve">
+    <value>não encontrado</value>
+  </data>
+  <data name="SC50D10A055517817" xml:space="preserve">
+    <value>Excluir {0:N0} itens? Os itens fixados serão mantidos.</value>
+  </data>
+  <data name="SC59E3F1F99E58F07" xml:space="preserve">
+    <value>Bandeja: não foi possível carregar o ícone </value>
+  </data>
+  <data name="SC6D999C77B3CE834" xml:space="preserve">
+    <value>Painel memória: </value>
+  </data>
+  <data name="SC7DCB5AD92A10781" xml:space="preserve">
+    <value>Dedicada</value>
+  </data>
+  <data name="SC85AE866DDF10A3C" xml:space="preserve">
+    <value>Agente de IA</value>
+  </data>
+  <data name="SC87CF0A53A4F99B3" xml:space="preserve">
+    <value>— Detecção deste PC</value>
+  </data>
+  <data name="SC8862FA7D7139FE6" xml:space="preserve">
+    <value>CPU Proximity</value>
+  </data>
+  <data name="SC8E3214BC0F85B03" xml:space="preserve">
+    <value>Falha na execução</value>
+  </data>
+  <data name="SC9173314CF568CED" xml:space="preserve">
+    <value>Nenhum servidor de IA local em execução</value>
+  </data>
+  <data name="SC9C4BAF759F82FE9" xml:space="preserve">
+    <value>Ative a opção acima para acompanhar as leituras disponíveis.</value>
+  </data>
+  <data name="SC9C81A7A339FD9DF" xml:space="preserve">
+    <value>O relatório pode conter nomes de projetos e caminhos locais. Revise antes de compartilhar.</value>
+  </data>
+  <data name="SCA2C8633877B535B" xml:space="preserve">
+    <value>Inicia a barra ao entrar na sua conta, com as permissões normais do Windows.</value>
+  </data>
+  <data name="SCA3607A31839C9D8" xml:space="preserve">
+    <value>Nenhum reset avulso disponível.</value>
+  </data>
+  <data name="SCA547DEC479B6186" xml:space="preserve">
+    <value>Ícone do Claude indisponível: {0}</value>
+  </data>
+  <data name="SCAE27BC02D3413A1" xml:space="preserve">
+    <value>{0}% disponível</value>
+  </data>
+  <data name="SCB734BD0340E9022" xml:space="preserve">
+    <value>Emoji (Win+.)</value>
+  </data>
+  <data name="SCBC2A19823D397D9" xml:space="preserve">
+    <value>settings.json do Claude não é um objeto JSON.</value>
+  </data>
+  <data name="SCC5EB4D7DD2D1E2E" xml:space="preserve">
+    <value>Idioma do aplicativo</value>
+  </data>
+  <data name="SCCF440F2A56DA80D" xml:space="preserve">
+    <value>Cópia de segurança dos arquivos</value>
+  </data>
+  <data name="SCD0FFB64F82F9DE2" xml:space="preserve">
+    <value>Segure e arraste para reorganizar</value>
+  </data>
+  <data name="SCD4A71CC48B940D5" xml:space="preserve">
+    <value>Fonte da CPU: {0}. Atualização a cada 10 segundos.</value>
+  </data>
+  <data name="SCE3C913A01E9A9F9" xml:space="preserve">
+    <value>Histórico ilimitado e persistente, emojis e atalhos do Windows, integrados à barra. Itens fixados nunca são apagados pelos limites.</value>
+  </data>
+  <data name="SCED2B615370531A9" xml:space="preserve">
+    <value>As cotas se atualizam sozinhas. Em tempo real, cada resposta do Codex ou do Claude atualiza os percentuais na hora e as contas são consultadas a cada minuto (respeitando os limites dos serviços). Clique nas cotas da barra para ver os detalhes de cada período.</value>
+  </data>
+  <data name="SCF91768061D69FE4" xml:space="preserve">
+    <value>É necessária autorização de administrador.</value>
+  </data>
+  <data name="SD16B7D21FD9CCF2D" xml:space="preserve">
+    <value>Colar ao escolher um item</value>
+  </data>
+  <data name="SD313D31B54DC78B8" xml:space="preserve">
+    <value>Linha contínua: recebimento · tracejada: envio · últimos 60 segundos</value>
+  </data>
+  <data name="SD33DF3B7E6A15B91" xml:space="preserve">
+    <value>Histórico e emojis</value>
+  </data>
+  <data name="SD375A880A5E7B968" xml:space="preserve">
+    <value>Abrir imagem</value>
+  </data>
+  <data name="SD3CE2F7C6CEBCB3D" xml:space="preserve">
+    <value>  Integração (hooks + statusLine):{0} · {1}</value>
+  </data>
+  <data name="SD43DCD206252F639" xml:space="preserve">
+    <value>Remover autorização permanente…</value>
+  </data>
+  <data name="SD444817E0B2B92A9" xml:space="preserve">
+    <value>Permite o aviso da primeira abertura. Não gera alertas de temperatura ou de cotas.</value>
+  </data>
+  <data name="SD52040E4B2B3CC10" xml:space="preserve">
+    <value>Os itens fixados serão mantidos. Esta ação não pode ser desfeita.</value>
+  </data>
+  <data name="SD5245D0C6F9808AE" xml:space="preserve">
+    <value>Velocidade do link</value>
+  </data>
+  <data name="SD52FADFF71C425DD" xml:space="preserve">
+    <value>Claude Code detectado: </value>
+  </data>
+  <data name="SD5DF3708BC688543" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="SD5F65A147D54A5A6" xml:space="preserve">
+    <value>Temperaturas desativadas</value>
+  </data>
+  <data name="SD66FABD8796D57EC" xml:space="preserve">
+    <value>Consulte as fontes e o estado atual das leituras para investigar um problema.</value>
+  </data>
+  <data name="SD6EAFE8235910042" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="SD7A0670BDD30A2D9" xml:space="preserve">
+    <value>Nome do adaptador</value>
+  </data>
+  <data name="SD800015DA033A9EF" xml:space="preserve">
+    <value>Aplicativos no painel da CPU</value>
+  </data>
+  <data name="SD83F1F3CE0F56513" xml:space="preserve">
+    <value>reset disponível</value>
+  </data>
+  <data name="SD8696C6B878B1D58" xml:space="preserve">
+    <value>Pele morena</value>
+  </data>
+  <data name="SD8867C64C1F60483" xml:space="preserve">
+    <value>RAM: {0}</value>
+  </data>
+  <data name="SD8AC5E4EFA1A3BCF" xml:space="preserve">
+    <value>Salvar imagem como...</value>
+  </data>
+  <data name="SD8F07B8A1C1DD329" xml:space="preserve">
+    <value>Autorização permanente ativa. A leitura continua após reiniciar o app ou o Windows, sem elevar a barra inteira.</value>
+  </data>
+  <data name="SD929E03E7A7CBEDC" xml:space="preserve">
+    <value>Medindo latência…</value>
+  </data>
+  <data name="SD9376349010B018B" xml:space="preserve">
+    <value>Utilizável pelo sistema: {0} GB</value>
+  </data>
+  <data name="SD965EE3871C737F9" xml:space="preserve">
+    <value>Win+V abre este histórico</value>
+  </data>
+  <data name="SD97083EA4807CF6F" xml:space="preserve">
+    <value>Automática prioriza pedidos de atenção e tarefas em execução. Você também pode escolher clicando na barra.</value>
+  </data>
+  <data name="SD99E8D2A63A3EDBC" xml:space="preserve">
+    <value>cópia salva</value>
+  </data>
+  <data name="SDA640C60B3A59BF8" xml:space="preserve">
+    <value>  Consulta da conta: {0} · próxima {1:HH:mm:ss} · erro {2}</value>
+  </data>
+  <data name="SDA9B080EB96F90E8" xml:space="preserve">
+    <value>Clique em CPU, RAM, GPU ou rede para ver gráficos e detalhes. Desligado, a barra mostra só a dica ao passar o mouse.</value>
+  </data>
+  <data name="SDA9B5419FA5D4844" xml:space="preserve">
+    <value>  CPU: {0} · frequência atual {1}</value>
+  </data>
+  <data name="SDAAB7484D8E5A620" xml:space="preserve">
+    <value>Janela de 5 horas</value>
+  </data>
+  <data name="SDB7ECCF330B72214" xml:space="preserve">
+    <value>  Temperaturas: CPU {0} °C · fonte {1} · GPU {2} °C</value>
+  </data>
+  <data name="SDB967C8FC7EB4133" xml:space="preserve">
+    <value>Painéis de detalhes</value>
+  </data>
+  <data name="SDB9A4C7D4C195EBF" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="SDC06EDAD0B9452DE" xml:space="preserve">
+    <value>Nenhuma tarefa em andamento</value>
+  </data>
+  <data name="SDCA64C25A9D377C3" xml:space="preserve">
+    <value>Tom de pele</value>
+  </data>
+  <data name="SDCF7D8C2BF85A17E" xml:space="preserve">
+    <value>  Executável: {0} · CODEX_HOME: {1}</value>
+  </data>
+  <data name="SDD685A31498C12C0" xml:space="preserve">
+    <value>Pesquisar emojis</value>
+  </data>
+  <data name="SDDE575C52E765A37" xml:space="preserve">
+    <value>IA e tarefas</value>
+  </data>
+  <data name="SDF2C137CFEE52D77" xml:space="preserve">
+    <value>Até 10 MB</value>
+  </data>
+  <data name="SDFC52B2C1D1BE5A4" xml:space="preserve">
+    <value>Tempo real</value>
+  </data>
+  <data name="SDFCA0B150C8D9FAC" xml:space="preserve">
+    <value>Imagens</value>
+  </data>
+  <data name="SDFF6624256BA2A95" xml:space="preserve">
+    <value>Atividades</value>
+  </data>
+  <data name="SE04C133900C6AC29" xml:space="preserve">
+    <value>Pele morena escura</value>
+  </data>
+  <data name="SE1D12D1A29A77B00" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+  <data name="SE27D72810C3F449F" xml:space="preserve">
+    <value>A opção automática acompanha as cores do Windows.</value>
+  </data>
+  <data name="SE2BA566987DE7FAA" xml:space="preserve">
+    <value>Ocultar informações pessoais</value>
+  </data>
+  <data name="SE3DB9926B2603EBD" xml:space="preserve">
+    <value>Detalhes da rede</value>
+  </data>
+  <data name="SE441A71BEC726F02" xml:space="preserve">
+    <value>Área de transferência (Win+V)</value>
+  </data>
+  <data name="SE44E180FC5579B26" xml:space="preserve">
+    <value>Colar como texto sem formatação</value>
+  </data>
+  <data name="SE485F29B76F8072D" xml:space="preserve">
+    <value>Ajustes avançados de IA</value>
+  </data>
+  <data name="SE495D53B967A7B04" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="SE4D7E324FF0E4F85" xml:space="preserve">
+    <value>Mica · discreto</value>
+  </data>
+  <data name="SE611857FA46934C9" xml:space="preserve">
+    <value>IAs acompanhadas</value>
+  </data>
+  <data name="SE661BD49434BFF8F" xml:space="preserve">
+    <value>Saldo de créditos: {0}</value>
+  </data>
+  <data name="SE67F758BFC8AE95D" xml:space="preserve">
+    <value>Versão do driver</value>
+  </data>
+  <data name="SE695EB16E81F3704" xml:space="preserve">
+    <value>Diagnóstico</value>
+  </data>
+  <data name="SE8BBB433A11F6D54" xml:space="preserve">
+    <value>CPU: {0}</value>
+  </data>
+  <data name="SE8FB73A87FAF5641" xml:space="preserve">
+    <value>O Claude limitou as consultas. A próxima tentativa será automática.</value>
+  </data>
+  <data name="SE9194C53C32319CA" xml:space="preserve">
+    <value>100% é o tamanho original. Aumentar também aumenta a altura da barra.</value>
+  </data>
+  <data name="SE926F23CBCAD6585" xml:space="preserve">
+    <value>Cotas das IAs</value>
+  </data>
+  <data name="SE95168D3C25A1388" xml:space="preserve">
+    <value>Limpar tudo</value>
+  </data>
+  <data name="SE9779B7E1F06109D" xml:space="preserve">
+    <value>Placa de vídeo (segundos)</value>
+  </data>
+  <data name="SE9A2FF6D8650E9A8" xml:space="preserve">
+    <value>Pasta de dados</value>
+  </data>
+  <data name="SEA49523D744C40BC" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="SEA7187D0ADC44EC8" xml:space="preserve">
+    <value>Não há itens não fixados para apagar.</value>
+  </data>
+  <data name="SEAC833E6CE529425" xml:space="preserve">
+    <value>Aguardando</value>
+  </data>
+  <data name="SEC20D5DE7B1910CB" xml:space="preserve">
+    <value>Componente de sensores ausente no pacote do WinStatusBar.</value>
+  </data>
+  <data name="SECD1F24BFD6E3FFE" xml:space="preserve">
+    <value>Acrílico · translúcido</value>
+  </data>
+  <data name="SED406E8E919A8439" xml:space="preserve">
+    <value>há {0} min</value>
+  </data>
+  <data name="SEDD3CC664D14BADC" xml:space="preserve">
+    <value>Aguardando sua autorização</value>
+  </data>
+  <data name="SEDD6DD450D3492B5" xml:space="preserve">
+    <value>Fixados</value>
+  </data>
+  <data name="SEE70C15A5277BF6F" xml:space="preserve">
+    <value>Finalizar tarefa</value>
+  </data>
+  <data name="SEEF834AFA7F6EA2B" xml:space="preserve">
+    <value>Aguardando a primeira leitura…</value>
+  </data>
+  <data name="SEF59FCEC0FA28B51" xml:space="preserve">
+    <value>Viagens e lugares</value>
+  </data>
+  <data name="SEFBF4354798BA48C" xml:space="preserve">
+    <value>O login atual não permite consultar as cotas. Entre pelo Claude Code com sua conta de assinatura.</value>
+  </data>
+  <data name="SEFFBE5E6D9FB2071" xml:space="preserve">
+    <value>Mostrar na pasta</value>
+  </data>
+  <data name="SF007F0230A0CAF5B" xml:space="preserve">
+    <value>Tarefa concluída</value>
+  </data>
+  <data name="SF06797AB2BE663D8" xml:space="preserve">
+    <value>Sem créditos extras</value>
+  </data>
+  <data name="SF11CE8A32E0F37C5" xml:space="preserve">
+    <value>Atividade das sessões (opcional)</value>
+  </data>
+  <data name="SF168CCC814C48C70" xml:space="preserve">
+    <value>90 dias</value>
+  </data>
+  <data name="SF1AA6582DEC67FBC" xml:space="preserve">
+    <value>A barra está ativa. Clique com o botão direito no ícone da bandeja para opções.</value>
+  </data>
+  <data name="SF1DE5782F4AF2BF7" xml:space="preserve">
+    <value>A conta Claude não informa resets avulsos; cada período renova sozinho no horário indicado.</value>
+  </data>
+  <data name="SF1ED735F0889EDE5" xml:space="preserve">
+    <value>No lugar do painel de emojis do Windows, com nomes em português e tons de pele.</value>
+  </data>
+  <data name="SF2437D0F98C4C39F" xml:space="preserve">
+    <value>Falha na verificação do leitor.</value>
+  </data>
+  <data name="SF289AC48D636AFD5" xml:space="preserve">
+    <value>Atualizar dados</value>
+  </data>
+  <data name="SF2BEFFDD5114716B" xml:space="preserve">
+    <value>1 dia</value>
+  </data>
+  <data name="SF2D6EF1287BF3518" xml:space="preserve">
+    <value>Limites do histórico</value>
+  </data>
+  <data name="SF2DFD0561089B8BB" xml:space="preserve">
+    <value>Sem atividade nas últimas horas</value>
+  </data>
+  <data name="SF2E52402328ED3E4" xml:space="preserve">
+    <value>Na versão da Microsoft Store, sensores que exigem permissão de administrador (como o da Lenovo) não são usados. As demais leituras continuam disponíveis.</value>
+  </data>
+  <data name="SF3D3EEADAFE042AD" xml:space="preserve">
+    <value>Cores e tamanho</value>
+  </data>
+  <data name="SF45DCD14675AEEDA" xml:space="preserve">
+    <value>Área de transferência</value>
+  </data>
+  <data name="SF47DFDE9CB6FD44E" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="SF47F12D06CC801DD" xml:space="preserve">
+    <value>Defina onde a barra aparece e como ela se comporta no dia a dia.</value>
+  </data>
+  <data name="SF517CD02964DF712" xml:space="preserve">
+    <value>Ajuste a leitura, as cores e as informações que ficam à vista.</value>
+  </data>
+  <data name="SF564F28905CF103E" xml:space="preserve">
+    <value>Aguardando a consulta automática da conta.</value>
+  </data>
+  <data name="SF58B85570398C0CC" xml:space="preserve">
+    <value>Código</value>
+  </data>
+  <data name="SF5B12066E6DD472F" xml:space="preserve">
+    <value>Mover para esta posição</value>
+  </data>
+  <data name="SF7070D57BBE5496E" xml:space="preserve">
+    <value>agora</value>
+  </data>
+  <data name="SF7498EC4118F9171" xml:space="preserve">
+    <value>
+Última atividade: {0}</value>
+  </data>
+  <data name="SF81931B6328FF87C" xml:space="preserve">
+    <value>Opcional. Nomes dos processos, separados por vírgula, somente se não forem detectados automaticamente.</value>
+  </data>
+  <data name="SF8287D1DEE2E1F83" xml:space="preserve">
+    <value>Até 500 MB</value>
+  </data>
+  <data name="SF83BFC261A8593C4" xml:space="preserve">
+    <value>Autorizar leitura permanentemente…</value>
+  </data>
+  <data name="SF86CD4EC918E1736" xml:space="preserve">
+    <value>Fonte: {0} · último dado às {1} · atualização automática: {2}</value>
+  </data>
+  <data name="SF8D3EC6F02A6EE7D" xml:space="preserve">
+    <value>A cada 5 minutos</value>
+  </data>
+  <data name="SF98E3AD9DBD6FDBF" xml:space="preserve">
+    <value>Nenhuma tarefa em execução</value>
+  </data>
+  <data name="SFA06BD4ECA248BDB" xml:space="preserve">
+    <value>A cada 15 minutos</value>
+  </data>
+  <data name="SFA098E49A9216FFB" xml:space="preserve">
+    <value>Área de transferência: </value>
+  </data>
+  <data name="SFA31C20537492EFB" xml:space="preserve">
+    <value>Salvar imagem: </value>
+  </data>
+  <data name="SFA44A348329783BC" xml:space="preserve">
+    <value>Não paginável</value>
+  </data>
+  <data name="SFA731DECF8C08E29" xml:space="preserve">
+    <value>— Sessões</value>
+  </data>
+  <data name="SFB8BA3871520E160" xml:space="preserve">
+    <value>Preencha os intervalos com um número válido para salvar.</value>
+  </data>
+  <data name="SFC893421F713A56C" xml:space="preserve">
+    <value>Reservada para hardware</value>
+  </data>
+  <data name="SFCB614D9DD1E8EF6" xml:space="preserve">
+    <value>Cotas de IA</value>
+  </data>
+  <data name="SFCD95B14BEDAADE7" xml:space="preserve">
+    <value>Memória</value>
+  </data>
+  <data name="SFD0877C83312E0B5" xml:space="preserve">
+    <value>Outros servidores locais</value>
+  </data>
+  <data name="SFDE5E0840B967BB1" xml:space="preserve">
+    <value>Tamanho dos elementos em porcentagem</value>
+  </data>
+  <data name="SFDE8BB83362A212B" xml:space="preserve">
+    <value>Escuro</value>
+  </data>
+  <data name="SFDE8EB0B615B684E" xml:space="preserve">
+    <value>Aguardando o primeiro dado da conta…</value>
+  </data>
+  <data name="SFDEA72C3543CB5C6" xml:space="preserve">
+    <value>
+Fonte: {0} · {1:HH:mm}</value>
+  </data>
+  <data name="SFEAF171E4236F8D7" xml:space="preserve">
+    <value>Pasta inválida.</value>
+  </data>
+  <data name="Save.Content" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Save.Text" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Save_Label" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Settings.Content" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Settings.Text" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="SettingsWindow.Title" xml:space="preserve">
+    <value>Configurações do WinStatusBar</value>
+  </data>
+  <data name="Settings_Label" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="U0465b7cdf10bb4.Content" xml:space="preserve">
+    <value>Quanto ainda posso usar</value>
+  </data>
+  <data name="U068cdb01bcdd5f.Text" xml:space="preserve">
+    <value>Abrir automaticamente</value>
+  </data>
+  <data name="U08e6a3c623a0c0.Text" xml:space="preserve">
+    <value>O que mostrar na barra</value>
+  </data>
+  <data name="U09172986791745.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Detalhes da memória</value>
+  </data>
+  <data name="U0a4689f0eb2c57.Content" xml:space="preserve">
+    <value>Atualizar relatório</value>
+  </data>
+  <data name="U0b9867c62bb9eb.Title" xml:space="preserve">
+    <value>Configurações do WinStatusBar</value>
+  </data>
+  <data name="U0ba8fdd1f00f35.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U0ba8fdd1f00f35.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U0bb1bce8141530.Text" xml:space="preserve">
+    <value>Ocultar informações pessoais</value>
+  </data>
+  <data name="U0dbf2f1afcf406.Content" xml:space="preserve">
+    <value>Consultar agora (não é necessário)</value>
+  </data>
+  <data name="U107100b612903a.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U107100b612903a.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U11f3562cf1923a.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tamanho dos elementos em porcentagem</value>
+  </data>
+  <data name="U136520dea263d3.Text" xml:space="preserve">
+    <value>Zero usa o padrão do Windows. Esta opção não se aplica ao fundo sólido.</value>
+  </data>
+  <data name="U137d7f2ebcd7f2.Text" xml:space="preserve">
+    <value>Escolha entre um fundo discreto, translúcido ou de cor uniforme.</value>
+  </data>
+  <data name="U146a343d81ea82.Content" xml:space="preserve">
+    <value>Pasta de dados</value>
+  </data>
+  <data name="U15af553444061c.Content" xml:space="preserve">
+    <value>Tempo real</value>
+  </data>
+  <data name="U160346bf705923.Text" xml:space="preserve">
+    <value>Tamanho dos elementos</value>
+  </data>
+  <data name="U173d217e37c6de.Content" xml:space="preserve">
+    <value>Memória de vídeo ocupada</value>
+  </data>
+  <data name="U1a0958a7a7d536.Content" xml:space="preserve">
+    <value>A cada 2 minutos</value>
+  </data>
+  <data name="U1ae461203985fb.Content" xml:space="preserve">
+    <value>A cada 1 minuto</value>
+  </data>
+  <data name="U1befac938abea8.Text" xml:space="preserve">
+    <value>Mostrar CPU e GPU</value>
+  </data>
+  <data name="U21c55b93f553e6.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cotas do Claude</value>
+  </data>
+  <data name="U2406a0cecf20ba.Content" xml:space="preserve">
+    <value>A cada 15 minutos</value>
+  </data>
+  <data name="U2446bff8632a28.Text" xml:space="preserve">
+    <value>Atualiza a cada 10 segundos. O nome da fonte aparece ao passar o mouse sobre a temperatura.</value>
+  </data>
+  <data name="U24ffaad224b550.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Agente de IA</value>
+  </data>
+  <data name="U25c9f5eeecd632.Text" xml:space="preserve">
+    <value>Intensidade da cor</value>
+  </data>
+  <data name="U25d02bd3a8821f.Text" xml:space="preserve">
+    <value>Aviso de boas-vindas</value>
+  </data>
+  <data name="U25f00d44876c14.Content" xml:space="preserve">
+    <value>Ficar atrás do aplicativo</value>
+  </data>
+  <data name="U2654450edff26e.Content" xml:space="preserve">
+    <value>A cada 30 minutos</value>
+  </data>
+  <data name="U2856a2a1bd1079.Text" xml:space="preserve">
+    <value>Telas e tela cheia</value>
+  </data>
+  <data name="U28cf0e50194b46.Text" xml:space="preserve">
+    <value>Escolha se a barra deve continuar à frente do aplicativo.</value>
+  </data>
+  <data name="U2a3ba2b6764264.Text" xml:space="preserve">
+    <value>Quando falta espaço na tela, a barra recolhe os itens de menor prioridade para o menu ⋯.</value>
+  </data>
+  <data name="U2bd166d234b52c.Text" xml:space="preserve">
+    <value>Acompanha tarefas, sessões e cotas disponíveis na sua conta.</value>
+  </data>
+  <data name="U3896a524b250de.Content" xml:space="preserve">
+    <value>A cada 60 minutos</value>
+  </data>
+  <data name="U39922d407443e9.Text" xml:space="preserve">
+    <value>Detecta atividade de Ollama, LM Studio e outros servidores no computador.</value>
+  </data>
+  <data name="U3f6b7493d5314a.Title" xml:space="preserve">
+    <value>Windows Clipmanager</value>
+  </data>
+  <data name="U432a0c75730acf.Text" xml:space="preserve">
+    <value>100% é o tamanho original. Aumentar também aumenta a altura da barra.</value>
+  </data>
+  <data name="U43b6498e7ff8cf.Text" xml:space="preserve">
+    <value>Atualização das cotas de todas as IAs</value>
+  </data>
+  <data name="U449ca61e6be36b.Text" xml:space="preserve">
+    <value>Placa de vídeo (GPU)</value>
+  </data>
+  <data name="U45f1188156d484.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U45f1188156d484.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U46e1e473b91d07.Text" xml:space="preserve">
+    <value>Emoji</value>
+  </data>
+  <data name="U46e1e473b91d07.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Emoji (Win+.)</value>
+  </data>
+  <data name="U474338187ccf87.Text" xml:space="preserve">
+    <value>Mostrar memória compartilhada</value>
+  </data>
+  <data name="U47d7fdbbbade3e.Text" xml:space="preserve">
+    <value>Em todas as telas, as barras mostram as mesmas informações.</value>
+  </data>
+  <data name="U4d03491311f356.Text" xml:space="preserve">
+    <value>2 segundos é o padrão. A coleta acontece junto dos ciclos de CPU, memória e rede.</value>
+  </data>
+  <data name="U4d0e3153054dff.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U4d0e3153054dff.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U4e60419281e6b6.Text" xml:space="preserve">
+    <value>Título e atividade da tarefa</value>
+  </data>
+  <data name="U4ed7cffcb4e851.Header" xml:space="preserve">
+    <value>Atualização e coleta avançada</value>
+  </data>
+  <data name="U525e279837de6b.Text" xml:space="preserve">
+    <value>Codex</value>
+  </data>
+  <data name="U54acf7e2a8fe3a.Header" xml:space="preserve">
+    <value>Ajustes avançados de IA</value>
+  </data>
+  <data name="U5570183e13afe3.Content" xml:space="preserve">
+    <value>A cada 5 minutos</value>
+  </data>
+  <data name="U56b0d03966fdbf.Content" xml:space="preserve">
+    <value>A cada 30 minutos</value>
+  </data>
+  <data name="U5910deb9c1b42d.Content" xml:space="preserve">
+    <value>Em todos os monitores</value>
+  </data>
+  <data name="U5a061749b1e643.Content" xml:space="preserve">
+    <value>Acrílico · translúcido</value>
+  </data>
+  <data name="U5b9e35b8d1e164.Content" xml:space="preserve">
+    <value>Mica · discreto</value>
+  </data>
+  <data name="U5e5811e7831f5e.Text" xml:space="preserve">
+    <value>Placa acompanhada</value>
+  </data>
+  <data name="U5ea15a39fe3e67.Content" xml:space="preserve">
+    <value>Copiar relatório</value>
+  </data>
+  <data name="U5ead3ca99a5c30.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tarefa atual</value>
+  </data>
+  <data name="U607df6c8b0c086.Text" xml:space="preserve">
+    <value>Permite o aviso da primeira abertura. Não gera alertas de temperatura ou de cotas.</value>
+  </data>
+  <data name="U63a58a1d072bc9.Text" xml:space="preserve">
+    <value>IA e tarefas</value>
+  </data>
+  <data name="U63c819177ce186.Text" xml:space="preserve">
+    <value>Alterações salvas automaticamente</value>
+  </data>
+  <data name="U642d898f3c049b.Content" xml:space="preserve">
+    <value>A cada 60 minutos</value>
+  </data>
+  <data name="U64c7d928a63c22.Text" xml:space="preserve">
+    <value>Automático prefere a placa dedicada quando ela está disponível.</value>
+  </data>
+  <data name="U6615e5f2fbe3ec.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tom de pele</value>
+  </data>
+  <data name="U6615e5f2fbe3ec.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Tom de pele</value>
+  </data>
+  <data name="U66c20a1ea16546.Text" xml:space="preserve">
+    <value>Claude 7d</value>
+  </data>
+  <data name="U674f6ef825f052.Text" xml:space="preserve">
+    <value>Durante jogos e vídeos em tela cheia</value>
+  </data>
+  <data name="U67774a617568c7.Text" xml:space="preserve">
+    <value>Marque o que deseja ver. Segure a alça ≡ à esquerda e arraste o item até a posição desejada.</value>
+  </data>
+  <data name="U67d0c4ac20636f.Text" xml:space="preserve">
+    <value>IA local</value>
+  </data>
+  <data name="U69e97d0b23a253.Text" xml:space="preserve">
+    <value>Acrescenta o uso gráfico aos detalhes. Essa coleta também é necessária para detectar IA local e mostrar a atividade da GPU.</value>
+  </data>
+  <data name="U6b7f03d281681f.Text" xml:space="preserve">
+    <value>Placa de vídeo (segundos)</value>
+  </data>
+  <data name="U6bc257076878c4.Content" xml:space="preserve">
+    <value>Limpar tudo</value>
+  </data>
+  <data name="U6bc257076878c4.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Excluir os itens não fixados</value>
+  </data>
+  <data name="U6bda6c2911b50a.Content" xml:space="preserve">
+    <value>Escuro</value>
+  </data>
+  <data name="U6e5f862f58368f.Text" xml:space="preserve">
+    <value>Acrescenta a RAM do computador que a GPU usa, separada da memória dedicada.</value>
+  </data>
+  <data name="U6f5ce7bbab5d04.Content" xml:space="preserve">
+    <value>A cada 5 minutos</value>
+  </data>
+  <data name="U6fc4e68b0f8b14.Text" xml:space="preserve">
+    <value>Memória de vídeo mede a ocupação da VRAM. Atividade mede o trabalho do processador gráfico.</value>
+  </data>
+  <data name="U7310eb3d7e67ee.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Detalhes da CPU</value>
+  </data>
+  <data name="U73b61824dd6e28.Text" xml:space="preserve">
+    <value>Outros servidores locais</value>
+  </data>
+  <data name="U7584ac0ba1ad38.Text" xml:space="preserve">
+    <value>Tarefa exibida na barra</value>
+  </data>
+  <data name="U7601af73ee20e8.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mais opções</value>
+  </data>
+  <data name="U7601af73ee20e8.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mais opções</value>
+  </data>
+  <data name="U769e6415e0da92.Text" xml:space="preserve">
+    <value>Codex 7d</value>
+  </data>
+  <data name="U76f0ed10a1059e.Content" xml:space="preserve">
+    <value>Atividade da GPU</value>
+  </data>
+  <data name="U76f39d84b309b2.Content" xml:space="preserve">
+    <value>A cada 1 minuto</value>
+  </data>
+  <data name="U76fd156cc6f782.Text" xml:space="preserve">
+    <value>1 segundo é o padrão. Um intervalo maior reduz a frequência das leituras.</value>
+  </data>
+  <data name="U79ee298ab82e95.Content" xml:space="preserve">
+    <value>A cada 2 minutos</value>
+  </data>
+  <data name="U7e6e82cff0c2f7.Text" xml:space="preserve">
+    <value>Consulta automaticamente as cotas da conta. A integração abaixo acrescenta a atividade das sessões.</value>
+  </data>
+  <data name="U7ec6662b3e53fd.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="U7ec6662b3e53fd.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="U80329ba59580d4.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U80329ba59580d4.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U83c964fd8684f4.Text" xml:space="preserve">
+    <value>Inicia a barra ao entrar na sua conta, com as permissões normais do Windows.</value>
+  </data>
+  <data name="U84d1fc135ae1e1.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U84d1fc135ae1e1.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U8507e75db2bc1f.Text" xml:space="preserve">
+    <value>Escolha as leituras exibidas. Valores indisponíveis aparecem como um traço.</value>
+  </data>
+  <data name="U88247c7b086b16.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="U88247c7b086b16.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="U8865b1e4e358f1.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Relatório de diagnóstico</value>
+  </data>
+  <data name="U8a3f4abf1c3263.Text" xml:space="preserve">
+    <value>Geral</value>
+  </data>
+  <data name="U9214c78c1796c7.Text" xml:space="preserve">
+    <value>Codex 5h</value>
+  </data>
+  <data name="U925e339da38d10.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mais opções</value>
+  </data>
+  <data name="U925e339da38d10.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mais opções</value>
+  </data>
+  <data name="U92e979470d9e79.Text" xml:space="preserve">
+    <value>O relatório pode conter nomes de projetos e caminhos locais. Revise antes de compartilhar.</value>
+  </data>
+  <data name="U938d980fc52404.Text" xml:space="preserve">
+    <value>Diagnóstico</value>
+  </data>
+  <data name="U945ef6200e518b.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Detalhes da GPU</value>
+  </data>
+  <data name="U94a606517530b5.Text" xml:space="preserve">
+    <value>WinStatusBar · Configurações</value>
+  </data>
+  <data name="U9b9cea2573312c.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="U9b9cea2573312c.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Microsoft Store</value>
+  </data>
+  <data name="U9d5322f78c8dbf.Text" xml:space="preserve">
+    <value>Escolha o que acompanhar e o que pode aparecer na sua tela.</value>
+  </data>
+  <data name="U9e75bccf2e37b8.Text" xml:space="preserve">
+    <value>Percentual das cotas</value>
+  </data>
+  <data name="U9ec3e25e442733.PlaceholderText" xml:space="preserve">
+    <value>Pesquisar</value>
+  </data>
+  <data name="U9ec3e25e442733.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pesquisar no histórico</value>
+  </data>
+  <data name="Ua008e75408f5cb.Header" xml:space="preserve">
+    <value>Ajuste fino do fundo</value>
+  </data>
+  <data name="Ua05c22f2f42892.Text" xml:space="preserve">
+    <value>Defina onde a barra aparece e como ela se comporta no dia a dia.</value>
+  </data>
+  <data name="Ua35c6f956935ea.Text" xml:space="preserve">
+    <value>Rede</value>
+  </data>
+  <data name="Ua37e81bcd9498c.Text" xml:space="preserve">
+    <value>Claude 5h</value>
+  </data>
+  <data name="Ua3b5bea684fef0.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Área de transferência</value>
+  </data>
+  <data name="Ua3b5bea684fef0.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Área de transferência (Win+V)</value>
+  </data>
+  <data name="Ua48ca52c191ba8.Text" xml:space="preserve">
+    <value>Temperaturas</value>
+  </data>
+  <data name="Ua543c3b292c8b1.Content" xml:space="preserve">
+    <value>Configurar atividade das sessões</value>
+  </data>
+  <data name="Ua9f86281525d7f.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Detalhes da rede</value>
+  </data>
+  <data name="Uaaaf788d137e9b.Content" xml:space="preserve">
+    <value>A cada 15 minutos</value>
+  </data>
+  <data name="Uacafb033d2b3d8.Text" xml:space="preserve">
+    <value>Informações e ordem na barra</value>
+  </data>
+  <data name="Uad393c371cdc79.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Uad393c371cdc79.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Configurações</value>
+  </data>
+  <data name="Uae8f59bdc59135.Text" xml:space="preserve">
+    <value>Escolha como ler os limites de uso informados pelas IAs.</value>
+  </data>
+  <data name="Uaf82abceda8874.Text" xml:space="preserve">
+    <value>Uma escolha para todas as IAs. Em tempo real, cada resposta do Codex ou do Claude atualiza os percentuais na hora; Gemini, Copilot e Qira são lidos nas páginas das próprias contas, no mínimo a cada 5 minutos. Clique nas cotas da barra para ver os detalhes de cada período.</value>
+  </data>
+  <data name="Ub042851963ec95.Text" xml:space="preserve">
+    <value>Hardware e rede</value>
+  </data>
+  <data name="Ub07a6cab8519b0.PlaceholderText" xml:space="preserve">
+    <value>ex.: meu-servidor, vllm</value>
+  </data>
+  <data name="Ub0babeeeaa798e.Content" xml:space="preserve">
+    <value>Continuar visível</value>
+  </data>
+  <data name="Ub2b47aa68b7e4b.Content" xml:space="preserve">
+    <value>Autorizar leitura permanentemente…</value>
+  </data>
+  <data name="Ub3cdf450fa3528.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gerenciador de Tarefas</value>
+  </data>
+  <data name="Ub3cdf450fa3528.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gerenciador de Tarefas</value>
+  </data>
+  <data name="Ub5cc4902e75ab1.Text" xml:space="preserve">
+    <value>Opcional. Nomes dos processos, separados por vírgula, somente se não forem detectados automaticamente.</value>
+  </data>
+  <data name="Ub6090a0eee9a33.Content" xml:space="preserve">
+    <value>A cada 10 minutos</value>
+  </data>
+  <data name="Ub6b0fb44acef13.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Ub6b0fb44acef13.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Ub7dea799b91023.Text" xml:space="preserve">
+    <value>Consulte as fontes e o estado atual das leituras para investigar um problema.</value>
+  </data>
+  <data name="Ub7edbcb99db572.Text" xml:space="preserve">
+    <value>Atualização das cotas do Claude</value>
+  </data>
+  <data name="Ubbcbfc0fc7587c.Text" xml:space="preserve">
+    <value>Onde mostrar a barra</value>
+  </data>
+  <data name="Ubc630ba8027695.Text" xml:space="preserve">
+    <value>Tarefa em destaque</value>
+  </data>
+  <data name="Ubca8db15bf668c.Text" xml:space="preserve">
+    <value>Mostra o nome da conversa e uma descrição curta do trabalho atual.</value>
+  </data>
+  <data name="Ubd13205549bd99.Text" xml:space="preserve">
+    <value>Coleta de dados</value>
+  </data>
+  <data name="Uc55fc76dc491d3.Text" xml:space="preserve">
+    <value>Cores e tamanho</value>
+  </data>
+  <data name="Uc9043c2875f4ea.Text" xml:space="preserve">
+    <value>Área de transferência</value>
+  </data>
+  <data name="Uc9043c2875f4ea.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Área de transferência (Win+V)</value>
+  </data>
+  <data name="Uc96fdacdf18640.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Intensidade da cor em porcentagem</value>
+  </data>
+  <data name="Ucb79ceec0dd495.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cotas do Codex</value>
+  </data>
+  <data name="Uccd952672e8748.Text" xml:space="preserve">
+    <value>Automática prioriza pedidos de atenção e tarefas em execução. Você também pode escolher clicando na barra.</value>
+  </data>
+  <data name="Uccdb6711283a81.Text" xml:space="preserve">
+    <value>IAs acompanhadas</value>
+  </data>
+  <data name="Uccf73decb841d2.Content" xml:space="preserve">
+    <value>Tempo real</value>
+  </data>
+  <data name="Ucdb9a3716ac0fe.Content" xml:space="preserve">
+    <value>Cor sólida</value>
+  </data>
+  <data name="Ud0507fa29d5fea.Text" xml:space="preserve">
+    <value>A opção automática acompanha as cores do Windows.</value>
+  </data>
+  <data name="Ud191f1407c4346.Text" xml:space="preserve">
+    <value>Conexão acompanhada</value>
+  </data>
+  <data name="Ud473ebcacd9f11.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Arrastar módulo</value>
+  </data>
+  <data name="Ud473ebcacd9f11.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Segure e arraste para reorganizar</value>
+  </data>
+  <data name="Ud9cd3e431c2629.Text" xml:space="preserve">
+    <value>Fundo da barra</value>
+  </data>
+  <data name="Udcba6c997eb06d.PlaceholderText" xml:space="preserve">
+    <value>Pesquisar emojis</value>
+  </data>
+  <data name="Udcba6c997eb06d.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pesquisar emojis</value>
+  </data>
+  <data name="Uddc0d6f5a96678.Text" xml:space="preserve">
+    <value>Frequência das leituras</value>
+  </data>
+  <data name="Udfe3ea36dae7a9.Content" xml:space="preserve">
+    <value>Mica Alt · mais contraste</value>
+  </data>
+  <data name="Ue31aca1fe25681.Text" xml:space="preserve">
+    <value>Medir atividade da GPU</value>
+  </data>
+  <data name="Ue5aa0c441429ef.Text" xml:space="preserve">
+    <value>Atividade das sessões (opcional)</value>
+  </data>
+  <data name="Ue6bb94dec98823.Text" xml:space="preserve">
+    <value>Oculta títulos, descrições e nomes de projetos na barra e na lista de sessões.</value>
+  </data>
+  <data name="Uebded84c250d4a.Text" xml:space="preserve">
+    <value>Automático soma Ethernet e Wi-Fi ativos. A lista mostra apenas conexões físicas; filtros internos do Windows ficam ocultos.</value>
+  </data>
+  <data name="Ued4f4a4ccdfc67.Text" xml:space="preserve">
+    <value>Aparência da barra</value>
+  </data>
+  <data name="Uedd7f4c4b55de2.Content" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="Ueee336d5cf0c4f.Text" xml:space="preserve">
+    <value>CPU, memória e rede (segundos)</value>
+  </data>
+  <data name="Uf22bdd6f7e8424.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Uf22bdd6f7e8424.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Uf3e2f3354151a8.Content" xml:space="preserve">
+    <value>Acompanhar o Windows</value>
+  </data>
+  <data name="Uf469dce74f2c2c.Content" xml:space="preserve">
+    <value>Adaptativo · cor da janela maximizada</value>
+  </data>
+  <data name="Uf5f89a454be0c2.Content" xml:space="preserve">
+    <value>Somente no monitor principal</value>
+  </data>
+  <data name="Uf647676ad71fe5.Content" xml:space="preserve">
+    <value>Remover integração do WinStatusBar</value>
+  </data>
+  <data name="Uf6eb2babbdaa20.Text" xml:space="preserve">
+    <value>O que o percentual representa</value>
+  </data>
+  <data name="Uf8c260312a37be.Content" xml:space="preserve">
+    <value>Quanto já foi usado</value>
+  </data>
+  <data name="Uf8e599ff7e4f0f.Content" xml:space="preserve">
+    <value>Remover autorização permanente…</value>
+  </data>
+  <data name="Ufa747f8659f944.Header" xml:space="preserve">
+    <value>Cotas das IAs</value>
+  </data>
+  <data name="Ufda618ca77138e.Text" xml:space="preserve">
+    <value>Ao entrar no Windows</value>
+  </data>
+  <data name="Ufe63b99a2025c3.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="Ufe63b99a2025c3.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="Ufe78093b356253.Content" xml:space="preserve">
+    <value>A cada 10 minutos</value>
+  </data>
+  <data name="Ufe8ed6f1c3eb8b.Text" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="Uff09a4b56baacf.Text" xml:space="preserve">
+    <value>Claude Code</value>
+  </data>
+  <data name="Uffd7f06a380e46.Text" xml:space="preserve">
+    <value>Ajuste a leitura, as cores e as informações que ficam à vista.</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Barra de status do Windows com monitoramento de CPU, memória, GPU e rede, atividade de agentes de IA e histórico da área de transferência.</value>
+  </data>
+  <data name="S77F636EE62749E86" xml:space="preserve">
+    <value>A caixa no centro da barra: pergunte ao Claude, Codex, Gemini, Copilot, Lenovo Qira, IA local ou à sua API, com histórico sincronizado no OneDrive.</value>
+  </data>
+  <data name="S79B2CD2FC9252ED2" xml:space="preserve">
+    <value>Um brilho arco-íris circula pelo contorno do módulo do agente e da barra de pergunta enquanto eles trabalham: linha fina na borda e halo suave por fora. Respeita a opção de animações do Windows.</value>
+  </data>
+  <data name="S6CDD7B43109EAA6F" xml:space="preserve">
+    <value>Claude Code não encontrado neste PC</value>
+  </data>
+  <data name="S9878544863E6874F" xml:space="preserve">
+    <value>Codex não encontrado neste PC</value>
+  </data>
+  <data name="S9008CBEFE25C61EB" xml:space="preserve">
+    <value>Nenhum servidor local respondeu (Ollama, LM Studio, llama.cpp, Jan…)</value>
+  </data>
+  <data name="S539C57A8AC1F7409" xml:space="preserve">
+    <value>Nenhum modelo no Ollama</value>
+  </data>
+  <data name="S394163BEEB892118" xml:space="preserve">
+    <value>Configure a API em Configurações › IA</value>
+  </data>
+  <data name="SAE8AED449759325C" xml:space="preserve">
+    <value>Anexos:</value>
+  </data>
+  <data name="S2D23537CC539AC89" xml:space="preserve">
+    <value>Não foi possível iniciar o agente</value>
+  </data>
+  <data name="S31C502AA4D55FFAF" xml:space="preserve">
+    <value>O agente retornou um erro</value>
+  </data>
+  <data name="S7FB71C325A6562B5" xml:space="preserve">
+    <value>O agente terminou sem resposta</value>
+  </data>
+  <data name="SC9A7956416C462A3" xml:space="preserve">
+    <value>Arquivo grande demais para anexar</value>
+  </data>
+  <data name="S024FB18BE7476AFB" xml:space="preserve">
+    <value>Escolha um modelo local</value>
+  </data>
+  <data name="S48F44B517FFDC1EE" xml:space="preserve">
+    <value>Texto reconhecido na imagem {0} (você não vê a imagem, só este texto lido por OCR)</value>
+  </data>
+  <data name="S6B420160B2E85B6A" xml:space="preserve">
+    <value>A pessoa anexou a imagem {0}, mas você não lê imagens e nenhum texto foi reconhecido nela</value>
+  </data>
+  <data name="S61EF584F140DBEA4" xml:space="preserve">
+    <value>O modelo {0} só lê texto: {1} foi enviada como o texto reconhecido nela, não como imagem.</value>
+  </data>
+  <data name="S58103CF6FB7F898F" xml:space="preserve">
+    <value>O modelo {0} só lê texto e não foi possível ler texto em {1}, então a imagem não foi enviada. Para a IA ver a tela, escolha um modelo que lê imagens.</value>
+  </data>
+  <data name="SABF0087ED35A69E1" xml:space="preserve">
+    <value>a captura da janela</value>
+  </data>
+  <data name="SF59A6111FC6AF9FD" xml:space="preserve">
+    <value>Escolha um modelo da API</value>
+  </data>
+  <data name="SFFC6CA6C65A30E40" xml:space="preserve">
+    <value>*Gerando imagem…*</value>
+  </data>
+  <data name="S3314E997059C68D9" xml:space="preserve">
+    <value>Sem resposta</value>
+  </data>
+  <data name="SBD4F681647BC0CF5" xml:space="preserve">
+    <value>Sem raciocínio</value>
+  </data>
+  <data name="S5D61B4A122C009E1" xml:space="preserve">
+    <value>Mínimo</value>
+  </data>
+  <data name="S2914B0D82363C15E" xml:space="preserve">
+    <value>Baixo</value>
+  </data>
+  <data name="S151C296C50988948" xml:space="preserve">
+    <value>Médio</value>
+  </data>
+  <data name="S9620F9D4D619A554" xml:space="preserve">
+    <value>Muito alto</value>
+  </data>
+  <data name="S994D51043F7D6951" xml:space="preserve">
+    <value>Máximo</value>
+  </data>
+  <data name="SA47DA1F5EDC3CAF6" xml:space="preserve">
+    <value>{0} recusou o pedido como inválido: algo no envio (anexo, contexto da tela ou opção do modelo {1}) não é aceito. Tente sem anexos e sem o Contexto, ou escolha outro modelo.</value>
+  </data>
+  <data name="S66BB7A8432589685" xml:space="preserve">
+    <value>O endereço do serviço {0} não foi encontrado. Confira o endereço e o modelo em Configurações › IA.</value>
+  </data>
+  <data name="SE7043150A8F2CBB3" xml:space="preserve">
+    <value>{0} devolveu um erro que a barra ainda não reconhece. Tente de novo; se repetir, escolha outro modelo ou outra IA. O texto original está abaixo.</value>
+  </data>
+  <data name="SD0FF8CAC65896F9D" xml:space="preserve">
+    <value>Entre de novo no Claude Code: abra o app Claude (ou rode claude no terminal e use /login).</value>
+  </data>
+  <data name="S90883B672C083A3D" xml:space="preserve">
+    <value>Entre de novo na sua conta no app Codex (ou rode codex login no terminal).</value>
+  </data>
+  <data name="S3386F17207D5C793" xml:space="preserve">
+    <value>Entre de novo com a conta Google ou confira a chave em Configurações › IA › Gemini.</value>
+  </data>
+  <data name="S6DA72F3EED2CA90F" xml:space="preserve">
+    <value>Entre de novo em Configurações › IA › Microsoft Copilot.</value>
+  </data>
+  <data name="SFE2657D518B2849B" xml:space="preserve">
+    <value>Abra o app do Qira e entre de novo na conta Lenovo.</value>
+  </data>
+  <data name="S8DFF6F27D639C83C" xml:space="preserve">
+    <value>O servidor local pediu uma chave; confira a configuração dele.</value>
+  </data>
+  <data name="SAFF4AEA77A6F8401" xml:space="preserve">
+    <value>Confira ou troque a chave em Configurações › IA.</value>
+  </data>
+  <data name="S9F2E94BDE7DAB628" xml:space="preserve">
+    <value>Instale o Claude Code (ou o app Claude para desktop) e tente de novo, ou escolha outra IA.</value>
+  </data>
+  <data name="S5F448B3BB1918E1E" xml:space="preserve">
+    <value>Instale o app Codex e tente de novo, ou escolha outra IA.</value>
+  </data>
+  <data name="S1CA9CB46C335D113" xml:space="preserve">
+    <value>Instale o Gemini CLI em Configurações › IA › Gemini, ou use a conta Google.</value>
+  </data>
+  <data name="S158AC62D0136AA17" xml:space="preserve">
+    <value>Reinstale o programa ou escolha outra IA.</value>
+  </data>
+  <data name="S07ED40ECD6782EA3" xml:space="preserve">
+    <value>Libera às {0}.</value>
+  </data>
+  <data name="SC8CA1518069CF704" xml:space="preserve">
+    <value>escolhido</value>
+  </data>
+  <data name="SDCF96CF96A4013A9" xml:space="preserve">
+    <value>sem detalhe</value>
+  </data>
+  <data name="S09A9BA8DCD4975BD" xml:space="preserve">
+    <value>{0} falhou sem informar o motivo. Tente de novo; se repetir, escolha outro modelo ou outra IA.</value>
+  </data>
+  <data name="SC22A2E29DA8C9A8F" xml:space="preserve">
+    <value>A resposta foi interrompida.</value>
+  </data>
+  <data name="S48EA859E2D447B85" xml:space="preserve">
+    <value>O modelo {0} só entende texto, e a mensagem levou uma imagem (a captura da janela do botão Contexto ou um anexo). Desligue o Contexto ou remova a imagem, ou escolha um modelo que lê imagens.</value>
+  </data>
+  <data name="SB0E94FD12A995EEA" xml:space="preserve">
+    <value>O modelo {0} não tem modo de raciocínio. No seletor de modelo, use o nível padrão ou "Sem raciocínio".</value>
+  </data>
+  <data name="SDDD4959DCDCB1FD1" xml:space="preserve">
+    <value>O modelo {0} não sabe usar ferramentas (ações no PC, conectores). Desligue o lápis Editar ou escolha outro modelo.</value>
+  </data>
+  <data name="S9B29CB6AF426BFEA" xml:space="preserve">
+    <value>O modelo {0} não está instalado na IA local. Escolha outro na lista de modelos ou baixe-o no terminal com: ollama pull {0}</value>
+  </data>
+  <data name="S56B26FB60B9C70EB" xml:space="preserve">
+    <value>O modelo {0} não existe {1} ou a sua conta não tem acesso a ele. Escolha outro modelo no seletor.</value>
+  </data>
+  <data name="SCE8AF3D786126D88" xml:space="preserve">
+    <value>A conversa ficou grande demais para o modelo {0} (mensagens, anexos e contexto da tela somados). Comece uma nova conversa, remova anexos grandes ou escolha um modelo com mais contexto.</value>
+  </data>
+  <data name="S32699A5D309F3A7F" xml:space="preserve">
+    <value>O PC não conseguiu carregar o modelo {0}: falta memória (RAM ou placa de vídeo). Feche programas pesados ou escolha um modelo menor.</value>
+  </data>
+  <data name="SB4F381E124C52BAB" xml:space="preserve">
+    <value>A cota ou os créditos da sua conta {0} acabaram.</value>
+  </data>
+  <data name="SADDE232686D2B49A" xml:space="preserve">
+    <value>Veja quando renova no menu Cotas da barra e, até lá, use outra IA.</value>
+  </data>
+  <data name="SAD1AB3553503E7CC" xml:space="preserve">
+    <value>Foram muitos pedidos em pouco tempo e {0} pediu para esperar. Aguarde um minuto e envie de novo.</value>
+  </data>
+  <data name="S56C58C10B78F6978" xml:space="preserve">
+    <value>{0} recusou o login ou a chave da sua conta (expirou ou é inválida).</value>
+  </data>
+  <data name="SE7974CABEB1EF5FA" xml:space="preserve">
+    <value>A sua conta não tem permissão para usar isso {0} (modelo, recurso ou região). Escolha outro modelo ou confira o plano da conta.</value>
+  </data>
+  <data name="SBD40F226F6DC80F8" xml:space="preserve">
+    <value>{0} bloqueou o pedido ou a resposta pelas próprias regras de segurança. Reformule o pedido com outras palavras.</value>
+  </data>
+  <data name="SA7F9096410ACD9C4" xml:space="preserve">
+    <value>O serviço {0} está com problema ou sobrecarregado agora; não é falha do seu PC. Tente de novo em alguns minutos ou use outra IA.</value>
+  </data>
+  <data name="S8699F67618AD8BD6" xml:space="preserve">
+    <value>O servidor da IA local (Ollama, LM Studio ou outro) não está aberto, então ninguém respondeu no PC. Abra o Ollama pelo menu Iniciar e envie de novo.</value>
+  </data>
+  <data name="S22DF5D8F4F8CF182" xml:space="preserve">
+    <value>Não foi possível falar {0} pela rede (internet, VPN, proxy ou firewall). Confira a conexão e tente de novo.</value>
+  </data>
+  <data name="S56844C25F3D0BBA9" xml:space="preserve">
+    <value>{0} demorou demais e a resposta não chegou a tempo. Tente de novo; se repetir, encurte o pedido ou escolha um modelo mais rápido.</value>
+  </data>
+  <data name="S82FA7E2D1FFDED9A" xml:space="preserve">
+    <value>{0} terminou sem mandar nenhum texto. Tente de novo; se repetir, escolha outro modelo ou outra IA.</value>
+  </data>
+  <data name="S0E17C468E5C75BA7" xml:space="preserve">
+    <value>O programa {0} não foi encontrado ou não abriu neste PC.</value>
+  </data>
+  <data name="S9A1EB15823259898" xml:space="preserve">
+    <value>Resposta encerrada</value>
+  </data>
+  <data name="S5CBAB8EEC44EC501" xml:space="preserve">
+    <value>Tarefa</value>
+  </data>
+  <data name="S1A7073315FC05A49" xml:space="preserve">
+    <value>[imagem anexada no Codex]</value>
+  </data>
+  <data name="SB183EA61698DF3BC" xml:space="preserve">
+    <value>Nenhuma mensagem para enviar.</value>
+  </data>
+  <data name="SDBD9C59E61429374" xml:space="preserve">
+    <value>Gemini CLI não encontrado neste PC</value>
+  </data>
+  <data name="S23B1B5E444FCDC03" xml:space="preserve">
+    <value>Salve uma chave do Google AI Studio em Configurações › IA › Gemini › Chave de API</value>
+  </data>
+  <data name="S15F8DF62AA9DD16B" xml:space="preserve">
+    <value>Entre com a conta Google em Configurações › IA › Gemini › Entrar</value>
+  </data>
+  <data name="SF75631131AE2B8F0" xml:space="preserve">
+    <value>Não foi possível iniciar o Gemini CLI</value>
+  </data>
+  <data name="SBB041264905D56CF" xml:space="preserve">
+    <value>O Gemini CLI terminou com erro ({0})</value>
+  </data>
+  <data name="SC241509BEE3EA473" xml:space="preserve">
+    <value>O Google recusou o login desta conta no Gemini CLI: o nível gratuito "Gemini Code Assist para pessoas físicas" não é mais aceito neste cliente. Use Gemini · chave de API (chave gratuita no Google AI Studio). Com Gemini Code Assist Standard/Enterprise, informe o projeto do Google Cloud em Configurações › IA › Gemini.</value>
+  </data>
+  <data name="SA688D2D38ED7A3DB" xml:space="preserve">
+    <value>A chave do Gemini foi recusada pelo Google. Confira ou troque a chave em Configurações › IA › Gemini.</value>
+  </data>
+  <data name="SE0DAE71FCD46281C" xml:space="preserve">
+    <value>Gemini sem autenticação. Entre com a conta Google ou salve uma chave em Configurações › IA › Gemini.</value>
+  </data>
+  <data name="S08F9D84D0FFA9F19" xml:space="preserve">
+    <value>Suas preferências foram restauradas do OneDrive.</value>
+  </data>
+  <data name="S048592D53606A1C5" xml:space="preserve">
+    <value>Conversa no ChatGPT</value>
+  </data>
+  <data name="S1F04571C1790A8D5" xml:space="preserve">
+    <value>Conversa no Claude</value>
+  </data>
+  <data name="S6C2D554BDBAC567A" xml:space="preserve">
+    <value>Bateria indisponível</value>
+  </data>
+  <data name="S762E089F42B05585" xml:space="preserve">
+    <value>Carregando</value>
+  </data>
+  <data name="S5858247AA67FD38B" xml:space="preserve">
+    <value>Carga completa</value>
+  </data>
+  <data name="SBDE570A9DCF7CD45" xml:space="preserve">
+    <value>Conectada, sem carregar</value>
+  </data>
+  <data name="S71430B58AEE5371C" xml:space="preserve">
+    <value>Usando bateria</value>
+  </data>
+  <data name="S6A04619B435980F5" xml:space="preserve">
+    <value>Alimentação desconhecida</value>
+  </data>
+  <data name="S30544FC6B460F3AD" xml:space="preserve">
+    <value>Tempo indisponível</value>
+  </data>
+  <data name="S0037ADEA046E2B9C" xml:space="preserve">
+    <value>No projeto {0}</value>
+  </data>
+  <data name="SBBAA77EFDB34B7BD" xml:space="preserve">
+    <value>Claude Code (app)</value>
+  </data>
+  <data name="S8F43DBB433C65D5A" xml:space="preserve">
+    <value>Codex (app)</value>
+  </data>
+  <data name="S320F7B2A8765E3EC" xml:space="preserve">
+    <value>Histórico do Claude Code (este PC)</value>
+  </data>
+  <data name="S3D865A4CAEB8D38A" xml:space="preserve">
+    <value>Igual ao app</value>
+  </data>
+  <data name="S7E170DD58671DC85" xml:space="preserve">
+    <value>Menos esforço responde mais rápido; mais esforço pensa com mais cuidado.</value>
+  </data>
+  <data name="SAE166ACB20B05893" xml:space="preserve">
+    <value>Escolher o modelo</value>
+  </data>
+  <data name="SDA0D03B8B0117BC3" xml:space="preserve">
+    <value>Voltar ao padrão do app</value>
+  </data>
+  <data name="S6779FDCD02D2E934" xml:space="preserve">
+    <value>Este modelo não tem níveis de esforço.</value>
+  </data>
+  <data name="S464433A5BE8133C3" xml:space="preserve">
+    <value>Escolher modelo</value>
+  </data>
+  <data name="S0C3DBF038C909CD4" xml:space="preserve">
+    <value>Nível de esforço</value>
+  </data>
+  <data name="SC4833A415DB182DC" xml:space="preserve">
+    <value>Selecionar modelo</value>
+  </data>
+  <data name="S2CF8E09692B4FAF1" xml:space="preserve">
+    <value>Projeto diferente: começou uma conversa nova.</value>
+  </data>
+  <data name="S90CE65EC24E400FB" xml:space="preserve">
+    <value>Sem projeto (pergunta rápida)</value>
+  </data>
+  <data name="S8488270CD149F46E" xml:space="preserve">
+    <value>Projetos do app Codex</value>
+  </data>
+  <data name="S56A828C43C4FDB10" xml:space="preserve">
+    <value>Pastas recentes do Claude Code</value>
+  </data>
+  <data name="S2ABC2FF76B7B6F74" xml:space="preserve">
+    <value>Escolher pasta…</value>
+  </data>
+  <data name="S9F8FBD0C04002BB6" xml:space="preserve">
+    <value>Não foi possível abrir o app.</value>
+  </data>
+  <data name="SBCCC93BC00E044D2" xml:space="preserve">
+    <value>Você perguntou {0}.</value>
+  </data>
+  <data name="S241DDE2D74EFB663" xml:space="preserve">
+    <value>Não foi possível colar o anexo. Use o botão + para selecionar o arquivo.</value>
+  </data>
+  <data name="S46350BCD5164FFA4" xml:space="preserve">
+    <value>Você perguntou {0} e depois {1}.</value>
+  </data>
+  <data name="SD75972FEC585E59E" xml:space="preserve">
+    <value>Resposta: {0}</value>
+  </data>
+  <data name="S87365B6AA77D0627" xml:space="preserve">
+    <value>A resposta foi interrompida antes de terminar.</value>
+  </data>
+  <data name="SD3814C32D4C6ED4C" xml:space="preserve">
+    <value>Clique para remover</value>
+  </data>
+  <data name="S38B7FB732F6276D9" xml:space="preserve">
+    <value>Enviado para {0}. A resposta aparece no app.</value>
+  </data>
+  <data name="S0A2A14B9E06D4FC3" xml:space="preserve">
+    <value>Escolhendo a IA…</value>
+  </data>
+  <data name="S3D8CFBDF9C9F3E33" xml:space="preserve">
+    <value>Nenhum destino elegível foi encontrado para Escolha por mim. Configure uma conta ou API, ou escolha um destino manualmente. IA local não participa da escolha automática.</value>
+  </data>
+  <data name="S13A695FC6402D0AE" xml:space="preserve">
+    <value>Esta conversa usa IA local. Selecione IA local manualmente para continuar, ou inicie uma nova conversa com Escolha por mim.</value>
+  </data>
+  <data name="S97D23780B6D37BA7" xml:space="preserve">
+    <value>mantida a IA desta conversa</value>
+  </data>
+  <data name="S4C7877D7558FE41D" xml:space="preserve">
+    <value>Projeto</value>
+  </data>
+  <data name="SC8A5098D6B466ECE" xml:space="preserve">
+    <value>Anexos</value>
+  </data>
+  <data name="S6784789B3E18CF38" xml:space="preserve">
+    <value>Pesquisa na web ligada</value>
+  </data>
+  <data name="SEF6B6B7EAA6A962A" xml:space="preserve">
+    <value>Interrompido</value>
+  </data>
+  <data name="S86ECEF2CFCB1B5BC" xml:space="preserve">
+    <value>interrompido</value>
+  </data>
+  <data name="SB3B6BFDB385FD7C5" xml:space="preserve">
+    <value>Qira (híbrido) respondeu via {0}.</value>
+  </data>
+  <data name="S837E1F1005D62A7B" xml:space="preserve">
+    <value>Texto da página</value>
+  </data>
+  <data name="S99F08628088DC02F" xml:space="preserve">
+    <value>Texto do documento</value>
+  </data>
+  <data name="S14D886E7BD86A9A6" xml:space="preserve">
+    <value>Dados da planilha</value>
+  </data>
+  <data name="S94F254DAC165F51C" xml:space="preserve">
+    <value>Captura da janela</value>
+  </data>
+  <data name="S17669DF1E07F77D7" xml:space="preserve">
+    <value>Texto da janela</value>
+  </data>
+  <data name="SA0D9D4344A0F0A15" xml:space="preserve">
+    <value>IA alterada de {0} para {1}</value>
+  </data>
+  <data name="S090159CB60162AE6" xml:space="preserve">
+    <value>Modelo alterado de {0} para {1}</value>
+  </data>
+  <data name="SA80DE96D9716C999" xml:space="preserve">
+    <value>Histórico</value>
+  </data>
+  <data name="S427E943533502AD2" xml:space="preserve">
+    <value>Abrir pasta do histórico (OneDrive)</value>
+  </data>
+  <data name="S48493ED50F3BEF50" xml:space="preserve">
+    <value>Nenhuma conversa guardada ainda.</value>
+  </data>
+  <data name="SCA478479855E049B" xml:space="preserve">
+    <value>O histórico está desligado nas configurações.</value>
+  </data>
+  <data name="S997B6C4DD021E7F8" xml:space="preserve">
+    <value>(sem título)</value>
+  </data>
+  <data name="S216DA0D0EE5A8800" xml:space="preserve">
+    <value>pergunta(s)</value>
+  </data>
+  <data name="SC21540CB52B3EFA1" xml:space="preserve">
+    <value>Apagar esta conversa</value>
+  </data>
+  <data name="S96B361CC3D33C952" xml:space="preserve">
+    <value>Apagar todas ({0})</value>
+  </data>
+  <data name="S7A46BCBF04C4F9DF" xml:space="preserve">
+    <value>Clique de novo para confirmar</value>
+  </data>
+  <data name="S46D1A7CBAA3918EF" xml:space="preserve">
+    <value>Histórico apagado</value>
+  </data>
+  <data name="S3DF868BCCED36A93" xml:space="preserve">
+    <value>Conversa de {0} · continua de onde parou.</value>
+  </data>
+  <data name="S57B8FE1060592EAC" xml:space="preserve">
+    <value>Pensando…</value>
+  </data>
+  <data name="S9BD5247E29C18E7C" xml:space="preserve">
+    <value>Contexto: {0}</value>
+  </data>
+  <data name="S62C95076DBEB3160" xml:space="preserve">
+    <value>Detalhes</value>
+  </data>
+  <data name="SDD680772877E1917" xml:space="preserve">
+    <value>Ocultar</value>
+  </data>
+  <data name="SF222481580218A40" xml:space="preserve">
+    <value>Editar arquivos</value>
+  </data>
+  <data name="SB2DDC0B5E2A4F37B" xml:space="preserve">
+    <value>Permite que a IA altere arquivos. Vale a partir da próxima mensagem.</value>
+  </data>
+  <data name="SA42667A60252A963" xml:space="preserve">
+    <value>Pensando</value>
+  </data>
+  <data name="S1730AB6BB58F15FF" xml:space="preserve">
+    <value>Respondendo…</value>
+  </data>
+  <data name="S87F10415C5C10821" xml:space="preserve">
+    <value>Escrevendo a resposta</value>
+  </data>
+  <data name="SE63474148B809635" xml:space="preserve">
+    <value>Resposta interrompida.</value>
+  </data>
+  <data name="S63E2BBAF1C924391" xml:space="preserve">
+    <value>Continuar</value>
+  </data>
+  <data name="SE3552640060D04B1" xml:space="preserve">
+    <value>Detalhe técnico: {0}</value>
+  </data>
+  <data name="SBA57F2AEE2F15573" xml:space="preserve">
+    <value>Pensou por {0}</value>
+  </data>
+  <data name="SAFBB26988AEF316D" xml:space="preserve">
+    <value>Parou após {0} · {1}</value>
+  </data>
+  <data name="S36CC3D2F728C343D" xml:space="preserve">
+    <value>Continuação de uma conversa:</value>
+  </data>
+  <data name="SB15DD8C66CA6D35D" xml:space="preserve">
+    <value>Eu: </value>
+  </data>
+  <data name="S8A0A17A1257470F7" xml:space="preserve">
+    <value>Assistente: </value>
+  </data>
+  <data name="S3F5D5E643C224850" xml:space="preserve">
+    <value>Lenovo Qira não está instalado neste PC.</value>
+  </data>
+  <data name="S2EC797FE520A822D" xml:space="preserve">
+    <value>Nova conversa</value>
+  </data>
+  <data name="SD36C5E504EB7C04C" xml:space="preserve">
+    <value>Parar</value>
+  </data>
+  <data name="SB137928F3221ED3C" xml:space="preserve">
+    <value>Escolha por mim</value>
+  </data>
+  <data name="SADE90A6329AB95D6" xml:space="preserve">
+    <value>chave de API</value>
+  </data>
+  <data name="SD0E22855BAC53890" xml:space="preserve">
+    <value>conta Google</value>
+  </data>
+  <data name="SD3B51748376B051B" xml:space="preserve">
+    <value>API própria</value>
+  </data>
+  <data name="S427EF2A4F84115F9" xml:space="preserve">
+    <value>Claude (chat)</value>
+  </data>
+  <data name="SA2785A754A255BED" xml:space="preserve">
+    <value>padrão</value>
+  </data>
+  <data name="S00A3C90885506396" xml:space="preserve">
+    <value>Pergunte à sua IA</value>
+  </data>
+  <data name="SDC752353F58733E9" xml:space="preserve">
+    <value>Destino: {0}</value>
+  </data>
+  <data name="S84DD50421B275607" xml:space="preserve">
+    <value>Mensagem para {0}</value>
+  </data>
+  <data name="S2216BF94EB96684B" xml:space="preserve">
+    <value>Pesquisa na web</value>
+  </data>
+  <data name="SCC4496A5353D1711" xml:space="preserve">
+    <value>Pesquisa na web indisponível para este destino</value>
+  </data>
+  <data name="S4C67F2F99D0F9F99" xml:space="preserve">
+    <value>Sem projeto</value>
+  </data>
+  <data name="S69D2EC7F9F344763" xml:space="preserve">
+    <value>Abre o app oficial com o prompt numa conversa nova, sincronizada com o celular e o PC. A resposta aparece lá.</value>
+  </data>
+  <data name="SD9CEC30E32B5F0CE" xml:space="preserve">
+    <value>automático</value>
+  </data>
+  <data name="SF367658D12E40010" xml:space="preserve">
+    <value>A IA será escolhida no primeiro envio desta conversa.</value>
+  </data>
+  <data name="S2ED0E39B7697D373" xml:space="preserve">
+    <value>A próxima mensagem vai para {0}, com o histórico desta conversa.</value>
+  </data>
+  <data name="SA324DE44CBF60B8E" xml:space="preserve">
+    <value>Histórico de conversas</value>
+  </data>
+  <data name="S15758430202CD6DF" xml:space="preserve">
+    <value>Continuar no app</value>
+  </data>
+  <data name="S08EF8A16691256EE" xml:space="preserve">
+    <value>Mensagem para a IA</value>
+  </data>
+  <data name="S3EE59A68ED116B6A" xml:space="preserve">
+    <value>Anexar</value>
+  </data>
+  <data name="S3679EDF8A5902517" xml:space="preserve">
+    <value>Arquivos…</value>
+  </data>
+  <data name="S4567A9A30B41B095" xml:space="preserve">
+    <value>Pasta…</value>
+  </data>
+  <data name="S2975104784A401E3" xml:space="preserve">
+    <value>Web</value>
+  </data>
+  <data name="S2EBA946B2E1EE4B6" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="SDBB654A486A5FC1F" xml:space="preserve">
+    <value>Contexto</value>
+  </data>
+  <data name="SEADB377837EF0A0E" xml:space="preserve">
+    <value>Opções</value>
+  </data>
+  <data name="S85923CA33033237F" xml:space="preserve">
+    <value>Para onde enviar</value>
+  </data>
+  <data name="SB61AEF6FF41A8727" xml:space="preserve">
+    <value>Projeto (pasta de trabalho)</value>
+  </data>
+  <data name="S433278C0D985C979" xml:space="preserve">
+    <value>Modelo e esforço</value>
+  </data>
+  <data name="SA092BDCE1BD6901B" xml:space="preserve">
+    <value>Ditar (Win+H)</value>
+  </data>
+  <data name="S393DCE9EF10E8B2E" xml:space="preserve">
+    <value>Continue de onde parou.</value>
+  </data>
+  <data name="SA777E0210F837751" xml:space="preserve">
+    <value>Anexar arquivos ou pasta</value>
+  </data>
+  <data name="S83C6C6E588301F35" xml:space="preserve">
+    <value>Ditar o texto (Win+H)</value>
+  </data>
+  <data name="S5765D3C09EAD9060" xml:space="preserve">
+    <value>Conversa por voz ao vivo no ChatGPT ou no Claude</value>
+  </data>
+  <data name="S051E351D9D071B4B" xml:space="preserve">
+    <value>configurar…</value>
+  </data>
+  <data name="S5519D1965FEB3B2C" xml:space="preserve">
+    <value>Abre no aplicativo oficial</value>
+  </data>
+  <data name="SB59A4462751714E8" xml:space="preserve">
+    <value>Sites oficiais</value>
+  </data>
+  <data name="S7C8777088540992E" xml:space="preserve">
+    <value>Permitir edições e ações no contexto</value>
+  </data>
+  <data name="S5D63DB1322405518" xml:space="preserve">
+    <value>Registrar no histórico do app Claude</value>
+  </data>
+  <data name="SD7E208F2A5C7E62C" xml:space="preserve">
+    <value>Configurações da IA…</value>
+  </data>
+  <data name="S61C7CF8DDE209208" xml:space="preserve">
+    <value>Continuar no terminal</value>
+  </data>
+  <data name="S658302C87219025E" xml:space="preserve">
+    <value>Abrir no aplicativo oficial</value>
+  </data>
+  <data name="SF581A2FF9E9EBA0C" xml:space="preserve">
+    <value>WinStatusBar</value>
+  </data>
+  <data name="S6CD7D72213493F8B" xml:space="preserve">
+    <value>Aplicativos ({0}) · {1} de RAM</value>
+  </data>
+  <data name="S08340249679ED22D" xml:space="preserve">
+    <value>Soma da memória residente dos processos dos aplicativos listados. Memória compartilhada pode ser contada em mais de um processo; não representa toda a RAM usada pelo Windows.</value>
+  </data>
+  <data name="S50AB862E80E57209" xml:space="preserve">
+    <value>Memória RAM residente somada de todos os processos deste aplicativo.</value>
+  </data>
+  <data name="SF1FDBF705EBBEABB" xml:space="preserve">
+    <value>código</value>
+  </data>
+  <data name="S1AB20B7797D20F74" xml:space="preserve">
+    <value>Copiar código</value>
+  </data>
+  <data name="SC5AA86E8714C7C42" xml:space="preserve">
+    <value>Bateria</value>
+  </data>
+  <data name="S6D3BC8DA9B79DC55" xml:space="preserve">
+    <value>Potência</value>
+  </data>
+  <data name="S521BAC2C00686155" xml:space="preserve">
+    <value>Saúde</value>
+  </data>
+  <data name="S511B67B0FD0AA978" xml:space="preserve">
+    <value>Ciclos</value>
+  </data>
+  <data name="S74A83382042D041B" xml:space="preserve">
+    <value>Economia</value>
+  </data>
+  <data name="S45A2FB181B2175B2" xml:space="preserve">
+    <value>Ativada</value>
+  </data>
+  <data name="S83B1836DA0C78588" xml:space="preserve">
+    <value>Desativada</value>
+  </data>
+  <data name="SB31DB0EAF5A222E6" xml:space="preserve">
+    <value>Capacidade de projeto</value>
+  </data>
+  <data name="S36D547CBFF624BCB" xml:space="preserve">
+    <value>Capacidade de carga completa</value>
+  </data>
+  <data name="SC31B236A0621E43E" xml:space="preserve">
+    <value>Número de série</value>
+  </data>
+  <data name="S70191500542DFE7B" xml:space="preserve">
+    <value>Série</value>
+  </data>
+  <data name="S4C00E5E7D3F52E19" xml:space="preserve">
+    <value>Repouso</value>
+  </data>
+  <data name="S310408A53567FFD1" xml:space="preserve">
+    <value>Tela desligada</value>
+  </data>
+  <data name="S568192D71107764F" xml:space="preserve">
+    <value>Uso ativo não equivale necessariamente a tela ligada. O relatório de bateria não separa esses tempos em todos os PCs.</value>
+  </data>
+  <data name="S954B67081C9C315A" xml:space="preserve">
+    <value>Fonte: Windows</value>
+  </data>
+  <data name="S139C1816BA27FB4D" xml:space="preserve">
+    <value>Consultando histórico do Windows…</value>
+  </data>
+  <data name="SF1DE6E6042D9724A" xml:space="preserve">
+    <value>Histórico do Windows indisponível.</value>
+  </data>
+  <data name="SF6B12B22A24DB3B4" xml:space="preserve">
+    <value>Últimas 24 horas</value>
+  </data>
+  <data name="SE05D6CB5DF68C224" xml:space="preserve">
+    <value>Últimos 7 dias</value>
+  </data>
+  <data name="S6790FE974BFD69A3" xml:space="preserve">
+    <value>Nível da bateria</value>
+  </data>
+  <data name="S02929DAB81CC5E20" xml:space="preserve">
+    <value>Conectada à tomada</value>
+  </data>
+  <data name="SF3368833A8F3D290" xml:space="preserve">
+    <value>Média do intervalo · relatório do Windows</value>
+  </data>
+  <data name="S98007DEE62BF4DB5" xml:space="preserve">
+    <value>Sem registros do Windows neste intervalo</value>
+  </data>
+  <data name="S37855DE6F6730976" xml:space="preserve">
+    <value>Modo de energia</value>
+  </data>
+  <data name="SC34280BC3ACADF61" xml:space="preserve">
+    <value>Economia de energia</value>
+  </data>
+  <data name="S7444E37EA660C24C" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="S2D3D1A78E098A359" xml:space="preserve">
+    <value>Na bateria</value>
+  </data>
+  <data name="S08F33E984D846E5A" xml:space="preserve">
+    <value>Sempre usar economia ↗</value>
+  </data>
+  <data name="SDB858ABFCCF5139B" xml:space="preserve">
+    <value>Configurar no Windows</value>
+  </data>
+  <data name="SDD0AB3E4C0ECD7D5" xml:space="preserve">
+    <value>Sempre</value>
+  </data>
+  <data name="SBBF3F11CB5B43E70" xml:space="preserve">
+    <value>%</value>
+  </data>
+  <data name="SC7AAC7C6388E53C7" xml:space="preserve">
+    <value>Use as configurações do Windows neste computador.</value>
+  </data>
+  <data name="S886069FDEBAEBBC9" xml:space="preserve">
+    <value>Alteração aplicada no Windows.</value>
+  </data>
+  <data name="S223F27C9729F9CEF" xml:space="preserve">
+    <value>O Windows não permitiu esta alteração. Use as configurações do Windows.</value>
+  </data>
+  <data name="S6A090BA08285E2AB" xml:space="preserve">
+    <value>Windows e personalização</value>
+  </data>
+  <data name="S586039322F0B1F16" xml:space="preserve">
+    <value>Reiniciar este computador agora? Salve seus arquivos antes de continuar.</value>
+  </data>
+  <data name="S8D36A86C98B9D472" xml:space="preserve">
+    <value>Modo atual: claro</value>
+  </data>
+  <data name="S6133507714F48770" xml:space="preserve">
+    <value>Modo atual: escuro</value>
+  </data>
+  <data name="SEBC2DF610AC025B1" xml:space="preserve">
+    <value>Modo atual: personalizado</value>
+  </data>
+  <data name="SF054D8FD5422E9B7" xml:space="preserve">
+    <value>Não foi possível ler a personalização.</value>
+  </data>
+  <data name="SD1C9714D3FEC4A11" xml:space="preserve">
+    <value>Aplicando…</value>
+  </data>
+  <data name="S40249DF2F50568D7" xml:space="preserve">
+    <value>Aplicado no Windows.</value>
+  </data>
+  <data name="S0A6830894690D66E" xml:space="preserve">
+    <value>O Windows não permitiu esta alteração.</value>
+  </data>
+  <data name="S4290938ED5E690DD" xml:space="preserve">
+    <value>Personalizado</value>
+  </data>
+  <data name="SB0B9FE24FFA96291" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="SFF320ACB14C962BF" xml:space="preserve">
+    <value>Disponível com o Windows no modo escuro.</value>
+  </data>
+  <data name="SCF1666ADEEEBD542" xml:space="preserve">
+    <value>{0} {1} — escolha abaixo qual usar</value>
+  </data>
+  <data name="S9F82554B0B951366" xml:space="preserve">
+    <value>Gravar</value>
+  </data>
+  <data name="S67AFBEEC3DF01C59" xml:space="preserve">
+    <value>Desativar</value>
+  </data>
+  <data name="SEA0DA2B60F1A6F7A" xml:space="preserve">
+    <value>Pressione o atalho… (Esc cancela)</value>
+  </data>
+  <data name="S38BA433F98465FF1" xml:space="preserve">
+    <value>Atalho para abrir</value>
+  </data>
+  <data name="S08E924C601300594" xml:space="preserve">
+    <value>Abre a barra de comando com o cursor pronto para digitar, de qualquer lugar. Padrão: Alt+Espaço (no lugar do menu da janela do Windows).</value>
+  </data>
+  <data name="S7BE93544E00BC862" xml:space="preserve">
+    <value>Chat e contexto</value>
+  </data>
+  <data name="SDA8920821E236009" xml:space="preserve">
+    <value>Uso</value>
+  </data>
+  <data name="SFAB4AE6E94E2C25F" xml:space="preserve">
+    <value>Barra de comando da IA</value>
+  </data>
+  <data name="SF5A08433B2DFBFA6" xml:space="preserve">
+    <value>Caixa no centro da barra. Ao clicar, escolha Claude Code, Codex, IA local ou a sua API, além do modelo e do esforço. Enter envia e a resposta aparece no balão.</value>
+  </data>
+  <data name="S682501DCB5135A89" xml:space="preserve">
+    <value>Pesquisa na web ligada por padrão</value>
+  </data>
+  <data name="S60AE2AE401361841" xml:space="preserve">
+    <value>Cada conversa nova começa com o 🌐 ativo (Claude Code e Codex). Dá para desligar na própria conversa.</value>
+  </data>
+  <data name="SDEE8995B6EB5D271" xml:space="preserve">
+    <value>Guardar histórico de conversas</value>
+  </data>
+  <data name="SBB0013C8A61F5D73" xml:space="preserve">
+    <value>Todas as IAs num histórico só, aberto pelo botão de relógio do painel. Cada conversa pode ser reaberta e continuada.</value>
+  </data>
+  <data name="S8D55BD9DCA6B1354" xml:space="preserve">
+    <value>Ao terminar, a conversa do Claude Code é importada pelo app Claude e aparece no histórico dele.</value>
+  </data>
+  <data name="SB64F1D0F6F0A91BE" xml:space="preserve">
+    <value>Compatível com OpenAI</value>
+  </data>
+  <data name="SC1284D4F7A0876D3" xml:space="preserve">
+    <value>Chave salva (digite para trocar)</value>
+  </data>
+  <data name="SB67A0FCC31A9FCBA" xml:space="preserve">
+    <value>Não foi possível salvar a chave.</value>
+  </data>
+  <data name="S4C7AF7A36A523645" xml:space="preserve">
+    <value>Chave da API</value>
+  </data>
+  <data name="S66618B789C4C3892" xml:space="preserve">
+    <value>Fica no Cofre de Credenciais do Windows, nunca nas configurações nem nos logs.</value>
+  </data>
+  <data name="S5086900635FEC3EF" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="S33B80DE45AF30047" xml:space="preserve">
+    <value>Como a API aparece no balão de seleção.</value>
+  </data>
+  <data name="S73E1804EB968F73E" xml:space="preserve">
+    <value>Formato</value>
+  </data>
+  <data name="SF31B69FF1B0218DC" xml:space="preserve">
+    <value>OpenAI cobre a maioria dos serviços (OpenAI, OpenRouter, Groq, Mistral, LM Studio…).</value>
+  </data>
+  <data name="SDF09995BE50C34EA" xml:space="preserve">
+    <value>Endereço base</value>
+  </data>
+  <data name="S74E9AA80741A39E2" xml:space="preserve">
+    <value>Ex.: https://api.openai.com/v1 · https://openrouter.ai/api/v1 · https://api.anthropic.com</value>
+  </data>
+  <data name="S91C637C807F499F9" xml:space="preserve">
+    <value>Modelo padrão</value>
+  </data>
+  <data name="S55D507817B0C9872" xml:space="preserve">
+    <value>Opcional. Em branco, o balão usa o primeiro modelo da lista do serviço.</value>
+  </data>
+  <data name="SA802E71EE477E596" xml:space="preserve">
+    <value>Sincronização</value>
+  </data>
+  <data name="SABD087E08F0BBA8B" xml:space="preserve">
+    <value>Guardar preferências no OneDrive</value>
+  </data>
+  <data name="S40BD89C8F448F01D" xml:space="preserve">
+    <value>Copia as configurações para o seu OneDrive pessoal (WinStatusBar\configuracoes.json). Numa instalação limpa com a mesma conta, tudo volta sozinho. A chave da API não vai junto.</value>
+  </data>
+  <data name="S89E078CA4A6330EB" xml:space="preserve">
+    <value>Alterar…</value>
+  </data>
+  <data name="SCF5FE0E550B5BB13" xml:space="preserve">
+    <value>Pasta do histórico</value>
+  </data>
+  <data name="S343648051C253227" xml:space="preserve">
+    <value>Por padrão no seu OneDrive pessoal: sincroniza entre PCs e volta depois de formatar. Nada é enviado para outro lugar.</value>
+  </data>
+  <data name="SF53807AA6CF5D027" xml:space="preserve">
+    <value>Espaço</value>
+  </data>
+  <data name="S6FDDB41A9FF1EA6B" xml:space="preserve">
+    <value>Atualizar contexto da janela</value>
+  </data>
+  <data name="S6B5E2087B7A45C81" xml:space="preserve">
+    <value>Aplicativo oficial aberto. Inicie a voz pelo botão de ondas; para abertura direta, configure o atalho de voz nas configurações da barra.</value>
+  </data>
+  <data name="SD45F20E8B5C99EB2" xml:space="preserve">
+    <value>Atalho de voz inválido. Use Ctrl, Alt ou Shift com uma letra, tecla de função ou Space.</value>
+  </data>
+  <data name="S661B7A2C79299D57" xml:space="preserve">
+    <value>Edição indisponível para este destino</value>
+  </data>
+  <data name="S60AAC223FEE3D92C" xml:space="preserve">
+    <value>Edição de arquivos e ações no contexto ligadas</value>
+  </data>
+  <data name="SD955ED3744ACF883" xml:space="preserve">
+    <value>Edição e ações no contexto desligadas</value>
+  </data>
+  <data name="S122FC621F8383957" xml:space="preserve">
+    <value>Contexto da tela ligado: a janela anterior ao chat vai junto com a mensagem</value>
+  </data>
+  <data name="SB1B0E3B6AB5F2E2C" xml:space="preserve">
+    <value>Contexto da tela desligado: só o que você digitar e anexar</value>
+  </data>
+  <data name="SCA368EBE17E1ADD5" xml:space="preserve">
+    <value>A API desta conversa mudou. Inicie uma nova conversa.</value>
+  </data>
+  <data name="S004A0E74AD888281" xml:space="preserve">
+    <value>Escolher seu modo</value>
+  </data>
+  <data name="S9C0A742F21DE7930" xml:space="preserve">
+    <value>Efeitos de transparência</value>
+  </data>
+  <data name="S780FA40F6FE970C7" xml:space="preserve">
+    <value>Cor em destaque</value>
+  </data>
+  <data name="S70ECA4A954DCF58A" xml:space="preserve">
+    <value>Cores recentes</value>
+  </data>
+  <data name="SE0038B1314DA5424" xml:space="preserve">
+    <value>Cores do Windows</value>
+  </data>
+  <data name="S0D65C4FFC7FE9B12" xml:space="preserve">
+    <value>Aplicar cor</value>
+  </data>
+  <data name="SFEDB6CD1E3D518D5" xml:space="preserve">
+    <value>Cor personalizada</value>
+  </data>
+  <data name="S768D6244B5D82AF6" xml:space="preserve">
+    <value>Iniciar e barra de tarefas</value>
+  </data>
+  <data name="SDE0F873BD1B2AE75" xml:space="preserve">
+    <value>Bordas e títulos</value>
+  </data>
+  <data name="SF96620A107D482D3" xml:space="preserve">
+    <value>Escolher outra cor…</value>
+  </data>
+  <data name="S4C55543349B35FE1" xml:space="preserve">
+    <value>Temas</value>
+  </data>
+  <data name="S0E20AE90A800C27F" xml:space="preserve">
+    <value>Nenhuma cor recente registrada.</value>
+  </data>
+  <data name="S787DE402DBA5F2CF" xml:space="preserve">
+    <value>Abrir configurações gerais do Windows</value>
+  </data>
+  <data name="S69FC04FBFE5FEB12" xml:space="preserve">
+    <value>Verificar se há atualizações</value>
+  </data>
+  <data name="S462E8E48C1C23B09" xml:space="preserve">
+    <value>Configurações de tela do Windows</value>
+  </data>
+  <data name="SEEF2E6D366897520" xml:space="preserve">
+    <value>Verificando se há atualizações…</value>
+  </data>
+  <data name="SC48672F27270A9DD" xml:space="preserve">
+    <value>Atualizações em andamento</value>
+  </data>
+  <data name="SFD3BA99AFC374238" xml:space="preserve">
+    <value>Solicitando início…</value>
+  </data>
+  <data name="S93EC5F6E7A3AE1C7" xml:space="preserve">
+    <value>Reinicie para concluir a instalação das atualizações.</value>
+  </data>
+  <data name="SDF023FE97AF6DC9F" xml:space="preserve">
+    <value>Atualizações disponíveis</value>
+  </data>
+  <data name="SB0FF7817720B8584" xml:space="preserve">
+    <value>Essas atualizações serão concluídas automaticamente.</value>
+  </data>
+  <data name="SC2BB8F6AE0AB251B" xml:space="preserve">
+    <value>Reinicialização pendente</value>
+  </data>
+  <data name="SD9ADDB7FA39E71BD" xml:space="preserve">
+    <value>Aguardando início…</value>
+  </data>
+  <data name="SD3931BAE513FCA42" xml:space="preserve">
+    <value>Instalação pendente</value>
+  </data>
+  <data name="S9167582CF0EFCE2F" xml:space="preserve">
+    <value>Download pendente</value>
+  </data>
+  <data name="S63978BB72DC1EDF4" xml:space="preserve">
+    <value>Melhor eficiência energética</value>
+  </data>
+  <data name="S9123685A0D2A98BA" xml:space="preserve">
+    <value>Equilibrado</value>
+  </data>
+  <data name="S0FE33F1EF4992F46" xml:space="preserve">
+    <value>Desempenho máximo</value>
+  </data>
+  <data name="SE15A9B9442677A08" xml:space="preserve">
+    <value>tempo indisponível</value>
+  </data>
+  <data name="S33A61CE9B7B10F4D" xml:space="preserve">
+    <value>até 100%</value>
+  </data>
+  <data name="S3154FB3040050D95" xml:space="preserve">
+    <value>na tomada</value>
+  </data>
+  <data name="S79C5EB4810E5C905" xml:space="preserve">
+    <value>Conectada</value>
+  </data>
+  <data name="SCC1B60BEEAA1BFFB" xml:space="preserve">
+    <value>sem carregar</value>
+  </data>
+  <data name="SAC78F29154D5FE93" xml:space="preserve">
+    <value>Economia de bateria</value>
+  </data>
+  <data name="S404E87B88CE9B0D9" xml:space="preserve">
+    <value>restantes</value>
+  </data>
+  <data name="S0853883DB432646E" xml:space="preserve">
+    <value>Alimentação</value>
+  </data>
+  <data name="SD32330FF2B019C4F" xml:space="preserve">
+    <value>desconhecida</value>
+  </data>
+  <data name="S9301C5AED5E23633" xml:space="preserve">
+    <value>modelo só lê texto</value>
+  </data>
+  <data name="S744985262385DF83" xml:space="preserve">
+    <value>modelo sem raciocínio</value>
+  </data>
+  <data name="SE5BB1A78B6CFBCD0" xml:space="preserve">
+    <value>modelo sem ferramentas</value>
+  </data>
+  <data name="S992B2A2D0F39FEFF" xml:space="preserve">
+    <value>modelo não instalado</value>
+  </data>
+  <data name="S1F5B8340AA56E5A6" xml:space="preserve">
+    <value>modelo indisponível</value>
+  </data>
+  <data name="S2CB27C8AB4EE4F57" xml:space="preserve">
+    <value>conversa longa demais</value>
+  </data>
+  <data name="S1C78B3E824A94BFD" xml:space="preserve">
+    <value>falta memória</value>
+  </data>
+  <data name="S8934F9A53576AFF1" xml:space="preserve">
+    <value>cota esgotada</value>
+  </data>
+  <data name="SCBEF2764586DC1D4" xml:space="preserve">
+    <value>muitos pedidos</value>
+  </data>
+  <data name="S65DB28FF6D6ECB7A" xml:space="preserve">
+    <value>login recusado</value>
+  </data>
+  <data name="SA24B44604828B6C0" xml:space="preserve">
+    <value>sem permissão</value>
+  </data>
+  <data name="S2ABB4EA27A7EB0D8" xml:space="preserve">
+    <value>bloqueado pela IA</value>
+  </data>
+  <data name="SA156F2C204FA8162" xml:space="preserve">
+    <value>serviço instável</value>
+  </data>
+  <data name="SA9236485D5D1C7E2" xml:space="preserve">
+    <value>IA local fechada</value>
+  </data>
+  <data name="SEB0A4BE48A5D5568" xml:space="preserve">
+    <value>sem conexão</value>
+  </data>
+  <data name="S471C2F0B84E5C472" xml:space="preserve">
+    <value>tempo esgotado</value>
+  </data>
+  <data name="S4D70D85300907A6F" xml:space="preserve">
+    <value>sem resposta</value>
+  </data>
+  <data name="S7D1F2C4205627734" xml:space="preserve">
+    <value>programa ausente</value>
+  </data>
+  <data name="S82D62C419000A118" xml:space="preserve">
+    <value>pedido recusado</value>
+  </data>
+  <data name="SD371CCE32E30CFE8" xml:space="preserve">
+    <value>endereço não encontrado</value>
+  </data>
+  <data name="SB9E41F3E8441FC62" xml:space="preserve">
+    <value>erro desconhecido</value>
+  </data>
+  <data name="SCD49FB5131FA5418" xml:space="preserve">
+    <value>O {0}</value>
+  </data>
+  <data name="SA275D296B83FAB55" xml:space="preserve">
+    <value>o {0}</value>
+  </data>
+  <data name="S289277185B4811B0" xml:space="preserve">
+    <value>do {0}</value>
+  </data>
+  <data name="SCB375C0D0F1D8D2B" xml:space="preserve">
+    <value>no {0}</value>
+  </data>
+  <data name="S6F7AEF6DC6345993" xml:space="preserve">
+    <value>com o {0}</value>
+  </data>
+  <data name="S36C19326A6039E3F" xml:space="preserve">
+    <value>A {0}</value>
+  </data>
+  <data name="SF54CD8DEBD523185" xml:space="preserve">
+    <value>a {0}</value>
+  </data>
+  <data name="S4539F3E2FC3A2C05" xml:space="preserve">
+    <value>da {0}</value>
+  </data>
+  <data name="SDC5C27EA441FD410" xml:space="preserve">
+    <value>na {0}</value>
+  </data>
+  <data name="S033EEACC25B22904" xml:space="preserve">
+    <value>com a {0}</value>
+  </data>
+  <data name="S5F5EDB0122F89A61" xml:space="preserve">
+    <value>A interface do Qira ainda não está pronta. Tente de novo em alguns segundos.</value>
+  </data>
+  <data name="S1224656A22180DC2" xml:space="preserve">
+    <value>A janela da conta Google está aberta. Conclua o login e feche-a antes de perguntar.</value>
+  </data>
+  <data name="S2F63DDC0B9706356" xml:space="preserve">
+    <value>A janela de login do Copilot está aberta. Conclua o login e feche-a antes de perguntar.</value>
+  </data>
+  <data name="S12307EA246C718BC" xml:space="preserve">
+    <value>A página do Copilot não carregou o campo de conversa. Tente de novo em instantes.</value>
+  </data>
+  <data name="S2D9D7F9816C1C809" xml:space="preserve">
+    <value>A página do Gemini não carregou o campo de conversa. Tente de novo em instantes.</value>
+  </data>
+  <data name="SAFD9CE10289914A2" xml:space="preserve">
+    <value>Campo de conversa do Copilot não encontrado. Nada foi enviado.</value>
+  </data>
+  <data name="SEED0BA308FFB93B0" xml:space="preserve">
+    <value>Campo de conversa do Gemini não encontrado. Nada foi enviado.</value>
+  </data>
+  <data name="SA6ECE55BF42A60A2" xml:space="preserve">
+    <value>Copilot indisponível nesta instalação da barra.</value>
+  </data>
+  <data name="S62B598E21333DA28" xml:space="preserve">
+    <value>Não foi possível preencher o campo do Copilot. Nada foi enviado.</value>
+  </data>
+  <data name="SCEECDA40B42E8BED" xml:space="preserve">
+    <value>Não foi possível preencher o campo do Gemini. Nada foi enviado.</value>
+  </data>
+  <data name="SEAC1F8B89244F5AD" xml:space="preserve">
+    <value>O Copilot da barra não atende chamadas auxiliares.</value>
+  </data>
+  <data name="S7B3E3566B7943F27" xml:space="preserve">
+    <value>O Copilot enviou só a primeira linha da mensagem. Confira a conversa e tente de novo.</value>
+  </data>
+  <data name="S97C01388906C7C2B" xml:space="preserve">
+    <value>O Copilot já está respondendo outra pergunta. Aguarde.</value>
+  </data>
+  <data name="S8DE755511691D45C" xml:space="preserve">
+    <value>O Copilot pede login. Entre em Configurações › IA › Microsoft Copilot.</value>
+  </data>
+  <data name="SD70C134857B3CE9A" xml:space="preserve">
+    <value>O Gemini enviou só a primeira linha da mensagem. Confira a conversa e tente de novo.</value>
+  </data>
+  <data name="S7E7736CB587DD95F" xml:space="preserve">
+    <value>O Gemini já está respondendo outra pergunta. Aguarde.</value>
+  </data>
+  <data name="SA1062B63E7697DC7" xml:space="preserve">
+    <value>O Gemini pela conta Google não atende chamadas auxiliares.</value>
+  </data>
+  <data name="S4BFC03F7068F043A" xml:space="preserve">
+    <value>O Google pede login. Entre em Configurações › IA › Gemini › Conta Google.</value>
+  </data>
+  <data name="S78432F17C268ECAB" xml:space="preserve">
+    <value>O Qira escolheu o modelo local dele, que não está pronto neste PC (ele só roda com a GPU NVIDIA ligada). Tente de novo ou use a IA local (phi4-mini no Ollama).</value>
+  </data>
+  <data name="S8A0B712F341CABEA" xml:space="preserve">
+    <value>O Qira não está respondendo (o núcleo dele travou). Nada foi enviado. A barra o reinicia sozinha no máximo a cada 10 min; se continuar, feche o Qira pela bandeja e abra de novo.</value>
+  </data>
+  <data name="S3846E4C0DAC37324" xml:space="preserve">
+    <value>O Qira não respondeu ao abrir. Envie de novo em alguns segundos.</value>
+  </data>
+  <data name="S30ED9A4C9D3FB013" xml:space="preserve">
+    <value>O Qira não respondeu. Tente de novo em instantes.</value>
+  </data>
+  <data name="S76810121E7D6CA33" xml:space="preserve">
+    <value>O filtro de segurança do Qira recusou esta mensagem. Reformule a pergunta.</value>
+  </data>
+  <data name="S19DB3C5FF0AFD75A" xml:space="preserve">
+    <value>Qira indisponível nesta instalação da barra.</value>
+  </data>
+  <data name="S0C6720C44E5AD3B9" xml:space="preserve">
+    <value>Tempo limite do Copilot. A resposta não foi confirmada como concluída.</value>
+  </data>
+  <data name="S385DF3BA27CC0AF6" xml:space="preserve">
+    <value>Tempo limite do Gemini. A resposta não foi confirmada como concluída.</value>
+  </data>
+  <data name="S0BA5E7149E0EFABE" xml:space="preserve">
+    <value>Texto longo demais para o Copilot. Inicie uma nova conversa ou escolha outra IA.</value>
+  </data>
+  <data name="SECAEBA31021242CD" xml:space="preserve">
+    <value>Texto longo demais para o Gemini pela conta Google. Inicie uma nova conversa ou use a chave de API.</value>
+  </data>
+</root>

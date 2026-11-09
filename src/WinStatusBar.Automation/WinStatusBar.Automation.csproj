@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework><UseWindowsForms>true</UseWindowsForms><SelfContained>true</SelfContained></PropertyGroup>
+ <ItemGroup><ProjectReference Include="../WinStatusBar.Core/WinStatusBar.Core.csproj" /></ItemGroup>
+ <ItemGroup><Compile Include="../WinStatusBar/Services/ContextActions.cs" Link="ContextActions.cs"/><Compile Include="../WinStatusBar/Services/ContextActions.Interop.cs" Link="ContextActions.Interop.cs"/></ItemGroup>
+</Project>

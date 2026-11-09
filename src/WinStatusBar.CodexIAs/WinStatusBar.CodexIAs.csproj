@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    IAs da barra no Codex (antes "Codex IAs", app separado): encaminhador do Codex (porta 11435) e as IAs configuradas
+    no seletor de modelos. Processo próprio, em segundo plano: o Codex continua funcionando com a barra fechada ou
+    atualizando. Publicado na pasta Automation, junto do auxiliar de controle, aproveitando o .NET de lá.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <SelfContained>true</SelfContained>
+    <RootNamespace>CodexIAs</RootNamespace>
+    <AssemblyName>WinStatusBar.CodexIAs</AssemblyName>
+    <ApplicationIcon>../WinStatusBar/Assets/WinStatusBar.ico</ApplicationIcon>
+    <!-- Igual à barra (WinUI 3): o navegador do WebView2 é compartilhado e herda a escala de quem o abriu; com outra
+         escala, o WebView2 recusa a pasta de perfil da barra (ERROR_INVALID_STATE). -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Mesma versão do WebView2 da barra (Windows App SDK), por cautela. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3179.45" />
+    <!-- O Codex comprime os pedidos (zstd); o encaminhador precisa ler o modelo pedido. -->
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.6" />
+    <!-- Chave da API OpenAI do encaminhador (DPAPI do usuário). -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../WinStatusBar.Core/WinStatusBar.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WinStatusBar.Tests" />
+  </ItemGroup>
+
+  <!-- O pacote do WebView2 também referencia a versão WPF; aqui só o WinForms é usado. -->
+  <Target Name="SemWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

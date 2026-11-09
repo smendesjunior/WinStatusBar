@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <AssemblyName>WinStatusBar.Tests</AssemblyName>
+    <!-- System.Drawing: gera imagens com texto para testar o OCR do Windows. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- O componente das IAs no Codex é publicado "self-contained"; aqui só as classes dele são testadas. -->
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WinStatusBar.Core\WinStatusBar.Core.csproj" />
+    <ProjectReference Include="..\..\src\WinStatusBar.CodexIAs\WinStatusBar.CodexIAs.csproj" />
+  </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../src/WinStatusBar/Views/SettingsWindow.xaml" LogicalName="SettingsWindow.xaml" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/WinStatusBar/Services/QiraAppBridge.cs" Link="QiraAppBridge.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ContextActions.cs" Link="ContextActions.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ContextActions.Interop.cs" Link="ContextActions.Interop.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/FolderShellOperations.cs" Link="FolderShellOperations.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ConversationStore.cs" Link="ConversationStore.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ContextAttachmentPolicy.cs" Link="ContextAttachmentPolicy.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/AdaptiveLogic.cs" Link="AdaptiveLogic.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/NetworkUpdater.cs" Link="NetworkUpdater.cs" />
+  </ItemGroup>
+  <!-- Como no componente das IAs no Codex: só a versão WinForms do WebView2 (a WPF do pacote gera aviso de conflito). -->
+  <Target Name="SemWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+</Project>
