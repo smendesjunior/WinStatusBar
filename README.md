@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <img src="docs/screenshots/reel.webp" alt="Animated tour of WinStatusBar: the agent glowing while Claude Code works, the agent menu, Codex and Claude quotas, a request typed in the Ask box, the live CPU panel, the bar over Codex and File Explorer, and light mode (personal items blurred)">
+</p>
+
+<p align="center">
   <img src="docs/screenshots/bar-left.png" alt="Left side of the bar: AI agent, Codex, Claude and Gemini quotas, current task and the Ask your AI box">
   <img src="docs/screenshots/bar-right.png" alt="Right side of the bar: network, CPU, RAM, GPU, battery and shortcuts">
 </p>
