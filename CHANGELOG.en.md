@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.0] - 2026-11-09 · build BUILD
+## [1.4.0] - 2026-11-09 · build 20261109093522
 
 ### Added
 - 3-step setup wizard (About → Installing → Done) when the installer is opened with a double-click. Automatic updates still run with no window at all.

@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.0] - 2026-11-09 · compilação BUILD
+## [1.4.0] - 2026-11-09 · compilação 20261109093522
 
 ### Adicionado
 - Instalador com assistente de 3 etapas (Sobre → Instalando → Concluído) para quem abre o arquivo com dois cliques. As atualizações automáticas continuam sem nenhuma janela.
