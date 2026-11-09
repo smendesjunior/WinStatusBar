@@ -94,7 +94,7 @@ public partial class App : Application
 #endif
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Settings.Load();
-        NetworkUpdater.Start();
+        AppUpdater.Start();
         if (Settings.RestoredFromCloud) Log("Preferências restauradas do OneDrive (instalação limpa).");
         else if (Settings.PendingRestore) StartLateRestoreWatch();
         else if (Settings.Current.SyncSettings && SettingsService.CloudSettingsPath is { } cloud && !File.Exists(cloud)) { try { Settings.Save(); } catch { } } // primeira cópia no OneDrive

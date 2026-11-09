@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
 using WinStatusBar.Core.Integration;
+using WinStatusBar.Services;
 using Xunit;
 
 namespace WinStatusBar.Tests;
@@ -175,6 +176,12 @@ public class AppUpdateTests
             UpdateErrorText.Explain(new TaskCanceledException(), UpdateSourceKind.GitHub));
 
     [Fact]
+    public void ExplainsStalledDownload() =>
+        // Download parado por 2 minutos: o leitor do fluxo cancela com OperationCanceledException (não TaskCanceledException).
+        Assert.Equal("O GitHub demorou demais para responder. A barra tenta de novo sozinha em 15 minutos.",
+            UpdateErrorText.Explain(new OperationCanceledException(), UpdateSourceKind.GitHub));
+
+    [Fact]
     public void ExplainsDiskFull() =>
         Assert.Equal("Falta espaço no disco para baixar a atualização (cerca de 300 MB).",
             UpdateErrorText.Explain(new IOException("x", unchecked((int)0x80070070)), UpdateSourceKind.GitHub));
@@ -193,4 +200,27 @@ public class AppUpdateTests
     public void UnknownErrorIsPrefixed() =>
         Assert.Equal("Não foi possível verificar atualizações: falha qualquer",
             UpdateErrorText.Explain(new InvalidOperationException("falha qualquer"), UpdateSourceKind.GitHub));
+
+    // ---------------------------------------------------------------- uma consulta por vez
+    [Fact]
+    public async Task CheckNowWhileRunningReturnsSameTask()
+    {
+        // O botão "Verificar atualizações" durante a consulta automática acompanha a mesma consulta: nunca dois downloads.
+        var gate = new TaskCompletionSource<UpdateProgress>();
+        int calls = 0;
+        AppUpdater.CheckOverrideForTests = async () => { calls++; return await gate.Task; };
+        try
+        {
+            var first = AppUpdater.CheckNowAsync();
+            var second = AppUpdater.CheckNowAsync();
+            Assert.Same(first, second);
+            Assert.Equal(1, calls);
+            gate.SetResult(new UpdateProgress(UpdateStage.UpToDate, "ok"));
+            Assert.Equal(UpdateStage.UpToDate, (await first).Stage);
+            var third = AppUpdater.CheckNowAsync();
+            Assert.NotSame(first, third);
+            Assert.Equal(2, calls);
+        }
+        finally { AppUpdater.CheckOverrideForTests = null; }
+    }
 }

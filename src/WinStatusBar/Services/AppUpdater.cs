@@ -1,0 +1,185 @@
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Reflection;
+using WinStatusBar.Core.Integration;
+
+namespace WinStatusBar.Services;
+
+internal enum UpdateStage { Checking, UpToDate, Downloading, Installing, Failed, Disabled }
+
+internal sealed record UpdateProgress(UpdateStage Stage, string Text);
+
+/// <summary>
+/// Atualização silenciosa da instalação por usuário: consulta a Release mais recente do GitHub (ou a pasta local deste
+/// PC, com <c>"Mode": "Local"</c>), baixa, confere tamanho e SHA-256 e executa o instalador com <c>/quiet /update</c>.
+/// Uma consulta por vez; o estado vai para Configurações › Sobre por <see cref="StatusChanged"/>.
+/// </summary>
+internal static class AppUpdater
+{
+    private const string DisabledText = "Compilação local: atualização automática desligada.";
+    private static readonly object Gate = new();
+    private static Task<UpdateProgress>? _current;
+    private static bool _sourceLogged;
+
+    private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    private static string UpdatesDir => Path.Combine(LocalAppData, "WinStatusBar", "Updates");
+    private static readonly string? CurrentBuild = typeof(AppUpdater).Assembly
+        .GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "NetworkUpdateBuild")?.Value;
+    private static readonly string CurrentVersion = typeof(AppUpdater).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "1.0.0";
+    private static readonly HttpClient Http = CreateClient();
+
+    /// <summary>Instalação pelo EXE, fora do pacote MSIX, com compilação carimbada. Builds de desenvolvimento não se atualizam.</summary>
+    public static bool IsEnabled { get; } = !PackageContext.IsPackaged && !string.IsNullOrEmpty(CurrentBuild)
+        && AppContext.BaseDirectory.TrimEnd('\\').Equals(Path.Combine(LocalAppData, "Programs", "WinStatusBar"), StringComparison.OrdinalIgnoreCase);
+
+    public static UpdateSourceKind? SourceKind { get; private set; }
+    public static UpdateProgress? LastStatus { get; private set; }
+    public static event Action<UpdateProgress>? StatusChanged;
+
+    /// <summary>Só para testes: substitui a consulta real.</summary>
+    internal static Func<Task<UpdateProgress>>? CheckOverrideForTests { get; set; }
+
+    public static void Start()
+    {
+        if (!IsEnabled) return;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(UpdateRules.FirstCheckDelay);
+            while (true)
+            {
+                // Installing só volta com o instalador concluído; normalmente ele já fechou esta barra antes.
+                if ((await CheckNowAsync()).Stage == UpdateStage.Installing) return;
+                await Task.Delay(UpdateRules.CheckInterval);
+            }
+        });
+    }
+
+    /// <summary>Consulta agora. Se já houver uma consulta em andamento (automática ou do botão), devolve a mesma.</summary>
+    public static Task<UpdateProgress> CheckNowAsync()
+    {
+        lock (Gate)
+        {
+            if (_current is { IsCompleted: false }) return _current;
+            _current = CheckOverrideForTests?.Invoke() ?? Task.Run(RunAsync);
+            return _current;
+        }
+    }
+
+    private static async Task<UpdateProgress> RunAsync()
+    {
+        if (!IsEnabled) return Report(new(UpdateStage.Disabled, DisabledText));
+        var kind = UpdateSourceKind.GitHub;
+        string part = Path.Combine(UpdatesDir, UpdateRules.SetupFileName + ".part");
+        try
+        {
+            Report(new(UpdateStage.Checking, "Procurando…"));
+            string sourceFile = Path.Combine(LocalAppData, "WinStatusBar", "update-source.json");
+            var source = UpdateSource.Resolve(File.Exists(sourceFile) ? await File.ReadAllTextAsync(sourceFile) : null);
+            kind = source.Kind;
+            SourceKind = kind;
+            if (!_sourceLogged)
+            {
+                _sourceLogged = true;
+                App.Log(kind == UpdateSourceKind.Local ? "Atualização: pela pasta local " + source.LocalDirectory : "Atualização: pelo GitHub (" + UpdateRules.GitHubManifestUrl + ")");
+            }
+
+            string json = kind == UpdateSourceKind.Local
+                ? await File.ReadAllTextAsync(Path.Combine(source.LocalDirectory!, UpdateRules.ManifestFileName))
+                : await GetManifestAsync();
+            var manifest = UpdateRules.Parse(json)
+                ?? throw new InvalidDataException("O arquivo de controle da atualização está inválido. A barra tenta de novo sozinha em 15 minutos.");
+            bool newer = manifest.Build is { Length: 14 } && string.CompareOrdinal(manifest.Build, CurrentBuild) > 0;
+            if (!newer) return Report(new(UpdateStage.UpToDate, $"Você já tem a versão mais recente ({CurrentVersion})"));
+            if (!UpdateRules.IsInstallable(manifest, CurrentBuild!, kind))
+                throw new InvalidDataException("A versão encontrada não passou na conferência de segurança e foi ignorada.");
+
+            string label = manifest.Version ?? manifest.Build;
+            Directory.CreateDirectory(UpdatesDir);
+            Report(new(UpdateStage.Downloading, $"Baixando a versão {label}… 0%"));
+            if (kind == UpdateSourceKind.Local)
+            {
+                // Leitura compartilhada sem escrita: não aceita o instalador enquanto ele ainda está sendo gravado.
+                await using var file = new FileStream(Path.Combine(source.LocalDirectory!, UpdateRules.SetupFileName), FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
+                await CopyWithProgressAsync(file, part, manifest.Size, label, stall: null);
+            }
+            else await DownloadAsync(manifest.Url!, part, manifest.Size, label);
+            UpdateRules.VerifyDownload(part, manifest);
+            string exe = Path.Combine(UpdatesDir, UpdateRules.SetupFileName);
+            File.Move(part, exe, overwrite: true);
+
+            var installing = Report(new(UpdateStage.Installing, $"Instalando a versão {label}. A barra vai fechar e abrir de novo sozinha."));
+            App.Log($"Atualização: instalando {label} (compilação {manifest.Build}).");
+            var start = new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true };
+            start.ArgumentList.Add("/quiet");
+            start.ArgumentList.Add("/update");
+            using var process = Process.Start(start) ?? throw new InvalidOperationException("o instalador não iniciou.");
+            await process.WaitForExitAsync();
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException($"o instalador terminou com o código {process.ExitCode}. Detalhes em {Path.Combine(LocalAppData, "WinStatusBar", "setup.log")}.");
+            return installing;
+        }
+        catch (Exception ex)
+        {
+            try { if (File.Exists(part)) File.Delete(part); } catch { }
+            var failed = Report(new(UpdateStage.Failed, UpdateErrorText.Explain(ex, kind)));
+            App.Log($"Atualização: {failed.Text} ({ex.GetType().Name}: {ex.Message})");
+            return failed;
+        }
+    }
+
+    private static async Task<string> GetManifestAsync()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, UpdateRules.GitHubManifestUrl);
+        request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
+        using var response = await Http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    private static async Task DownloadAsync(string url, string target, long size, string label)
+    {
+        // Sem limite de tempo total (são ~261 MB); só desiste se ficar 2 minutos sem receber nada.
+        using var stall = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, stall.Token);
+        response.EnsureSuccessStatusCode();
+        await using var source = await response.Content.ReadAsStreamAsync(stall.Token);
+        await CopyWithProgressAsync(source, target, size, label, stall);
+    }
+
+    private static async Task CopyWithProgressAsync(Stream source, string target, long total, string label, CancellationTokenSource? stall)
+    {
+        await using var destination = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16, useAsync: true);
+        var buffer = new byte[1 << 20];
+        long done = 0;
+        int lastPercent = 0;
+        while (true)
+        {
+            stall?.CancelAfter(TimeSpan.FromMinutes(2));
+            int read = await source.ReadAsync(buffer, stall?.Token ?? CancellationToken.None);
+            if (read == 0) break;
+            await destination.WriteAsync(buffer.AsMemory(0, read));
+            done += read;
+            if (done > total) throw new InvalidDataException("O download veio maior que a publicação; a atualização fica para a próxima consulta.");
+            int percent = (int)(done * 100 / total);
+            if (percent != lastPercent) { lastPercent = percent; Report(new(UpdateStage.Downloading, $"Baixando a versão {label}… {percent}%")); }
+        }
+    }
+
+    private static UpdateProgress Report(UpdateProgress progress)
+    {
+        LastStatus = progress;
+        try { StatusChanged?.Invoke(progress); }
+        catch (Exception ex) { App.Log("Atualização: aviso de estado falhou: " + ex.Message); }
+        return progress;
+    }
+
+    private static HttpClient CreateClient()
+    {
+        // Proxy do sistema e redirecionamentos (github.com → servidor de arquivos do GitHub) ficam no padrão.
+        var http = new HttpClient(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(10) })
+            { Timeout = TimeSpan.FromSeconds(30) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("WinStatusBar-Updater/" + CurrentVersion);
+        return http;
+    }
+}

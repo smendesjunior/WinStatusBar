@@ -18,7 +18,7 @@ public static class UpdateErrorText
             IOException io when io.HResult is DiskFull or HandleDiskFull => "Falta espaço no disco para baixar a atualização (cerca de 300 MB).",
             HttpRequestException { StatusCode: HttpStatusCode.NotFound } => "A versão nova ainda está sendo publicada no GitHub." + Retry,
             HttpRequestException or SocketException => "Sem conexão com o GitHub." + Retry,
-            TaskCanceledException or TimeoutException => (local ? "A pasta local de atualização demorou demais para responder." : "O GitHub demorou demais para responder.") + Retry,
+            OperationCanceledException or TimeoutException => (local ? "A pasta local de atualização demorou demais para responder." : "O GitHub demorou demais para responder.") + Retry,
             DirectoryNotFoundException or FileNotFoundException or IOException or UnauthorizedAccessException when local =>
                 "A pasta local de atualização não está acessível." + Retry,
             _ => "Não foi possível verificar atualizações: " + ex.Message,
