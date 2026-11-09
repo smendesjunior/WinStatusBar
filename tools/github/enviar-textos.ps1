@@ -21,6 +21,11 @@ try {
     if ($changed) { & (Join-Path $PSScriptRoot 'verificar-segredos.ps1') -Paths $changed }
     Invoke-Native git @('push', 'origin', 'main') 'git push (main)' | Out-Null
     Say "main enviado ($($changed.Count) arquivo(s) alterado(s))."
+    # Descrição, página e tópicos do repositório (inglês), sempre iguais aos daqui.
+    $description = "AI command bar for Windows 11: chat with Claude, Codex, Gemini, Copilot, Qira or local models using the active window as context, run verified PC automations straight from the bar, bring every AI into Codex's model picker with one-click model sync, and track AI quotas and hardware live. Per-user install, silent auto-updates."
+    $topics = 'windows,windows-11,status-bar,appbar,winui3,dotnet,system-monitor,ai-assistant,claude,codex,gemini,copilot,ollama,automation,desktop-automation,llm,productivity'
+    Invoke-Native $gh @('repo', 'edit', $repo, '--description', $description, '--homepage', "https://github.com/$repo/releases/latest", '--add-topic', $topics) 'Descrição do repositório' | Out-Null
+    Say 'Descrição, página e tópicos do repositório atualizados.'
     $version = (Select-Xml -Path (Join-Path $root 'Directory.Build.props') -XPath '//Version').Node.InnerText
     $tag = "v$version"
     if (Invoke-Native git @('ls-remote', '--tags', 'origin', "refs/tags/$tag") 'git ls-remote') {

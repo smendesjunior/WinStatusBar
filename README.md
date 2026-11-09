@@ -1,9 +1,9 @@
 <h1 align="center">WinStatusBar</h1>
 
 <p align="center">
-  <b>A native Windows 11 status bar with a built-in AI assistant.</b><br>
-  Chat with several AIs using the context of the active window, keep an eye on your hardware and AI quotas,<br>
-  and let the assistant automate your PC — files, Office, settings and apps — with verified, background-first actions.
+  <b>Your AIs, your PC, one bar.</b><br>
+  A native Windows 11 command bar that talks to Claude, Codex, Gemini, Copilot, Qira and local models,<br>
+  runs real automations on your PC straight from the bar, plugs every AI into Codex, and keeps your quotas and hardware in sight.
 </p>
 
 <p align="center">
@@ -20,6 +20,18 @@
 
 <p align="center"><sub>Docked at the top of the screen like a native Windows AppBar. Screenshots show the Portuguese (Brazil) interface; English, Spanish, French, Japanese and Simplified Chinese are included.</sub></p>
 
+## Why WinStatusBar
+
+| | |
+|---|---|
+| ⚡ **Commands straight from the bar** | Type what you need — "rename these files", "fill this Excel sheet", "install this app" — and the bar's executor does it on your PC with built-in, self-checking actions. |
+| 🪙 **Fewer tokens per task** | Ready-made actions return short, verified results, and the bar remembers the steps that already worked on your PC, so the AI plans less and spends less. Context, Web and Edit start the way you set them. |
+| 🔌 **Every AI inside Codex** | Claude Code, Gemini, Copilot, Lenovo Qira, your API keys and local models show up in Codex's model picker through a gateway that runs only on your PC. |
+| 🔄 **Models always in sync** | One click re-reads every configured AI and updates the bar's chat and Codex's picker at once; new local Ollama models appear on their own. |
+| 📊 **Quotas and agents at a glance** | 5-hour and weekly limits, API spending and the task each agent is running right now. |
+| 🖥️ **Hardware panels** | CPU, GPU, RAM, network and battery panels with live charts, temperatures and End task. |
+| 🛡️ **Silent, safe updates** | Updates install by themselves from GitHub Releases, verified by SHA-256, with no prompts and no administrator rights. |
+
 ## Install
 
 ```
@@ -34,9 +46,28 @@ Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://githu
 
 ## Ask your AI from anywhere
 
-One box at the center of the bar talks to **Claude Code, Codex, Gemini, Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, and with **Edit** on, the assistant can work on your files, folders, Office documents, settings and apps — checking every step.
+One box at the center of the bar talks to **Claude Code, Codex, Gemini, Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
 
 <p align="center"><img src="docs/screenshots/chat.png" width="760" alt="Chat panel with the AI selector, project, model, context chip and the Context, Web and Edit toggles"></p>
+
+## Run commands on your PC, right from the bar
+
+Turn on **Edit** and ask. The bar's executor works the same way for every AI, with ready-made actions that check their own result:
+
+- **Files and folders** — create, rename in bulk, move, convert, organize.
+- **Office** — Word, Excel and PowerPoint through COM, without clicking around.
+- **Windows and apps** — open, focus, type, press controls by name, read the active window.
+- **System** — settings, services, registry, printing, downloads, app installs with winget and PowerShell when needed.
+
+Every step is verified before the next one, results come back as short text instead of long dumps, and paths that already worked on your PC are remembered and reused. The AI plans less, finishes in fewer rounds and spends fewer tokens. The executor keeps your Windows permissions; anything that needs administrator rights still asks through UAC.
+
+## Codex, supercharged
+
+- **All your AIs in Codex's model picker** — Claude Code (with your account), Gemini and Copilot (with their site modes), Lenovo Qira, your API keys and local models, served by a local gateway that only listens on your PC. It keeps working with the bar closed and starts with Windows.
+- **Set up by itself** — the first time the bar finds Codex it links everything, with a backup of `config.toml`. One click undoes it.
+- **One-click model sync** — **Check and update models** re-reads every configured AI and updates the bar and Codex together, flags OpenAI models that look obsolete (they only leave with your confirmation) and brings new Ollama models in.
+- **Fix AI problems** — one button checks and repairs the gateway, Codex's config, Ollama and Qira, and tells you exactly what still needs a login.
+- **Follow Codex from the bar** — current task, progress and 5-hour/weekly quotas without opening Codex.
 
 ## Every AI at a glance
 
@@ -75,7 +106,6 @@ Click any metric for a live panel in the style of Task Manager: usage history, t
 
 ## And more
 
-- **Codex model picker** — the bar's AIs also show up in Codex's model selector, through a local gateway.
 - **Clipboard history and emoji picker**, Windows shortcuts and a light/dark look that follows Windows.
 - **Settings › Updates** shows the installed version, a **Check for updates** button and what changed in each version.
 
