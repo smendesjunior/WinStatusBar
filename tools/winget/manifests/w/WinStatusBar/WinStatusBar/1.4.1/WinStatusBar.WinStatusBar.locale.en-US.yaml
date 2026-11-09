@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
 
 PackageIdentifier: WinStatusBar.WinStatusBar
-PackageVersion: 1.4.0
+PackageVersion: 1.4.1
 PackageLocale: en-US
 Publisher: Sidney Junior
 PublisherUrl: https://github.com/smendesjunior
@@ -28,6 +28,6 @@ Tags:
 - status-bar
 - system-monitor
 - windows-11
-ReleaseNotesUrl: https://github.com/smendesjunior/WinStatusBar/releases/tag/v1.4.0
+ReleaseNotesUrl: https://github.com/smendesjunior/WinStatusBar/releases/tag/v1.4.1
 ManifestType: defaultLocale
 ManifestVersion: 1.10.0

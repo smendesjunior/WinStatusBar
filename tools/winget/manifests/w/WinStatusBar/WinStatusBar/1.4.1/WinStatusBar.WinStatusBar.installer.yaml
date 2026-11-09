@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
 
 PackageIdentifier: WinStatusBar.WinStatusBar
-PackageVersion: 1.4.0
+PackageVersion: 1.4.1
 InstallerLocale: pt-BR
 MinimumOSVersion: 10.0.19041.0
 InstallerType: exe
@@ -21,11 +21,11 @@ ReleaseDate: 2026-11-09
 AppsAndFeaturesEntries:
 - DisplayName: WinStatusBar
   Publisher: Sidney Junior
-  DisplayVersion: 1.4.0
+  DisplayVersion: 1.4.1
   ProductCode: WinStatusBar
 Installers:
 - Architecture: x64
-  InstallerUrl: https://github.com/smendesjunior/WinStatusBar/releases/download/v1.4.0/WinStatusBar-Setup.exe
-  InstallerSha256: 7FFD16636055D75EF2E5D13A7C26E37D7A062F1C73D6472CBD7009D2C8006D74
+  InstallerUrl: https://github.com/smendesjunior/WinStatusBar/releases/download/v1.4.1/WinStatusBar-Setup.exe
+  InstallerSha256: CADBE9338D31114C7F709CF28F82BFFBA46ACB4204E73218E8DAC0CF539F4721
 ManifestType: installer
 ManifestVersion: 1.10.0
