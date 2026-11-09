@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using WinStatusBar.Core.Integration;
+using WinStatusBar.Services;
 namespace WinStatusBar.Views;
 
 /// <summary>Página "Sobre": identificação do aplicativo, versão/compilação, autor, contato e créditos.</summary>
@@ -67,10 +69,32 @@ public sealed partial class SettingsWindow
         {
             try { Process.Start(new ProcessStartInfo("explorer.exe", "\"" + dataFolder + "\"") { UseShellExecute = true }); } catch { }
         });
+        // Atualizações: botão para consultar agora + estado da consulta (a mesma rotina da consulta automática).
+        var updateStatus = Help("");
+        updateStatus.TextWrapping = TextWrapping.Wrap;
+        var checkUpdates = ActionButton("Verificar atualizações", () => _ = AppUpdater.CheckNowAsync());
+        checkUpdates.HorizontalAlignment = HorizontalAlignment.Stretch;
+        void ShowUpdate(UpdateProgress? progress)
+        {
+            updateStatus.Text = AppUpdater.IsEnabled ? progress?.Text ?? "" : "Compilação local: atualização automática desligada.";
+            updateStatus.Visibility = updateStatus.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+            checkUpdates.IsEnabled = AppUpdater.IsEnabled && progress?.Stage is not (UpdateStage.Checking or UpdateStage.Downloading or UpdateStage.Installing);
+        }
+        ShowUpdate(AppUpdater.LastStatus);
+        Action<UpdateProgress> onUpdate = progress => DispatcherQueue.TryEnqueue(() => ShowUpdate(progress));
+        AppUpdater.StatusChanged += onUpdate;
+        Closed += (_, _) => AppUpdater.StatusChanged -= onUpdate;
+        var updatePanel = new StackPanel { Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
+        updatePanel.Children.Add(checkUpdates);
+        updatePanel.Children.Add(updateStatus);
+        string updateHelp = AppUpdater.SourceKind == UpdateSourceKind.Local
+            ? "Procura novas versões sozinha a cada 15 minutos, pela pasta local Instalador, e se atualiza sem pedir administrador."
+            : "Procura novas versões sozinha a cada 15 minutos, pelo GitHub, e se atualiza sem pedir administrador.";
+
         page.Children.Add(Group(
             Row("Sistema", null, new TextBlock { Text = windows, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center }),
             Row("Runtime", null, new TextBlock { Text = runtime, VerticalAlignment = VerticalAlignment.Center }),
-            Row("Atualizações", "O aplicativo instalado pelo EXE procura novas versões automaticamente a cada 5 minutos e se atualiza sem pedir administrador.", new TextBlock { Text = "Automáticas", VerticalAlignment = VerticalAlignment.Center }),
+            Row("Atualizações", updateHelp, updatePanel),
             Row("Suporte", "Copie a versão e o sistema para enviar junto do relato, ou abra a pasta com o registro (log) do aplicativo.", Buttons(copy, openData)),
             copied));
 

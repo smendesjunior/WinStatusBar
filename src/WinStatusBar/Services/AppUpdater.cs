@@ -33,7 +33,26 @@ internal static class AppUpdater
     public static bool IsEnabled { get; } = !PackageContext.IsPackaged && !string.IsNullOrEmpty(CurrentBuild)
         && AppContext.BaseDirectory.TrimEnd('\\').Equals(Path.Combine(LocalAppData, "Programs", "WinStatusBar"), StringComparison.OrdinalIgnoreCase);
 
-    public static UpdateSourceKind? SourceKind { get; private set; }
+    private static UpdateSourceKind? _sourceKind;
+
+    /// <summary>Origem desta instalação; antes da primeira consulta, lida do update-source.json (para o texto de Sobre).</summary>
+    public static UpdateSourceKind? SourceKind
+    {
+        get
+        {
+            if (_sourceKind is null && IsEnabled)
+            {
+                try
+                {
+                    string file = Path.Combine(LocalAppData, "WinStatusBar", "update-source.json");
+                    _sourceKind = UpdateSource.Resolve(File.Exists(file) ? File.ReadAllText(file) : null).Kind;
+                }
+                catch { }
+            }
+            return _sourceKind;
+        }
+        private set => _sourceKind = value;
+    }
     public static UpdateProgress? LastStatus { get; private set; }
     public static event Action<UpdateProgress>? StatusChanged;
 
