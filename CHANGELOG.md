@@ -7,6 +7,17 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.1] - 2026-11-09 · compilação 20261109103623
+
+### Corrigido
+- Atualização automática: uma queda de conexão no meio do download mostra "A conexão com o GitHub caiu durante o download", em vez de um texto técnico em inglês.
+- Atualização automática: o instalador já baixado e conferido é reaproveitado. Depois de 3 falhas seguidas da mesma versão, a consulta automática passa a esperar 6 horas (o botão "Verificar atualizações" continua tentando na hora). Antes, uma falha que se repetia baixava cerca de 270 MB a cada 15 minutos.
+- Redes com proxy que pede o login do Windows: a atualização e o download do Microsoft Edge WebView2 passam a enviar as credenciais da conta.
+- Instalador: quando a instalação falha, a etapa 3 explica o motivo em português simples (acesso negado, arquivo em uso, disco cheio) e só diz "Nada foi alterado" quando os arquivos antigos ainda estavam no lugar.
+
+### Alterado
+- Publicação: a busca de segredos confere também os commits ainda não enviados e os nomes internos, e uma versão já publicada é recusada antes de qualquer mudança.
+
 ## [1.4.0] - 2026-11-09 · compilação 20261109093522
 
 ### Adicionado
