@@ -86,8 +86,9 @@ public sealed partial class SettingsWindow
         var credentials = new StackPanel { Spacing = 6 }; credentials.Children.Add(key); credentials.Children.Add(buttons); credentials.Children.Add(feedback);
         _openAiBillingPanel.Children.Add(Group(Row("Consulta direta de uso e custos", "Alternativa ao login: requer chave administrativa da organização. É diferente da chave de conversa e não informa saldo de créditos. Fica no Cofre do Windows; não é sincronizada.", credentials)));
         BuildModelsPage();
+        BuildUpdatesPage();
         BuildAboutPage();
-        string[] order = ["system", "appearance", "shortcuts", "ai", "models", "command", "gpu", "connections", "battery", "clip", "diagnostics", "about"];
+        string[] order = ["system", "appearance", "shortcuts", "ai", "models", "command", "gpu", "connections", "battery", "clip", "diagnostics", "updates", "about"];
         var items = Nav.MenuItems.OfType<NavigationViewItem>().ToDictionary(i => (string)i.Tag);
         Nav.MenuItems.Clear(); foreach (string tag in order) if (items.TryGetValue(tag, out var item)) Nav.MenuItems.Add(item);
         if (items.TryGetValue("gpu", out var hardware)) hardware.Content = "Hardware";

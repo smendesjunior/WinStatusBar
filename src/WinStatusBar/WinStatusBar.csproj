@@ -39,6 +39,8 @@
     <Content Include="Assets\AgentLogos\*.svg" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\Battery\*.svg" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\FluentIcons-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Histórico mostrado em Configurações › Atualizações -->
+    <Content Include="..\..\CHANGELOG.md" Link="CHANGELOG.md" CopyToOutputDirectory="PreserveNewest" />
     <!-- Área de transferência e emojis (antigo Windows Clipmanager) -->
     <Content Include="Assets\Clipboard.ico;Assets\Clipboard.png" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Clip\dados\emoji-test.txt;Clip\dados\annotations-*.json;Clip\dados\UNICODE-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
