@@ -42,7 +42,7 @@ The bar blends into whatever is below it. Over a maximized window it takes on th
     <td width="50%" align="center"><b>Over Claude</b><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (personal items blurred)"></td>
   </tr>
   <tr>
-    <td width="50%" align="center"><b>Over File Explorer</b><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its tab bar (personal folders blurred)"></td>
+    <td width="50%" align="center"><b>Over File Explorer</b><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its Mica tab bar (personal folders blurred)"></td>
     <td width="50%" align="center"><b>Over the desktop</b><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper, with text that adapts for contrast"></td>
   </tr>
   <tr>
