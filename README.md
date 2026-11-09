@@ -45,6 +45,10 @@ The bar blends into whatever is below it. Over a maximized window it takes on th
     <td width="50%" align="center"><b>Over File Explorer</b><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its tab bar (personal folders blurred)"></td>
     <td width="50%" align="center"><b>Over the desktop</b><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper, with text that adapts for contrast"></td>
   </tr>
+  <tr>
+    <td width="50%" align="center"><b>Light mode · File Explorer</b><br><img src="docs/screenshots/integration-explorer-light.png" alt="WinStatusBar in light mode above a maximized File Explorer window (personal folders blurred)"></td>
+    <td width="50%" align="center"><b>Light mode · desktop with the CPU panel open</b><br><img src="docs/screenshots/integration-desktop-light.png" alt="WinStatusBar in light mode over the wallpaper, with the CPU detail panel open"></td>
+  </tr>
 </table>
 
 ## Install
