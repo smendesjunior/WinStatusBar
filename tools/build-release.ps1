@@ -1,12 +1,16 @@
-﻿# Build de release completo: testes → publish (self-contained, x64) → payload.zip → Instalador\WinStatusBar-Setup.exe
-# Uso: powershell -File tools\build-release.ps1 [-KeepIntermediates] [-SkipNetwork]
-# -SkipNetwork: gera e entrega em Instalador e no OneDrive CGM, sem publicar no compartilhamento rede.
-param([switch]$KeepIntermediates, [switch]$SkipNetwork)
+﻿# Build de release completo: testes → publish (self-contained, x64) → payload.zip → instalador → entrega e publicação.
+# Uso: powershell -File tools\build-release.ps1 [-KeepIntermediates] [-SandboxTest]
+#   (sem opções)     entrega em Instalador (este PC se atualiza por lá) e publica no GitHub (código + Release).
+#   -SandboxTest     só gera tools\sandbox\teste\WinStatusBar-Setup.exe para testar no Windows Sandbox (sem Instalador e sem GitHub).
+#   -KeepIntermediates mantém artifacts, bin e obj.
+param([switch]$KeepIntermediates, [switch]$SandboxTest)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $dotnet = 'C:\Program Files\dotnet\dotnet.exe'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'; $env:DOTNET_NOLOGO = '1'
 $updateBuild = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$version = (Select-Xml -Path (Join-Path $root 'Directory.Build.props') -XPath '//Version').Node.InnerText
+if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Versão inválida em Directory.Build.props: '$version'" }
 $art = Join-Path $root ('artifacts\build-' + $updateBuild)
 $app = Join-Path $art 'publish\WinStatusBar'
 $col = Join-Path $art 'publish\collector'
@@ -15,6 +19,18 @@ $payload = Join-Path $art 'payload.zip'
 $inst = Join-Path $art 'installer'
 # Cada compilação usa uma pasta nova; -KeepIntermediates também preserva builds anteriores.
 New-Item -ItemType Directory -Force $app, $col, $inst | Out-Null
+Write-Host "== WinStatusBar $version (compilação $updateBuild)"
+
+# A compilação entra no CHANGELOG antes do publish (o app leva o CHANGELOG.md para Configurações › Atualizações).
+# Aceita o marcador BUILD ou o número de um build anterior que não chegou a ser publicado.
+$utf8 = New-Object Text.UTF8Encoding $false
+foreach ($name in 'CHANGELOG.md', 'CHANGELOG.en.md') {
+    $file = Join-Path $root $name
+    if (-not (Test-Path -LiteralPath $file)) { continue }
+    $text = [IO.File]::ReadAllText($file)
+    $updated = [regex]::Replace($text, "(?m)^(## \[$([regex]::Escape($version))\][^\r\n]*?(?:compilação|build) )(?:BUILD|\d{14})", "`${1}$updateBuild")
+    if ($updated -ne $text) { [IO.File]::WriteAllText($file, $updated, $utf8) }
+}
 
 Write-Host '== Testes'
 & $dotnet test (Join-Path $root 'tests\WinStatusBar.Tests\WinStatusBar.Tests.csproj') -c Release -nologo -v q
@@ -63,42 +79,39 @@ Remove-Item (Join-Path $inst '*.pdb') -Force -ErrorAction SilentlyContinue
 $setup = Get-Item (Join-Path $inst 'WinStatusBar.Setup.exe')
 $appSize = (Get-ChildItem $app -Recurse | Measure-Object Length -Sum).Sum
 Write-Host ("Aplicativo: {0} ({1:N1} MB)" -f $app, ($appSize / 1MB))
+if ($setup.Length -lt 50MB) { throw "Instalador pequeno demais ($($setup.Length) bytes): o pacote do app não entrou." }
 
-# Entrega final: um único arquivo em Instalador\ (o que vai para outros PCs)
-$final = Join-Path $root 'Instalador'
-New-Item -ItemType Directory -Force $final | Out-Null
-$target = Join-Path $final 'WinStatusBar-Setup.exe'
-Copy-Item $setup.FullName $target -Force
-Write-Host ("Instalador: {0} ({1:N1} MB)" -f $target, ((Get-Item $target).Length / 1MB))
-$manifestPath = Join-Path $final 'WinStatusBar-update.json'
-@{ Build = $updateBuild; Sha256 = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash; Size = (Get-Item -LiteralPath $target).Length } |
-    ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding UTF8
-# Entrega única em Instalador: este PC atualiza daqui (padronizado em 07/11/2026). Outros PCs: compartilhamento rede
-# ou a pasta do OneDrive CGM (PCs com essa conta sincronizada; o BAT de lá grava essa pasta como fonte de atualização).
-$cgmDir = Join-Path $env:USERPROFILE 'OneDrive - Empresa\WinStatusBar'
-if (Test-Path -LiteralPath (Split-Path $cgmDir -Parent)) {
-    New-Item -ItemType Directory -Force $cgmDir | Out-Null
-    # Mesma ordem da rede: EXE completo primeiro, manifesto por último.
-    Copy-Item -LiteralPath $target -Destination (Join-Path $cgmDir 'WinStatusBar-Setup.exe') -Force
-    Copy-Item -LiteralPath (Join-Path $final 'Instalar-WinStatusBar.bat') -Destination (Join-Path $cgmDir 'Instalar-WinStatusBar.bat') -Force
-    Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $cgmDir 'WinStatusBar-update.json') -Force
-    Write-Host "Atualização publicada no OneDrive CGM: $cgmDir"
-}
-# Publicação: arquivo completo primeiro; manifesto por último. Nunca anuncia uma cópia em andamento.
-$networkDir = '\\servidor\rede\Obras\Engenharia\WinStatusBar'
-try {
-    if ($SkipNetwork) { throw 'publicação na rede adiada (-SkipNetwork)' }
-    if (-not (Test-Path -LiteralPath $networkDir)) { throw 'Compartilhamento indisponível' }
-    $networkSetup = Join-Path $networkDir 'WinStatusBar-Setup.exe'
-    $networkManifest = Join-Path $networkDir 'WinStatusBar-update.json'
-    # O compartilhamento permite gravar, mas restringe substituição por rename.
-    # Tamanho/hash rejeitam cópias parciais; publica o manifesto por último.
-    Copy-Item -LiteralPath $target -Destination $networkSetup -Force -ErrorAction Stop
-    Copy-Item -LiteralPath $manifestPath -Destination $networkManifest -Force -ErrorAction Stop
-    Copy-Item -LiteralPath (Join-Path $final 'Instalar-WinStatusBar.bat') -Destination (Join-Path $networkDir 'Instalar-WinStatusBar.bat') -Force -ErrorAction Stop
-    Write-Host "Atualização publicada na rede: $updateBuild"
-} catch {
-    Write-Warning "Instalador gerado, mas não publicado na rede: $($_.Exception.Message). Copie o EXE e WinStatusBar-update.json de Instalador para $networkDir."
+if ($SandboxTest) {
+    # Teste no Windows Sandbox: compilação anterior à da Release, para provar a atualização silenciosa pelo GitHub.
+    $testDir = Join-Path $root 'tools\sandbox\teste'
+    Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force $testDir | Out-Null
+    Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $testDir 'WinStatusBar-Setup.exe') -Force
+    Write-Host "Instalador de teste (compilação $updateBuild): $testDir\WinStatusBar-Setup.exe"
+} else {
+    # Entrega local: este PC se atualiza por Instalador (update-source.json com Mode Local).
+    $final = Join-Path $root 'Instalador'
+    New-Item -ItemType Directory -Force $final | Out-Null
+    $target = Join-Path $final 'WinStatusBar-Setup.exe'
+    Copy-Item $setup.FullName $target -Force
+    Write-Host ("Instalador: {0} ({1:N1} MB)" -f $target, ((Get-Item $target).Length / 1MB))
+    $manifestPath = Join-Path $final 'WinStatusBar-update.json'
+    $manifest = [ordered]@{
+        Version = $version
+        Build   = $updateBuild
+        Sha256  = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+        Size    = (Get-Item -LiteralPath $target).Length
+        Url     = "https://github.com/smendesjunior/WinStatusBar/releases/download/v$version/WinStatusBar-Setup.exe"
+    }
+    # Manifesto por último: nunca anuncia um instalador ainda em cópia.
+    [IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json), $utf8)
+
+    # Publicação: GitHub (código + Release). Falha não apaga a entrega local; fica como pendência no log.
+    try {
+        & (Join-Path $PSScriptRoot 'publicar-github.ps1') -Version $version -Build $updateBuild -Setup $target -Manifest $manifestPath
+    } catch {
+        Write-Warning "Instalador gerado em Instalador, mas a publicação no GitHub ficou pendente: $($_.Exception.Message)"
+    }
 }
 
 # Limpeza (determinação de 07/11/2026): a pasta fica só com os arquivos finais. Remove este build e os anteriores
@@ -109,6 +122,6 @@ if (-not $KeepIntermediates) {
     Get-ChildItem (Join-Path $root 'src'), (Join-Path $root 'tests') -Directory -Recurse -Force |
         Where-Object { $_.Name -in 'bin', 'obj' } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     Get-ChildItem (Join-Path $root 'tools\diag') -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Extension -in '.txt', '.log' } | Remove-Item -Force -ErrorAction SilentlyContinue
+        Where-Object { $_.Extension -in '.txt', '.log', '.png' } | Remove-Item -Force -ErrorAction SilentlyContinue
     Write-Host 'Temporários e builds anteriores removidos (artifacts, bin, obj, saídas de diagnóstico).'
 }

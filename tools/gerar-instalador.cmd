@@ -1,3 +1,3 @@
 @echo off
-rem Gera o instalador sem publicar na rede rede (suspensa ate liberacao). Saida em docs\instalador\ultimo-build.log
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build-release.ps1" -SkipNetwork > "%~dp0..\docs\instalador\ultimo-build.log" 2>&1
+rem Gera o instalador, entrega em Instalador (este PC) e publica no GitHub (codigo + Release). Saida em docs\instalador\ultimo-build.log
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build-release.ps1" > "%~dp0..\docs\instalador\ultimo-build.log" 2>&1

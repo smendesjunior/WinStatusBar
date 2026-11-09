@@ -1,4 +1,4 @@
-# Liga o Windows Sandbox (recurso oficial do Windows), usado para testar o instalador num ambiente descartável.
+﻿# Liga o Windows Sandbox (recurso oficial do Windows), usado para testar o instalador num ambiente descartável.
 # Roda fora do pacote do Claude (aberto pelo ligar-sandbox.cmd via explorer.exe) e pede administrador pelo UAC.
 param([switch]$Elevated)
 $ErrorActionPreference = 'Stop'

@@ -1,4 +1,4 @@
-# Marca ESTE PC (desenvolvedor) para se atualizar só pela pasta local Instalador, e não pelo GitHub.
+﻿# Marca ESTE PC (desenvolvedor) para se atualizar só pela pasta local Instalador, e não pelo GitHub.
 # Roda fora do pacote do Claude (aberto pelo .cmd via explorer.exe): grava em %LOCALAPPDATA%\WinStatusBar.
 # As versões 1.3.x continuam lendo LocalDirectory; a 1.4.0+ exige "Mode": "Local" (sem ele, usa o GitHub).
 $ErrorActionPreference = 'Stop'
