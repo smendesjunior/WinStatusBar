@@ -32,6 +32,15 @@
 | 🖥️ **Hardware panels** | CPU, GPU, RAM, network and battery panels with live charts, temperatures and End task. |
 | 🛡️ **Silent, safe updates** | Updates install by themselves from GitHub Releases, verified by SHA-256, with no prompts and no administrator rights. |
 
+## Feels like part of Windows
+
+The bar blends into whatever is below it. Over a maximized window it takes on that window's title bar, so the app and the bar read as one surface; over the wallpaper it turns transparent, and each part picks light or dark text for contrast.
+
+<p align="center"><sub><b>Over Codex</b></sub><br><img src="docs/screenshots/integration-codex.png" alt="WinStatusBar above a maximized Codex window, matching its title bar"></p>
+<p align="center"><sub><b>Over Claude</b></sub><br><img src="docs/screenshots/integration-claude.png" alt="WinStatusBar above a maximized Claude window, matching its title bar (chat content blurred)"></p>
+<p align="center"><sub><b>Over File Explorer</b></sub><br><img src="docs/screenshots/integration-explorer.png" alt="WinStatusBar above a maximized File Explorer window, matching its tab bar"></p>
+<p align="center"><sub><b>Over the desktop</b></sub><br><img src="docs/screenshots/integration-desktop.png" alt="WinStatusBar transparent over the wallpaper"></p>
+
 ## Install
 
 ```
