@@ -12,7 +12,7 @@ namespace WinStatusBar.Setup;
 /// Instalador/desinstalador por usuário (sem administrador).
 ///   WinStatusBar.Setup.exe              → instala/atualiza e inicia
 ///   WinStatusBar.Setup.exe /uninstall   → desinstalação limpa
-///   /quiet                              → sem mensagens
+///   /quiet                              → sem janelas (atualizações automáticas, winget); sem /quiet abre o assistente
 ///   /keepdata                           → (desinstalação) mantém configurações em %LOCALAPPDATA%\WinStatusBar
 /// </summary>
 internal static class Program
@@ -63,11 +63,12 @@ internal static class Program
                 Uninstall(keepData);
                 if (!quiet) Info("WinStatusBar removido.\n\n" + Log);
             }
-            else
+            else if (!quiet)
             {
-                Install(args.Any(a => a.Equals("/update", StringComparison.OrdinalIgnoreCase)));
-                if (!quiet) Info("WinStatusBar instalado e em execução.\n\n" + Log);
+                // Dois cliques no EXE: assistente de 3 etapas. Ele grava o próprio registro (setup.log).
+                return RunWizard();
             }
+            else Install(args.Any(a => a.Equals("/update", StringComparison.OrdinalIgnoreCase)), launch: true, step: null);
             code = 0;
         }
         catch (Exception ex)
@@ -81,11 +82,44 @@ internal static class Program
         return code;
     }
 
-    private static void Install(bool updateOnly)
+    /// <summary>Assistente (sem /quiet). 0 = instalado, 1 = cancelado, 2 = falhou.</summary>
+    private static int RunWizard()
+    {
+        System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
+        System.Windows.Forms.Application.EnableVisualStyles();
+        System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+        string version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+        int result = 1;
+        using var wizard = new SetupWizard(version, InstalledVersion(), step =>
+        {
+            try { Install(updateOnly: false, launch: false, step); result = 0; }
+            catch (Exception ex) { Log.AppendLine("ERRO: " + ex.Message); result = 2; throw; }
+            finally { WriteLog("install"); }
+        }, Path.Combine(DataDir, "setup.log"));
+        System.Windows.Forms.Application.Run(wizard);
+        if (result == 0 && wizard.LaunchRequested)
+            try { Process.Start(new ProcessStartInfo(AppExe) { UseShellExecute = true, WorkingDirectory = InstallDir }); } catch { }
+        return result;
+    }
+
+    /// <summary>Versão registrada em Aplicativos instalados, se a barra já estiver instalada.</summary>
+    private static string? InstalledVersion()
+    {
+        try
+        {
+            if (!File.Exists(AppExe)) return null;
+            using var key = Registry.CurrentUser.OpenSubKey(UninstallKey);
+            return key?.GetValue("DisplayVersion") as string;
+        }
+        catch { return null; }
+    }
+
+    private static void Install(bool updateOnly, bool launch, Action<string>? step)
     {
         using var payload = typeof(Program).Assembly.GetManifestResourceStream("payload.zip")
                            ?? throw new InvalidOperationException("Pacote do aplicativo ausente no instalador.");
-        try { InstallationFiles.Replace(payload, InstallDir, StopRunningApp); }
+        step?.Invoke("Copiando os arquivos…");
+        try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); StopRunningApp(); }); }
         catch
         {
             // A failed update must not leave the previous, preserved installation closed.
@@ -96,14 +130,18 @@ internal static class Program
         File.Copy(Environment.ProcessPath!, Path.Combine(InstallDir, "Uninstall.exe"), true);
         Log.AppendLine($"Arquivos: {InstallDir}");
 
+        step?.Invoke("Criando o atalho no menu Iniciar…");
         CreateShortcut(ShortcutPath, AppExe, InstallDir, "Barra de status e monitoramento do Windows 11");
         Log.AppendLine("Atalho no menu Iniciar criado.");
 
+        step?.Invoke("Registrando em Aplicativos instalados…");
         using (var key = Registry.CurrentUser.CreateSubKey(UninstallKey))
         {
             key.SetValue("DisplayName", AppName);
             key.SetValue("DisplayVersion", typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
-            key.SetValue("Publisher", AppName);
+            // Editor e página do projeto: o winget relaciona a instalação ao pacote SidneyJunior.WinStatusBar por estes dados.
+            key.SetValue("Publisher", "Sidney Junior");
+            key.SetValue("URLInfoAbout", "https://github.com/smendesjunior/WinStatusBar");
             key.SetValue("DisplayIcon", AppExe + ",0");
             key.SetValue("InstallLocation", InstallDir);
             key.SetValue("UninstallString", $"\"{Path.Combine(InstallDir, "Uninstall.exe")}\" /uninstall");
@@ -119,8 +157,10 @@ internal static class Program
         if (ReadStartWithWindows()) { StartupService.Set(true, AppExe); Log.AppendLine("Inicialização automática ativada (" + StartupService.LastMethod + ")."); }
         // Dependências em toda instalação e atualização (decisão de 07/11/2026: os PCs da rede recebem pelo fluxo
         // automático). Só o WebView2 oficial da Microsoft, por usuário, sem administrador; presente = só consulta ao registro.
+        step?.Invoke("Conferindo o Microsoft Edge WebView2…");
         EnsureWebView2();
 
+        step?.Invoke("Ligando ao Claude Code…");
         try
         {
             if (!updateOnly && (Directory.Exists(ClaudeIntegrationInstaller.ClaudeConfigDir()) || File.Exists(ClaudeIntegrationInstaller.SettingsFile)))
@@ -129,6 +169,7 @@ internal static class Program
         }
         catch (Exception ex) { Log.AppendLine("Claude Code: integração não aplicada (" + ex.Message + ")"); }
 
+        if (!launch) return; // no assistente, a barra abre ao clicar em Concluir (se a caixa estiver marcada)
         Process.Start(new ProcessStartInfo(AppExe) { UseShellExecute = true, WorkingDirectory = InstallDir });
         Log.AppendLine("WinStatusBar iniciado.");
     }

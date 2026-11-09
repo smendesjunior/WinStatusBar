@@ -13,6 +13,8 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <!-- Assistente de instalação de 3 etapas (sem /quiet) -->
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\WinStatusBar.Core\WinStatusBar.Core.csproj" />
