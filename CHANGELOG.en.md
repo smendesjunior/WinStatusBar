@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.2] - 2026-11-09 · build 20261109163414
+
+### Changed
+- The bar's AIs in Codex: the automatic link now happens only where the bar was already installed (on update, when the PC has Codex and the link was never made). On a fresh install the link stays off until you click "Link to Codex" in Settings › Models.
+
 ## [1.4.1] - 2026-11-09 · build 20261109103623
 
 ### Fixed

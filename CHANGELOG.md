@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.2] - 2026-11-09 · compilação 20261109163414
+
+### Alterado
+- IAs da barra no Codex: a ligação automática acontece só onde a barra já estava instalada (na atualização, se o PC tem o Codex e a ligação nunca foi feita). Numa instalação nova, a ligação fica desligada até você clicar em "Ligar no Codex", em Configurações › Modelos.
+
 ## [1.4.1] - 2026-11-09 · compilação 20261109103623
 
 ### Corrigido
