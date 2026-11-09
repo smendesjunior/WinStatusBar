@@ -82,6 +82,19 @@ public static class CodexIntegration
 
     public static void SaveState(State state) => WriteAtomic(StateFile, JsonSerializer.Serialize(state, Pretty));
 
+    /// <summary>
+    /// Chamado pelo instalador (decisão de 09/11/2026): a ligação automática com o Codex só acontece onde a barra já estava
+    /// instalada. Numa instalação nova, grava a ligação como desligada (a barra pula a ligação automática quando o estado
+    /// existe); a pessoa liga em Configurações › Modelos. Nunca troca uma escolha já gravada. True = gravou.
+    /// </summary>
+    public static bool PrepareForInstall(string stateFile, bool hadInstallBefore)
+    {
+        if (hadInstallBefore || File.Exists(stateFile)) return false;
+        Directory.CreateDirectory(Path.GetDirectoryName(stateFile)!);
+        WriteAtomic(stateFile, JsonSerializer.Serialize(new State { Ligado = false }, Pretty));
+        return true;
+    }
+
     public static Report? LoadReport()
     {
         try { return File.Exists(ReportFile) ? JsonSerializer.Deserialize<Report>(File.ReadAllText(ReportFile)) : null; } catch { return null; }

@@ -52,7 +52,8 @@ internal static class CodexIasComponent
     /// Primeira vez com esta versão num PC com o Codex (determinação de 08/11/2026): liga as IAs da barra no Codex sozinha,
     /// com cópia do config.toml, depois que a barra termina de abrir. Só quando a ligação nunca foi feita neste PC (sem
     /// integracao.json): quem desligar depois continua desligado. Se falhar (ex.: porta ocupada), tenta de novo na próxima
-    /// abertura da barra.
+    /// abertura da barra. Numa instalação nova o instalador já grava a ligação como desligada (decisão de 09/11/2026:
+    /// ligar sozinho só onde a barra já estava instalada), então isto vale só para atualizações.
     /// </summary>
     public static void AutoEnableOnce()
     {

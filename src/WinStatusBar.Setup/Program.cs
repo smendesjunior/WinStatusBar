@@ -127,6 +127,8 @@ internal static class Program
     {
         using var payload = typeof(Program).Assembly.GetManifestResourceStream("payload.zip")
                            ?? throw new InvalidOperationException("Pacote do aplicativo ausente no instalador.");
+        // Instalação nova (nenhuma barra antes neste usuário): a ligação com o Codex não é feita sozinha (decisão de 09/11/2026).
+        bool hadInstallBefore = File.Exists(AppExe);
         step?.Invoke("Copiando os arquivos…");
         try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); StopRunningApp(); }); _filesReplaced = true; }
         catch
@@ -138,6 +140,12 @@ internal static class Program
         }
         File.Copy(Environment.ProcessPath!, Path.Combine(InstallDir, "Uninstall.exe"), true);
         Log.AppendLine($"Arquivos: {InstallDir}");
+        try
+        {
+            if (WinStatusBar.Core.Ai.Codex.CodexIntegration.PrepareForInstall(WinStatusBar.Core.Ai.Codex.CodexIntegration.StateFile, hadInstallBefore))
+                Log.AppendLine("IAs no Codex: instalação nova, ligação automática desativada (ligue em Configurações › Modelos).");
+        }
+        catch (Exception ex) { Log.AppendLine("IAs no Codex: estado da ligação não gravado (" + ex.Message + ")"); }
 
         step?.Invoke("Criando o atalho no menu Iniciar…");
         CreateShortcut(ShortcutPath, AppExe, InstallDir, "Barra de status e monitoramento do Windows 11");
