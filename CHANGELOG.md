@@ -12,7 +12,7 @@ A compilação (data e hora UTC) é o que o atualizador compara. A versão é pa
 ### Adicionado
 - Instalador com assistente de 3 etapas (Sobre → Instalando → Concluído) para quem abre o arquivo com dois cliques. As atualizações automáticas continuam sem nenhuma janela.
 - Configurações › Atualizações (aba nova): versão instalada, botão "Verificar atualizações" com o andamento (procurando, baixando, instalando ou o motivo de uma falha) e o que mudou em cada versão.
-- Instalação pelo winget, sem o aviso do SmartScreen: `winget install SidneyJunior.WinStatusBar` (depois que a Microsoft aprovar o pacote).
+- Instalação pelo winget, sem o aviso do SmartScreen: `winget install winstatusbar` (depois que a Microsoft aprovar o pacote).
 
 ### Alterado
 - Atualizações automáticas pelas Releases do GitHub (smendesjunior/WinStatusBar), a cada 15 minutos, em silêncio e sem pedir administrador. O instalador baixado é conferido (tamanho e SHA-256) antes de rodar.

@@ -13,12 +13,14 @@ tools/dev/*.txt
 tools/sandbox/teste/
 tools/accounts/*.json
 tools/qira-ponte/resultado.txt
+tools/readme/raw/
+tools/readme/*.txt
 .superpowers/
 
 # Entregas e material local (não vão para o repositório público)
 Instalador/
 docs/*
-!docs/winstatusbar-dark.png
+!docs/screenshots/
 output/
 Store/
 AGENTS.md

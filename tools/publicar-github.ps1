@@ -14,20 +14,7 @@ $repo = 'smendesjunior/WinStatusBar'
 $tag = "v$Version"
 $latestManifest = "https://github.com/$repo/releases/latest/download/WinStatusBar-update.json"
 
-function Find-Gh {
-    $cmd = Get-Command gh -ErrorAction SilentlyContinue
-    if ($cmd) { return $cmd.Source }
-    foreach ($p in "$env:ProgramFiles\GitHub CLI\gh.exe", "$env:LOCALAPPDATA\Programs\GitHub CLI\gh.exe") { if (Test-Path -LiteralPath $p) { return $p } }
-    return $null
-}
-
-# Programas externos (git, gh) escrevem progresso no stderr: lê como texto e decide pelo código de saída.
-function Invoke-Native([string]$Exe, [string[]]$Arguments, [string]$What) {
-    $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    try { $out = @(& $Exe @Arguments 2>&1 | ForEach-Object { "$_" }) } finally { $ErrorActionPreference = $old }
-    if ($LASTEXITCODE -ne 0) { throw "$What falhou (código $LASTEXITCODE): $($out -join ' ')" }
-    return $out
-}
+. (Join-Path $PSScriptRoot 'github\comum.ps1')
 
 $gh = Find-Gh
 if (-not $gh) { throw 'GitHub CLI não encontrado. Rode tools\github\configurar-github.cmd.' }
@@ -44,17 +31,8 @@ try {
     if ($remote) { throw "A versão $Version já foi publicada; suba a versão em Directory.Build.props." }
 
     # Notas da Release (inglês): seção da versão no CHANGELOG.en.md + como instalar.
-    $english = [IO.File]::ReadAllText((Join-Path $root 'CHANGELOG.en.md'))
-    $section = [regex]::Match($english, "(?ms)^## \[$([regex]::Escape($Version))\][^\r\n]*\r?\n(.*?)(?=^## \[|\z)")
-    if (-not $section.Success -or -not $section.Groups[1].Value.Trim()) { throw "Falta a seção [$Version] no CHANGELOG.en.md." }
-    $install = @'
-## Install
-- **winget** (no SmartScreen prompt): `winget install SidneyJunior.WinStatusBar`
-- **Installer**: download `WinStatusBar-Setup.exe` below and run it. Windows may show a SmartScreen prompt the first time (More info › Run anyway), because the installer is not code-signed yet.
-
-Existing installations update automatically and silently.
-'@
-    [IO.File]::WriteAllText($notesFile, $section.Groups[1].Value.Trim() + "`n`n" + $install, (New-Object Text.UTF8Encoding $false))
+    $notes = Get-ReleaseNotes $root $Version
+    [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
 
     # Código: commit de tudo que não está no .gitignore, depois da busca de segredos.
     Invoke-Native git @('add', '-A') 'git add' | Out-Null
