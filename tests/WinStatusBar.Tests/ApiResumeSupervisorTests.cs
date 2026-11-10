@@ -427,6 +427,33 @@ public class ApiResumeSupervisorTests
         }
         Assert.Equal(3, t.Launcher.Starts.Count);
         Assert.Contains(t.Host.Logs, l => l == "Continuar pela API: o app abriu a conversa antes do início (-32600); aguardando");
+        Assert.Single(t.Host.Notices); // um balão por espera, não um por tentativa
+    }
+
+    [Fact]
+    public async Task RepeatedWriterConflictsBackOff()
+    {
+        using var t = await Running();
+        for (int i = 0; i < 3; i++)
+        {
+            t.Launcher.Error("Error: thread x already has an active writer (code -32600)");
+            t.Launcher.Exit();
+            await t.Tick(S5);
+            if (i < 2) await t.Tick(S5);
+        }
+        Assert.Equal(3, t.Launcher.Starts.Count);
+        await t.Ticks(5, S5); // 25 s: ainda esperando (recuo de 30 s depois de 3 conflitos seguidos)
+        Assert.Equal(3, t.Launcher.Starts.Count);
+        Assert.StartsWith("Outro programa do Codex", t.Job().Detail);
+        await t.Tick(S5);
+        Assert.Equal(4, t.Launcher.Starts.Count);
+        t.Launcher.Error("Error: thread x already has an active writer (code -32600)");
+        t.Launcher.Exit();
+        await t.Tick(S5);
+        await t.Tick(TimeSpan.FromSeconds(60));
+        Assert.Equal(4, t.Launcher.Starts.Count); // 4º conflito: 2 min
+        await t.Tick(TimeSpan.FromSeconds(60));
+        Assert.Equal(5, t.Launcher.Starts.Count);
     }
 
     [Fact]

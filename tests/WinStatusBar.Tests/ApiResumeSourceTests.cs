@@ -208,6 +208,13 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
+    public void EndOfAJobRescansOnlyOnce()
+    {
+        string body = Body(Svc(), "private void OnSupervisorChanged()");
+        Assert.Contains("_rescannedEnds.Add(", body);
+    }
+
+    [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
         string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");

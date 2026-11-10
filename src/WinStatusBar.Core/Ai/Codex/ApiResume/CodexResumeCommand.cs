@@ -7,7 +7,13 @@ public sealed record ResumeSpec(string ThreadId, string Cwd, IReadOnlyList<strin
     string SandboxMode, string ApprovalPolicy, bool? NetworkAccess);
 
 /// <summary>O que importa do config.toml do Codex: as exclusões de ambiente dos comandos e o login obrigatório pelo ChatGPT.</summary>
-public sealed record CodexConfigFacts(IReadOnlyList<string> EnvExcludes, bool ForcedChatGptLogin);
+public sealed record CodexConfigFacts(IReadOnlyList<string> EnvExcludes, bool ForcedChatGptLogin)
+{
+    /// <summary>Perfil ativo (profile = "x" na raiz): os valores dele passariam por cima dos -c da raiz.</summary>
+    public string? Profile { get; init; }
+    /// <summary>model_provider da raiz (outro que não "openai" mandaria o turno a outro lugar).</summary>
+    public string? ModelProvider { get; init; }
+}
 
 /// <summary>
 /// Monta o codex exec resume na ordem verificada no teste pago:
@@ -65,7 +71,7 @@ public static class CodexResumeCommand
     }
 
     /// <summary>Argumentos do codex.exe, um elemento por "-c", valores em TOML. Confere tudo de novo e lança ArgumentException.</summary>
-    public static IReadOnlyList<string> Arguments(ResumeSpec spec, IReadOnlyList<string> configEnvExcludes)
+    public static IReadOnlyList<string> Arguments(ResumeSpec spec, IReadOnlyList<string> configEnvExcludes, string? activeProfile = null)
     {
         if (string.IsNullOrWhiteSpace(spec.ThreadId) || string.IsNullOrWhiteSpace(spec.Cwd))
             throw new ArgumentException("Conversa ou pasta ausente.", nameof(spec));
@@ -79,10 +85,18 @@ public static class CodexResumeCommand
             foreach (var dir in spec.ExtraDirs) { args.Add("--add-dir"); args.Add(dir); }
         args.AddRange(["resume", spec.ThreadId,
             "-c", "openai_base_url=" + Toml(ApiBaseUrl),
+            "-c", "model_provider=" + Toml("openai"),
             "-c", "model=" + Toml(spec.Model),
             "-c", "model_reasoning_effort=" + Toml(spec.Effort),
             "-c", "sandbox_mode=" + Toml(spec.SandboxMode),
             "-c", "approval_policy=" + Toml(spec.ApprovalPolicy)]);
+        // Um perfil ativo no config.toml passaria por cima dos valores da raiz: fixa neles o mesmo modelo, nível e provedor.
+        if (!string.IsNullOrWhiteSpace(activeProfile))
+        {
+            string profile = "profiles." + TomlKey(activeProfile);
+            args.AddRange(["-c", profile + ".model=" + Toml(spec.Model), "-c", profile + ".model_reasoning_effort=" + Toml(spec.Effort),
+                "-c", profile + ".model_provider=" + Toml("openai")]);
+        }
         if (workspaceWrite && spec.NetworkAccess is { } network)
             args.AddRange(["-c", "sandbox_workspace_write.network_access=" + (network ? "true" : "false")]);
         var excludes = configEnvExcludes.Where(e => !string.IsNullOrEmpty(e)).ToList();
@@ -92,6 +106,9 @@ public static class CodexResumeCommand
         return args;
     }
 
+    private static string TomlKey(string key) =>
+        Regex.IsMatch(key, "^[A-Za-z0-9_-]+$") ? key : Toml(key);
+
     private static string Toml(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
     /// <summary>Lê as exclusões de [shell_environment_policy] (ou da chave pontuada) e o forced_login_method da raiz.</summary>
@@ -100,6 +117,7 @@ public static class CodexResumeCommand
         if (string.IsNullOrWhiteSpace(configToml)) return new([], false);
         var excludes = new List<string>();
         bool forced = false;
+        string? profile = null, provider = null;
         string? table = null;
         string? capturing = null; // texto do array de exclusões ainda aberto (multilinha)
         foreach (var rawLine in configToml.Replace("\r\n", "\n").Split('\n'))
@@ -127,11 +145,13 @@ public static class CodexResumeCommand
                 if (ArrayClosed(value)) excludes.AddRange(Strings(value));
                 else capturing = value;
             }
+            else if (table is null && key == "profile" && Strings(value).FirstOrDefault() is { Length: > 0 } p) profile = p;
+            else if (table is null && key == "model_provider" && Strings(value).FirstOrDefault() is { Length: > 0 } mp) provider = mp;
             else if (table is null && key == "forced_login_method" && Strings(value).FirstOrDefault() is { } method
                      && method.Equals("chatgpt", StringComparison.OrdinalIgnoreCase))
                 forced = true;
         }
-        return new CodexConfigFacts(excludes, forced);
+        return new CodexConfigFacts(excludes, forced) { Profile = profile, ModelProvider = provider };
     }
 
     private static readonly Regex TomlString = new("\"((?:[^\"\\\\]|\\\\.)*)\"|'([^']*)'", RegexOptions.CultureInvariant);

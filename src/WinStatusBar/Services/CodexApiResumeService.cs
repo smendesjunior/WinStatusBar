@@ -24,6 +24,7 @@ internal sealed class CodexApiResumeService : IApiResumeHost
     private readonly CancellationTokenSource _cts = new();
     private readonly SemaphoreSlim _scanGate = new(1, 1);
     private readonly HashSet<string> _dismissed = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _rescannedEnds = new(StringComparer.Ordinal);
     private DispatcherQueueTimer? _dashboardTimer;
     private bool _stopped, _awake;
     private (bool Value, DateTimeOffset At)? _hasKey;
@@ -168,8 +169,12 @@ internal sealed class CodexApiResumeService : IApiResumeHost
     private void OnSupervisorChanged()
     {
         bool awake = Supervisor.KeepAwake;
-        if (Supervisor.Jobs.Any(j => j.IsFinished && j.Notified && j.EndedAt is { } end && Now - end < TimeSpan.FromSeconds(10)))
-            _ = ScanAsync(TimeSpan.Zero); // fim de uma continuação: a lista de paradas muda
+        // Fim de uma continuação: a lista de paradas muda. Uma busca por continuação terminada (não a cada atualização).
+        bool rescan = false;
+        lock (_rescannedEnds)
+            foreach (var j in Supervisor.Jobs.Where(j => j.IsFinished && j.Notified && j.EndedAt is { } end && Now - end < TimeSpan.FromSeconds(10)))
+                rescan |= _rescannedEnds.Add(j.Id + "|" + j.EndedAt!.Value.UtcTicks);
+        if (rescan) _ = ScanAsync(TimeSpan.Zero);
         _ui.TryEnqueue(() =>
         {
             if (_stopped) return;

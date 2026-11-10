@@ -26,7 +26,7 @@ public class CodexResumeCommandTests
         Assert.Equal(new[]
         {
             "exec", "--json", "--skip-git-repo-check", "-C", Cwd, "--add-dir", @"Z:\", "resume", Id1,
-            "-c", "openai_base_url=\"https://api.openai.com/v1\"", "-c", "model=\"gpt-5.6-sol\"", "-c", "model_reasoning_effort=\"low\"",
+            "-c", "openai_base_url=\"https://api.openai.com/v1\"", "-c", "model_provider=\"openai\"", "-c", "model=\"gpt-5.6-sol\"", "-c", "model_reasoning_effort=\"low\"",
             "-c", "sandbox_mode=\"workspace-write\"", "-c", "approval_policy=\"never\"", "-c", "sandbox_workspace_write.network_access=true",
             "-c", "shell_environment_policy.exclude=[\"CODEX_API_KEY\"]", "--", "continue de onde parou",
         }, args);
@@ -118,6 +118,15 @@ public class CodexResumeCommandTests
         Assert.False(dotted.ForcedChatGptLogin);
         Assert.Equal("shell_environment_policy.exclude=[\"CODEX_API_KEY\",\"X\"]",
             CodexResumeCommand.Arguments(CodexResumeCommand.ToSpec(Stop(), _ => true, out _), dotted.EnvExcludes)[^3]);
+
+        var withProfile = CodexResumeCommand.ReadConfig("profile = \"rapido\"\nmodel_provider = \"gateway\"\n[profiles.rapido]\nmodel = \"gpt-5-mini\"\n");
+        Assert.Equal(("rapido", "gateway"), (withProfile.Profile, withProfile.ModelProvider));
+        var args2 = CodexResumeCommand.Arguments(CodexResumeCommand.ToSpec(Stop(), _ => true, out _), withProfile.EnvExcludes, withProfile.Profile);
+        Assert.Contains("profiles.rapido.model=\"gpt-5.6-sol\"", args2);
+        Assert.Contains("profiles.rapido.model_reasoning_effort=\"low\"", args2);
+        Assert.Contains("profiles.rapido.model_provider=\"openai\"", args2);
+        Assert.Contains("profiles.\"meu perfil\".model=\"gpt-5.6-sol\"",
+            CodexResumeCommand.Arguments(CodexResumeCommand.ToSpec(Stop(), _ => true, out _), [], "meu perfil"));
 
         var empty = CodexResumeCommand.ReadConfig(null);
         Assert.Empty(empty.EnvExcludes);

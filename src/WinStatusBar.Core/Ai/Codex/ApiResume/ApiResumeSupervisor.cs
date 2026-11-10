@@ -26,6 +26,8 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
     private readonly SemaphoreSlim _wake = new(0);
     private readonly ConcurrentQueue<Func<Task>> _requests = new();
     private readonly Dictionary<string, WaitState> _waits = new(StringComparer.Ordinal);
+    /// <summary>Conflitos -32600 seguidos por continuação (a sonda diz livre, mas o Codex diz que a conversa está aberta).</summary>
+    private readonly Dictionary<string, int> _conflicts = new(StringComparer.Ordinal);
     private IReadOnlyList<ApiResumeJob> _published = [];
     private CancellationTokenSource? _loop;
     private Task? _loopTask;
@@ -328,7 +330,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         foreach (var missing in job.ExtraDirs.Except(present))
             host.Log($"{Prefix}pasta extra ausente conversa={job.ThreadId} pasta={missing}");
         IReadOnlyList<string> args;
-        try { args = CodexResumeCommand.Arguments(job.ToSpec() with { ExtraDirs = present }, facts.EnvExcludes); }
+        try { args = CodexResumeCommand.Arguments(job.ToSpec() with { ExtraDirs = present }, facts.EnvExcludes, facts.Profile); }
         catch (ArgumentException) { Block(job, ApiResumeProblem.MissingTurnData, now, null); return; }
 
         ResetRun(job);
@@ -393,9 +395,10 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
 
     // ---------------- espera pelo app (regra 5) ----------------
 
-    private void EnterWaiting(ApiResumeJob job, DateTimeOffset now, CancellationToken ct)
+    private void EnterWaiting(ApiResumeJob job, DateTimeOffset now, CancellationToken ct, bool afterConflict = false)
     {
-        if (job.State != ApiResumeState.WaitingForApp)
+        // Depois de um conflito, é a mesma espera: não reinicia os lembretes nem manda outro balão.
+        if (job.State != ApiResumeState.WaitingForApp && !afterConflict)
         {
             job.State = ApiResumeState.WaitingForApp;
             job.WaitingSince = now;
@@ -407,6 +410,14 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         SetWaitingDetail(job, ws, app);
         if (app) { ws.ChatGptExit = host.WaitChatGptExitAsync(_loop?.Token ?? ct); ws.ProbeUntil = null; }
         else ws.NextProbe = now + TimeSpan.FromSeconds(5);
+        job.State = ApiResumeState.WaitingForApp;
+        job.WaitingSince ??= now;
+        if (afterConflict && _conflicts.GetValueOrDefault(job.Id) is >= 3 and var conflicts && !app)
+        {
+            // A sonda diz livre, mas o Codex insiste: recua (30 s, 2 min, depois 5 min) em vez de relançar a cada 5 s.
+            ws.NextProbe = now + (conflicts == 3 ? TimeSpan.FromSeconds(30) : conflicts == 4 ? TimeSpan.FromMinutes(2) : TimeSpan.FromMinutes(5));
+            job.Detail = ApiResumeText.WaitingFor(false);
+        }
         job.UpdatedAt = now;
         if (job.Reminders == 0)
         {
@@ -573,8 +584,9 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         {
             // O app abriu a conversa antes do início: volta a esperar, sem custo e sem limite de tentativas.
             host.Log($"{Prefix}o app abriu a conversa antes do início (-32600); aguardando");
+            _conflicts[job.Id] = _conflicts.GetValueOrDefault(job.Id) + 1;
             ResetRun(job);
-            EnterWaiting(job, now, CancellationToken.None);
+            EnterWaiting(job, now, CancellationToken.None, afterConflict: true);
             return Task.CompletedTask;
         }
         else if (failure is not null)
@@ -584,6 +596,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         else
         { job.State = ApiResumeState.Failed; job.Error = ApiResumeErrors.For(ApiResumeProblem.EndedWithoutTurnEnd); }
 
+        _conflicts.Remove(job.Id);
         job.TurnStarted = turnStarted;
         job.ApiTurnId = turnStarted ? tail?.LastTurnId : null;
         job.EndedAt = job.UpdatedAt = now;
