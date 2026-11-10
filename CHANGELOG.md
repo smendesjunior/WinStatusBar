@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.6] - 2026-11-10 · compilação BUILD
+## [1.4.6] - 2026-11-10 · compilação 20261110093029
 
 ### Corrigido
 - Uso de CPU com a tela apagada ou a sessão bloqueada: a barra seguia trabalhando para ninguém. Lia os sensores a cada segundo, consultava as janelas do ChatGPT e do Claude, abria navegadores ocultos para ler cotas (a cada 5 a 6 minutos), fotografava a tela para o fundo adaptativo e animava o módulo do agente. Agora tudo isso para quando a tela da sessão apaga ou a sessão é bloqueada, e volta na hora em que a tela acende (medido com a tela apagada: de 3,9% para 0,5% de um núcleo).

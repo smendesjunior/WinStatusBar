@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.6] - 2026-11-10 · build BUILD
+## [1.4.6] - 2026-11-10 · build 20261110093029
 
 ### Fixed
 - CPU use with the screen off or the session locked: the bar kept working for nobody. It read the sensors every second, checked the ChatGPT and Claude windows, opened hidden browsers to read quotas (every 5 to 6 minutes), captured the screen for the adaptive background and animated the agent module. All of this now stops when the session's screen turns off or the session is locked, and resumes as soon as the screen turns back on (measured with the screen off: from 3.9% to 0.5% of a CPU core).
