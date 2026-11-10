@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.5] - 2026-11-09 · build BUILD
+## [1.4.5] - 2026-11-09 · build 20261110024050
 
 ### Fixed
 - Memory and disk with long Claude Code or Codex sessions: on every change to the conversation, the bar re-read the whole conversation file (8.8 MB in a long session, several times a minute) to follow the task's steps. The large lines piled up in memory (about 280 MB extra) and the disk was read all the time. It now reads only what was added since the last time (measured: disk reads from 184 to 10 KB/s, and the bar at about 350 MB instead of 600 to 660 MB).

@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.5] - 2026-11-09 · compilação BUILD
+## [1.4.5] - 2026-11-09 · compilação 20261110024050
 
 ### Corrigido
 - Memória e disco com sessões longas do Claude Code ou do Codex: a cada mudança da conversa, a barra relia o arquivo inteiro da conversa (8,8 MB numa sessão longa, várias vezes por minuto) para acompanhar as etapas da tarefa. As linhas grandes se acumulavam na memória (cerca de 280 MB a mais) e o disco ficava sendo lido o tempo todo. Agora ela lê só o que foi acrescentado desde a última vez (medido: leitura de disco de 184 para 10 KB/s, e a barra em cerca de 350 MB em vez de 600 a 660 MB).
