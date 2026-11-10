@@ -150,6 +150,8 @@ public sealed class AppSettings
     public bool ClaudeEnabled { get; set; } = true;
     public bool LocalEnabled { get; set; } = true;
     public bool QiraEnabled { get; set; } = true;
+    /// <summary>Claude no seletor do Codex: false = só texto (padrão); true = o Claude Code edita arquivos e executa comandos na pasta da conversa.</summary>
+    public bool CodexClaudeCommands { get; set; } = false;
     /// <summary>
     /// Quanto tempo o modelo da IA local (Ollama) fica carregado depois do último uso: keep_alive enviado ao Ollama
     /// ("5m", "1h", "0" = libera logo após responder, "-1" = sempre carregado).
