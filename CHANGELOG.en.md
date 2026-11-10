@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.8] - 2026-11-10 · build BUILD
+## [1.4.8] - 2026-11-10 · build 20261110135241
 
 ### Fixed
 - Memory: every time Settings was opened and closed, the whole window stayed in memory, about 36 MB each time, and kept refreshing on every Gemini quota read. WinUI does not release closed windows, so the same window is now reused: closing just hides it, and while hidden it does no reads. Measured: 4 openings kept 146 MB; now the first one costs about 18 MB once and the next ones add nothing.

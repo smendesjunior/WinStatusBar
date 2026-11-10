@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.8] - 2026-11-10 · compilação BUILD
+## [1.4.8] - 2026-11-10 · compilação 20261110135241
 
 ### Corrigido
 - Memória: cada vez que Configurações era aberta e fechada, a janela continuava inteira na memória, cerca de 36 MB por vez, e ainda se atualizava a cada leitura das cotas do Gemini. O WinUI não libera janelas fechadas, então agora a mesma janela é reaproveitada: fechar só a esconde, e escondida ela não faz leituras. Medido: 4 aberturas deixavam 146 MB presos; agora a primeira custa cerca de 18 MB uma vez só, e as seguintes não acrescentam nada.
