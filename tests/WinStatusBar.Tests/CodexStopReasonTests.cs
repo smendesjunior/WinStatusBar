@@ -123,6 +123,128 @@ public class CodexStopReasonTests
         Assert.Null(s.TurnTokens);
     }
 
+    // ---- CodexProvider adota, segura e libera (A7) ----
+
+    private static readonly DateTimeOffset StoppedAt = DateTimeOffset.Parse(CodexQuotaStopsTests.StopAt);
+    private const string StoppedCaptionText = "Parada pela cota do Codex · créditos do workspace esgotados";
+
+    private static string StoppedRollout(string dir) => CodexQuotaStopsTests.WriteRollout(dir, CodexQuotaStopsTests.Id,
+        CodexQuotaStopsTests.Meta(), CodexQuotaStopsTests.Started("t1"), CodexQuotaStopsTests.Context("t1"),
+        CodexQuotaStopsTests.TokenCount(), CodexQuotaStopsTests.QuotaEnd());
+
+    private static QuotaStop Stopped(string path = @"C:\nao\existe.jsonl", long offset = 0) => new(
+        CodexQuotaStopsTests.Id, CodexQuotaStopsTests.Title, path, offset, "t1", StoppedAt, "gpt-5.6-sol", "low", false,
+        "workspace-write", false, [], "on-request", CodexQuotaStopsTests.Cwd, [], "gpt-5.6-sol", "medium", 79123, "workspace_owner_credits_depleted");
+
+    private static QuotaSnapshot Blocked(DateTimeOffset at) =>
+        CodexQuotaBlockTests.Snapshot(at, CodexQuotaBlockTests.Official(at, false, "workspace_owner_credits_depleted"));
+
+    private static QuotaSnapshot Allowed(DateTimeOffset at) =>
+        CodexQuotaBlockTests.Snapshot(at, CodexQuotaBlockTests.Official(at, true), used7d: 10);
+
+    [Fact]
+    public void AdoptedStopOlderThanSixHoursShowsAndKeepsReading()
+    {
+        string dir = CodexQuotaStopsTests.TempDir();
+        try
+        {
+            string path = StoppedRollout(dir);
+            using var p = new CodexProvider();
+            var now = StoppedAt.AddDays(2);
+            Assert.Equal(1, p.AdoptQuotaStops([Stopped(path, new FileInfo(path).Length)], now));
+            var s = p.SessionById(CodexQuotaStopsTests.Id)!;
+            Assert.Equal((AgentState.Interrupted, StoppedCaptionText), (s.State, s.Caption));
+            Assert.Equal((CodexQuotaStopsTests.Title, CodexParsers.UsageLimitExceeded, "t1"), (s.Title, s.StopReason, s.TurnId));
+            Assert.Contains(CodexQuotaStopsTests.Title, p.KnownTitles);
+            Assert.Null(p.SessionById("outra"));
+            Assert.Equal(0, p.AdoptQuotaStops([Stopped(path, new FileInfo(path).Length)], now));
+
+            File.AppendAllText(path, CodexQuotaStopsTests.Started("t2", "2026-11-12T10:00:00.000Z", "exec") + "\n");
+            p.ReadFile(path, false);
+            s = p.SessionById(CodexQuotaStopsTests.Id)!;
+            Assert.Equal((AgentState.Running, "t2", "exec", CodexQuotaStopsTests.Title), (s.State, s.TurnId, s.TurnTrigger, s.Title));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void QuotaStopDoesNotAgeWhileBlockedAndTheOfficialReleaseClearsIt()
+    {
+        using var p = new CodexProvider();
+        var log = new List<string>();
+        p.Diagnostic += log.Add;
+        var t0 = StoppedAt.AddMinutes(1);
+        p.ApplyQuota(Blocked(t0), official: true, t0);
+        p.AdoptQuotaStops([Stopped()], t0);
+        p.Expire(StoppedAt.AddDays(1));
+        Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+
+        var released = StoppedAt.AddDays(2);
+        p.ApplyQuota(Allowed(released), official: true, released);
+        Assert.Equal("Cota liberada · pode continuar no app", p.SessionById(CodexQuotaStopsTests.Id)!.Caption);
+        Assert.Contains("Codex cota: liberadas 1 conversa(s) parada(s) pela cota", log);
+        p.Expire(released.AddMinutes(20));
+        Assert.Equal(AgentState.Idle, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+    }
+
+    [Fact]
+    public async Task ScanRunsOnTheFirstBlockedOfficialReadAndOnEachNewBlock()
+    {
+        using var p = new CodexProvider();
+        int scans = 0;
+        p.FindQuotaStops = _ =>
+        {
+            scans++;
+            return Task.FromResult(new QuotaStopScan([Stopped()], new QuotaStopExclusions(0, 0, 0, 0, 0), false, StoppedAt));
+        };
+        var t = StoppedAt.AddHours(1);
+        p.ApplyQuota(Blocked(t), official: true, t);
+        await p.LastQuotaScan!;
+        Assert.Equal(1, scans);
+        Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+
+        p.ApplyQuota(Blocked(t.AddMinutes(10)), official: true, t.AddMinutes(10));
+        p.ApplyQuota(Blocked(t.AddMinutes(11)), official: false, t.AddMinutes(11));
+        await p.LastQuotaScan!;
+        Assert.Equal(1, scans);
+
+        p.ApplyQuota(Allowed(t.AddMinutes(20)), official: true, t.AddMinutes(20));
+        p.ApplyQuota(Blocked(t.AddMinutes(30)), official: true, t.AddMinutes(30));
+        await p.LastQuotaScan!;
+        Assert.Equal(2, scans);
+    }
+
+    [Fact]
+    public void ExecTriggeredTurnWithoutItsProcessIsOrphaned()
+    {
+        string dir = CodexQuotaStopsTests.TempDir();
+        try
+        {
+            string path = CodexQuotaStopsTests.WriteRollout(dir, CodexQuotaStopsTests.Id, CodexQuotaStopsTests.Meta(),
+                CodexQuotaStopsTests.Started("t1", "2026-11-10T03:00:00.000Z", "exec"));
+            using var p = new CodexProvider { ExecProcessStarts = () => [] };
+            p.ReadFile(path, true);
+            Assert.Equal(AgentState.Running, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+            p.Expire(DateTimeOffset.Parse("2026-11-10T07:00:00Z"));
+            Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void NotePrefixesTheCaptionUntilItExpires()
+    {
+        using var p = new CodexProvider();
+        p.AdoptQuotaStops([Stopped()], StoppedAt.AddMinutes(1));
+        p.SetNote(CodexQuotaStopsTests.Id, "Pela API");
+        Assert.Equal("Pela API · " + StoppedCaptionText, p.SessionById(CodexQuotaStopsTests.Id)!.Caption);
+        Assert.Equal("Pela API · " + StoppedCaptionText, Assert.Single(p.Sessions).Caption);
+        p.SetNote(CodexQuotaStopsTests.Id, "Pela API", DateTimeOffset.Now.AddMinutes(-1));
+        Assert.Equal(StoppedCaptionText, p.SessionById(CodexQuotaStopsTests.Id)!.Caption);
+        p.SetNote(CodexQuotaStopsTests.Id, null);
+        Assert.Equal(StoppedCaptionText, p.SessionById(CodexQuotaStopsTests.Id)!.Caption);
+    }
+
     [Fact]
     public void TokenUsageRecordFillsTheCurrentTurnTokens()
     {

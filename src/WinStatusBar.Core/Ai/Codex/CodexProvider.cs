@@ -43,15 +43,130 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
 
     public IReadOnlyList<AgentSession> Sessions
     {
-        get { lock (_gate) return _sessions.Values.Select(s => s.Clone()).ToList(); }
+        get { lock (_gate) return _sessions.Values.Select(WithNote).ToList(); }
     }
 
     public string Home => CodexAppServerClient.CodexHome();
+
+    private readonly Dictionary<string, (string Note, DateTimeOffset? KeepUntil)> _notes = new(StringComparer.Ordinal);
+    private bool? _lastOfficialBlocked;
+
+    /// <summary>Títulos conhecidos das conversas do Codex (session_index.jsonl e sessões abertas).</summary>
+    public IReadOnlyCollection<string> KnownTitles
+    {
+        get
+        {
+            lock (_gate)
+            {
+                var titles = new HashSet<string>(_titles.Values, StringComparer.OrdinalIgnoreCase);
+                foreach (var s in _sessions.Values)
+                    if (!string.IsNullOrWhiteSpace(s.Title)) titles.Add(s.Title!);
+                return titles;
+            }
+        }
+    }
+
+    /// <summary>Cópia da sessão (com a nota, se houver); null se não existir.</summary>
+    public AgentSession? SessionById(string id)
+    {
+        lock (_gate) return _sessions.TryGetValue(id, out var s) ? WithNote(s) : null;
+    }
+
+    /// <summary>Nota curta que antecede a legenda da conversa ("{nota} · …") até <paramref name="keepUntil"/>; null remove.</summary>
+    public void SetNote(string threadId, string? note, DateTimeOffset? keepUntil = null)
+    {
+        lock (_gate)
+        {
+            if (string.IsNullOrEmpty(note)) _notes.Remove(threadId);
+            else _notes[threadId] = (note, keepUntil);
+        }
+        SessionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private AgentSession WithNote(AgentSession s)
+    {
+        var clone = s.Clone();
+        if (_notes.TryGetValue(s.Id, out var n) && (n.KeepUntil is null || n.KeepUntil > DateTimeOffset.Now))
+            clone.Caption = string.IsNullOrEmpty(clone.Caption) ? n.Note : $"{n.Note} · {clone.Caption}";
+        return clone;
+    }
+
+    /// <summary>Busca de conversas paradas pela cota (trocável nos testes).</summary>
+    internal Func<CancellationToken, Task<QuotaStopScan>>? FindQuotaStops { get; set; }
+    /// <summary>Última busca disparada pela cota oficial bloqueada.</summary>
+    internal Task? LastQuotaScan { get; private set; }
+
+    internal async Task ScanQuotaStopsAsync(CancellationToken ct)
+    {
+        if (FindQuotaStops is not { } find) return;
+        try
+        {
+            var scan = await find(ct).ConfigureAwait(false);
+            AdoptQuotaStops(scan.Stops, DateTimeOffset.Now);
+        }
+        catch (Exception e)
+        {
+            Diagnostic?.Invoke($"Conversas paradas pela cota: a busca falhou ({e.GetType().Name}: {e.Message})");
+        }
+    }
+
+    /// <summary>Mostra as conversas paradas pela cota mesmo quando o registro é antigo (a leitura inicial só pega as últimas 6 h).
+    /// Pula as que já mostram esta parada ou algo mais novo. Devolve quantas foram adotadas.</summary>
+    public int AdoptQuotaStops(IReadOnlyList<QuotaStop> stops, DateTimeOffset now)
+    {
+        int adopted = 0;
+        lock (_gate)
+        {
+            foreach (var stop in stops)
+            {
+                if (_sessions.TryGetValue(stop.ThreadId, out var existing) && existing.LastStateEvent >= stop.StoppedAt) continue;
+                var s = existing ?? new AgentSession { Kind = AgentKind.Codex, Id = stop.ThreadId, ObservationSource = "Registro local do Codex" };
+                s.Title ??= stop.Title;
+                s.State = AgentState.Interrupted; s.ExecutionEnded = true; s.ObservationStale = false;
+                s.TurnId = stop.StoppedTurnId; s.StopReason = CodexParsers.UsageLimitExceeded; s.LastReachedType = stop.ReachedType;
+                s.Caption = CodexQuotaText.StoppedCaption(stop.ReachedType);
+                s.LastActivity = stop.StoppedAt; s.LastStateEvent = stop.StoppedAt;
+                s.ProjectDir ??= stop.Cwd; s.Model ??= stop.Model; s.TranscriptPath ??= stop.RolloutPath;
+                _sessions[stop.ThreadId] = s;
+                if (stop.RolloutOffset > 0) _offsets.TryAdd(stop.RolloutPath, stop.RolloutOffset);
+                adopted++;
+            }
+        }
+        if (adopted > 0)
+        {
+            Diagnostic?.Invoke($"Conversas paradas pela cota: {adopted} adotada(s)");
+            SessionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+        return adopted;
+    }
+
+    /// <summary>A conta liberou: as conversas paradas pela cota passam a "Cota liberada · pode continuar no app".</summary>
+    public int ClearQuotaStops(DateTimeOffset now)
+    {
+        int cleared = 0;
+        lock (_gate)
+        {
+            foreach (var s in _sessions.Values)
+            {
+                if (s.StopReason != CodexParsers.UsageLimitExceeded || s.State != AgentState.Interrupted) continue;
+                s.StopReason = null; s.Caption = CodexQuotaText.Released; s.LastActivity = now;
+                cleared++;
+            }
+        }
+        if (cleared > 0)
+        {
+            Diagnostic?.Invoke($"Codex cota: liberadas {cleared} conversa(s) parada(s) pela cota");
+            SessionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+        return cleared;
+    }
 
     public void Start()
     {
         Stop();
         Enabled = true;
+        _lastOfficialBlocked = null;
+        FindQuotaStops ??= ct => CodexQuotaStops.FindAsync(Home, TimeSpan.Zero, ct, m => Diagnostic?.Invoke(m));
         _cts = new CancellationTokenSource();
         Executable = CodexAppServerClient.FindCodexExecutable();
         string sessionsDir = Path.Combine(Home, "sessions");
@@ -147,7 +262,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
     /// <summary>Junta a cota nova e avisa; registra no log só quando o bloqueio começa ou termina.</summary>
     internal void ApplyQuota(QuotaSnapshot incoming, bool official, DateTimeOffset now)
     {
-        bool wasBlocked, blocked;
+        bool wasBlocked, blocked, scan = false, release = false;
         QuotaSnapshot merged;
         lock (_quotaGate)
         {
@@ -157,8 +272,17 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
             if (ReferenceEquals(merged, current)) return;
             Quota = merged;
             blocked = merged.IsBlocked(now);
+            if (official)
+            {
+                // Busca as conversas paradas na 1ª leitura oficial bloqueada e em cada passagem de liberado para bloqueado.
+                scan = blocked && _lastOfficialBlocked != true;
+                release = !blocked;
+                _lastOfficialBlocked = blocked;
+            }
         }
         if (blocked != wasBlocked) Diagnostic?.Invoke(blocked ? CodexQuotaText.BlockLog(merged, now) : "Codex cota: uso liberado");
+        if (release) ClearQuotaStops(now);
+        if (scan) LastQuotaScan = ScanQuotaStopsAsync(_cts?.Token ?? CancellationToken.None);
         QuotaChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -332,10 +456,10 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
                 }
                 else if (s.State.IsActive() && idle > TimeSpan.FromMinutes(2) && !s.ObservationStale)
                 { s.ObservationStale = true; changed = true; }
-                else if (s.State is AgentState.Completed or AgentState.Error or AgentState.Interrupted && idle > TimeSpan.FromMinutes(15))
+                else if (s.State is AgentState.Completed or AgentState.Error or AgentState.Interrupted && idle > TimeSpan.FromMinutes(15) && !Held(s, now))
                 { s.State = AgentState.Idle; changed = true; }
             }
-            foreach (var old in _sessions.Values.Where(s => !s.State.IsActive() && now - s.LastActivity > TimeSpan.FromHours(12)).Select(s => s.Id).ToList())
+            foreach (var old in _sessions.Values.Where(s => !s.State.IsActive() && now - s.LastActivity > TimeSpan.FromHours(12) && !Held(s, now)).Select(s => s.Id).ToList())
             { _sessions.TryRemove(old, out _); changed = true; }
         }
         return changed;
@@ -351,12 +475,15 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
     /// `codex exec` que possa ser o dono delas (iniciado até 30 s depois do turno). A consulta de processos
     /// roda fora da trava e só quando há candidatas, no máximo a cada 20 s.
     /// </summary>
+    /// <summary>Parada pela cota enquanto a conta continua bloqueada: não envelhece nem some.</summary>
+    private bool Held(AgentSession s, DateTimeOffset now) => s.StopReason == CodexParsers.UsageLimitExceeded && Quota?.IsBlocked(now) == true;
+
     private HashSet<string> FindOrphanExecSessions(DateTimeOffset now)
     {
         List<(string Id, DateTimeOffset Start)> candidates;
         lock (_gate)
             candidates = _sessions.Values
-                .Where(s => s.State.IsActive() && s.Originator == "codex_exec" && now - s.LastActivity > TimeSpan.FromMinutes(2))
+                .Where(s => s.State.IsActive() && (s.Originator == "codex_exec" || s.TurnTrigger == "exec") && now - s.LastActivity > TimeSpan.FromMinutes(2))
                 .Select(s => (s.Id, s.StartedAt ?? s.LastActivity)).ToList();
         if (candidates.Count == 0) return [];
         if (now - _execStartsAt > TimeSpan.FromSeconds(20) || now < _execStartsAt)
