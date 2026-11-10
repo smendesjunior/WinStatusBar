@@ -99,6 +99,127 @@ public class CodexIAsClaudeCommandsArgumentsTests
     }
 }
 
+public class CodexIAsClaudeCommandsRegistryTests
+{
+    private static readonly Conversation Conv = new("Liste os arquivos", [("user", "Oi"), ("assistant", "Olá")], @"C:\Projetos\X", "conv-registro");
+    private const string Slug = "codexias-claude-opus-5-5";
+
+    [Fact]
+    public async Task Repeticao_durante_a_execucao_se_junta_e_nao_roda_de_novo()
+    {
+        var registry = new ClaudeRunRegistry();
+        int starts = 0;
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var sentFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> start = async (text, status, ct) =>
+        {
+            Interlocked.Increment(ref starts);
+            status("Executando: a"); text("Parcial");
+            sentFirst.TrySetResult();
+            await gate.Task;
+            status("Lendo b");
+            return new Answer("Parcial e fim", null);
+        };
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        var first = registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None);
+        await sentFirst.Task;
+        var texts2 = new List<string>();
+        var statuses2 = new List<string>();
+        var second = registry.RunAsync(key, start, texts2.Add, statuses2.Add, CancellationToken.None);
+        gate.SetResult();
+        Assert.Equal("Parcial e fim", (await first).Text);
+        Assert.Equal("Parcial e fim", (await second).Text);
+        Assert.Equal(1, starts);
+        Assert.Equal(["Executando: a", "Lendo b"], statuses2);
+        Assert.Equal("Parcial", texts2[0]);
+    }
+
+    [Fact]
+    public async Task Repeticao_depois_do_fim_recebe_a_resposta_pronta_por_10_minutos()
+    {
+        var now = new DateTime(2026, 11, 10, 12, 0, 0, DateTimeKind.Utc);
+        var registry = new ClaudeRunRegistry { Clock = () => now };
+        int starts = 0;
+        Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> start = (text, status, ct) =>
+        {
+            starts++;
+            status("Executando: a"); text("Pronto");
+            return Task.FromResult(new Answer("Pronto", null));
+        };
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        await registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None);
+        now = now.AddMinutes(9);
+        var statuses = new List<string>();
+        Assert.Equal("Pronto", (await registry.RunAsync(key, start, _ => { }, statuses.Add, CancellationToken.None)).Text);
+        Assert.Equal(["Executando: a"], statuses);
+        Assert.Equal(1, starts);
+        now = now.AddMinutes(1).AddSeconds(1);
+        await registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None);
+        Assert.Equal(2, starts);
+    }
+
+    [Fact]
+    public async Task Quando_todos_desistem_a_execucao_para_e_a_proxima_roda_de_novo()
+    {
+        var registry = new ClaudeRunRegistry();
+        int starts = 0;
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> start = async (text, status, ct) =>
+        {
+            Interlocked.Increment(ref starts);
+            try { await Task.Delay(Timeout.Infinite, ct); }
+            catch (OperationCanceledException) { cancelled.TrySetResult(); throw; }
+            return new Answer("nunca", null);
+        };
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        using var cts = new CancellationTokenSource();
+        var run = registry.RunAsync(key, start, _ => { }, _ => { }, cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
+        Assert.Equal("Interrompido", (await run).Error);
+        Assert.True(await Task.WhenAny(cancelled.Task, Task.Delay(5000)) == cancelled.Task);
+        using var cts2 = new CancellationTokenSource(200);
+        await registry.RunAsync(key, start, _ => { }, _ => { }, cts2.Token);
+        Assert.Equal(2, starts);
+    }
+
+    [Fact]
+    public async Task Um_dos_dois_desistindo_nao_para_a_execucao()
+    {
+        var registry = new ClaudeRunRegistry();
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        bool cancelledRun = false;
+        Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> start = async (text, status, ct) =>
+        {
+            ct.Register(() => cancelledRun = true);
+            await gate.Task;
+            return new Answer("ok", null);
+        };
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        using var cts = new CancellationTokenSource();
+        var first = registry.RunAsync(key, start, _ => { }, _ => { }, cts.Token);
+        await Task.Delay(50);
+        var second = registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None);
+        cts.Cancel();
+        Assert.Equal("Interrompido", (await first).Error);
+        gate.SetResult();
+        Assert.Equal("ok", (await second).Text);
+        Assert.False(cancelledRun);
+    }
+
+    [Fact]
+    public void Chave_muda_com_conteudo_modelo_nivel_e_conversa()
+    {
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        Assert.Equal(key, ClaudeRunRegistry.KeyOf(Slug, null, Conv with { History = [("user", "Oi"), ("assistant", "Olá")] }));
+        Assert.NotEqual(key, ClaudeRunRegistry.KeyOf(Slug, null, Conv with { Prompt = "Outra coisa" }));
+        Assert.NotEqual(key, ClaudeRunRegistry.KeyOf("codexias-claude-sonnet-5-5", null, Conv));
+        Assert.NotEqual(key, ClaudeRunRegistry.KeyOf(Slug, "low", Conv));
+        Assert.NotEqual(key, ClaudeRunRegistry.KeyOf(Slug, null, Conv with { Key = "outra-conversa" }));
+        Assert.Null(ClaudeRunRegistry.KeyOf(Slug, null, Conv with { Key = null }));
+    }
+}
+
 public class CodexIAsClaudeCommandsOutputTests
 {
     private static readonly string[] Fixture =
