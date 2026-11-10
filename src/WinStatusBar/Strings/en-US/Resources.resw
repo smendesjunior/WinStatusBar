@@ -3909,4 +3909,337 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S8B5AA854CBEDB226" xml:space="preserve">
     <value>The AI recorded no steps; inference is paused while the Codex quota is used up.</value>
   </data>
+  <data name="SB134836A3B917D02" xml:space="preserve">
+    <value>no API key</value>
+  </data>
+  <data name="SA2008026CB3DCA26" xml:space="preserve">
+    <value>There is no OpenAI API key on this PC. Add one in Settings › AI and tasks › Other service (own API), address https://api.openai.com/v1, and try again.</value>
+  </data>
+  <data name="S0E5B7CB9258EEAA9" xml:space="preserve">
+    <value>key rejected</value>
+  </data>
+  <data name="S997AF5DCB29B56A3" xml:space="preserve">
+    <value>The OpenAI API rejected your key (expired, revoked or from another project). Replace the key in Settings › AI and tasks.</value>
+  </data>
+  <data name="SF1E81BDF542021E4" xml:space="preserve">
+    <value>model not in the API</value>
+  </data>
+  <data name="S9B340027AB7B7437" xml:space="preserve">
+    <value>The OpenAI API does not offer model {0} for your key. The bar does not switch models: the conversation stays stopped until the Codex quota returns ({1}).</value>
+  </data>
+  <data name="SA8B27EE6C7FCF56C" xml:space="preserve">
+    <value>level not accepted</value>
+  </data>
+  <data name="S9F3994C211B4B90B" xml:space="preserve">
+    <value>Model {0} does not accept level {1}. The bar does not lower the level: the conversation stays stopped until the Codex quota returns ({2}).</value>
+  </data>
+  <data name="SA528C86BF11ABF66" xml:space="preserve">
+    <value>no turn data</value>
+  </data>
+  <data name="SFE9CD46BDEF8119B" xml:space="preserve">
+    <value>bar model</value>
+  </data>
+  <data name="S6E6533296715CBF0" xml:space="preserve">
+    <value>The turn used {0}, one of the bar's own models in Codex, which does not depend on the quota. Continue in the app.</value>
+  </data>
+  <data name="S4AE7E24C1219CFD4" xml:space="preserve">
+    <value>folder unavailable</value>
+  </data>
+  <data name="SE8A90C7B6FEFFF88" xml:space="preserve">
+    <value>The conversation folder ({0}) is not accessible right now. Open OneDrive or connect the drive and try again.</value>
+  </data>
+  <data name="S5321E5914FCEA01B" xml:space="preserve">
+    <value>extra folder missing</value>
+  </data>
+  <data name="S2B9A04337F3A1CB1" xml:space="preserve">
+    <value>Drive {0} is not connected; the AI will not be able to read files from it.</value>
+  </data>
+  <data name="SD540E09923587C38" xml:space="preserve">
+    <value>The bar could not find the Codex program (codex.exe) on this PC. Open the Codex app once so it installs itself, then try again.</value>
+  </data>
+  <data name="S746CBF8D5759D54A" xml:space="preserve">
+    <value>ChatGPT sign-in required</value>
+  </data>
+  <data name="SB43E809FE37409C0" xml:space="preserve">
+    <value>Codex's config.toml requires signing in with ChatGPT, so the continuation cannot use the API key.</value>
+  </data>
+  <data name="S069330A557B4B351" xml:space="preserve">
+    <value>conversation open in the app</value>
+  </data>
+  <data name="S38069EDEE0E2557B" xml:space="preserve">
+    <value>Close the Codex app to continue. Nothing is charged.</value>
+  </data>
+  <data name="SFFCDDF4E7C722A52" xml:space="preserve">
+    <value>API out of credits</value>
+  </data>
+  <data name="S399083184B7738EB" xml:space="preserve">
+    <value>Your OpenAI API account has no balance (separate from the Codex plan). Add credits at platform.openai.com › Settings › Billing and click Try again.</value>
+  </data>
+  <data name="S4B818F2FE21BB799" xml:space="preserve">
+    <value>conversation not found</value>
+  </data>
+  <data name="S1B59B8C16E6F34E5" xml:space="preserve">
+    <value>Codex could not find this conversation (it may have been deleted or archived).</value>
+  </data>
+  <data name="S1AFC915DADF9057A" xml:space="preserve">
+    <value>already continued</value>
+  </data>
+  <data name="SE0CF8ED49021EA71" xml:space="preserve">
+    <value>The conversation already continued on {0}; nothing was sent.</value>
+  </data>
+  <data name="SFAD6F53AB62B3C56" xml:space="preserve">
+    <value>stopped by the quota again</value>
+  </data>
+  <data name="S40416D49E18D29C8" xml:space="preserve">
+    <value>The conversation stopped by the quota again on {0}, in a turn made by the app; nothing was sent. Open Continue via API again to continue from this point.</value>
+  </data>
+  <data name="S0F9D870A41D41310" xml:space="preserve">
+    <value>stopped without recording the end</value>
+  </data>
+  <data name="S40F0F147978F5C18" xml:space="preserve">
+    <value>Codex ended without recording the end of the turn (the bar or Windows closed, or the process was ended). What was already done stayed in the conversation; open it in the app to check.</value>
+  </data>
+  <data name="S2DA748FCA8ABE236" xml:space="preserve">
+    <value>did not stop</value>
+  </data>
+  <data name="S83050FEA6BBD1990" xml:space="preserve">
+    <value>Codex did not respond to the stop request. You can force it to end; in that case the last step may have no recorded end.</value>
+  </data>
+  <data name="S6BB1E0C3F2C02CF0" xml:space="preserve">
+    <value>safe stop unavailable</value>
+  </data>
+  <data name="S7E9120411F42FFBC" xml:space="preserve">
+    <value>The installation is incomplete (the Automation component is missing). Reinstall the bar, or use "Force end".</value>
+  </data>
+  <data name="S9325A31A59737A91" xml:space="preserve">
+    <value>{0} at {1}</value>
+  </data>
+  <data name="S1C95959BBE21B643" xml:space="preserve">
+    <value>Continue via API</value>
+  </data>
+  <data name="S419860B136578131" xml:space="preserve">
+    <value>Via API</value>
+  </data>
+  <data name="S05A7808D6FB2331A" xml:space="preserve">
+    <value>Conversations stopped by the quota</value>
+  </data>
+  <data name="S085B7B7EF2B58AF8" xml:space="preserve">
+    <value>Continue via API…</value>
+  </data>
+  <data name="SB5C3FEE689BC5DF9" xml:space="preserve">
+    <value>Add the OpenAI API key in Settings › AI and tasks (own API, address https://api.openai.com/v1)</value>
+  </data>
+  <data name="S824A0E952B49ABF0" xml:space="preserve">
+    <value>Available in the traditional installer version: in the Store version, closing or updating the bar would end the continuation midway.</value>
+  </data>
+  <data name="SF65717B2A800E79A" xml:space="preserve">
+    <value>Open in the Codex app: it starts by itself as soon as you close the app</value>
+  </data>
+  <data name="S2CD3CB9ED3AAC40B" xml:space="preserve">
+    <value>Already in the queue</value>
+  </data>
+  <data name="S31A0905705A4A115" xml:space="preserve">
+    <value>Message sent: 'continue de onde parou' (continue where you stopped)</value>
+  </data>
+  <data name="SF1EC49FCC8262C10" xml:space="preserve">
+    <value>No spending limit. You follow tokens and dollars in the task panel and can stop at any time; what was already done stays in the conversation.</value>
+  </data>
+  <data name="S586C912B4B4AAB3A" xml:space="preserve">
+    <value>While it runs, do not open the conversation in the Codex app.</value>
+  </data>
+  <data name="SD6458E4E91C56CF4" xml:space="preserve">
+    <value>One at a time (queue)</value>
+  </data>
+  <data name="SBB0B879000579C38" xml:space="preserve">
+    <value>All at the same time</value>
+  </data>
+  <data name="SF4B9E1F5D29A7051" xml:space="preserve">
+    <value>Task panel · Codex · via API</value>
+  </data>
+  <data name="S5D3E794DDA08A366" xml:space="preserve">
+    <value>What was already done stays in the conversation</value>
+  </data>
+  <data name="S983939D33E7E25A7" xml:space="preserve">
+    <value>Stopping…</value>
+  </data>
+  <data name="S1CA6A9D6E5D09AF6" xml:space="preserve">
+    <value>Codex quota released: waiting for you</value>
+  </data>
+  <data name="SBE990478FA8DB19E" xml:space="preserve">
+    <value>No conversation stopped for lack of quota in the last 14 days</value>
+  </data>
+  <data name="SB7684EF294C91FA7" xml:space="preserve">
+    <value>1 conversation stopped for lack of quota: {0}</value>
+  </data>
+  <data name="SA95230914856FCA2" xml:space="preserve">
+    <value>{0} conversations stopped for lack of quota: {1}</value>
+  </data>
+  <data name="S8D769C2BBE8B2BA8" xml:space="preserve">
+    <value>Stopped on {0} at {1} · {2} · level {3} · folder {4}</value>
+  </data>
+  <data name="S14FB20A22DBEF8A8" xml:space="preserve">
+    <value>Context: about {0} tokens (each API call resends this context)</value>
+  </data>
+  <data name="S4C9F54AD9BA7A06B" xml:space="preserve">
+    <value>It is now set to {0} · {1}. It will continue with the model and level of the turn that stopped: {2} · {3}. Afterwards the conversation stays set this way in the app.</value>
+  </data>
+  <data name="SCD8C8D565B9B9240" xml:space="preserve">
+    <value>Cannot continue: {0}</value>
+  </data>
+  <data name="S99602E911FDB5132" xml:space="preserve">
+    <value>Only conversations stopped for lack of quota appear. Left out: {0} interrupted by you, {1} from scripts, {2} from subagents, {3} from the bar, {4} others; archived ones never appear.</value>
+  </data>
+  <data name="S13DD5AB787859179" xml:space="preserve">
+    <value>{0} · {1} (the same as the turn that stopped)</value>
+  </data>
+  <data name="S7AB21EB5468E378E" xml:space="preserve">
+    <value>Key: {0}</value>
+  </data>
+  <data name="SE44AAE58F468DBC8" xml:space="preserve">
+    <value>Key: not found</value>
+  </data>
+  <data name="S4A112F7881CD0E24" xml:space="preserve">
+    <value>Organization billed by the key: {0} · billing dashboard account: {1}</value>
+  </data>
+  <data name="S906CB0BD0BF223A8" xml:space="preserve">
+    <value>not given</value>
+  </data>
+  <data name="S764332DBA3E75206" xml:space="preserve">
+    <value>Tokens this turn: waiting for the Codex record</value>
+  </data>
+  <data name="S7E8430145C24603F" xml:space="preserve">
+    <value>Tokens this turn: {0} input ({1} cached) · {2} output</value>
+  </data>
+  <data name="SDEDA644D0429A0AB" xml:space="preserve">
+    <value>Spend: US$ {0} since {1} (OpenAI dashboard at {2}; it lags a few minutes and includes other use by the same organization)</value>
+  </data>
+  <data name="SF583D49B2BF9D058" xml:space="preserve">
+    <value>Spend: waiting for the OpenAI dashboard (since {0})</value>
+  </data>
+  <data name="S79FBA5F45333A611" xml:space="preserve">
+    <value>US$ {0} (may change by a few cents in the next minutes)</value>
+  </data>
+  <data name="SA82ABA14D8A122AD" xml:space="preserve">
+    <value>US$ n/a (the OpenAI dashboard did not report it)</value>
+  </data>
+  <data name="S78C79480BDD6D7C5" xml:space="preserve">
+    <value>Queue: {0} of {1}</value>
+  </data>
+  <data name="S56564F145E9B2D74" xml:space="preserve">
+    <value>In the queue</value>
+  </data>
+  <data name="SD86987681EA3BEAF" xml:space="preserve">
+    <value>Starting…</value>
+  </data>
+  <data name="S884FD1D94199596A" xml:space="preserve">
+    <value>Running for {0}</value>
+  </data>
+  <data name="SD237E7892B970A3B" xml:space="preserve">
+    <value>Completed via API in {0}</value>
+  </data>
+  <data name="SDD9F3184635676B7" xml:space="preserve">
+    <value>Stopped by you after {0}; what was already done stayed in the conversation.</value>
+  </data>
+  <data name="SF3F3433651615C02" xml:space="preserve">
+    <value>Did not continue: {0}</value>
+  </data>
+  <data name="S259A31DD97103C68" xml:space="preserve">
+    <value>Already continued</value>
+  </data>
+  <data name="S164611A0C0309186" xml:space="preserve">
+    <value>Removed from the queue</value>
+  </data>
+  <data name="S099D8E9E5C3A1B92" xml:space="preserve">
+    <value>Via API: {0} · {1}</value>
+  </data>
+  <data name="S42805E2636632F88" xml:space="preserve">
+    <value>While the bar was closed: </value>
+  </data>
+  <data name="SA97A9DE5A614933E" xml:space="preserve">
+    <value>Close the Codex app completely (including the icon near the clock). The bar starts by itself as soon as it releases the conversation.</value>
+  </data>
+  <data name="S5E5628F96AE590E0" xml:space="preserve">
+    <value>Another Codex program has this conversation open (a terminal with Codex, the VS Code extension or the bar's chat). Close it to continue.</value>
+  </data>
+  <data name="S8D851E48D05F48F7" xml:space="preserve">
+    <value>The Codex quota is back. {0} conversation(s) are waiting in the API queue; they will not continue on their own.</value>
+  </data>
+  <data name="S69DAACDF555B3B09" xml:space="preserve">
+    <value>Force end</value>
+  </data>
+  <data name="SA2A78C2D6BE33BBF" xml:space="preserve">
+    <value>Continue via API anyway</value>
+  </data>
+  <data name="S05D08702FB9B2350" xml:space="preserve">
+    <value>Remove from queue</value>
+  </data>
+  <data name="S6BB3150B9757E97B" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="S98996B4302882915" xml:space="preserve">
+    <value>Continue via API again</value>
+  </data>
+  <data name="S6B5B0486A4AC5CB1" xml:space="preserve">
+    <value>Open in Codex</value>
+  </data>
+  <data name="S565339BC4D33D728" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="S0A6756ADDBF4671C" xml:space="preserve">
+    <value>{0}K</value>
+  </data>
+  <data name="S11F5865C56A2F660" xml:space="preserve">
+    <value>{0}M</value>
+  </data>
+  <data name="S5ED93406A7DE26CA" xml:space="preserve">
+    <value>less than 1 min</value>
+  </data>
+  <data name="S96D15CF84B61A585" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="S477A1B5F11304D3E" xml:space="preserve">
+    <value>{0} h</value>
+  </data>
+  <data name="S379C310D145A3208" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
+  <data name="S65EFAD8C59E67E2A" xml:space="preserve">
+    <value>Editing {0} file(s)…</value>
+  </data>
+  <data name="S1F78AB0A611187C8" xml:space="preserve">
+    <value>Searching the web…</value>
+  </data>
+  <data name="S4E17CF487497A3CB" xml:space="preserve">
+    <value>Using {0}…</value>
+  </data>
+  <data name="S4C0995A0AD3BCCBE" xml:space="preserve">
+    <value>Own API «{0}» (Windows Credential Manager)</value>
+  </data>
+  <data name="S876D03E6627C9C2C" xml:space="preserve">
+    <value>Looking for conversations stopped by the quota…</value>
+  </data>
+  <data name="S150FAF58E5D04948" xml:space="preserve">
+    <value>Stop the continuation via API?</value>
+  </data>
+  <data name="S70BD70EAE658B0C6" xml:space="preserve">
+    <value>Force end?</value>
+  </data>
+  <data name="S8D9CE94899623DC4" xml:space="preserve">
+    <value>Checking the conversations…</value>
+  </data>
+  <data name="S3701FECCC430B6BF" xml:space="preserve">
+    <value>The official Codex list did not respond; the bar used the local records, so archived conversations may appear.</value>
+  </data>
+  <data name="S52FADDDB772FFBDF" xml:space="preserve">
+    <value>Review</value>
+  </data>
+  <data name="SE4A8663123A6831B" xml:space="preserve">
+    <value>Confirm and continue via API</value>
+  </data>
+  <data name="S9B0E57C6DE00C87B" xml:space="preserve">
+    <value>Could not check the conversations: {0}</value>
+  </data>
+  <data name="S5C492F37A63F6E93" xml:space="preserve">
+    <value>Show</value>
+  </data>
 </root>

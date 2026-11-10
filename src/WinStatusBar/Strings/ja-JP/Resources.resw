@@ -3909,4 +3909,337 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S8B5AA854CBEDB226" xml:space="preserve">
     <value>AI はステップを記録していません。Codex のクォータが切れている間は推定を停止します。</value>
   </data>
+  <data name="SB134836A3B917D02" xml:space="preserve">
+    <value>API キーなし</value>
+  </data>
+  <data name="SA2008026CB3DCA26" xml:space="preserve">
+    <value>この PC には OpenAI の API キーがありません。設定 › AI とタスク › その他のサービス（独自 API）で、アドレス https://api.openai.com/v1 として登録し、もう一度お試しください。</value>
+  </data>
+  <data name="S0E5B7CB9258EEAA9" xml:space="preserve">
+    <value>キーが拒否されました</value>
+  </data>
+  <data name="S997AF5DCB29B56A3" xml:space="preserve">
+    <value>OpenAI API がキーを拒否しました（期限切れ、取り消し済み、または別のプロジェクトのキー）。設定 › AI とタスク でキーを変更してください。</value>
+  </data>
+  <data name="SF1E81BDF542021E4" xml:space="preserve">
+    <value>API にないモデル</value>
+  </data>
+  <data name="S9B340027AB7B7437" xml:space="preserve">
+    <value>OpenAI API はこのキーでモデル {0} を提供していません。バーはモデルを切り替えません。Codex のクォータが戻るまで（{1}）会話は停止したままです。</value>
+  </data>
+  <data name="SA8B27EE6C7FCF56C" xml:space="preserve">
+    <value>レベルが受け付けられません</value>
+  </data>
+  <data name="S9F3994C211B4B90B" xml:space="preserve">
+    <value>モデル {0} はレベル {1} を受け付けません。バーはレベルを下げません。Codex のクォータが戻るまで（{2}）会話は停止したままです。</value>
+  </data>
+  <data name="SA528C86BF11ABF66" xml:space="preserve">
+    <value>ターンのデータなし</value>
+  </data>
+  <data name="SFE9CD46BDEF8119B" xml:space="preserve">
+    <value>バーのモデル</value>
+  </data>
+  <data name="S6E6533296715CBF0" xml:space="preserve">
+    <value>このターンでは {0}（Codex 内のバー独自のモデルで、クォータに依存しません）を使っていました。アプリで続行してください。</value>
+  </data>
+  <data name="S4AE7E24C1219CFD4" xml:space="preserve">
+    <value>フォルダーにアクセスできません</value>
+  </data>
+  <data name="SE8A90C7B6FEFFF88" xml:space="preserve">
+    <value>会話のフォルダー（{0}）に今はアクセスできません。OneDrive を開くかドライブを接続して、もう一度お試しください。</value>
+  </data>
+  <data name="S5321E5914FCEA01B" xml:space="preserve">
+    <value>追加フォルダーがありません</value>
+  </data>
+  <data name="S2B9A04337F3A1CB1" xml:space="preserve">
+    <value>ドライブ {0} が接続されていません。AI はそこにあるファイルを読めません。</value>
+  </data>
+  <data name="SD540E09923587C38" xml:space="preserve">
+    <value>この PC で Codex のプログラム（codex.exe）が見つかりませんでした。Codex アプリを一度開いてインストールさせてから、もう一度お試しください。</value>
+  </data>
+  <data name="S746CBF8D5759D54A" xml:space="preserve">
+    <value>ChatGPT でのサインインが必須</value>
+  </data>
+  <data name="SB43E809FE37409C0" xml:space="preserve">
+    <value>Codex の config.toml が ChatGPT でのサインインを必須にしているため、続行に API キーを使えません。</value>
+  </data>
+  <data name="S069330A557B4B351" xml:space="preserve">
+    <value>アプリで開いている会話</value>
+  </data>
+  <data name="S38069EDEE0E2557B" xml:space="preserve">
+    <value>続行するには Codex アプリを閉じてください。料金はかかりません。</value>
+  </data>
+  <data name="SFFCDDF4E7C722A52" xml:space="preserve">
+    <value>API のクレジット切れ</value>
+  </data>
+  <data name="S399083184B7738EB" xml:space="preserve">
+    <value>OpenAI API アカウントの残高がありません（Codex のプランとは別です）。platform.openai.com › Settings › Billing でクレジットを追加し、「もう一度試す」をクリックしてください。</value>
+  </data>
+  <data name="S4B818F2FE21BB799" xml:space="preserve">
+    <value>会話が見つかりません</value>
+  </data>
+  <data name="S1B59B8C16E6F34E5" xml:space="preserve">
+    <value>Codex はこの会話を見つけられませんでした（削除またはアーカイブされた可能性があります）。</value>
+  </data>
+  <data name="S1AFC915DADF9057A" xml:space="preserve">
+    <value>すでに続行済み</value>
+  </data>
+  <data name="SE0CF8ED49021EA71" xml:space="preserve">
+    <value>会話は {0} にすでに続行されています。何も送信していません。</value>
+  </data>
+  <data name="SFAD6F53AB62B3C56" xml:space="preserve">
+    <value>再びクォータで停止</value>
+  </data>
+  <data name="S40416D49E18D29C8" xml:space="preserve">
+    <value>会話は {0} に、アプリで行ったターンで再びクォータにより停止しました。何も送信していません。この時点から続けるには「API で続行」をもう一度開いてください。</value>
+  </data>
+  <data name="S0F9D870A41D41310" xml:space="preserve">
+    <value>終了を記録せずに停止</value>
+  </data>
+  <data name="S40F0F147978F5C18" xml:space="preserve">
+    <value>Codex はターンの終了を記録せずに終了しました（バーまたは Windows が閉じたか、プロセスが終了されました）。すでに行った作業は会話に残っています。アプリで開いて確認してください。</value>
+  </data>
+  <data name="S2DA748FCA8ABE236" xml:space="preserve">
+    <value>停止しませんでした</value>
+  </data>
+  <data name="S83050FEA6BBD1990" xml:space="preserve">
+    <value>Codex は停止の要求に応答しませんでした。強制終了できますが、その場合は最後のステップの終了が記録されないことがあります。</value>
+  </data>
+  <data name="S6BB1E0C3F2C02CF0" xml:space="preserve">
+    <value>安全な停止を利用できません</value>
+  </data>
+  <data name="S7E9120411F42FFBC" xml:space="preserve">
+    <value>インストールが不完全です（Automation コンポーネントがありません）。バーを再インストールするか、「強制終了」を使ってください。</value>
+  </data>
+  <data name="S9325A31A59737A91" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="S1C95959BBE21B643" xml:space="preserve">
+    <value>API で続行</value>
+  </data>
+  <data name="S419860B136578131" xml:space="preserve">
+    <value>API 経由</value>
+  </data>
+  <data name="S05A7808D6FB2331A" xml:space="preserve">
+    <value>クォータで停止した会話</value>
+  </data>
+  <data name="S085B7B7EF2B58AF8" xml:space="preserve">
+    <value>API で続行…</value>
+  </data>
+  <data name="SB5C3FEE689BC5DF9" xml:space="preserve">
+    <value>設定 › AI とタスク で OpenAI の API キーを登録してください（独自 API、アドレス https://api.openai.com/v1）</value>
+  </data>
+  <data name="S824A0E952B49ABF0" xml:space="preserve">
+    <value>従来のインストーラー版で利用できます。ストア版では、バーを閉じたり更新したりすると続行が途中で終了してしまいます。</value>
+  </data>
+  <data name="SF65717B2A800E79A" xml:space="preserve">
+    <value>Codex アプリで開いています。アプリを閉じるとすぐに自動で開始します</value>
+  </data>
+  <data name="S2CD3CB9ED3AAC40B" xml:space="preserve">
+    <value>すでにキューにあります</value>
+  </data>
+  <data name="S31A0905705A4A115" xml:space="preserve">
+    <value>送信するメッセージ: 'continue de onde parou'（止まったところから続けて）</value>
+  </data>
+  <data name="SF1EC49FCC8262C10" xml:space="preserve">
+    <value>支出の上限はありません。トークンとドルはトラッキングで確認でき、いつでも停止できます。すでに行った作業は会話に残ります。</value>
+  </data>
+  <data name="S586C912B4B4AAB3A" xml:space="preserve">
+    <value>実行中は Codex アプリで会話を開かないでください。</value>
+  </data>
+  <data name="SD6458E4E91C56CF4" xml:space="preserve">
+    <value>1 件ずつ（キュー）</value>
+  </data>
+  <data name="SBB0B879000579C38" xml:space="preserve">
+    <value>すべて同時に</value>
+  </data>
+  <data name="SF4B9E1F5D29A7051" xml:space="preserve">
+    <value>トラッキング · Codex · API 経由</value>
+  </data>
+  <data name="S5D3E794DDA08A366" xml:space="preserve">
+    <value>すでに行った作業は会話に残ります</value>
+  </data>
+  <data name="S983939D33E7E25A7" xml:space="preserve">
+    <value>停止中…</value>
+  </data>
+  <data name="S1CA6A9D6E5D09AF6" xml:space="preserve">
+    <value>Codex のクォータが解除されました：あなたの判断を待っています</value>
+  </data>
+  <data name="SBE990478FA8DB19E" xml:space="preserve">
+    <value>過去 14 日間にクォータ不足で停止した会話はありません</value>
+  </data>
+  <data name="SB7684EF294C91FA7" xml:space="preserve">
+    <value>1 件の会話がクォータ不足で停止しました: {0}</value>
+  </data>
+  <data name="SA95230914856FCA2" xml:space="preserve">
+    <value>{0} 件の会話がクォータ不足で停止しました: {1}</value>
+  </data>
+  <data name="S8D769C2BBE8B2BA8" xml:space="preserve">
+    <value>{0} {1} に停止 · {2} · レベル {3} · フォルダー {4}</value>
+  </data>
+  <data name="S14FB20A22DBEF8A8" xml:space="preserve">
+    <value>コンテキスト: 約 {0} トークン（API の呼び出しごとにこのコンテキストを再送します）</value>
+  </data>
+  <data name="S4C9F54AD9BA7A06B" xml:space="preserve">
+    <value>現在は {0} · {1} に設定されています。停止したターンのモデルとレベル（{2} · {3}）で続行します。その後、アプリでの会話はこの設定になります。</value>
+  </data>
+  <data name="SCD8C8D565B9B9240" xml:space="preserve">
+    <value>続行できません: {0}</value>
+  </data>
+  <data name="S99602E911FDB5132" xml:space="preserve">
+    <value>クォータ不足で停止した会話だけを表示します。除外: あなたが中断した {0} 件、スクリプトの {1} 件、サブエージェントの {2} 件、バーの {3} 件、その他 {4} 件。アーカイブ済みは表示されません。</value>
+  </data>
+  <data name="S13DD5AB787859179" xml:space="preserve">
+    <value>{0} · {1}（停止したターンと同じ）</value>
+  </data>
+  <data name="S7AB21EB5468E378E" xml:space="preserve">
+    <value>キー: {0}</value>
+  </data>
+  <data name="SE44AAE58F468DBC8" xml:space="preserve">
+    <value>キー: 見つかりません</value>
+  </data>
+  <data name="S4A112F7881CD0E24" xml:space="preserve">
+    <value>キーで請求される組織: {0} · 請求ダッシュボードのアカウント: {1}</value>
+  </data>
+  <data name="S906CB0BD0BF223A8" xml:space="preserve">
+    <value>不明</value>
+  </data>
+  <data name="S764332DBA3E75206" xml:space="preserve">
+    <value>このターンのトークン: Codex の記録を待っています</value>
+  </data>
+  <data name="S7E8430145C24603F" xml:space="preserve">
+    <value>このターンのトークン: 入力 {0}（キャッシュ {1}）· 出力 {2}</value>
+  </data>
+  <data name="SDEDA644D0429A0AB" xml:space="preserve">
+    <value>支出: {1} から US$ {0}（OpenAI ダッシュボード {2} 時点。数分遅れ、同じ組織の他の使用分も含みます）</value>
+  </data>
+  <data name="SF583D49B2BF9D058" xml:space="preserve">
+    <value>支出: OpenAI ダッシュボードを待っています（{0} から）</value>
+  </data>
+  <data name="S79FBA5F45333A611" xml:space="preserve">
+    <value>US$ {0}（今後数分で数セント変わることがあります）</value>
+  </data>
+  <data name="SA82ABA14D8A122AD" xml:space="preserve">
+    <value>US$ 不明（OpenAI ダッシュボードが報告しませんでした）</value>
+  </data>
+  <data name="S78C79480BDD6D7C5" xml:space="preserve">
+    <value>キュー: {1} 件中 {0}</value>
+  </data>
+  <data name="S56564F145E9B2D74" xml:space="preserve">
+    <value>キュー待ち</value>
+  </data>
+  <data name="SD86987681EA3BEAF" xml:space="preserve">
+    <value>開始中…</value>
+  </data>
+  <data name="S884FD1D94199596A" xml:space="preserve">
+    <value>{0} 実行中</value>
+  </data>
+  <data name="SD237E7892B970A3B" xml:space="preserve">
+    <value>API で {0} で完了</value>
+  </data>
+  <data name="SDD9F3184635676B7" xml:space="preserve">
+    <value>{0} 後にあなたが停止しました。すでに行った作業は会話に残っています。</value>
+  </data>
+  <data name="SF3F3433651615C02" xml:space="preserve">
+    <value>続行しませんでした: {0}</value>
+  </data>
+  <data name="S259A31DD97103C68" xml:space="preserve">
+    <value>すでに続行済み</value>
+  </data>
+  <data name="S164611A0C0309186" xml:space="preserve">
+    <value>キューから外しました</value>
+  </data>
+  <data name="S099D8E9E5C3A1B92" xml:space="preserve">
+    <value>API 経由: {0} · {1}</value>
+  </data>
+  <data name="S42805E2636632F88" xml:space="preserve">
+    <value>バーが閉じていた間に: </value>
+  </data>
+  <data name="SA97A9DE5A614933E" xml:space="preserve">
+    <value>Codex アプリを完全に閉じてください（時計の近くのアイコンも含みます）。会話が解放されるとすぐにバーが自動で開始します。</value>
+  </data>
+  <data name="S5E5628F96AE590E0" xml:space="preserve">
+    <value>別の Codex プログラムがこの会話を開いています（Codex のターミナル、VS Code 拡張機能、またはバーのチャット）。続行するにはそれを閉じてください。</value>
+  </data>
+  <data name="S8D851E48D05F48F7" xml:space="preserve">
+    <value>Codex のクォータが戻りました。{0} 件の会話が API のキューで待っています。自動では続行しません。</value>
+  </data>
+  <data name="S69DAACDF555B3B09" xml:space="preserve">
+    <value>強制終了</value>
+  </data>
+  <data name="SA2A78C2D6BE33BBF" xml:space="preserve">
+    <value>それでも API で続行</value>
+  </data>
+  <data name="S05D08702FB9B2350" xml:space="preserve">
+    <value>キューから外す</value>
+  </data>
+  <data name="S6BB3150B9757E97B" xml:space="preserve">
+    <value>もう一度試す</value>
+  </data>
+  <data name="S98996B4302882915" xml:space="preserve">
+    <value>もう一度 API で続行</value>
+  </data>
+  <data name="S6B5B0486A4AC5CB1" xml:space="preserve">
+    <value>Codex で開く</value>
+  </data>
+  <data name="S565339BC4D33D728" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="S0A6756ADDBF4671C" xml:space="preserve">
+    <value>{0}千</value>
+  </data>
+  <data name="S11F5865C56A2F660" xml:space="preserve">
+    <value>{0}百万</value>
+  </data>
+  <data name="S5ED93406A7DE26CA" xml:space="preserve">
+    <value>1 分未満</value>
+  </data>
+  <data name="S96D15CF84B61A585" xml:space="preserve">
+    <value>{0} 分</value>
+  </data>
+  <data name="S477A1B5F11304D3E" xml:space="preserve">
+    <value>{0} 時間</value>
+  </data>
+  <data name="S379C310D145A3208" xml:space="preserve">
+    <value>{0} 時間 {1} 分</value>
+  </data>
+  <data name="S65EFAD8C59E67E2A" xml:space="preserve">
+    <value>{0} 個のファイルを編集中…</value>
+  </data>
+  <data name="S1F78AB0A611187C8" xml:space="preserve">
+    <value>Web を検索中…</value>
+  </data>
+  <data name="S4E17CF487497A3CB" xml:space="preserve">
+    <value>{0} を使用中…</value>
+  </data>
+  <data name="S4C0995A0AD3BCCBE" xml:space="preserve">
+    <value>独自 API「{0}」（Windows 資格情報マネージャー）</value>
+  </data>
+  <data name="S876D03E6627C9C2C" xml:space="preserve">
+    <value>クォータで停止した会話を探しています…</value>
+  </data>
+  <data name="S150FAF58E5D04948" xml:space="preserve">
+    <value>API での続行を停止しますか？</value>
+  </data>
+  <data name="S70BD70EAE658B0C6" xml:space="preserve">
+    <value>強制終了しますか？</value>
+  </data>
+  <data name="S8D9CE94899623DC4" xml:space="preserve">
+    <value>会話を確認しています…</value>
+  </data>
+  <data name="S3701FECCC430B6BF" xml:space="preserve">
+    <value>Codex の公式リストが応答しませんでした。バーはローカルの記録を使ったため、アーカイブ済みの会話が表示されることがあります。</value>
+  </data>
+  <data name="S52FADDDB772FFBDF" xml:space="preserve">
+    <value>確認</value>
+  </data>
+  <data name="SE4A8663123A6831B" xml:space="preserve">
+    <value>確認して API で続行</value>
+  </data>
+  <data name="S9B0E57C6DE00C87B" xml:space="preserve">
+    <value>会話を確認できませんでした: {0}</value>
+  </data>
+  <data name="S5C492F37A63F6E93" xml:space="preserve">
+    <value>表示</value>
+  </data>
 </root>

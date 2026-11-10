@@ -3909,4 +3909,337 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S8B5AA854CBEDB226" xml:space="preserve">
     <value>A IA não registrou etapas; a dedução fica parada enquanto a cota do Codex estiver esgotada.</value>
   </data>
+  <data name="SB134836A3B917D02" xml:space="preserve">
+    <value>sem chave da API</value>
+  </data>
+  <data name="SA2008026CB3DCA26" xml:space="preserve">
+    <value>Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IA e tarefas › Outro serviço (API própria), endereço https://api.openai.com/v1, e tente de novo.</value>
+  </data>
+  <data name="S0E5B7CB9258EEAA9" xml:space="preserve">
+    <value>chave recusada</value>
+  </data>
+  <data name="S997AF5DCB29B56A3" xml:space="preserve">
+    <value>A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IA e tarefas.</value>
+  </data>
+  <data name="SF1E81BDF542021E4" xml:space="preserve">
+    <value>modelo fora da API</value>
+  </data>
+  <data name="S9B340027AB7B7437" xml:space="preserve">
+    <value>A API da OpenAI não oferece o modelo {0} para a sua chave. A barra não troca de modelo: a conversa continua parada até a cota do Codex voltar ({1}).</value>
+  </data>
+  <data name="SA8B27EE6C7FCF56C" xml:space="preserve">
+    <value>nível não aceito</value>
+  </data>
+  <data name="S9F3994C211B4B90B" xml:space="preserve">
+    <value>O modelo {0} não aceita o nível {1}. A barra não baixa o nível: a conversa continua parada até a cota do Codex voltar ({2}).</value>
+  </data>
+  <data name="SA528C86BF11ABF66" xml:space="preserve">
+    <value>sem dados do turno</value>
+  </data>
+  <data name="SFE9CD46BDEF8119B" xml:space="preserve">
+    <value>modelo da barra</value>
+  </data>
+  <data name="S6E6533296715CBF0" xml:space="preserve">
+    <value>O turno usava {0}, um modelo da própria barra no Codex, que não depende da cota. Continue pelo app.</value>
+  </data>
+  <data name="S4AE7E24C1219CFD4" xml:space="preserve">
+    <value>pasta inacessível</value>
+  </data>
+  <data name="SE8A90C7B6FEFFF88" xml:space="preserve">
+    <value>A pasta da conversa ({0}) não está acessível agora. Abra o OneDrive ou conecte a unidade e tente de novo.</value>
+  </data>
+  <data name="S5321E5914FCEA01B" xml:space="preserve">
+    <value>pasta extra ausente</value>
+  </data>
+  <data name="S2B9A04337F3A1CB1" xml:space="preserve">
+    <value>A unidade {0} não está conectada; a IA não vai conseguir ler arquivos de lá.</value>
+  </data>
+  <data name="SD540E09923587C38" xml:space="preserve">
+    <value>A barra não achou o programa do Codex (codex.exe) neste PC. Abra o app do Codex uma vez para ele se instalar e tente de novo.</value>
+  </data>
+  <data name="S746CBF8D5759D54A" xml:space="preserve">
+    <value>login obrigatório pelo ChatGPT</value>
+  </data>
+  <data name="SB43E809FE37409C0" xml:space="preserve">
+    <value>O config.toml do Codex obriga o login pelo ChatGPT; assim a continuação não pode usar a chave da API.</value>
+  </data>
+  <data name="S069330A557B4B351" xml:space="preserve">
+    <value>conversa aberta no app</value>
+  </data>
+  <data name="S38069EDEE0E2557B" xml:space="preserve">
+    <value>Feche o app do Codex para continuar. Nada é cobrado.</value>
+  </data>
+  <data name="SFFCDDF4E7C722A52" xml:space="preserve">
+    <value>API sem créditos</value>
+  </data>
+  <data name="S399083184B7738EB" xml:space="preserve">
+    <value>A sua conta da API da OpenAI está sem saldo (separado do plano do Codex). Adicione créditos em platform.openai.com › Settings › Billing e clique em Tentar de novo.</value>
+  </data>
+  <data name="S4B818F2FE21BB799" xml:space="preserve">
+    <value>conversa não encontrada</value>
+  </data>
+  <data name="S1B59B8C16E6F34E5" xml:space="preserve">
+    <value>O Codex não achou esta conversa (pode ter sido apagada ou arquivada).</value>
+  </data>
+  <data name="S1AFC915DADF9057A" xml:space="preserve">
+    <value>já continuou</value>
+  </data>
+  <data name="SE0CF8ED49021EA71" xml:space="preserve">
+    <value>A conversa já continuou em {0}; nada foi enviado.</value>
+  </data>
+  <data name="SFAD6F53AB62B3C56" xml:space="preserve">
+    <value>parou de novo pela cota</value>
+  </data>
+  <data name="S40416D49E18D29C8" xml:space="preserve">
+    <value>A conversa parou de novo pela cota em {0}, num turno feito pelo app; nada foi enviado. Abra Continuar pela API de novo para continuar deste ponto.</value>
+  </data>
+  <data name="S0F9D870A41D41310" xml:space="preserve">
+    <value>parou sem registrar o fim</value>
+  </data>
+  <data name="S40F0F147978F5C18" xml:space="preserve">
+    <value>O Codex terminou sem registrar o fim do turno (a barra ou o Windows fechou, ou o processo foi encerrado). O que já foi feito ficou na conversa; abra no app para conferir.</value>
+  </data>
+  <data name="S2DA748FCA8ABE236" xml:space="preserve">
+    <value>não parou</value>
+  </data>
+  <data name="S83050FEA6BBD1990" xml:space="preserve">
+    <value>O Codex não respondeu ao pedido para parar. Você pode encerrar à força; nesse caso o último passo pode ficar sem registro de fim.</value>
+  </data>
+  <data name="S6BB1E0C3F2C02CF0" xml:space="preserve">
+    <value>parada segura indisponível</value>
+  </data>
+  <data name="S7E9120411F42FFBC" xml:space="preserve">
+    <value>A instalação está incompleta (falta o componente Automation). Reinstale a barra, ou use "Encerrar à força".</value>
+  </data>
+  <data name="S9325A31A59737A91" xml:space="preserve">
+    <value>{0} às {1}</value>
+  </data>
+  <data name="S1C95959BBE21B643" xml:space="preserve">
+    <value>Continuar pela API</value>
+  </data>
+  <data name="S419860B136578131" xml:space="preserve">
+    <value>Pela API</value>
+  </data>
+  <data name="S05A7808D6FB2331A" xml:space="preserve">
+    <value>Conversas paradas pela cota</value>
+  </data>
+  <data name="S085B7B7EF2B58AF8" xml:space="preserve">
+    <value>Continuar pela API…</value>
+  </data>
+  <data name="SB5C3FEE689BC5DF9" xml:space="preserve">
+    <value>Cadastre a chave da API da OpenAI em Configurações › IA e tarefas (API própria, endereço https://api.openai.com/v1)</value>
+  </data>
+  <data name="S824A0E952B49ABF0" xml:space="preserve">
+    <value>Disponível na versão do instalador tradicional: na versão da Loja, fechar ou atualizar a barra encerraria a continuação no meio.</value>
+  </data>
+  <data name="SF65717B2A800E79A" xml:space="preserve">
+    <value>Aberta no app do Codex: começa sozinha assim que você fechar o app</value>
+  </data>
+  <data name="S2CD3CB9ED3AAC40B" xml:space="preserve">
+    <value>Já está na fila</value>
+  </data>
+  <data name="S31A0905705A4A115" xml:space="preserve">
+    <value>Mensagem enviada: 'continue de onde parou'</value>
+  </data>
+  <data name="SF1EC49FCC8262C10" xml:space="preserve">
+    <value>Sem limite de gasto. Você acompanha tokens e dólares no Acompanhamento e pode parar a qualquer momento; o que já foi feito fica na conversa.</value>
+  </data>
+  <data name="S586C912B4B4AAB3A" xml:space="preserve">
+    <value>Durante a execução, não abra a conversa no app do Codex.</value>
+  </data>
+  <data name="SD6458E4E91C56CF4" xml:space="preserve">
+    <value>Uma de cada vez (fila)</value>
+  </data>
+  <data name="SBB0B879000579C38" xml:space="preserve">
+    <value>Todas ao mesmo tempo</value>
+  </data>
+  <data name="SF4B9E1F5D29A7051" xml:space="preserve">
+    <value>Acompanhamento · Codex · pela API</value>
+  </data>
+  <data name="S5D3E794DDA08A366" xml:space="preserve">
+    <value>O que já foi feito fica na conversa</value>
+  </data>
+  <data name="S983939D33E7E25A7" xml:space="preserve">
+    <value>Parando…</value>
+  </data>
+  <data name="S1CA6A9D6E5D09AF6" xml:space="preserve">
+    <value>Cota do Codex liberada: aguardando você</value>
+  </data>
+  <data name="SBE990478FA8DB19E" xml:space="preserve">
+    <value>Nenhuma conversa parou por falta de cota nos últimos 14 dias</value>
+  </data>
+  <data name="SB7684EF294C91FA7" xml:space="preserve">
+    <value>1 conversa parou por falta de cota: {0}</value>
+  </data>
+  <data name="SA95230914856FCA2" xml:space="preserve">
+    <value>{0} conversas pararam por falta de cota: {1}</value>
+  </data>
+  <data name="S8D769C2BBE8B2BA8" xml:space="preserve">
+    <value>Parou em {0} às {1} · {2} · nível {3} · pasta {4}</value>
+  </data>
+  <data name="S14FB20A22DBEF8A8" xml:space="preserve">
+    <value>Contexto: cerca de {0} tokens (cada chamada à API reenvia esse contexto)</value>
+  </data>
+  <data name="S4C9F54AD9BA7A06B" xml:space="preserve">
+    <value>Agora está marcada como {0} · {1}. Vai continuar com o modelo e o nível do turno que parou: {2} · {3}. Depois, a conversa fica marcada assim no app.</value>
+  </data>
+  <data name="SCD8C8D565B9B9240" xml:space="preserve">
+    <value>Não dá para continuar: {0}</value>
+  </data>
+  <data name="S99602E911FDB5132" xml:space="preserve">
+    <value>Só aparecem conversas paradas por falta de cota. De fora: {0} interrompidas por você, {1} de scripts, {2} de subagentes, {3} da barra, {4} outras; as arquivadas nunca aparecem.</value>
+  </data>
+  <data name="S13DD5AB787859179" xml:space="preserve">
+    <value>{0} · {1} (o mesmo do turno que parou)</value>
+  </data>
+  <data name="S7AB21EB5468E378E" xml:space="preserve">
+    <value>Chave: {0}</value>
+  </data>
+  <data name="SE44AAE58F468DBC8" xml:space="preserve">
+    <value>Chave: não encontrada</value>
+  </data>
+  <data name="S4A112F7881CD0E24" xml:space="preserve">
+    <value>Organização cobrada pela chave: {0} · conta do painel de faturamento: {1}</value>
+  </data>
+  <data name="S906CB0BD0BF223A8" xml:space="preserve">
+    <value>não informada</value>
+  </data>
+  <data name="S764332DBA3E75206" xml:space="preserve">
+    <value>Tokens deste turno: aguardando o registro do Codex</value>
+  </data>
+  <data name="S7E8430145C24603F" xml:space="preserve">
+    <value>Tokens deste turno: {0} de entrada ({1} em cache) · {2} de saída</value>
+  </data>
+  <data name="SDEDA644D0429A0AB" xml:space="preserve">
+    <value>Gasto: US$ {0} desde {1} (painel da OpenAI às {2}; atrasa alguns minutos e inclui outro uso da mesma organização)</value>
+  </data>
+  <data name="SF583D49B2BF9D058" xml:space="preserve">
+    <value>Gasto: aguardando o painel da OpenAI (desde {0})</value>
+  </data>
+  <data name="S79FBA5F45333A611" xml:space="preserve">
+    <value>US$ {0} (pode mudar alguns centavos nos próximos minutos)</value>
+  </data>
+  <data name="SA82ABA14D8A122AD" xml:space="preserve">
+    <value>US$ n/d (o painel da OpenAI não informou)</value>
+  </data>
+  <data name="S78C79480BDD6D7C5" xml:space="preserve">
+    <value>Fila: {0} de {1}</value>
+  </data>
+  <data name="S56564F145E9B2D74" xml:space="preserve">
+    <value>Na fila</value>
+  </data>
+  <data name="SD86987681EA3BEAF" xml:space="preserve">
+    <value>Iniciando…</value>
+  </data>
+  <data name="S884FD1D94199596A" xml:space="preserve">
+    <value>Executando há {0}</value>
+  </data>
+  <data name="SD237E7892B970A3B" xml:space="preserve">
+    <value>Concluída pela API em {0}</value>
+  </data>
+  <data name="SDD9F3184635676B7" xml:space="preserve">
+    <value>Parada por você após {0}; o que já foi feito ficou na conversa.</value>
+  </data>
+  <data name="SF3F3433651615C02" xml:space="preserve">
+    <value>Não continuou: {0}</value>
+  </data>
+  <data name="S259A31DD97103C68" xml:space="preserve">
+    <value>Já continuou</value>
+  </data>
+  <data name="S164611A0C0309186" xml:space="preserve">
+    <value>Tirada da fila</value>
+  </data>
+  <data name="S099D8E9E5C3A1B92" xml:space="preserve">
+    <value>Pela API: {0} · {1}</value>
+  </data>
+  <data name="S42805E2636632F88" xml:space="preserve">
+    <value>Enquanto a barra estava fechada: </value>
+  </data>
+  <data name="SA97A9DE5A614933E" xml:space="preserve">
+    <value>Feche o app do Codex por completo (inclusive o ícone perto do relógio). A barra começa sozinha assim que ele soltar a conversa.</value>
+  </data>
+  <data name="S5E5628F96AE590E0" xml:space="preserve">
+    <value>Outro programa do Codex está com esta conversa aberta (um terminal com o Codex, a extensão do VS Code ou o chat da barra). Feche-o para continuar.</value>
+  </data>
+  <data name="S8D851E48D05F48F7" xml:space="preserve">
+    <value>A cota do Codex voltou. {0} conversa(s) esperam na fila da API; elas não vão continuar sozinhas.</value>
+  </data>
+  <data name="S69DAACDF555B3B09" xml:space="preserve">
+    <value>Encerrar à força</value>
+  </data>
+  <data name="SA2A78C2D6BE33BBF" xml:space="preserve">
+    <value>Continuar pela API mesmo assim</value>
+  </data>
+  <data name="S05D08702FB9B2350" xml:space="preserve">
+    <value>Tirar da fila</value>
+  </data>
+  <data name="S6BB3150B9757E97B" xml:space="preserve">
+    <value>Tentar de novo</value>
+  </data>
+  <data name="S98996B4302882915" xml:space="preserve">
+    <value>Continuar de novo pela API</value>
+  </data>
+  <data name="S6B5B0486A4AC5CB1" xml:space="preserve">
+    <value>Abrir no Codex</value>
+  </data>
+  <data name="S565339BC4D33D728" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="S0A6756ADDBF4671C" xml:space="preserve">
+    <value>{0} mil</value>
+  </data>
+  <data name="S11F5865C56A2F660" xml:space="preserve">
+    <value>{0} mi</value>
+  </data>
+  <data name="S5ED93406A7DE26CA" xml:space="preserve">
+    <value>menos de 1 min</value>
+  </data>
+  <data name="S96D15CF84B61A585" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="S477A1B5F11304D3E" xml:space="preserve">
+    <value>{0} h</value>
+  </data>
+  <data name="S379C310D145A3208" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
+  <data name="S65EFAD8C59E67E2A" xml:space="preserve">
+    <value>Editando {0} arquivo(s)…</value>
+  </data>
+  <data name="S1F78AB0A611187C8" xml:space="preserve">
+    <value>Pesquisando na web…</value>
+  </data>
+  <data name="S4E17CF487497A3CB" xml:space="preserve">
+    <value>Usando {0}…</value>
+  </data>
+  <data name="S4C0995A0AD3BCCBE" xml:space="preserve">
+    <value>API própria «{0}» (Cofre de Credenciais do Windows)</value>
+  </data>
+  <data name="S876D03E6627C9C2C" xml:space="preserve">
+    <value>Procurando conversas paradas pela cota…</value>
+  </data>
+  <data name="S150FAF58E5D04948" xml:space="preserve">
+    <value>Parar a continuação pela API?</value>
+  </data>
+  <data name="S70BD70EAE658B0C6" xml:space="preserve">
+    <value>Encerrar à força?</value>
+  </data>
+  <data name="S8D9CE94899623DC4" xml:space="preserve">
+    <value>Conferindo as conversas…</value>
+  </data>
+  <data name="S3701FECCC430B6BF" xml:space="preserve">
+    <value>A lista oficial do Codex não respondeu; a barra usou os registros locais, e conversas arquivadas podem aparecer.</value>
+  </data>
+  <data name="S52FADDDB772FFBDF" xml:space="preserve">
+    <value>Revisar</value>
+  </data>
+  <data name="SE4A8663123A6831B" xml:space="preserve">
+    <value>Confirmar e continuar pela API</value>
+  </data>
+  <data name="S9B0E57C6DE00C87B" xml:space="preserve">
+    <value>Não foi possível conferir as conversas: {0}</value>
+  </data>
+  <data name="S5C492F37A63F6E93" xml:space="preserve">
+    <value>Mostrar</value>
+  </data>
 </root>

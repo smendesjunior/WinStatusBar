@@ -3909,4 +3909,337 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S8B5AA854CBEDB226" xml:space="preserve">
     <value>AI 未记录步骤；Codex 配额用尽期间暂停推断。</value>
   </data>
+  <data name="SB134836A3B917D02" xml:space="preserve">
+    <value>没有 API 密钥</value>
+  </data>
+  <data name="SA2008026CB3DCA26" xml:space="preserve">
+    <value>此电脑上没有 OpenAI API 密钥。请在 设置 › AI 与任务 › 其他服务（自有 API）中添加，地址为 https://api.openai.com/v1，然后重试。</value>
+  </data>
+  <data name="S0E5B7CB9258EEAA9" xml:space="preserve">
+    <value>密钥被拒绝</value>
+  </data>
+  <data name="S997AF5DCB29B56A3" xml:space="preserve">
+    <value>OpenAI API 拒绝了您的密钥（已过期、已撤销或属于其他项目）。请在 设置 › AI 与任务 中更换密钥。</value>
+  </data>
+  <data name="SF1E81BDF542021E4" xml:space="preserve">
+    <value>API 中没有该模型</value>
+  </data>
+  <data name="S9B340027AB7B7437" xml:space="preserve">
+    <value>OpenAI API 不为您的密钥提供模型 {0}。栏不会更换模型：对话将保持停止，直到 Codex 配额恢复（{1}）。</value>
+  </data>
+  <data name="SA8B27EE6C7FCF56C" xml:space="preserve">
+    <value>级别不被接受</value>
+  </data>
+  <data name="S9F3994C211B4B90B" xml:space="preserve">
+    <value>模型 {0} 不接受级别 {1}。栏不会降低级别：对话将保持停止，直到 Codex 配额恢复（{2}）。</value>
+  </data>
+  <data name="SA528C86BF11ABF66" xml:space="preserve">
+    <value>没有轮次数据</value>
+  </data>
+  <data name="SFE9CD46BDEF8119B" xml:space="preserve">
+    <value>栏的模型</value>
+  </data>
+  <data name="S6E6533296715CBF0" xml:space="preserve">
+    <value>该轮次使用的是 {0}，这是栏在 Codex 中自带的模型，不受配额限制。请在应用中继续。</value>
+  </data>
+  <data name="S4AE7E24C1219CFD4" xml:space="preserve">
+    <value>文件夹无法访问</value>
+  </data>
+  <data name="SE8A90C7B6FEFFF88" xml:space="preserve">
+    <value>对话文件夹（{0}）目前无法访问。请打开 OneDrive 或连接驱动器后重试。</value>
+  </data>
+  <data name="S5321E5914FCEA01B" xml:space="preserve">
+    <value>缺少额外文件夹</value>
+  </data>
+  <data name="S2B9A04337F3A1CB1" xml:space="preserve">
+    <value>驱动器 {0} 未连接；AI 将无法读取其中的文件。</value>
+  </data>
+  <data name="SD540E09923587C38" xml:space="preserve">
+    <value>栏在此电脑上找不到 Codex 程序（codex.exe）。请打开一次 Codex 应用让它完成安装，然后重试。</value>
+  </data>
+  <data name="S746CBF8D5759D54A" xml:space="preserve">
+    <value>必须通过 ChatGPT 登录</value>
+  </data>
+  <data name="SB43E809FE37409C0" xml:space="preserve">
+    <value>Codex 的 config.toml 要求通过 ChatGPT 登录，因此继续时无法使用 API 密钥。</value>
+  </data>
+  <data name="S069330A557B4B351" xml:space="preserve">
+    <value>对话在应用中打开</value>
+  </data>
+  <data name="S38069EDEE0E2557B" xml:space="preserve">
+    <value>请关闭 Codex 应用以继续。不会产生费用。</value>
+  </data>
+  <data name="SFFCDDF4E7C722A52" xml:space="preserve">
+    <value>API 没有额度</value>
+  </data>
+  <data name="S399083184B7738EB" xml:space="preserve">
+    <value>您的 OpenAI API 账户没有余额（与 Codex 方案分开）。请在 platform.openai.com › Settings › Billing 中添加额度，然后点击“重试”。</value>
+  </data>
+  <data name="S4B818F2FE21BB799" xml:space="preserve">
+    <value>找不到对话</value>
+  </data>
+  <data name="S1B59B8C16E6F34E5" xml:space="preserve">
+    <value>Codex 找不到此对话（可能已被删除或归档）。</value>
+  </data>
+  <data name="S1AFC915DADF9057A" xml:space="preserve">
+    <value>已继续</value>
+  </data>
+  <data name="SE0CF8ED49021EA71" xml:space="preserve">
+    <value>对话已于 {0} 继续；未发送任何内容。</value>
+  </data>
+  <data name="SFAD6F53AB62B3C56" xml:space="preserve">
+    <value>再次因配额停止</value>
+  </data>
+  <data name="S40416D49E18D29C8" xml:space="preserve">
+    <value>对话于 {0} 在应用发起的轮次中再次因配额停止；未发送任何内容。请再次打开“通过 API 继续”，从此处继续。</value>
+  </data>
+  <data name="S0F9D870A41D41310" xml:space="preserve">
+    <value>停止但未记录结束</value>
+  </data>
+  <data name="S40F0F147978F5C18" xml:space="preserve">
+    <value>Codex 结束时未记录该轮次的结束（栏或 Windows 已关闭，或进程被结束）。已完成的内容保留在对话中；请在应用中打开查看。</value>
+  </data>
+  <data name="S2DA748FCA8ABE236" xml:space="preserve">
+    <value>未停止</value>
+  </data>
+  <data name="S83050FEA6BBD1990" xml:space="preserve">
+    <value>Codex 没有响应停止请求。您可以强制结束；这种情况下最后一步可能没有结束记录。</value>
+  </data>
+  <data name="S6BB1E0C3F2C02CF0" xml:space="preserve">
+    <value>安全停止不可用</value>
+  </data>
+  <data name="S7E9120411F42FFBC" xml:space="preserve">
+    <value>安装不完整（缺少 Automation 组件）。请重新安装栏，或使用“强制结束”。</value>
+  </data>
+  <data name="S9325A31A59737A91" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="S1C95959BBE21B643" xml:space="preserve">
+    <value>通过 API 继续</value>
+  </data>
+  <data name="S419860B136578131" xml:space="preserve">
+    <value>通过 API</value>
+  </data>
+  <data name="S05A7808D6FB2331A" xml:space="preserve">
+    <value>因配额停止的对话</value>
+  </data>
+  <data name="S085B7B7EF2B58AF8" xml:space="preserve">
+    <value>通过 API 继续…</value>
+  </data>
+  <data name="SB5C3FEE689BC5DF9" xml:space="preserve">
+    <value>请在 设置 › AI 与任务 中添加 OpenAI API 密钥（自有 API，地址 https://api.openai.com/v1）</value>
+  </data>
+  <data name="S824A0E952B49ABF0" xml:space="preserve">
+    <value>仅在传统安装程序版本中可用：在应用商店版本中，关闭或更新栏会使继续过程中途结束。</value>
+  </data>
+  <data name="SF65717B2A800E79A" xml:space="preserve">
+    <value>已在 Codex 应用中打开：关闭应用后会自动开始</value>
+  </data>
+  <data name="S2CD3CB9ED3AAC40B" xml:space="preserve">
+    <value>已在队列中</value>
+  </data>
+  <data name="S31A0905705A4A115" xml:space="preserve">
+    <value>发送的消息：'continue de onde parou'（从停下的地方继续）</value>
+  </data>
+  <data name="SF1EC49FCC8262C10" xml:space="preserve">
+    <value>没有支出上限。您可以在跟踪面板中查看令牌和美元，并随时停止；已完成的内容会保留在对话中。</value>
+  </data>
+  <data name="S586C912B4B4AAB3A" xml:space="preserve">
+    <value>运行期间，请不要在 Codex 应用中打开该对话。</value>
+  </data>
+  <data name="SD6458E4E91C56CF4" xml:space="preserve">
+    <value>一次一个（队列）</value>
+  </data>
+  <data name="SBB0B879000579C38" xml:space="preserve">
+    <value>全部同时</value>
+  </data>
+  <data name="SF4B9E1F5D29A7051" xml:space="preserve">
+    <value>跟踪 · Codex · 通过 API</value>
+  </data>
+  <data name="S5D3E794DDA08A366" xml:space="preserve">
+    <value>已完成的内容会保留在对话中</value>
+  </data>
+  <data name="S983939D33E7E25A7" xml:space="preserve">
+    <value>正在停止…</value>
+  </data>
+  <data name="S1CA6A9D6E5D09AF6" xml:space="preserve">
+    <value>Codex 配额已恢复：等待您的决定</value>
+  </data>
+  <data name="SBE990478FA8DB19E" xml:space="preserve">
+    <value>过去 14 天内没有因配额不足而停止的对话</value>
+  </data>
+  <data name="SB7684EF294C91FA7" xml:space="preserve">
+    <value>1 个对话因配额不足而停止：{0}</value>
+  </data>
+  <data name="SA95230914856FCA2" xml:space="preserve">
+    <value>{0} 个对话因配额不足而停止：{1}</value>
+  </data>
+  <data name="S8D769C2BBE8B2BA8" xml:space="preserve">
+    <value>于 {0} {1} 停止 · {2} · 级别 {3} · 文件夹 {4}</value>
+  </data>
+  <data name="S14FB20A22DBEF8A8" xml:space="preserve">
+    <value>上下文：约 {0} 个令牌（每次调用 API 都会重新发送此上下文）</value>
+  </data>
+  <data name="S4C9F54AD9BA7A06B" xml:space="preserve">
+    <value>现在设置为 {0} · {1}。将使用停止那一轮的模型和级别继续：{2} · {3}。之后，该对话在应用中会保持此设置。</value>
+  </data>
+  <data name="SCD8C8D565B9B9240" xml:space="preserve">
+    <value>无法继续：{0}</value>
+  </data>
+  <data name="S99602E911FDB5132" xml:space="preserve">
+    <value>仅显示因配额不足而停止的对话。未列出：您中断的 {0} 个、脚本的 {1} 个、子代理的 {2} 个、栏的 {3} 个、其他 {4} 个；已归档的永远不会显示。</value>
+  </data>
+  <data name="S13DD5AB787859179" xml:space="preserve">
+    <value>{0} · {1}（与停止的那一轮相同）</value>
+  </data>
+  <data name="S7AB21EB5468E378E" xml:space="preserve">
+    <value>密钥：{0}</value>
+  </data>
+  <data name="SE44AAE58F468DBC8" xml:space="preserve">
+    <value>密钥：未找到</value>
+  </data>
+  <data name="S4A112F7881CD0E24" xml:space="preserve">
+    <value>该密钥计费的组织：{0} · 账单面板账户：{1}</value>
+  </data>
+  <data name="S906CB0BD0BF223A8" xml:space="preserve">
+    <value>未提供</value>
+  </data>
+  <data name="S764332DBA3E75206" xml:space="preserve">
+    <value>本轮令牌：等待 Codex 记录</value>
+  </data>
+  <data name="S7E8430145C24603F" xml:space="preserve">
+    <value>本轮令牌：输入 {0}（缓存 {1}）· 输出 {2}</value>
+  </data>
+  <data name="SDEDA644D0429A0AB" xml:space="preserve">
+    <value>支出：自 {1} 起 US$ {0}（OpenAI 面板 {2} 的数据；会延迟几分钟，并包含同一组织的其他用量）</value>
+  </data>
+  <data name="SF583D49B2BF9D058" xml:space="preserve">
+    <value>支出：等待 OpenAI 面板（自 {0} 起）</value>
+  </data>
+  <data name="S79FBA5F45333A611" xml:space="preserve">
+    <value>US$ {0}（接下来几分钟内可能变化几美分）</value>
+  </data>
+  <data name="SA82ABA14D8A122AD" xml:space="preserve">
+    <value>US$ 不详（OpenAI 面板未提供）</value>
+  </data>
+  <data name="S78C79480BDD6D7C5" xml:space="preserve">
+    <value>队列：第 {0} 个，共 {1} 个</value>
+  </data>
+  <data name="S56564F145E9B2D74" xml:space="preserve">
+    <value>排队中</value>
+  </data>
+  <data name="SD86987681EA3BEAF" xml:space="preserve">
+    <value>正在启动…</value>
+  </data>
+  <data name="S884FD1D94199596A" xml:space="preserve">
+    <value>已运行 {0}</value>
+  </data>
+  <data name="SD237E7892B970A3B" xml:space="preserve">
+    <value>已通过 API 在 {0} 内完成</value>
+  </data>
+  <data name="SDD9F3184635676B7" xml:space="preserve">
+    <value>您在 {0} 后停止；已完成的内容保留在对话中。</value>
+  </data>
+  <data name="SF3F3433651615C02" xml:space="preserve">
+    <value>未继续：{0}</value>
+  </data>
+  <data name="S259A31DD97103C68" xml:space="preserve">
+    <value>已继续</value>
+  </data>
+  <data name="S164611A0C0309186" xml:space="preserve">
+    <value>已移出队列</value>
+  </data>
+  <data name="S099D8E9E5C3A1B92" xml:space="preserve">
+    <value>通过 API：{0} · {1}</value>
+  </data>
+  <data name="S42805E2636632F88" xml:space="preserve">
+    <value>在栏关闭期间：</value>
+  </data>
+  <data name="SA97A9DE5A614933E" xml:space="preserve">
+    <value>请完全关闭 Codex 应用（包括时钟旁的图标）。它一释放该对话，栏就会自动开始。</value>
+  </data>
+  <data name="S5E5628F96AE590E0" xml:space="preserve">
+    <value>另一个 Codex 程序正打开此对话（运行 Codex 的终端、VS Code 扩展或栏的聊天）。请关闭它以继续。</value>
+  </data>
+  <data name="S8D851E48D05F48F7" xml:space="preserve">
+    <value>Codex 配额已恢复。{0} 个对话在 API 队列中等待；它们不会自动继续。</value>
+  </data>
+  <data name="S69DAACDF555B3B09" xml:space="preserve">
+    <value>强制结束</value>
+  </data>
+  <data name="SA2A78C2D6BE33BBF" xml:space="preserve">
+    <value>仍通过 API 继续</value>
+  </data>
+  <data name="S05D08702FB9B2350" xml:space="preserve">
+    <value>移出队列</value>
+  </data>
+  <data name="S6BB3150B9757E97B" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="S98996B4302882915" xml:space="preserve">
+    <value>再次通过 API 继续</value>
+  </data>
+  <data name="S6B5B0486A4AC5CB1" xml:space="preserve">
+    <value>在 Codex 中打开</value>
+  </data>
+  <data name="S565339BC4D33D728" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="S0A6756ADDBF4671C" xml:space="preserve">
+    <value>{0}千</value>
+  </data>
+  <data name="S11F5865C56A2F660" xml:space="preserve">
+    <value>{0}百万</value>
+  </data>
+  <data name="S5ED93406A7DE26CA" xml:space="preserve">
+    <value>不到 1 分钟</value>
+  </data>
+  <data name="S96D15CF84B61A585" xml:space="preserve">
+    <value>{0} 分钟</value>
+  </data>
+  <data name="S477A1B5F11304D3E" xml:space="preserve">
+    <value>{0} 小时</value>
+  </data>
+  <data name="S379C310D145A3208" xml:space="preserve">
+    <value>{0} 小时 {1} 分钟</value>
+  </data>
+  <data name="S65EFAD8C59E67E2A" xml:space="preserve">
+    <value>正在编辑 {0} 个文件…</value>
+  </data>
+  <data name="S1F78AB0A611187C8" xml:space="preserve">
+    <value>正在搜索网络…</value>
+  </data>
+  <data name="S4E17CF487497A3CB" xml:space="preserve">
+    <value>正在使用 {0}…</value>
+  </data>
+  <data name="S4C0995A0AD3BCCBE" xml:space="preserve">
+    <value>自有 API「{0}」（Windows 凭据管理器）</value>
+  </data>
+  <data name="S876D03E6627C9C2C" xml:space="preserve">
+    <value>正在查找因配额停止的对话…</value>
+  </data>
+  <data name="S150FAF58E5D04948" xml:space="preserve">
+    <value>停止通过 API 继续？</value>
+  </data>
+  <data name="S70BD70EAE658B0C6" xml:space="preserve">
+    <value>强制结束？</value>
+  </data>
+  <data name="S8D9CE94899623DC4" xml:space="preserve">
+    <value>正在检查对话…</value>
+  </data>
+  <data name="S3701FECCC430B6BF" xml:space="preserve">
+    <value>Codex 官方列表没有响应；栏使用了本地记录，因此可能会显示已归档的对话。</value>
+  </data>
+  <data name="S52FADDDB772FFBDF" xml:space="preserve">
+    <value>检查</value>
+  </data>
+  <data name="SE4A8663123A6831B" xml:space="preserve">
+    <value>确认并通过 API 继续</value>
+  </data>
+  <data name="S9B0E57C6DE00C87B" xml:space="preserve">
+    <value>无法检查对话：{0}</value>
+  </data>
+  <data name="S5C492F37A63F6E93" xml:space="preserve">
+    <value>显示</value>
+  </data>
 </root>
