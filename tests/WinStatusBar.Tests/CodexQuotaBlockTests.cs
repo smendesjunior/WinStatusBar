@@ -138,6 +138,90 @@ public class CodexQuotaBlockTests
         Assert.False(merged.IsBlocked(Seen.AddMinutes(10)));
     }
 
+    [Theory]
+    [InlineData(false, "workspace_owner_credits_depleted", null, 0, 10, "os créditos do workspace acabaram")]
+    [InlineData(false, "workspace_member_credits_depleted", null, 0, 10, "os créditos do workspace acabaram (o administrador precisa adicionar)")]
+    [InlineData(false, "workspace_owner_usage_limit_reached", null, 0, 10, "o workspace atingiu o limite de uso definido")]
+    [InlineData(false, "workspace_member_usage_limit_reached", null, 0, 10, "você atingiu o limite de uso definido pelo administrador")]
+    [InlineData(false, "rate_limit_reached", null, 0, 10, "o limite de uso foi atingido")]
+    [InlineData(true, null, true, 0, 10, "o limite de gastos do workspace foi atingido")]
+    [InlineData(false, null, null, 0, 10, "a conta bloqueou o uso")]
+    [InlineData(true, null, null, 100, 10, "a cota de 5 horas acabou")]
+    [InlineData(true, null, null, 0, 100, "a cota semanal acabou")]
+    public void ReasonForEachCause(bool allowed, string? reached, bool? spend, double used5h, double used7d, string expected)
+    {
+        var q = Snapshot(Seen, Official(Seen, allowed, reached, spend), used5h, used7d);
+        Assert.Equal(expected, CodexQuotaText.Reason(CodexQuotaText.Cause(q, Seen)));
+    }
+
+    [Theory]
+    [InlineData(false, null, null, 0, 10, "Uso bloqueado")]
+    [InlineData(false, "workspace_member_usage_limit_reached", null, 0, 10, "Limite do workspace")]
+    [InlineData(true, null, true, 0, 10, "Limite do workspace")]
+    [InlineData(true, null, null, 100, 10, "Cota de 5h esgotada")]
+    [InlineData(true, null, null, 0, 100, "Cota semanal esgotada")]
+    public void PillForEachKindOfBlock(bool allowed, string? reached, bool? spend, double used5h, double used7d, string expected)
+    {
+        var q = Snapshot(Seen, Official(Seen, allowed, reached, spend), used5h, used7d);
+        Assert.Equal(expected, CodexQuotaText.Pill(q, Seen));
+    }
+
+    [Fact]
+    public void PillLineAndBannerForTheRealBlock()
+    {
+        var q = Parse(CreditsDepleted, Seen)!;
+        Assert.Equal("Créditos esgotados", CodexQuotaText.Pill(q, Seen));
+        Assert.Equal("Codex bloqueado: créditos do workspace esgotados · volta qui 12/11 às 23:01", CodexQuotaText.BlockedLine(q, Seen));
+
+        var b = CodexQuotaText.Banner(q, Seen)!;
+        Assert.Equal("O Codex está bloqueado pela conta", b.Title);
+        Assert.Equal("Motivo: os créditos do workspace acabaram.", b.Reason);
+        Assert.Equal("Volta qui 12/11 às 23:01 (informado pela conta).", b.Returns);
+        Assert.Equal("Enquanto isso, o app do Codex não envia mensagens, com nenhum modelo.", b.Effect);
+        Assert.Equal("Confirmado pela conta às 10:37.", b.Confirmed);
+        Assert.Equal("ordinaryUsageAllowed=false · rateLimitReachedType=workspace_owner_credits_depleted · saldo de créditos 0", b.Technical);
+
+        var fromRollout = Parse(RolloutBlock, Seen)!;
+        Assert.Equal("Visto no registro de uma conversa às 10:37; a conta ainda não confirmou.", CodexQuotaText.Banner(fromRollout, Seen)!.Confirmed);
+
+        var free = Snapshot(Seen, Official(Seen, true), used7d: 10);
+        Assert.Null(CodexQuotaText.Banner(free, Seen));
+        Assert.Equal("", CodexQuotaText.BlockedLine(free, Seen));
+    }
+
+    [Fact]
+    public void ReturnsTextHasThreeForms()
+    {
+        var q = Parse(CreditsDepleted, Seen)!;
+        var passed = Returns.AddMinutes(5);
+        Assert.Equal("O horário previsto (12/11 às 23:01) já passou; aguardando a conta confirmar a liberação.", CodexQuotaText.ReturnsText(q, passed));
+        Assert.EndsWith("· aguardando a conta confirmar a liberação", CodexQuotaText.BlockedLine(q, passed));
+
+        var noForecast = Snapshot(Seen, Official(Seen, false, "workspace_owner_credits_depleted"), used7d: 10);
+        Assert.Equal("A conta não informou quando volta.", CodexQuotaText.ReturnsText(noForecast, Seen));
+        Assert.EndsWith("· sem previsão informada pela conta", CodexQuotaText.BlockedLine(noForecast, Seen));
+    }
+
+    [Fact]
+    public void StoppedCaptionRefusedSendAndLog()
+    {
+        Assert.Equal("Parada pela cota do Codex · créditos do workspace esgotados", CodexQuotaText.StoppedCaption("workspace_owner_credits_depleted"));
+        Assert.Equal("Parada pela cota do Codex", CodexQuotaText.StoppedCaption(null));
+        Assert.Equal("O Codex está sem cota (créditos do workspace esgotados); o app não confirmou resposta",
+            CodexQuotaText.ChatRefused("créditos do workspace esgotados"));
+        Assert.Equal("Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01",
+            CodexQuotaText.BlockLog(Parse(CreditsDepleted, Seen)!, Seen));
+        Assert.Equal("Codex cota: uso bloqueado (ordinaryUsageAllowed=false) até horário não informado",
+            CodexQuotaText.BlockLog(Snapshot(Seen, Official(Seen, false), used7d: 10), Seen));
+    }
+
+    [Fact]
+    public void DayDateIsPortugueseAndLocal()
+    {
+        Assert.Equal("ter 10/11", CodexQuotaText.DayDate(new DateTimeOffset(new DateTime(2026, 11, 10, 0, 31, 0, DateTimeKind.Local))));
+        Assert.Equal("qui 12/11", CodexQuotaText.DayDate(DateTimeOffset.FromUnixTimeSeconds(1794535289)));
+    }
+
     [Fact]
     public void FullWindowBlocksOnlyUntilItRenewsAndSpendControlBlocks()
     {
