@@ -7,6 +7,19 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.6] - 2026-11-10 · compilação BUILD
+
+### Corrigido
+- Uso de CPU com a tela apagada ou a sessão bloqueada: a barra seguia trabalhando para ninguém. Lia os sensores a cada segundo, consultava as janelas do ChatGPT e do Claude, abria navegadores ocultos para ler cotas (a cada 5 a 6 minutos), fotografava a tela para o fundo adaptativo e animava o módulo do agente. Agora tudo isso para quando a tela da sessão apaga ou a sessão é bloqueada, e volta na hora em que a tela acende (medido com a tela apagada: de 3,9% para 0,5% de um núcleo).
+- Uso de CPU enquanto uma IA trabalha: o brilho do contorno, a estrela do Claude, os logotipos girando e o círculo da tarefa agora andam num relógio único de cerca de 32 quadros por segundo. Antes, essas animações faziam a barra ser redesenhada na taxa da tela (165 vezes por segundo neste PC). O visual é o mesmo (medido com uma IA trabalhando: a barra de 15,6% para 4,5% de um núcleo, e o desenho da tela de 11,1% para 1,8%).
+- Placa de vídeo: o uso e a temperatura agora vêm direto do kernel gráfico do Windows, a mesma fonte do Gerenciador de Tarefas. Antes, cada leitura do uso percorria cerca de 900 contadores (3 ms de CPU a cada 2 segundos), e a temperatura da NVIDIA vinha do nvidia-smi.exe, aberto a cada 10 segundos (44 ms de CPU por vez, e podia acordar a placa dedicada só para isso). Se a placa dedicada estiver desligada para economizar energia, a temperatura dela fica oculta até ela voltar a ser usada.
+- Painel da CPU: o número de processos, threads e handles agora vem de uma chamada só do Windows. Os contadores usados antes percorriam todos os processos e threads do PC a cada segundo, gastando cerca de 1% de um núcleo só para mostrar três números.
+- Etapas da tarefa: cada linha da conversa agora é interpretada uma vez só. Antes, a barra guardava na memória até 2 milhões de caracteres de cada conversa e interpretava tudo de novo a cada mudança, várias vezes por minuto enquanto a IA trabalha.
+- Conversas no aplicativo do ChatGPT e do Claude: a janela do aplicativo é consultada a cada 2,5 segundos só quando ele está em uso ou tem uma conversa em andamento; fora disso, a cada 10 segundos. Cada consulta também faz o aplicativo consultado trabalhar (medido: o ChatGPT parado subia de 0,3% para 2,5% de um núcleo só por causa delas).
+- IA local: com o Ollama fechado, a barra procura o servidor a cada 10 segundos, em vez de listar todos os processos do PC a cada 2 segundos.
+- Temperatura pelo LibreHardwareMonitor ou pelo OpenHardwareMonitor: quando eles não estão instalados, a barra para de perguntar a cada 10 segundos (cada tentativa terminava em erro no serviço WMI).
+- Memória: a barra devolve ao Windows a memória que o .NET reserva na abertura e quando a tela apaga (medido: de 100 para 21 MB reservados), e passa a usar o Segment Heap, o gerenciador de memória do Windows usado pelo Edge e pelo Chrome. No Gerenciador de Tarefas, a barra caiu de cerca de 356 para cerca de 260 MB.
+
 ## [1.4.5] - 2026-11-09 · compilação 20261110024050
 
 ### Corrigido

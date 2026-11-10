@@ -18,6 +18,7 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
     public enum App { ChatGpt, Claude, Qira }
 
     private static readonly TimeSpan BusyInterval = TimeSpan.FromSeconds(2.5), IdleInterval = TimeSpan.FromSeconds(5);
+    private DateTime _lastProbe = DateTime.MinValue, _lastUsed = DateTime.MinValue; // ChatProbeSchedule
     private static readonly TimeSpan KeepFinished = TimeSpan.FromMinutes(20);
     /// <summary>Nomes do indicador da barra lateral do ChatGPT que significam trabalho em andamento (pt/en).</summary>
     private static readonly Regex ChatGptBusy = new(@"process|pensa|think|pesquis|search|gera|generat|respond|trabalh|work|escrev|writ|analis|analy|execut|running|carregand|loading",
@@ -70,6 +71,9 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
     {
         while (!token.IsCancellationRequested)
         {
+            // Tela apagada ou sessão bloqueada: não consulta as janelas (cada consulta também faz o app consultado
+            // trabalhar: ~2% de um núcleo no ChatGPT, medido em 10/11/2026); volta assim que a tela acender.
+            if (WinStatusBar.Core.Presence.Away && !WinStatusBar.Core.Presence.WaitVisible(token)) return;
             bool open = false;
             try
             {
@@ -77,10 +81,16 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
                 {
                     var windows = Windows();
                     open = windows.Count > 0;
-                    var sw = Stopwatch.StartNew();
-                    var found = open ? Probe(windows) : [];
-                    LastProbeCost = sw.Elapsed;
-                    Apply(found);
+                    var now = DateTime.UtcNow;
+                    if (open && windows.Contains(GetForegroundWindow())) _lastUsed = now;
+                    if (!open || ChatProbeSchedule.ShouldProbe(now, _lastProbe, _lastUsed, HasRunning()))
+                    {
+                        _lastProbe = now;
+                        var sw = Stopwatch.StartNew();
+                        var found = open ? Probe(windows) : [];
+                        LastProbeCost = sw.Elapsed;
+                        Apply(found);
+                    }
                 }
                 else Apply([]);
             }
@@ -91,6 +101,11 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
             }
             token.WaitHandle.WaitOne(open ? BusyInterval : IdleInterval);
         }
+    }
+
+    private bool HasRunning()
+    {
+        lock (_gate) return _sessions.Values.Any(s => s.State == AgentState.Running);
     }
 
     /// <summary>Conversas em andamento agora: título → legenda.</summary>
@@ -197,25 +212,46 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
         if (changed) SessionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Janelas visíveis de nível superior do aplicativo (Chromium/Electron).</summary>
+    /// <summary>
+    /// Janelas visíveis de nível superior do aplicativo (Chromium/Electron). Parte das janelas, não dos processos:
+    /// listar todos os processos do PC (GetProcessesByName) a cada 2,5 s custava mais do que achar as janelas, e o nome
+    /// do processo de cada janela Chromium fica guardado enquanto ela existir.
+    /// </summary>
     private List<IntPtr> Windows()
     {
         if (_app == App.Qira) return QiraAppBridge.Windows();
-        var pids = new HashSet<uint>();
-        foreach (var p in Process.GetProcessesByName(_process)) { pids.Add((uint)p.Id); p.Dispose(); }
         var list = new List<IntPtr>();
-        if (pids.Count == 0) return list;
+        var seen = new HashSet<uint>();
         var cls = new StringBuilder(64);
         EnumWindows((h, _) =>
         {
             if (!IsWindowVisible(h)) return true;
-            GetWindowThreadProcessId(h, out uint pid);
-            if (!pids.Contains(pid)) return true;
             cls.Clear(); GetClassName(h, cls, cls.Capacity);
-            if (cls.ToString() == "Chrome_WidgetWin_1" && GetWindowTextLength(h) > 0) list.Add(h);
+            if (cls.ToString() != "Chrome_WidgetWin_1" || GetWindowTextLength(h) == 0) return true;
+            GetWindowThreadProcessId(h, out uint pid);
+            seen.Add(pid);
+            if (!_processNames.TryGetValue(pid, out var name)) _processNames[pid] = name = ProcessName(pid);
+            if (string.Equals(name, _process, StringComparison.OrdinalIgnoreCase)) list.Add(h);
             return true;
         }, IntPtr.Zero);
+        foreach (var gone in _processNames.Keys.Where(p => !seen.Contains(p)).ToList()) _processNames.Remove(gone);
         return list;
+    }
+
+    /// <summary>Nome do processo de cada janela Chromium vista na última volta (PID → nome, sem extensão).</summary>
+    private readonly Dictionary<uint, string> _processNames = new();
+
+    private static string ProcessName(uint pid)
+    {
+        IntPtr h = OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */, false, pid);
+        if (h == IntPtr.Zero) return string.Empty;
+        try
+        {
+            var path = new StringBuilder(1024);
+            int size = path.Capacity;
+            return QueryFullProcessImageNameW(h, 0, path, ref size) ? System.IO.Path.GetFileNameWithoutExtension(path.ToString()) : string.Empty;
+        }
+        finally { CloseHandle(h); }
     }
 
     // ------------------------------------------------------------------ UI Automation (UIAutomationCore.dll, já no Windows)
@@ -272,4 +308,8 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
     [DllImport("user32.dll")] private static extern int GetWindowTextLength(IntPtr hwnd);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr hwnd, StringBuilder name, int max);
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr handle);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern bool QueryFullProcessImageNameW(IntPtr process, uint flags, StringBuilder name, ref int size);
 }

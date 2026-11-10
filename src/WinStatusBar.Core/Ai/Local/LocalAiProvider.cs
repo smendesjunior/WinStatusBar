@@ -74,10 +74,21 @@ public sealed class LocalAiProvider : IAgentActivityProvider, IDisposable
         get { lock (_gate) return _session is null ? [] : [_session.Clone()]; }
     }
 
-    /// <summary>Chamado pelo agendador central (fora da UI) a cada ~2 s com a amostra mais recente dos motores de GPU.</summary>
-    public void Poll(IReadOnlyList<KeyValuePair<string, double>>? gpuEngines)
+    /// <summary>
+    /// Sem servidor de IA local aberto, procura de novo a cada 10 s: listar os ~500 processos do PC a cada 2 s só para
+    /// saber que o Ollama continua fechado gastava CPU à toa. Com o servidor aberto, segue a cada ~2 s.
+    /// </summary>
+    internal static readonly TimeSpan IdleScan = TimeSpan.FromSeconds(10);
+    private DateTime _lastEmptyScan = DateTime.MinValue;
+
+    /// <summary>
+    /// Chamado pelo agendador central (fora da UI) a cada ~2 s. <paramref name="gpuForPids"/> dá o uso da GPU pelos
+    /// processos do servidor (motor mais ocupado, somando os processos).
+    /// </summary>
+    public void Poll(Func<HashSet<uint>, double?>? gpuForPids)
     {
         var now = DateTime.UtcNow;
+        if (ServerDisplay is null && now - _lastEmptyScan < IdleScan) return;
         double dt = Math.Max(0.2, (now - _lastPoll).TotalSeconds);
         _lastPoll = now;
 
@@ -85,6 +96,7 @@ public sealed class LocalAiProvider : IAgentActivityProvider, IDisposable
         var (kind, serverPids) = FindServer(snapshot.Processes.Values, ExtraProcessNames);
         if (kind is null)
         {
+            _lastEmptyScan = now;
             bool had;
             lock (_gate) { had = _session is not null; _session = null; }
             _lastCpu.Clear(); ServerDisplay = null;
@@ -107,7 +119,7 @@ public sealed class LocalAiProvider : IAgentActivityProvider, IDisposable
             _lastCpu[pid] = secs.Value;
         }
         foreach (var gone in _lastCpu.Keys.Where(p => !serverPids.Contains(p)).ToList()) _lastCpu.Remove(gone);
-        double? gpu = gpuEngines is null ? null : GpuForPids(gpuEngines, serverPids);
+        double? gpu = gpuForPids?.Invoke(serverPids);
         LastGpu = gpu; LastCpuCores = cores;
 
         bool busyNow = IsBusy(gpu, cores, GpuThreshold, CpuCoresThreshold);

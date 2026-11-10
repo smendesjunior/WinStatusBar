@@ -32,6 +32,19 @@ internal static unsafe partial class NativeMethods
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern bool GetPhysicallyInstalledSystemMemory(out ulong totalKilobytes);
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct PERFORMANCE_INFORMATION
+    {
+        public uint cb;
+        public nuint CommitTotal, CommitLimit, CommitPeak, PhysicalTotal, PhysicalAvailable, SystemCache,
+            KernelTotal, KernelPaged, KernelNonpaged, PageSize;
+        public uint HandleCount, ProcessCount, ThreadCount;
+    }
+
+    /// <summary>Processos, threads e handles do sistema numa chamada só (psapi/kernel32).</summary>
+    [DllImport("kernel32.dll", EntryPoint = "K32GetPerformanceInfo", SetLastError = true)]
+    internal static extern bool GetPerformanceInfo(ref PERFORMANCE_INFORMATION info, uint size);
+
     // ---------------- pdh ----------------
     internal const uint PDH_FMT_DOUBLE = 0x00000200;
     internal const uint PDH_FMT_NOCAP100 = 0x00008000;

@@ -17,7 +17,11 @@ public sealed class OllamaLogo : Grid
     public bool IsWorking { get => (bool)GetValue(IsWorkingProperty); set => SetValue(IsWorkingProperty, value); }
     private sealed record Layer(Geometry Still, Geometry[] Frames, bool White);
     private static readonly Lazy<Layer[]> Layers = new(Load);
-    private readonly Storyboard _story = new() { RepeatBehavior = RepeatBehavior.Forever };
+    /// <summary>Ondulação em 3 s, um quadro de cada camada por vez, pelo relógio único da barra (FrameClock).</summary>
+    private const double Cycle = 3.0;
+    private readonly List<(Path Path, Layer Layer)> _paths = [];
+    private int[] _shown = [];
+    private Action<double>? _tick;
     private bool _running;
 
     public OllamaLogo()
@@ -30,19 +34,16 @@ public sealed class OllamaLogo : Grid
             {
                 var path = new Path { Data = layer.Still, Fill = new SolidColorBrush(layer.White ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black) };
                 canvas.Children.Add(path);
-                var animation = new ObjectAnimationUsingKeyFrames { Duration = TimeSpan.FromSeconds(3) };
-                for (int i = 0; i < layer.Frames.Length; i++)
-                    animation.KeyFrames.Add(new DiscreteObjectKeyFrame { KeyTime = TimeSpan.FromSeconds(3.0 * i / layer.Frames.Length), Value = layer.Frames[i] });
-                Storyboard.SetTarget(animation, path);
-                Storyboard.SetTargetProperty(animation, "Data");
-                _story.Children.Add(animation);
+                _paths.Add((path, layer));
             }
+            _shown = Enumerable.Repeat(-1, _paths.Count).ToArray();
         }
         catch (Exception ex) { global::WinStatusBar.App.Log("Ícone Ollama: " + ex.Message); }
         Children.Add(new Viewbox { Child = canvas, Stretch = Stretch.Uniform });
         Loaded += (_, _) => Sync();
         Unloaded += (_, _) => Stop();
         RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => Sync());
+        AnimationGate.Watch(this, Sync);
     }
 
     private static Layer[] Load()
@@ -75,8 +76,30 @@ public sealed class OllamaLogo : Grid
 
     private void Sync()
     {
-        if (!IsWorking || !IsLoaded || Visibility != Visibility.Visible) { Stop(); return; }
-        if (!_running && _story.Children.Count > 0) { _story.Begin(); _running = true; }
+        if (!IsWorking || !IsLoaded || Visibility != Visibility.Visible || !AnimationGate.Allowed) { Stop(); return; }
+        if (!_running && _paths.Count > 0) { _running = true; FrameClock.Add(_tick ??= OnFrame); }
     }
-    private void Stop() { if (_running) _story.Stop(); _running = false; }
+
+    /// <summary>Troca o desenho de cada camada só quando o quadro muda (~27 vezes por segundo).</summary>
+    private void OnFrame(double t)
+    {
+        double phase = FrameClock.Phase(t, Cycle);
+        for (int k = 0; k < _paths.Count; k++)
+        {
+            var (path, layer) = _paths[k];
+            if (layer.Frames.Length == 0) continue;
+            int i = Math.Min(layer.Frames.Length - 1, (int)(phase * layer.Frames.Length));
+            if (i == _shown[k]) continue;
+            _shown[k] = i;
+            path.Data = layer.Frames[i];
+        }
+    }
+
+    private void Stop()
+    {
+        if (!_running) return;
+        _running = false;
+        if (_tick is not null) FrameClock.Remove(_tick);
+        for (int k = 0; k < _paths.Count; k++) { _paths[k].Path.Data = _paths[k].Layer.Still; _shown[k] = -1; }
+    }
 }

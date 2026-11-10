@@ -45,7 +45,12 @@ internal static class MicrosoftCreditsSession
         _ui = ui;
         _timer = ui.CreateTimer();
         _timer.Interval = TimeSpan.FromMinutes(5);
-        _timer.Tick += (_, _) => { if (Current?.SignedIn == true) Refresh(); };
+        // Com a tela apagada ou a sessão bloqueada não abre o navegador oculto; ao acender, lê se a última leitura venceu.
+        _timer.Tick += (_, _) => { if (Current?.SignedIn == true && !Core.Presence.Away) Refresh(); };
+        Core.Presence.Changed += away =>
+        {
+            if (!away) _ui?.TryEnqueue(() => { if (Current?.SignedIn == true && DateTimeOffset.Now - Current.Updated >= _interval) Refresh(); });
+        };
         _timer.Interval = _interval;
         _timer.Start();
         // Primeira leitura ao iniciar: com sessão gravada (cookies no perfil) mesmo sem leitura anterior.

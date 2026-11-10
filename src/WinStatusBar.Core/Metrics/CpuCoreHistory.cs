@@ -11,7 +11,9 @@ public sealed class CpuCoreHistory : IDisposable
 {
     public const int Capacity = 60;
     private const string Cores = @"\Processor Information(*)\% Processor Utility";
-    private const string Processes = @"\System\Processes", Threads = @"\System\Threads", Handles = @"\Process(_Total)\Handle Count";
+    // Processos, threads e handles vêm de GetPerformanceInfo: os contadores "\System\Processes|Threads" e
+    // "\Process(_Total)\Handle Count" percorrem todos os processos e threads a cada coleta (~11 ms de CPU por segundo,
+    // medido em 10/11/2026 com 520 processos e 8.300 threads), só para o painel mostrar três números.
     private readonly PdhQuery _pdh = new();
     private readonly Lock _gate = new();
     private readonly Dictionary<string, Queue<double>> _history = new();
@@ -27,7 +29,7 @@ public sealed class CpuCoreHistory : IDisposable
 
     public CpuCoreHistory()
     {
-        foreach (var c in new[] { Cores, Processes, Threads, Handles }) _pdh.AddCounter(c);
+        _pdh.AddCounter(Cores);
         _pdh.Collect();
     }
 
@@ -35,15 +37,18 @@ public sealed class CpuCoreHistory : IDisposable
     {
         lock (_gate)
         {
+            var info = new NativeMethods.PERFORMANCE_INFORMATION { cb = (uint)System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.PERFORMANCE_INFORMATION>() };
+            if (NativeMethods.GetPerformanceInfo(ref info, info.cb))
+            {
+                ProcessCount = info.ProcessCount; ThreadCount = info.ThreadCount; HandleCount = info.HandleCount;
+            }
             if (!_pdh.Collect()) return;
-            ProcessCount = _pdh.GetValue(Processes, noCap: true);
-            ThreadCount = _pdh.GetValue(Threads, noCap: true);
-            HandleCount = _pdh.GetValue(Handles, noCap: true);
+            var all = _pdh.GetArray(Cores);
             // Instâncias "grupo,índice"; ignora totais ("_Total" e "0,_Total").
-            var cores = _pdh.GetArray(Cores).Where(x => !x.Key.Contains("_total", StringComparison.OrdinalIgnoreCase) && x.Key.Contains(','))
+            var cores = all.Where(x => !x.Key.Contains("_total", StringComparison.OrdinalIgnoreCase) && x.Key.Contains(','))
                 .OrderBy(x => Part(x.Key, 0)).ThenBy(x => Part(x.Key, 1)).ToArray();
             // Uso total (mesma instância "_Total" do contador da barra) para o gráfico principal do painel.
-            var total = _pdh.GetArray(Cores).FirstOrDefault(x => x.Key.Equals("_Total", StringComparison.OrdinalIgnoreCase));
+            var total = all.FirstOrDefault(x => x.Key.Equals("_Total", StringComparison.OrdinalIgnoreCase));
             if (total.Key is not null)
             {
                 _total.Enqueue(Math.Clamp(total.Value, 0, 100));

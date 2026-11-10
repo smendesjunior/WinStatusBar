@@ -170,6 +170,7 @@ public sealed class MonitoringHub : IDisposable
         {
             try
             {
+                await WinStatusBar.Core.Presence.WhenVisibleAsync(ct); // tela apagada: sem consultas até ela acender
                 if (_settings.Current.ClaudeEnabled) await Claude.RefreshUsageAsync(ct: ct);
                 await Task.Delay(TimeSpan.FromSeconds(5), ct); // a própria consulta respeita o intervalo e o Retry-After
             }
@@ -195,6 +196,13 @@ public sealed class MonitoringHub : IDisposable
         bool firstGpu = true;
         while (!ct.IsCancellationRequested)
         {
+            if (WinStatusBar.Core.Presence.Away)
+            {
+                // Tela apagada ou sessão bloqueada: ninguém vê a barra. Para aqui e volta assim que a tela acender,
+                // já com GPU, bateria e temperaturas lidas de novo.
+                try { await WinStatusBar.Core.Presence.WhenVisibleAsync(ct); } catch (OperationCanceledException) { return; }
+                firstGpu = firstBattery = firstTemperature = true;
+            }
             var s = _settings.Current;
             var sw = Stopwatch.StartNew();
             try
@@ -230,7 +238,7 @@ public sealed class MonitoringHub : IDisposable
                 }
                 if (firstTemperature || temperatureClock.Elapsed.TotalSeconds >= 10)
                 {
-                    var t = s.ShowTemperatures ? await temperatures.SampleAsync(LastGpu?.Adapter?.Name, ct) : new TemperatureSample(null, null);
+                    var t = s.ShowTemperatures ? await temperatures.SampleAsync(LastGpu?.Adapter, ct) : new TemperatureSample(null, null);
                     LastTemperature = t;
                     _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(t, s.ShowTemperatures));
                     firstTemperature = false;
@@ -239,7 +247,7 @@ public sealed class MonitoringHub : IDisposable
                 if (s.LocalEnabled && localClock.ElapsedMilliseconds >= 2000)
                 {
                     localClock.Restart();
-                    try { Local.Poll(Gpu.LastEngineValues); } catch (Exception ex) { App.Log(global::WinStatusBar.Services.Localization.T("Local: ") + ex.Message); }
+                    try { Local.Poll(Gpu.ProcessUsage); } catch (Exception ex) { App.Log(global::WinStatusBar.Services.Localization.T("Local: ") + ex.Message); }
                 }
                 if (expireClock.Elapsed > TimeSpan.FromSeconds(5))
                 {
@@ -259,7 +267,7 @@ public sealed class MonitoringHub : IDisposable
     public async Task RefreshTemperaturesAsync()
     {
         using var temperatures = new TemperatureProvider();
-        var sample = await Task.Run(() => temperatures.SampleAsync(LastGpu?.Adapter?.Name, _cts?.Token ?? CancellationToken.None));
+        var sample = await Task.Run(() => temperatures.SampleAsync(LastGpu?.Adapter, _cts?.Token ?? CancellationToken.None));
         LastTemperature = sample;
         _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(sample, _settings.Current.ShowTemperatures));
     }

@@ -111,6 +111,8 @@ internal sealed class TaskBriefingService : IDisposable
     {
         while (!_stop.IsCancellationRequested)
         {
+            // Tela apagada ou sessão bloqueada: o acompanhamento espera; ao acender, lê só o que a conversa acrescentou.
+            try { await WinStatusBar.Core.Presence.WhenVisibleAsync(_stop.Token); } catch (OperationCanceledException) { return; }
             try { await Refresh(); }
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { return; }
             catch (Exception ex) { App.Log("Acompanhamento da tarefa: " + ex.Message); }

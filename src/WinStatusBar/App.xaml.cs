@@ -134,7 +134,11 @@ public partial class App : Application
             folderPreview.ShowAt(null);
         }
 
+        Core.Presence.Changed += away => Log(away
+            ? "Tela apagada ou sessão bloqueada: leituras e animações em pausa."
+            : "Tela acesa: leituras e animações retomadas.");
         _tray = new TrayIconService(IconPath);
+        MemoryTrim.Start(_dispatcher);
         _tray.HardwareChanged += Hub.HardwareChanged;
         _tray.CommandInvoked += OnTrayCommand;
         _tray.MenuRequested += (x, y) => _dispatcher.TryEnqueue(() =>
@@ -403,6 +407,8 @@ public partial class App : Application
         _apiUsageTimer.Interval = TimeSpan.FromMinutes(1);
         _apiUsageTimer.Tick += (_, _) =>
         {
+            // Tela apagada ou sessão bloqueada: nada a mostrar; na volta, o próximo minuto atualiza o que venceu.
+            if (WinStatusBar.Core.Presence.Away) return;
             // Créditos do Qira: no intervalo das cotas (mínimo 5 min), só se a interface do Qira da barra já estiver aberta.
             if (DateTimeOffset.Now - (WinStatusBar.Core.Ai.QiraBridge.CurrentQuota?.Updated ?? DateTimeOffset.MinValue) >= WinStatusBar.Core.Settings.AppSettings.WebQuotaInterval(Settings.Current.CodexQuotaIntervalMin))
                 _ = QiraHubSession.RefreshQuotaAsync();

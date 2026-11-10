@@ -35,7 +35,68 @@ public sealed class TrayIconService : IDisposable
         _iconPath = iconPath;
         LoadIcon();
         Add();
+        WatchPresence();
     }
+
+    // ------------------------------------------------------------------ Presença (tela da sessão e bloqueio)
+    // Tela desta sessão (vale também em área de trabalho remota, ao contrário de GUID_CONSOLE_DISPLAY_STATE).
+    private static readonly Guid SessionDisplayStatus = new("2b84c20e-ad23-4ddf-93db-05ffbd7efca5");
+    private const int PBT_POWERSETTINGCHANGE = 0x8013, WM_WTSSESSION_CHANGE = 0x02B1, WTS_SESSION_LOCK = 0x7, WTS_SESSION_UNLOCK = 0x8;
+    private IntPtr _displayNotification;
+
+    /// <summary>
+    /// Avisos do Windows para <see cref="WinStatusBar.Core.Presence"/>: tela da sessão ligada/desligada (o Windows manda
+    /// o estado atual logo no registro) e sessão bloqueada/desbloqueada (o estado inicial vem de WTSQuerySessionInformation).
+    /// </summary>
+    private void WatchPresence()
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        var guid = SessionDisplayStatus;
+        _displayNotification = RegisterPowerSettingNotification(_hwnd, ref guid, 0 /* DEVICE_NOTIFY_WINDOW_HANDLE */);
+        WTSRegisterSessionNotification(_hwnd, 0 /* NOTIFY_FOR_THIS_SESSION */);
+        if (SessionLocked() is bool locked) Core.Presence.SetLocked(locked);
+    }
+
+    /// <summary>
+    /// Sessão atual bloqueada? WTSINFOEX: Level@0, WTSINFOEX_LEVEL1 alinhado a 8 (SessionId@8, SessionState@12,
+    /// SessionFlags@16: 0 = bloqueada, 1 = desbloqueada; conferido em 10/11/2026).
+    /// </summary>
+    private static bool? SessionLocked()
+    {
+        try
+        {
+            if (!WTSQuerySessionInformationW(IntPtr.Zero, -1 /* WTS_CURRENT_SESSION */, 25 /* WTSSessionInfoEx */, out var buffer, out int bytes) || buffer == IntPtr.Zero)
+                return null;
+            try { return bytes >= 20 && Marshal.ReadInt32(buffer, 0) == 1 ? Marshal.ReadInt32(buffer, 16) switch { 0 => true, 1 => false, _ => null } : null; }
+            finally { WTSFreeMemory(buffer); }
+        }
+        catch { return null; }
+    }
+
+    private static bool HandlePresence(uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        if (msg == 0x0218 && (int)wParam == PBT_POWERSETTINGCHANGE && lParam != IntPtr.Zero)
+        {
+            // POWERBROADCAST_SETTING: GUID PowerSetting; DWORD DataLength; UCHAR Data[] (DWORD: 0 desligada, 1 ligada, 2 esmaecida).
+            if (Marshal.PtrToStructure<Guid>(lParam) == SessionDisplayStatus && Marshal.ReadInt32(lParam, 16) >= 4)
+                Core.Presence.SetDisplay(Marshal.ReadInt32(lParam, 20) != 0);
+            return true;
+        }
+        if (msg == WM_WTSSESSION_CHANGE)
+        {
+            if ((int)wParam == WTS_SESSION_LOCK) Core.Presence.SetLocked(true);
+            else if ((int)wParam == WTS_SESSION_UNLOCK) Core.Presence.SetLocked(false);
+            return true;
+        }
+        return false;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr RegisterPowerSettingNotification(IntPtr recipient, ref Guid setting, int flags);
+    [DllImport("user32.dll")] private static extern bool UnregisterPowerSettingNotification(IntPtr handle);
+    [DllImport("wtsapi32.dll")] private static extern bool WTSRegisterSessionNotification(IntPtr hwnd, int flags);
+    [DllImport("wtsapi32.dll")] private static extern bool WTSUnRegisterSessionNotification(IntPtr hwnd);
+    [DllImport("wtsapi32.dll", CharSet = CharSet.Unicode)] private static extern bool WTSQuerySessionInformationW(IntPtr server, int session, int infoClass, out IntPtr buffer, out int bytes);
+    [DllImport("wtsapi32.dll")] private static extern void WTSFreeMemory(IntPtr memory);
 
     private readonly string _iconPath;
 
@@ -107,6 +168,8 @@ public sealed class TrayIconService : IDisposable
 
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
+        // Tela ligada/desligada e bloqueio: não são mudança de hardware (não recarregam adaptadores nem sensores).
+        if (HandlePresence(msg, wParam, lParam)) return msg == 0x0218 ? new IntPtr(1) : IntPtr.Zero;
         // Broadcast de topologia, tela e energia. O destinatário só sinaliza o coletor.
         if (msg is 0x0219 or 0x0218 || msg == WM_DISPLAYCHANGE_U)
             HardwareChanged?.Invoke();
@@ -137,6 +200,7 @@ public sealed class TrayIconService : IDisposable
     {
         if (_added) { var d = Data(); Shell_NotifyIconW(NIM_DELETE, ref d); _added = false; }
         if (_icon != IntPtr.Zero) { DestroyIcon(_icon); _icon = IntPtr.Zero; }
-        if (_hwnd != IntPtr.Zero) DestroyWindow(_hwnd);
+        if (_displayNotification != IntPtr.Zero) { UnregisterPowerSettingNotification(_displayNotification); _displayNotification = IntPtr.Zero; }
+        if (_hwnd != IntPtr.Zero) { WTSUnRegisterSessionNotification(_hwnd); DestroyWindow(_hwnd); }
     }
 }

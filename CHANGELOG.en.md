@@ -7,6 +7,19 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.6] - 2026-11-10 · build BUILD
+
+### Fixed
+- CPU use with the screen off or the session locked: the bar kept working for nobody. It read the sensors every second, checked the ChatGPT and Claude windows, opened hidden browsers to read quotas (every 5 to 6 minutes), captured the screen for the adaptive background and animated the agent module. All of this now stops when the session's screen turns off or the session is locked, and resumes as soon as the screen turns back on (measured with the screen off: from 3.9% to 0.5% of a CPU core).
+- CPU use while an AI is working: the outline glow, the Claude star, the spinning logos and the task ring now run on a single clock of about 32 frames per second. Before, these animations made the bar redraw at the screen's refresh rate (165 times per second on this PC). It looks the same (measured while an AI was working: the bar went from 15.6% to 4.5% of a core, and screen drawing from 11.1% to 1.8%).
+- Graphics card: usage and temperature now come straight from the Windows graphics kernel, the same source as Task Manager. Before, each usage read went through about 900 counters (3 ms of CPU every 2 seconds), and the NVIDIA temperature came from nvidia-smi.exe, started every 10 seconds (44 ms of CPU each time, and it could wake the dedicated card just for that). If the dedicated card is powered off to save energy, its temperature stays hidden until the card is used again.
+- CPU panel: the process, thread and handle counts now come from a single Windows call. The counters used before went through every process and thread on the PC every second, using about 1% of a core just to show three numbers.
+- Task steps: each line of the conversation is now parsed only once. Before, the bar kept up to 2 million characters of each conversation in memory and parsed all of it again on every change, several times a minute while the AI works.
+- Conversations in the ChatGPT and Claude apps: the app window is checked every 2.5 seconds only while the app is in use or has a conversation in progress; otherwise, every 10 seconds. Each check also makes the checked app do work (measured: an idle ChatGPT went from 0.3% to 2.5% of a core just because of them).
+- Local AI: with Ollama closed, the bar looks for the server every 10 seconds instead of listing every process on the PC every 2 seconds.
+- Temperature from LibreHardwareMonitor or OpenHardwareMonitor: when they are not installed, the bar stops asking every 10 seconds (each attempt ended in an error in the WMI service).
+- Memory: the bar returns to Windows the memory .NET reserves at startup and when the screen turns off (measured: from 100 to 21 MB reserved), and now uses the Segment Heap, the Windows memory manager used by Edge and Chrome. In Task Manager, the bar went from about 356 to about 260 MB.
+
 ## [1.4.5] - 2026-11-09 · build 20261110024050
 
 ### Fixed

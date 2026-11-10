@@ -103,6 +103,8 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         var last = DateTimeOffset.MinValue;
         while (!ct.IsCancellationRequested)
         {
+            // Tela apagada ou sessão bloqueada: não abre o Codex só para ler a cota; ao acender, consulta se já venceu.
+            try { await Presence.WhenVisibleAsync(ct); } catch { return; }
             // Reavalia a cada 5 s: mudanças no intervalo configurado valem imediatamente.
             // Backoff exponencial em falhas (até 1 h) para não sobrecarregar o Codex.
             var due = _failures == 0 ? QuotaInterval : TimeSpan.FromMinutes(Math.Min(60, Math.Pow(2, _failures)));

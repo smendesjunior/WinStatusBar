@@ -7,16 +7,20 @@ namespace WinStatusBar.Core.Metrics;
 /// Adaptadores via DXGI (IDXGIFactory1/IDXGIAdapter1::GetDesc1). VRAM total = DedicatedVideoMemory.
 /// VRAM em uso (global, todos os processos) = contador "GPU Adapter Memory(luid_*)\Dedicated Usage" do mesmo LUID —
 /// a mesma fonte do Gerenciador de Tarefas. Não usa QueryVideoMemoryInfo.CurrentUsage (que é por processo).
-/// Utilização 3D/compute = maior soma por motor de "GPU Engine(*_luid_*_eng_N_*)\Utilization Percentage".
+/// Utilização 3D/compute = motor mais ocupado, pelo tempo de execução de cada motor no kernel gráfico
+/// (<see cref="GpuKernelStats"/>); reserva: maior soma por motor de "GPU Engine(*_luid_*_eng_N_*)\Utilization Percentage".
 /// </summary>
 public sealed class GpuMetricsProvider : ISystemMetricsProvider<GpuSample>
 {
     private const string Dedicated = @"\GPU Adapter Memory(*)\Dedicated Usage";
     private const string Shared = @"\GPU Adapter Memory(*)\Shared Usage";
     private const string Engine = @"\GPU Engine(*)\Utilization Percentage";
+    private const string EngineRunningTime = @"\GPU Engine(*)\Running Time";
 
     private readonly PdhQuery _memory = new();
     private PdhQuery? _engine;
+    /// <summary>Uso dos motores pelo kernel gráfico; o PDH "GPU Engine(*)" fica só como reserva (adaptador sem estatísticas).</summary>
+    private readonly GpuKernelStats _kernel = new(ReadEngineInstanceNames);
     private List<GpuAdapterInfo> _adapters = new();
     private DateTime _adaptersReadAt;
     private readonly Func<List<GpuAdapterInfo>> _enumerate;
@@ -28,7 +32,10 @@ public sealed class GpuMetricsProvider : ISystemMetricsProvider<GpuSample>
     public string? PreferredAdapter { get; set; }
     public bool MeasureUtilization { get; set; } = true;
 
-    /// <summary>Última leitura de "GPU Engine(*)\Utilization Percentage" (todas as instâncias, com PID no nome).</summary>
+    /// <summary>
+    /// Última leitura do uso dos motores no formato das instâncias do PDH: pelo kernel gráfico, uma por motor do
+    /// adaptador escolhido ("luid_…_eng_N_engtype_X"); pelo PDH (reserva), todas as instâncias, com PID no nome.
+    /// </summary>
     public IReadOnlyList<KeyValuePair<string, double>>? LastEngineValues { get; private set; }
 
     public GpuMetricsProvider() : this(EnumerateAdapters, null) { }
@@ -55,8 +62,27 @@ public sealed class GpuMetricsProvider : ISystemMetricsProvider<GpuSample>
         }
         _driverSizes = null;
         var adapters = _enumerate();
-        if (!_adapters.SequenceEqual(adapters)) _adapters = adapters;
+        if (!_adapters.SequenceEqual(adapters)) { _adapters = adapters; _kernel.Reset(); }
         _adaptersReadAt = DateTime.UtcNow;
+    }
+
+    /// <summary>Nomes das instâncias do contador "GPU Engine" (com o tipo de cada motor), lidos de uma vez só.</summary>
+    private static IReadOnlyList<KeyValuePair<string, double>> ReadEngineInstanceNames()
+    {
+        using var query = new PdhQuery();
+        // "Running Time" é um valor bruto: vale já na primeira coleta (o percentual precisa de duas).
+        return query.AddCounter(EngineRunningTime) && query.Collect() ? query.GetArray(EngineRunningTime) : [];
+    }
+
+    /// <summary>
+    /// Uso da GPU pelos processos indicados (o servidor de IA local) em qualquer adaptador: soma dos processos por
+    /// motor e o motor mais ocupado. Pelo kernel gráfico quando disponível; senão, pela última leitura do PDH.
+    /// </summary>
+    public double? ProcessUsage(HashSet<uint> pids)
+    {
+        var adapters = _adapters;
+        if (adapters.Any(a => _kernel.Supports(a.Luid))) return _kernel.ProcessUtilization(adapters.Select(a => a.Luid).ToList(), pids);
+        return LastEngineValues is { } engines ? Ai.Local.LocalAiProvider.GpuForPids(engines, pids) : null;
     }
 
     // Apenas sinaliza: DXGI/PDH continuam serializados pelo laço de amostragem.
@@ -158,7 +184,16 @@ public sealed class GpuMetricsProvider : ISystemMetricsProvider<GpuSample>
         double? util = null;
         if (MeasureUtilization)
         {
-            if (_engine is null) { _engine = new PdhQuery(); _engine.AddCounter(Engine); _engine.Collect(); }
+            if (_kernel.Supports(adapter.Luid))
+            {
+                if (_engine is not null) { _engine.Dispose(); _engine = null; }
+                if (_kernel.Engines(adapter) is { } engines)
+                {
+                    LastEngineValues = engines;
+                    util = ComputeEngineUtilization(engines, adapter.LuidKey);
+                }
+            }
+            else if (_engine is null) { _engine = new PdhQuery(); _engine.AddCounter(Engine); _engine.Collect(); }
             else if (_engine.Collect())
             {
                 var engines = _engine.GetArray(Engine);
@@ -226,5 +261,5 @@ public sealed class GpuMetricsProvider : ISystemMetricsProvider<GpuSample>
         return result;
     }
 
-    public void Dispose() { _memory.Dispose(); _engine?.Dispose(); Release(_factory); _factory = IntPtr.Zero; }
+    public void Dispose() { _memory.Dispose(); _engine?.Dispose(); _kernel.Dispose(); Release(_factory); _factory = IntPtr.Zero; }
 }

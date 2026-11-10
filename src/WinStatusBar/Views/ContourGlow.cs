@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
-using Windows.UI.ViewManagement;
 
 namespace WinStatusBar.Views;
 
@@ -21,7 +20,8 @@ namespace WinStatusBar.Views;
 /// • brilho: o mesmo gradiente desfocado, nascendo na borda e esmaecendo para dentro do elemento;
 /// • halo: um contorno curto por fora, que cabe nos ~6 px livres em volta dos módulos sem ser cortado.
 /// Duas direções: linha e halo deslizam para um lado e o brilho para o outro, com ciclos de tamanhos diferentes, e o
-/// brilho respira devagar; assim o padrão não se repete. Roda no compositor e respeita "Efeitos de animação" do Windows.
+/// brilho respira devagar; assim o padrão não se repete. Anda pelo relógio único da barra (FrameClock) e respeita
+/// "Efeitos de animação" do Windows.
 /// Desempenho (09/11/2026): o desfoque é feito uma vez só, numa máscara parada (o contorno desfocado, refeito apenas
 /// quando o tamanho, a escala ou a placa de vídeo mudam), e o gradiente desliza por trás dela. Antes, duas camadas com
 /// desfoque eram refeitas a cada quadro (165 por segundo, nas duas barras): ~18 a 35% de um núcleo e ~8% da GPU
@@ -61,7 +61,6 @@ internal sealed class ContourGlow
     private readonly CompositionDrawingSurface _glowMask, _outerMask;
     private readonly CompositionRoundedRectangleGeometry _geometry;
     private readonly CompositionLinearGradientBrush _lineBrush, _glowBrush, _outerBrush;
-    private readonly UISettings _ui = new();
     private Canvas? _outerHost;
     private Vector3 _placed = new(float.NaN);
     private bool _active, _running, _attached;
@@ -96,6 +95,7 @@ internal sealed class ContourGlow
 
         if (element.IsLoaded) Attach(); else element.Loaded += (_, _) => Attach();
         element.SizeChanged += (_, _) => Update(restart: true);
+        AnimationGate.Watch(element, () => Update(restart: false)); // tela apagada: para; acesa: volta
         element.LayoutUpdated += (_, _) => { if (_outerRoot.IsVisible) Place(); };
         UpdateColors();
     }
@@ -229,7 +229,7 @@ internal sealed class ContourGlow
         _lineRoot.Opacity = LineOpacity(dark);
         _glowRoot.Opacity = GlowOpacity(dark);
         _outerRoot.Opacity = OuterOpacity(dark);
-        if (_running) { Breathe(_glowRoot, GlowOpacity(dark), 7.3); Breathe(_outerRoot, OuterOpacity(dark), 9.1); }
+        _breathe = (GlowOpacity(dark), OuterOpacity(dark));
     }
 
     private void Place()
@@ -244,54 +244,46 @@ internal sealed class ContourGlow
         catch (ArgumentException) { } // fora da árvore por um instante (reorganização dos módulos)
     }
 
-    /// <summary>
-    /// Quadros por segundo do brilho. Ele é um efeito de fundo, lento e desfocado: 30 trocas por segundo bastam e cada uma
-    /// custa o redesenho dos gradientes. Contínuo, ele mudava a cada quadro da tela (165 por segundo neste PC).
-    /// </summary>
-    private const double Fps = 30;
-
-    /// <summary>Degraus de 1/30 s num trecho de animação: o valor só muda (e a tela só é redesenhada) a cada degrau.</summary>
-    private CompositionEasingFunction Steps(double seconds) => _c.CreateStepEasingFunction(Math.Max(1, (int)Math.Round(seconds * Fps)));
+    // Animação pelo relógio único da barra (FrameClock, ~32 quadros/s): os valores só mudam a cada quadro dele. Antes
+    // (até 10/11/2026) eram animações do compositor, que mantinham a composição rodando na taxa da tela (165 Hz).
+    private readonly record struct SlideSpec(CompositionLinearGradientBrush Brush, float Distance, double Seconds);
+    private readonly List<SlideSpec> _slides = [];
+    private (float Glow, float Outer) _breathe;
+    private Action<double>? _frame;
 
     /// <summary>Desliza o gradiente um período inteiro por ciclo (emenda perfeita), em velocidade constante.</summary>
     private void Slide(CompositionLinearGradientBrush brush, float originX, float period, float direction, float pace)
     {
         brush.StartPoint = new Vector2(originX, 0);
         brush.EndPoint = new Vector2(originX + period, 0);
-        double seconds = period / (PixelsPerSecond * pace);
-        var slide = _c.CreateVector2KeyFrameAnimation();
-        slide.InsertKeyFrame(0f, Vector2.Zero);
-        slide.InsertKeyFrame(1f, new Vector2(direction * period, 0), Steps(seconds));
-        slide.Duration = TimeSpan.FromSeconds(seconds);
-        slide.IterationBehavior = AnimationIterationBehavior.Forever;
-        brush.StartAnimation("Offset", slide);
+        _slides.Add(new(brush, direction * period, period / (PixelsPerSecond * pace)));
     }
 
-    /// <summary>Respiração lenta da intensidade, num ritmo que não coincide com o das cores.</summary>
-    private void Breathe(Visual layer, float opacity, double seconds)
+    /// <summary>Respiração lenta da intensidade (100% → 70% → 112% → 100%), num ritmo que não coincide com o das cores.</summary>
+    internal static float Breath(double t, double seconds, float opacity)
     {
-        var breathe = _c.CreateScalarKeyFrameAnimation();
-        breathe.InsertKeyFrame(0f, opacity);
-        breathe.InsertKeyFrame(0.38f, opacity * 0.7f, Steps(seconds * 0.38));
-        breathe.InsertKeyFrame(0.71f, opacity * 1.12f, Steps(seconds * 0.33));
-        breathe.InsertKeyFrame(1f, opacity, Steps(seconds * 0.29));
-        breathe.Duration = TimeSpan.FromSeconds(seconds);
-        breathe.IterationBehavior = AnimationIterationBehavior.Forever;
-        layer.StartAnimation("Opacity", breathe);
+        double p = FrameClock.Phase(t, seconds);
+        double k = p < 0.38 ? 1 + (0.7 - 1) * (p / 0.38) : p < 0.71 ? 0.7 + (1.12 - 0.7) * ((p - 0.38) / 0.33) : 1.12 + (1 - 1.12) * ((p - 0.71) / 0.29);
+        return (float)(opacity * k);
+    }
+
+    private void OnFrame(double t)
+    {
+        foreach (var slide in _slides) slide.Brush.Offset = new Vector2((float)(slide.Distance * FrameClock.Phase(t, slide.Seconds)), 0);
+        _glowRoot.Opacity = Breath(t, 7.3, _breathe.Glow);
+        _outerRoot.Opacity = Breath(t, 9.1, _breathe.Outer);
     }
 
     private void Update(bool restart)
     {
         var size = new Vector2((float)_element.ActualWidth, (float)_element.ActualHeight);
-        bool animations = true;
-        try { animations = _ui.AnimationsEnabled; } catch { }
-        bool on = _active && Enabled && animations && _attached && _element.Visibility == Visibility.Visible && size.X > 20 && size.Y > 10;
+        bool on = _active && Enabled && AnimationGate.Allowed && _attached && _element.Visibility == Visibility.Visible && size.X > 20 && size.Y > 10;
         if (!on)
         {
             if (_running)
             {
-                foreach (var brush in new[] { _lineBrush, _glowBrush, _outerBrush }) brush.StopAnimation("Offset");
-                _glowRoot.StopAnimation("Opacity"); _outerRoot.StopAnimation("Opacity");
+                if (_frame is not null) FrameClock.Remove(_frame);
+                foreach (var brush in new[] { _lineBrush, _glowBrush, _outerBrush }) brush.Offset = Vector2.Zero;
                 _glowRoot.Opacity = GlowOpacity(App.IsDarkTheme); _outerRoot.Opacity = OuterOpacity(App.IsDarkTheme);
                 _running = false;
             }
@@ -311,14 +303,15 @@ internal sealed class ContourGlow
         DrawMasks(size);
         // Um ciclo de cores ocupa o dobro da largura (como o background-size 200% do original): poucas cores por vez.
         float period = Math.Max(240f, size.X * 2);
+        _slides.Clear();
         Slide(_lineBrush, 0, period, 1, 1.00f);
         Slide(_glowBrush, 0, period * 1.37f, -1, 0.91f);     // sentido oposto ao da linha
         Slide(_outerBrush, OuterPad, period * 1.18f, 1, 0.87f);
-        Breathe(_glowRoot, GlowOpacity(App.IsDarkTheme), 7.3);
-        Breathe(_outerRoot, OuterOpacity(App.IsDarkTheme), 9.1);
+        _breathe = (GlowOpacity(App.IsDarkTheme), OuterOpacity(App.IsDarkTheme));
         Place();
         _outerRoot.IsVisible = _outerHost is not null;
         _root.IsVisible = true;
         _running = true;
+        FrameClock.Add(_frame ??= OnFrame);
     }
 }

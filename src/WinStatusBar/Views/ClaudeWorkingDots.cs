@@ -96,13 +96,18 @@ internal static class AgentLogoAssets
 
 /// <summary>
 /// Claude trabalhando: a estrela vetorial animada (estrela-vetorial-animada.svg), quadro a quadro, sem fundo.
-/// Cada quadro é um caminho que só fica opaco na sua vez (animação de opacidade, roda no compositor);
-/// as animações só ficam ativas enquanto o controle está visível e carregado.
+/// Cada quadro é um caminho que só fica opaco na sua vez, trocado pelo relógio único da barra (FrameClock): a tela só é
+/// redesenhada quando o quadro muda (~11 vezes por segundo). Só anima com o controle visível e carregado e com alguém
+/// vendo a tela (AnimationGate).
 /// </summary>
 public sealed class ClaudeWorkingDots : Grid
 {
     private const double Size = 17;
-    private readonly Storyboard _story = new() { RepeatBehavior = RepeatBehavior.Forever };
+    private readonly List<(Path Path, int Index)> _frames = [];
+    private readonly int _frameCount = 1;
+    private readonly double _duration = 0.81;
+    private Action<double>? _tick;
+    private int _shown;
     private bool _running;
 
     public ClaudeWorkingDots()
@@ -114,25 +119,21 @@ public sealed class ClaudeWorkingDots : Grid
             // os 17 px como os ícones das cotas, sem mudar de posição entre quadros.
             var (x0, y0, side) = Bounds(star.Frames.Select(f => f.Data));
             var canvas = new Canvas { Width = side, Height = side };
-            double slot = star.Duration.TotalSeconds / star.FrameCount;
+            _frameCount = Math.Max(1, star.FrameCount);
+            _duration = star.Duration.TotalSeconds;
             foreach (var f in star.Frames)
             {
                 var path = new Path { Data = AgentLogoAssets.ToGeometry(f.Data), Fill = new SolidColorBrush(f.Fill), Opacity = f.Index == 0 ? 1 : 0 };
                 Canvas.SetLeft(path, -x0); Canvas.SetTop(path, -y0);
                 canvas.Children.Add(path);
-                var anim = new DoubleAnimationUsingKeyFrames { Duration = star.Duration };
-                anim.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = f.Index == 0 ? 1 : 0 });
-                if (f.Index > 0) anim.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.FromSeconds(f.Index * slot), Value = 1 });
-                anim.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.FromSeconds((f.Index + 1) * slot), Value = 0 });
-                Storyboard.SetTarget(anim, path);
-                Storyboard.SetTargetProperty(anim, "Opacity");
-                _story.Children.Add(anim);
+                _frames.Add((path, f.Index));
             }
             Children.Add(new Viewbox { Stretch = Stretch.Uniform, Child = canvas });
         }
         Loaded += (_, _) => Sync();
         Unloaded += (_, _) => Stop();
         RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => Sync());
+        AnimationGate.Watch(this, Sync);
     }
 
     /// <summary>Quadrado que contém todos os pontos dos caminhos (só comandos absolutos M/L/Z, como no SVG da estrela).</summary>
@@ -152,14 +153,29 @@ public sealed class ClaudeWorkingDots : Grid
 
     private void Sync()
     {
-        if (Visibility == Visibility.Visible && IsLoaded && new Windows.UI.ViewManagement.UISettings().AnimationsEnabled && _story.Children.Count > 0) { if (!_running) { _story.Begin(); _running = true; } }
+        if (Visibility == Visibility.Visible && IsLoaded && AnimationGate.Allowed && _frames.Count > 0)
+        {
+            if (!_running) { _running = true; FrameClock.Add(_tick ??= OnFrame); }
+        }
         else Stop();
+    }
+
+    /// <summary>Quadro da vez: cada um ocupa 1/<c>_frameCount</c> do ciclo do SVG (0,81 s).</summary>
+    private void OnFrame(double t) => Show(Math.Min(_frameCount - 1, (int)(FrameClock.Phase(t, _duration) * _frameCount)));
+
+    private void Show(int index)
+    {
+        if (index == _shown) return;
+        _shown = index;
+        foreach (var (path, i) in _frames) path.Opacity = i == index ? 1 : 0;
     }
 
     private void Stop()
     {
         if (!_running) return;
-        _story.Stop(); _running = false;
+        _running = false;
+        if (_tick is not null) FrameClock.Remove(_tick);
+        Show(0);
     }
 }
 
@@ -178,6 +194,7 @@ public sealed class OpenAiLogo : Grid
     private readonly Path? _path;
     private readonly TimeSpan _turn = TimeSpan.FromSeconds(2);
     private Storyboard? _story;
+    private Action<double>? _tick;
     private bool _spinning;
 
     public OpenAiLogo()
@@ -194,9 +211,10 @@ public sealed class OpenAiLogo : Grid
             ApplyColor();
         }
         Loaded += (_, _) => { ApplyColor(); Sync(); };
-        Unloaded += (_, _) => { _story?.Stop(); _story = null; _spinning = false; };
+        Unloaded += (_, _) => { if (_tick is not null) FrameClock.Remove(_tick); _story?.Stop(); _story = null; _spinning = false; };
         RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => Sync());
         ActualThemeChanged += (_, _) => ApplyColor();
+        AnimationGate.Watch(this, Sync);
     }
 
     /// <summary>Branco no tema escuro, preto no claro: o mesmo pincel do texto e dos ícones da barra.</summary>
@@ -209,14 +227,21 @@ public sealed class OpenAiLogo : Grid
 
     private void Sync()
     {
-        bool want = IsWorking && IsLoaded && Visibility == Visibility.Visible && new Windows.UI.ViewManagement.UISettings().AnimationsEnabled;
+        bool want = IsWorking && IsLoaded && Visibility == Visibility.Visible && AnimationGate.Allowed;
         if (want == _spinning) return;
         _spinning = want;
-        _story?.Stop();
-        var anim = want
-            ? new DoubleAnimation { From = 0, To = 360, Duration = _turn }
-            : new DoubleAnimation { From = _rotate.Angle % 360, To = 0, Duration = TimeSpan.FromMilliseconds(250), EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-        _story = new Storyboard { RepeatBehavior = want ? RepeatBehavior.Forever : new RepeatBehavior(1) };
+        // Sem soltar o storyboard da volta a zero, o valor animado dele ficaria por cima do ângulo definido pelo relógio.
+        _story?.Stop(); _story = null;
+        if (want)
+        {
+            // Uma volta linear por ciclo, pelo relógio único da barra (~32 quadros por segundo).
+            FrameClock.Add(_tick ??= t => _rotate.Angle = 360 * FrameClock.Phase(t, _turn.TotalSeconds));
+            return;
+        }
+        if (_tick is not null) FrameClock.Remove(_tick);
+        // Ao parar, volta suavemente a zero (250 ms, uma vez só).
+        var anim = new DoubleAnimation { From = _rotate.Angle % 360, To = 0, Duration = TimeSpan.FromMilliseconds(250), EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        _story = new Storyboard();
         Storyboard.SetTarget(anim, _rotate);
         Storyboard.SetTargetProperty(anim, "Angle");
         _story.Children.Add(anim);
@@ -225,13 +250,17 @@ public sealed class OpenAiLogo : Grid
 }
 
 /// <summary>
-/// Velocidade da animação de um ProgressRing (<c>local:RingSpeed.Rate="0.8"</c> = 20% mais lento): ajusta o
-/// AnimatedVisualPlayer do modelo do controle sempre que ele é aplicado ou carregado.
+/// Velocidade da animação de um ProgressRing (<c>local:RingSpeed.Rate="0.8"</c> = 20% mais lento) e o círculo girando
+/// pelo relógio único da barra: no modo indeterminado, o AnimatedVisualPlayer do modelo do controle fica parado e o
+/// progresso da animação é definido a cada quadro do relógio (~32 por segundo), em vez de tocar na taxa da tela
+/// (165 Hz neste PC). Sem ninguém vendo (tela apagada ou sessão bloqueada), o círculo girando é desativado.
 /// </summary>
 public static class RingSpeed
 {
     public static readonly DependencyProperty RateProperty = DependencyProperty.RegisterAttached(
         "Rate", typeof(double), typeof(RingSpeed), new PropertyMetadata(1.0, (d, _) => Hook(d)));
+    private static readonly DependencyProperty SpinProperty = DependencyProperty.RegisterAttached(
+        "Spin", typeof(Action<double>), typeof(RingSpeed), new PropertyMetadata(null));
 
     public static double GetRate(DependencyObject o) => (double)o.GetValue(RateProperty);
     public static void SetRate(DependencyObject o, double value) => o.SetValue(RateProperty, value);
@@ -240,34 +269,61 @@ public static class RingSpeed
     {
         if (d is not ProgressRing ring) return;
         ring.Loaded -= OnLoaded; ring.Loaded += OnLoaded;
-        ring.RegisterPropertyChangedCallback(ProgressRing.IsIndeterminateProperty, (s, _) => Apply((ProgressRing)s));
-        ring.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (s, _) => Apply((ProgressRing)s));
-        Apply(ring);
+        ring.Unloaded -= OnUnloaded; ring.Unloaded += OnUnloaded;
+        ring.RegisterPropertyChangedCallback(ProgressRing.IsIndeterminateProperty, (s, _) => Refresh((ProgressRing)s));
+        ring.RegisterPropertyChangedCallback(ProgressRing.IsActiveProperty, (s, _) => Drive((ProgressRing)s));
+        ring.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (s, _) => Refresh((ProgressRing)s));
+        AnimationGate.Watch(ring, () => Refresh(ring));
+        Refresh(ring);
     }
 
-    private static void OnLoaded(object sender, RoutedEventArgs e) => Apply((ProgressRing)sender);
+    private static void OnLoaded(object sender, RoutedEventArgs e) => Refresh((ProgressRing)sender);
+    private static void OnUnloaded(object sender, RoutedEventArgs e) => Drive((ProgressRing)sender);
 
-    private static void Apply(ProgressRing ring)
+    private static void Refresh(ProgressRing ring)
     {
-        // O modelo pode ainda não estar aplicado: tenta agora e de novo após o próximo layout.
-        if (!Set(ring)) ring.DispatcherQueue?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => Set(ring));
+        // Círculo girando sem ninguém para ver: desativado até a tela acender. O de porcentagem não anima e fica ativo.
+        ring.IsActive = !(ring.IsIndeterminate && Core.Presence.Away);
+        if (Player(ring) is { } player) { player.PlaybackRate = GetRate(ring); Drive(ring); return; }
+        // O modelo pode ainda não estar aplicado: de novo após o próximo layout.
+        ring.DispatcherQueue?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            if (Player(ring) is { } later) later.PlaybackRate = GetRate(ring);
+            Drive(ring);
+        });
     }
 
-    private static bool Set(DependencyObject root)
+    private static void Drive(ProgressRing ring)
+    {
+        var current = ring.GetValue(SpinProperty) as Action<double>;
+        var player = ring.IsIndeterminate && ring.IsActive && ring.IsLoaded && ring.Visibility == Visibility.Visible && AnimationGate.Allowed
+            ? Player(ring) : null;
+        if (player is null)
+        {
+            if (current is not null) { FrameClock.Remove(current); ring.ClearValue(SpinProperty); }
+            return;
+        }
+        if (current is not null) return;
+        Action<double> frame = t =>
+        {
+            double seconds = player.Duration.TotalSeconds;
+            if (seconds <= 0) return;
+            if (player.IsPlaying) player.Pause(); // o controle volta a tocar quando muda de estado: o relógio manda
+            player.SetProgress(FrameClock.Phase(t * GetRate(ring), seconds));
+        };
+        ring.SetValue(SpinProperty, frame);
+        FrameClock.Add(frame);
+    }
+
+    private static AnimatedVisualPlayer? Player(DependencyObject root)
     {
         int n = VisualTreeHelper.GetChildrenCount(root);
         for (int i = 0; i < n; i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
-            if (child is AnimatedVisualPlayer player) { player.PlaybackRate = GetRate(FindRing(root)); return true; }
-            if (Set(child)) return true;
+            if (child is AnimatedVisualPlayer player) return player;
+            if (Player(child) is { } found) return found;
         }
-        return false;
-    }
-
-    private static DependencyObject FindRing(DependencyObject o)
-    {
-        for (var x = o; x is not null; x = VisualTreeHelper.GetParent(x)) if (x is ProgressRing) return x;
-        return o;
+        return null;
     }
 }

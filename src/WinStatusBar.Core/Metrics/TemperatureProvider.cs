@@ -51,36 +51,27 @@ public sealed class TemperatureProvider : IDisposable
         return null;
     }
 
-    public async Task<TemperatureSample> SampleAsync(string? gpuName, CancellationToken ct)
+    /// <summary>Namespaces WMI ausentes (LibreHardwareMonitor/OpenHardwareMonitor não instalados) até quando.</summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> MissingNamespaces = new();
+    private static readonly TimeSpan MissingRetry = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Reserva quando o driver não informa a temperatura pelo kernel gráfico: nvidia-smi no máximo uma vez por minuto
+    /// (cada execução custa ~44 ms de CPU e pode acordar a placa dedicada); entre uma e outra, vale a última leitura.
+    /// </summary>
+    private static readonly SemaphoreSlim NvidiaGate = new(1, 1);
+    private static DateTime _nvidiaSmiAt = DateTime.MinValue;
+    private static double? _nvidiaSmiLast;
+    private static readonly TimeSpan NvidiaSmiInterval = TimeSpan.FromMinutes(1);
+
+    private static async Task<double?> NvidiaSmiAsync(string gpuName, CancellationToken ct)
     {
-        double? cpu = null, gpu = null;
-        var readings = new List<CpuTemperatureReading>();
-        var persistent = await CpuSensorPipe.ReadAsync(ct);
-        if (persistent?.Celsius is double saved) readings.Add(new(global::WinStatusBar.Core.LocalizedText.T("Sensor Lenovo (autorização persistente)"), saved, true));
-        else if (ReadLenovoCpu() is double lenovo) readings.Add(new(global::WinStatusBar.Core.LocalizedText.T("Sensor Lenovo (GetCPUTemp)"), lenovo, true));
-        foreach (var ns in new[] { @"root\LibreHardwareMonitor", @"root\OpenHardwareMonitor" })
+        await NvidiaGate.WaitAsync(ct);
+        try
         {
-            try
-            {
-                using var query = new ManagementObjectSearcher(ns, "SELECT Name, Value, Identifier FROM Sensor WHERE SensorType='Temperature'");
-                query.Options.Timeout = TimeSpan.FromSeconds(2);
-                using var rows = query.Get();
-                foreach (ManagementObject row in rows)
-                {
-                    using (row)
-                    {
-                        string id = row["Identifier"]?.ToString() ?? "";
-                        double value = Convert.ToDouble(row["Value"], CultureInfo.InvariantCulture);
-                        string name = row["Name"]?.ToString() ?? "";
-                        readings.Add(new(name, value, id.Contains("cpu", StringComparison.OrdinalIgnoreCase)));
-                    }
-                }
-            }
-            catch (ManagementException) { }
-            catch (UnauthorizedAccessException) { }
-        }
-        if (gpuName?.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) == true)
-        {
+            if (DateTime.UtcNow - _nvidiaSmiAt < NvidiaSmiInterval) return _nvidiaSmiLast;
+            _nvidiaSmiAt = DateTime.UtcNow;
+            double? gpu = null;
             try
             {
                 var info = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "nvidia-smi.exe"))
@@ -108,6 +99,51 @@ public sealed class TemperatureProvider : IDisposable
                 }
             }
             catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or OperationCanceledException or InvalidOperationException) { }
+            return _nvidiaSmiLast = gpu;
+        }
+        finally { NvidiaGate.Release(); }
+    }
+
+    public async Task<TemperatureSample> SampleAsync(GpuAdapterInfo? adapter, CancellationToken ct)
+    {
+        double? cpu = null, gpu = null;
+        var readings = new List<CpuTemperatureReading>();
+        var persistent = await CpuSensorPipe.ReadAsync(ct);
+        if (persistent?.Celsius is double saved) readings.Add(new(global::WinStatusBar.Core.LocalizedText.T("Sensor Lenovo (autorização persistente)"), saved, true));
+        else if (ReadLenovoCpu() is double lenovo) readings.Add(new(global::WinStatusBar.Core.LocalizedText.T("Sensor Lenovo (GetCPUTemp)"), lenovo, true));
+        foreach (var ns in new[] { @"root\LibreHardwareMonitor", @"root\OpenHardwareMonitor" })
+        {
+            if (MissingNamespaces.TryGetValue(ns, out var until) && DateTime.UtcNow < until) continue;
+            try
+            {
+                using var query = new ManagementObjectSearcher(ns, "SELECT Name, Value, Identifier FROM Sensor WHERE SensorType='Temperature'");
+                query.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var rows = query.Get();
+                foreach (ManagementObject row in rows)
+                {
+                    using (row)
+                    {
+                        string id = row["Identifier"]?.ToString() ?? "";
+                        double value = Convert.ToDouble(row["Value"], CultureInfo.InvariantCulture);
+                        string name = row["Name"]?.ToString() ?? "";
+                        readings.Add(new(name, value, id.Contains("cpu", StringComparison.OrdinalIgnoreCase)));
+                    }
+                }
+            }
+            catch (ManagementException ex) when (ex.ErrorCode is ManagementStatus.InvalidNamespace or ManagementStatus.InvalidClass or ManagementStatus.NotFound)
+            {
+                // Programa não instalado: cada tentativa custava ~5 ms de CPU aqui e mais no serviço WMI, a cada 10 s.
+                MissingNamespaces[ns] = DateTime.UtcNow + MissingRetry;
+            }
+            catch (ManagementException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+        if (adapter is not null)
+        {
+            // Pelo kernel gráfico, sem abrir programas (WDDM 2.4+, a mesma leitura do Gerenciador de Tarefas).
+            var (supported, celsius) = GpuKernelStats.Temperature(adapter.Luid);
+            if (supported) gpu = celsius;
+            else if (adapter.Name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)) gpu = await NvidiaSmiAsync(adapter.Name, ct);
         }
         var selected = SelectCpu(readings);
         cpu = selected?.Value;

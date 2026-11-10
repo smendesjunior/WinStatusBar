@@ -49,6 +49,9 @@ public sealed partial class BarWindow
             _adaptiveBurst = Timer(80, repeating: true, BurstTick);
             _adaptiveReveal = Timer(40, repeating: false, RevealOverlay);
             Closed += (_, _) => StopAdaptive();
+            // Tela apagada ou sessão bloqueada: não fotografa a tela (AdaptiveTick); ao acender, lê na hora.
+            global::WinStatusBar.Core.Presence.Changed += OnPresenceChanged;
+            Closed += (_, _) => global::WinStatusBar.Core.Presence.Changed -= OnPresenceChanged;
             Activated += OnBarActivationChanged;
         }
         _overlayTransition ??= new BrushTransition { Duration = TimeSpan.FromMilliseconds(150) };
@@ -158,10 +161,15 @@ public sealed partial class BarWindow
             ApplySample(inactive, trusted: true);
     }
 
+    private void OnPresenceChanged(bool away)
+    {
+        if (!away) DispatcherQueue.TryEnqueue(() => { if (_adaptiveHooked) AdaptiveTick(); });
+    }
+
     /// <summary>Leitura fora da thread da interface (captura de tela ~6 ms); só uma por vez, com mais uma se pediram durante.</summary>
     private void AdaptiveTick()
     {
-        if (_closing) return;
+        if (_closing || global::WinStatusBar.Core.Presence.Away) return;
         if (_sampling) { _resample = true; return; }
         if (CurrentMonitor() is not { } monitor) return;
         _sampling = true;
