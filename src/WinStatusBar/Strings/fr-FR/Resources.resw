@@ -3774,4 +3774,139 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SA0DBBA527195B60F" xml:space="preserve">
     <value>L'IA locale (Ollama) s'est arrêtée au milieu de la réponse et recharge le modèle. Réessayez dans quelques secondes. Si cela se reproduit, la cause est généralement la carte graphique : avec overclocking, réduisez-le ou désactivez-le ; sans overclocking, choisissez un modèle plus petit.</value>
   </data>
+  <data name="SEE4E91AD0A26FC12" xml:space="preserve">
+    <value>Quota libéré · vous pouvez continuer dans l'app</value>
+  </data>
+  <data name="S0E996B878A6DA216" xml:space="preserve">
+    <value>Le journal n'indique pas avec quel modèle, niveau ou accès le tour s'est arrêté ; la barre ne devine pas. Continuez dans l'app quand le quota reviendra.</value>
+  </data>
+  <data name="SDE7C391DDC5AE712" xml:space="preserve">
+    <value>les crédits de l'espace de travail sont épuisés</value>
+  </data>
+  <data name="SE4652BDFD1E58BA6" xml:space="preserve">
+    <value>les crédits de l'espace de travail sont épuisés (l'administrateur doit en ajouter)</value>
+  </data>
+  <data name="S3B6FB028954245AF" xml:space="preserve">
+    <value>l'espace de travail a atteint la limite d'utilisation définie</value>
+  </data>
+  <data name="S0654CB6DB2BBF58D" xml:space="preserve">
+    <value>vous avez atteint la limite d'utilisation définie par l'administrateur</value>
+  </data>
+  <data name="S891EFB603C0D9585" xml:space="preserve">
+    <value>la limite d'utilisation a été atteinte</value>
+  </data>
+  <data name="S14A57521261F5E47" xml:space="preserve">
+    <value>la limite de dépenses de l'espace de travail a été atteinte</value>
+  </data>
+  <data name="S9408F8B1F3C97A55" xml:space="preserve">
+    <value>le compte a bloqué l'utilisation</value>
+  </data>
+  <data name="S225CEE26FECDC3CF" xml:space="preserve">
+    <value>le quota de 5 heures est épuisé</value>
+  </data>
+  <data name="SA6E1904CFAF1ACB8" xml:space="preserve">
+    <value>le quota hebdomadaire est épuisé</value>
+  </data>
+  <data name="S085FE813FDECB33C" xml:space="preserve">
+    <value>crédits de l'espace de travail épuisés</value>
+  </data>
+  <data name="SF39C7AAF8DF93B90" xml:space="preserve">
+    <value>limite d'utilisation de l'espace de travail atteinte</value>
+  </data>
+  <data name="SD32EB948E78B447F" xml:space="preserve">
+    <value>limite d'utilisation définie par l'administrateur atteinte</value>
+  </data>
+  <data name="SAA067333985CDBB5" xml:space="preserve">
+    <value>limite d'utilisation atteinte</value>
+  </data>
+  <data name="SF7227536E1E24340" xml:space="preserve">
+    <value>limite de dépenses de l'espace de travail atteinte</value>
+  </data>
+  <data name="S21F6E855BC96CD96" xml:space="preserve">
+    <value>utilisation bloquée par le compte</value>
+  </data>
+  <data name="S41E1A2E5169AA6F4" xml:space="preserve">
+    <value>quota de 5 heures épuisé</value>
+  </data>
+  <data name="S0F0CE9157CC7B60B" xml:space="preserve">
+    <value>quota hebdomadaire épuisé</value>
+  </data>
+  <data name="S2C4EA9B0F91CA9D0" xml:space="preserve">
+    <value>Crédits épuisés</value>
+  </data>
+  <data name="SA7DEAD645AB27F03" xml:space="preserve">
+    <value>Limite de l'espace de travail</value>
+  </data>
+  <data name="SD966889CD5F2310A" xml:space="preserve">
+    <value>Quota de 5 h épuisé</value>
+  </data>
+  <data name="SB88EA0E47B45EE50" xml:space="preserve">
+    <value>Quota hebdomadaire épuisé</value>
+  </data>
+  <data name="S93E4CA1754DE3BEF" xml:space="preserve">
+    <value>Utilisation bloquée</value>
+  </data>
+  <data name="SA62C5DA720959C20" xml:space="preserve">
+    <value>aucune prévision donnée par le compte</value>
+  </data>
+  <data name="S21EE908FAA5CCD70" xml:space="preserve">
+    <value>en attente de la confirmation du déblocage par le compte</value>
+  </data>
+  <data name="S2D2241E3AF4819C8" xml:space="preserve">
+    <value>retour {0} à {1}</value>
+  </data>
+  <data name="S5E187FBE1A028AE1" xml:space="preserve">
+    <value>Codex bloqué : {0} · {1}</value>
+  </data>
+  <data name="S8BCD73F334764DF2" xml:space="preserve">
+    <value>Le compte n'a pas indiqué quand il reviendra.</value>
+  </data>
+  <data name="S19C0701C111FD130" xml:space="preserve">
+    <value>L'heure prévue ({0} à {1}) est passée ; en attente de la confirmation du déblocage par le compte.</value>
+  </data>
+  <data name="S1A3B35CE51952010" xml:space="preserve">
+    <value>Retour {0} à {1} (indiqué par le compte).</value>
+  </data>
+  <data name="SFECDDD44CF36E383" xml:space="preserve">
+    <value>Arrêtée par le quota de Codex</value>
+  </data>
+  <data name="SCB71608E4271E618" xml:space="preserve">
+    <value>Arrêtée par le quota de Codex · {0}</value>
+  </data>
+  <data name="SC2D4FC3A50DC7000" xml:space="preserve">
+    <value>Codex n'a plus de quota ({0}) ; l'app n'a pas confirmé de réponse</value>
+  </data>
+  <data name="S93DDC94EB35A34E1" xml:space="preserve">
+    <value>solde de crédits {0}</value>
+  </data>
+  <data name="S50529FA9A71C7FA1" xml:space="preserve">
+    <value>Dernière donnée à {0}.</value>
+  </data>
+  <data name="S0E1D1DC46DA45FEC" xml:space="preserve">
+    <value>Confirmé par le compte à {0}.</value>
+  </data>
+  <data name="SF2C6BAD3A5DEC504" xml:space="preserve">
+    <value>Vu dans le journal d'une conversation à {0} ; le compte ne l'a pas encore confirmé.</value>
+  </data>
+  <data name="S51006339A090A8C6" xml:space="preserve">
+    <value>Codex est bloqué par le compte</value>
+  </data>
+  <data name="S4DABDBC3306BD172" xml:space="preserve">
+    <value>Motif : {0}.</value>
+  </data>
+  <data name="S6A4400D545908138" xml:space="preserve">
+    <value>En attendant, l'app Codex n'envoie de messages avec aucun modèle.</value>
+  </data>
+  <data name="S0F33B699E8945898" xml:space="preserve">
+    <value>Conversation sans titre</value>
+  </data>
+  <data name="S2C12B1B95CFCE335" xml:space="preserve">
+    <value>Échec de l'exécution · {0}</value>
+  </data>
+  <data name="SCD44282609753F46" xml:space="preserve">
+    <value>Il reste du solde dans cette fenêtre, mais le blocage du compte s'applique à tous les modèles</value>
+  </data>
+  <data name="S8B5AA854CBEDB226" xml:space="preserve">
+    <value>L'IA n'a enregistré aucune étape ; la déduction est en pause tant que le quota de Codex est épuisé.</value>
+  </data>
 </root>

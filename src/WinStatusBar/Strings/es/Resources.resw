@@ -3774,4 +3774,139 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SA0DBBA527195B60F" xml:space="preserve">
     <value>La IA local (Ollama) se detuvo en medio de la respuesta y está recargando el modelo. Inténtalo de nuevo en unos segundos. Si se repite, la causa suele ser la tarjeta gráfica: con overclock, redúcelo o desactívalo; sin overclock, elige un modelo más pequeño.</value>
   </data>
+  <data name="SEE4E91AD0A26FC12" xml:space="preserve">
+    <value>Cuota liberada · puede continuar en la app</value>
+  </data>
+  <data name="S0E996B878A6DA216" xml:space="preserve">
+    <value>El registro no indica con qué modelo, nivel o acceso se detuvo el turno; la barra no lo adivina. Continúe en la app cuando vuelva la cuota.</value>
+  </data>
+  <data name="SDE7C391DDC5AE712" xml:space="preserve">
+    <value>se agotaron los créditos del workspace</value>
+  </data>
+  <data name="SE4652BDFD1E58BA6" xml:space="preserve">
+    <value>se agotaron los créditos del workspace (el administrador debe añadir más)</value>
+  </data>
+  <data name="S3B6FB028954245AF" xml:space="preserve">
+    <value>el workspace alcanzó el límite de uso definido</value>
+  </data>
+  <data name="S0654CB6DB2BBF58D" xml:space="preserve">
+    <value>alcanzó el límite de uso definido por el administrador</value>
+  </data>
+  <data name="S891EFB603C0D9585" xml:space="preserve">
+    <value>se alcanzó el límite de uso</value>
+  </data>
+  <data name="S14A57521261F5E47" xml:space="preserve">
+    <value>se alcanzó el límite de gastos del workspace</value>
+  </data>
+  <data name="S9408F8B1F3C97A55" xml:space="preserve">
+    <value>la cuenta bloqueó el uso</value>
+  </data>
+  <data name="S225CEE26FECDC3CF" xml:space="preserve">
+    <value>se agotó la cuota de 5 horas</value>
+  </data>
+  <data name="SA6E1904CFAF1ACB8" xml:space="preserve">
+    <value>se agotó la cuota semanal</value>
+  </data>
+  <data name="S085FE813FDECB33C" xml:space="preserve">
+    <value>créditos del workspace agotados</value>
+  </data>
+  <data name="SF39C7AAF8DF93B90" xml:space="preserve">
+    <value>límite de uso del workspace alcanzado</value>
+  </data>
+  <data name="SD32EB948E78B447F" xml:space="preserve">
+    <value>límite de uso definido por el administrador alcanzado</value>
+  </data>
+  <data name="SAA067333985CDBB5" xml:space="preserve">
+    <value>límite de uso alcanzado</value>
+  </data>
+  <data name="SF7227536E1E24340" xml:space="preserve">
+    <value>límite de gastos del workspace alcanzado</value>
+  </data>
+  <data name="S21F6E855BC96CD96" xml:space="preserve">
+    <value>uso bloqueado por la cuenta</value>
+  </data>
+  <data name="S41E1A2E5169AA6F4" xml:space="preserve">
+    <value>cuota de 5 horas agotada</value>
+  </data>
+  <data name="S0F0CE9157CC7B60B" xml:space="preserve">
+    <value>cuota semanal agotada</value>
+  </data>
+  <data name="S2C4EA9B0F91CA9D0" xml:space="preserve">
+    <value>Créditos agotados</value>
+  </data>
+  <data name="SA7DEAD645AB27F03" xml:space="preserve">
+    <value>Límite del workspace</value>
+  </data>
+  <data name="SD966889CD5F2310A" xml:space="preserve">
+    <value>Cuota de 5 h agotada</value>
+  </data>
+  <data name="SB88EA0E47B45EE50" xml:space="preserve">
+    <value>Cuota semanal agotada</value>
+  </data>
+  <data name="S93E4CA1754DE3BEF" xml:space="preserve">
+    <value>Uso bloqueado</value>
+  </data>
+  <data name="SA62C5DA720959C20" xml:space="preserve">
+    <value>sin previsión informada por la cuenta</value>
+  </data>
+  <data name="S21EE908FAA5CCD70" xml:space="preserve">
+    <value>esperando que la cuenta confirme la liberación</value>
+  </data>
+  <data name="S2D2241E3AF4819C8" xml:space="preserve">
+    <value>vuelve {0} a las {1}</value>
+  </data>
+  <data name="S5E187FBE1A028AE1" xml:space="preserve">
+    <value>Codex bloqueado: {0} · {1}</value>
+  </data>
+  <data name="S8BCD73F334764DF2" xml:space="preserve">
+    <value>La cuenta no informó cuándo vuelve.</value>
+  </data>
+  <data name="S19C0701C111FD130" xml:space="preserve">
+    <value>La hora prevista ({0} a las {1}) ya pasó; esperando que la cuenta confirme la liberación.</value>
+  </data>
+  <data name="S1A3B35CE51952010" xml:space="preserve">
+    <value>Vuelve {0} a las {1} (informado por la cuenta).</value>
+  </data>
+  <data name="SFECDDD44CF36E383" xml:space="preserve">
+    <value>Detenida por la cuota de Codex</value>
+  </data>
+  <data name="SCB71608E4271E618" xml:space="preserve">
+    <value>Detenida por la cuota de Codex · {0}</value>
+  </data>
+  <data name="SC2D4FC3A50DC7000" xml:space="preserve">
+    <value>Codex no tiene cuota ({0}); la app no confirmó respuesta</value>
+  </data>
+  <data name="S93DDC94EB35A34E1" xml:space="preserve">
+    <value>saldo de créditos {0}</value>
+  </data>
+  <data name="S50529FA9A71C7FA1" xml:space="preserve">
+    <value>Último dato a las {0}.</value>
+  </data>
+  <data name="S0E1D1DC46DA45FEC" xml:space="preserve">
+    <value>Confirmado por la cuenta a las {0}.</value>
+  </data>
+  <data name="SF2C6BAD3A5DEC504" xml:space="preserve">
+    <value>Visto en el registro de una conversación a las {0}; la cuenta aún no lo confirmó.</value>
+  </data>
+  <data name="S51006339A090A8C6" xml:space="preserve">
+    <value>Codex está bloqueado por la cuenta</value>
+  </data>
+  <data name="S4DABDBC3306BD172" xml:space="preserve">
+    <value>Motivo: {0}.</value>
+  </data>
+  <data name="S6A4400D545908138" xml:space="preserve">
+    <value>Mientras tanto, la app de Codex no envía mensajes con ningún modelo.</value>
+  </data>
+  <data name="S0F33B699E8945898" xml:space="preserve">
+    <value>Conversación sin título</value>
+  </data>
+  <data name="S2C12B1B95CFCE335" xml:space="preserve">
+    <value>Fallo en la ejecución · {0}</value>
+  </data>
+  <data name="SCD44282609753F46" xml:space="preserve">
+    <value>Hay saldo en esta ventana, pero el bloqueo de la cuenta vale para todos los modelos</value>
+  </data>
+  <data name="S8B5AA854CBEDB226" xml:space="preserve">
+    <value>La IA no registró etapas; la deducción queda en pausa mientras la cuota de Codex esté agotada.</value>
+  </data>
 </root>

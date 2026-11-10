@@ -3774,4 +3774,139 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SA0DBBA527195B60F" xml:space="preserve">
     <value>The local AI (Ollama) stopped in the middle of the answer and is reloading the model. Try again in a few seconds. If it happens again, the cause is usually the graphics card: with overclock, lower it or turn it off; without overclock, choose a smaller model.</value>
   </data>
+  <data name="SEE4E91AD0A26FC12" xml:space="preserve">
+    <value>Quota released · you can continue in the app</value>
+  </data>
+  <data name="S0E996B878A6DA216" xml:space="preserve">
+    <value>The record does not say which model, level or access the turn stopped with; the bar does not guess. Continue in the app when the quota returns.</value>
+  </data>
+  <data name="SDE7C391DDC5AE712" xml:space="preserve">
+    <value>the workspace credits ran out</value>
+  </data>
+  <data name="SE4652BDFD1E58BA6" xml:space="preserve">
+    <value>the workspace credits ran out (the administrator needs to add more)</value>
+  </data>
+  <data name="S3B6FB028954245AF" xml:space="preserve">
+    <value>the workspace reached its set usage limit</value>
+  </data>
+  <data name="S0654CB6DB2BBF58D" xml:space="preserve">
+    <value>you reached the usage limit set by the administrator</value>
+  </data>
+  <data name="S891EFB603C0D9585" xml:space="preserve">
+    <value>the usage limit was reached</value>
+  </data>
+  <data name="S14A57521261F5E47" xml:space="preserve">
+    <value>the workspace spending limit was reached</value>
+  </data>
+  <data name="S9408F8B1F3C97A55" xml:space="preserve">
+    <value>the account blocked usage</value>
+  </data>
+  <data name="S225CEE26FECDC3CF" xml:space="preserve">
+    <value>the 5-hour quota ran out</value>
+  </data>
+  <data name="SA6E1904CFAF1ACB8" xml:space="preserve">
+    <value>the weekly quota ran out</value>
+  </data>
+  <data name="S085FE813FDECB33C" xml:space="preserve">
+    <value>workspace credits used up</value>
+  </data>
+  <data name="SF39C7AAF8DF93B90" xml:space="preserve">
+    <value>workspace usage limit reached</value>
+  </data>
+  <data name="SD32EB948E78B447F" xml:space="preserve">
+    <value>usage limit set by the administrator reached</value>
+  </data>
+  <data name="SAA067333985CDBB5" xml:space="preserve">
+    <value>usage limit reached</value>
+  </data>
+  <data name="SF7227536E1E24340" xml:space="preserve">
+    <value>workspace spending limit reached</value>
+  </data>
+  <data name="S21F6E855BC96CD96" xml:space="preserve">
+    <value>usage blocked by the account</value>
+  </data>
+  <data name="S41E1A2E5169AA6F4" xml:space="preserve">
+    <value>5-hour quota used up</value>
+  </data>
+  <data name="S0F0CE9157CC7B60B" xml:space="preserve">
+    <value>weekly quota used up</value>
+  </data>
+  <data name="S2C4EA9B0F91CA9D0" xml:space="preserve">
+    <value>Credits used up</value>
+  </data>
+  <data name="SA7DEAD645AB27F03" xml:space="preserve">
+    <value>Workspace limit</value>
+  </data>
+  <data name="SD966889CD5F2310A" xml:space="preserve">
+    <value>5h quota used up</value>
+  </data>
+  <data name="SB88EA0E47B45EE50" xml:space="preserve">
+    <value>Weekly quota used up</value>
+  </data>
+  <data name="S93E4CA1754DE3BEF" xml:space="preserve">
+    <value>Usage blocked</value>
+  </data>
+  <data name="SA62C5DA720959C20" xml:space="preserve">
+    <value>no return time given by the account</value>
+  </data>
+  <data name="S21EE908FAA5CCD70" xml:space="preserve">
+    <value>waiting for the account to confirm the release</value>
+  </data>
+  <data name="S2D2241E3AF4819C8" xml:space="preserve">
+    <value>back {0} at {1}</value>
+  </data>
+  <data name="S5E187FBE1A028AE1" xml:space="preserve">
+    <value>Codex blocked: {0} · {1}</value>
+  </data>
+  <data name="S8BCD73F334764DF2" xml:space="preserve">
+    <value>The account did not say when it will be back.</value>
+  </data>
+  <data name="S19C0701C111FD130" xml:space="preserve">
+    <value>The expected time ({0} at {1}) has passed; waiting for the account to confirm the release.</value>
+  </data>
+  <data name="S1A3B35CE51952010" xml:space="preserve">
+    <value>Back {0} at {1} (given by the account).</value>
+  </data>
+  <data name="SFECDDD44CF36E383" xml:space="preserve">
+    <value>Stopped by the Codex quota</value>
+  </data>
+  <data name="SCB71608E4271E618" xml:space="preserve">
+    <value>Stopped by the Codex quota · {0}</value>
+  </data>
+  <data name="SC2D4FC3A50DC7000" xml:space="preserve">
+    <value>Codex is out of quota ({0}); the app did not confirm an answer</value>
+  </data>
+  <data name="S93DDC94EB35A34E1" xml:space="preserve">
+    <value>credit balance {0}</value>
+  </data>
+  <data name="S50529FA9A71C7FA1" xml:space="preserve">
+    <value>Last data at {0}.</value>
+  </data>
+  <data name="S0E1D1DC46DA45FEC" xml:space="preserve">
+    <value>Confirmed by the account at {0}.</value>
+  </data>
+  <data name="SF2C6BAD3A5DEC504" xml:space="preserve">
+    <value>Seen in a conversation record at {0}; the account has not confirmed it yet.</value>
+  </data>
+  <data name="S51006339A090A8C6" xml:space="preserve">
+    <value>Codex is blocked by the account</value>
+  </data>
+  <data name="S4DABDBC3306BD172" xml:space="preserve">
+    <value>Reason: {0}.</value>
+  </data>
+  <data name="S6A4400D545908138" xml:space="preserve">
+    <value>Meanwhile, the Codex app does not send messages with any model.</value>
+  </data>
+  <data name="S0F33B699E8945898" xml:space="preserve">
+    <value>Untitled conversation</value>
+  </data>
+  <data name="S2C12B1B95CFCE335" xml:space="preserve">
+    <value>Run failed · {0}</value>
+  </data>
+  <data name="SCD44282609753F46" xml:space="preserve">
+    <value>This window still has room, but the account block applies to every model</value>
+  </data>
+  <data name="S8B5AA854CBEDB226" xml:space="preserve">
+    <value>The AI recorded no steps; inference is paused while the Codex quota is used up.</value>
+  </data>
 </root>
