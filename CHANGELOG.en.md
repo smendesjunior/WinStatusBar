@@ -7,6 +7,16 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.5.0] - 2026-11-10 · build BUILD
+
+### Added
+- Codex › Continue via the API (quota menu): conversations stopped for lack of quota continue through your OpenAI API key, in the same conversation and with the same model and level, with live spend and a Stop button.
+- Settings › Models: Claude in the Codex model picker can run commands and edit files (off by default); during long steps, Codex gets the notice that Claude is still working.
+
+### Fixed
+- When the Codex account is blocked, the quota shows the reason and when it returns, and the stopped conversation no longer turns into "Unknown state".
+- Closing the Codex AI component also ends Claude Code and its commands.
+
 ## [1.4.8] - 2026-11-10 · build 20261110135241
 
 ### Fixed

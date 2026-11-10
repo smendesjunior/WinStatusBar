@@ -89,6 +89,7 @@ Every step is verified before the next one, results come back as short text inst
 - **One-click model sync** — **Check and update models** re-reads every configured AI and updates the bar and Codex together, flags OpenAI models that look obsolete (they only leave with your confirmation) and brings new Ollama models in.
 - **Fix AI problems** — one button checks and repairs the gateway, Codex's config, Ollama and Qira, and tells you exactly what still needs a login.
 - **Follow Codex from the bar** — current task, progress and 5-hour/weekly quotas without opening Codex.
+- **Continue via the API** — Codex conversations stopped by quota continue through your OpenAI API key.
 
 ## Every AI at a glance
 

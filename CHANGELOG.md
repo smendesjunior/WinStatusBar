@@ -7,6 +7,16 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.5.0] - 2026-11-10 · compilação BUILD
+
+### Adicionado
+- Codex › Continuar pela API (menu da cota): as conversas paradas por falta de cota continuam pela sua chave da API da OpenAI, na mesma conversa e com o mesmo modelo e nível, com gasto ao vivo e o botão Parar.
+- Configurações › Modelos: o Claude no seletor do Codex pode executar comandos e editar arquivos (desligado por padrão); nas etapas longas, o Codex recebe o aviso de que ele ainda trabalha.
+
+### Corrigido
+- Com o Codex bloqueado pela conta, a cota mostra o motivo e quando volta, e a conversa parada não vira mais "Estado desconhecido".
+- Fechar o componente das IAs no Codex encerra também o Claude Code e os comandos dele.
+
 ## [1.4.8] - 2026-11-10 · compilação 20261110135241
 
 ### Corrigido
