@@ -15,15 +15,17 @@ internal static class MemoryTrim
 {
     private static readonly TimeSpan MinimumGap = TimeSpan.FromMinutes(10);
     private static long _last;
+    /// <summary>Guardado num campo: um temporizador só numa variável local é recolhido pelo .NET e nunca dispara (1.4.6).</summary>
+    private static DispatcherQueueTimer? _startup;
 
     public static void Start(DispatcherQueue ui)
     {
-        var timer = ui.CreateTimer();
-        timer.Interval = TimeSpan.FromMinutes(1);
-        timer.IsRepeating = false;
+        _startup = ui.CreateTimer();
+        _startup.Interval = TimeSpan.FromMinutes(1);
+        _startup.IsRepeating = false;
         // A da abertura vale sempre: a leitura inicial ainda pode estar em andamento quando a tela já está apagada.
-        timer.Tick += (_, _) => Run("abertura", always: true);
-        timer.Start();
+        _startup.Tick += (_, _) => Run("abertura", always: true);
+        _startup.Start();
         Core.Presence.Changed += away => { if (away) Run("tela apagada"); };
     }
 

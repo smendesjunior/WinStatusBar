@@ -76,6 +76,16 @@ public class ResourceUseTests
     }
 
     [Fact]
+    public void StartupMemoryTrimTimerIsKeptAlive()
+    {
+        // 1.4.6: o temporizador da compactação ficava só numa variável local, era recolhido pelo .NET e nunca disparava.
+        string source = RepoSource.Read("src/WinStatusBar/Services/MemoryTrim.cs");
+        Assert.Contains("private static DispatcherQueueTimer? _startup;", source);
+        Assert.Contains("_startup = ui.CreateTimer();", source);
+        Assert.Contains("GCCollectionMode.Aggressive", source);
+    }
+
+    [Fact]
     public void ContinuousBarAnimationsRunOnTheSharedFrameClock()
     {
         // Animações sem fim do compositor ou do XAML mantinham a composição na taxa da tela (165 Hz) enquanto uma IA

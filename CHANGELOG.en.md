@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.7] - 2026-11-10 · build BUILD
+
+### Fixed
+- Memory: in 1.4.6, returning to Windows the memory .NET reserves at startup (1 minute after the bar opens) never happened, because its timer was discarded before it fired; only the release when the screen turns off worked. Both work now (measured right after startup: from 80 to 26 MB reserved).
+
 ## [1.4.6] - 2026-11-10 · build 20261110093029
 
 ### Fixed
