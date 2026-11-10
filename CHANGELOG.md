@@ -11,7 +11,7 @@ A compilação (data e hora UTC) é o que o atualizador compara. A versão é pa
 
 ### Corrigido
 - Memória: cada vez que Configurações era aberta e fechada, a janela continuava inteira na memória, cerca de 36 MB por vez, e ainda se atualizava a cada leitura das cotas do Gemini. O WinUI não libera janelas fechadas, então agora a mesma janela é reaproveitada: fechar só a esconde, e escondida ela não faz leituras. Medido: 4 aberturas deixavam 146 MB presos; agora a primeira custa cerca de 18 MB uma vez só, e as seguintes não acrescentam nada.
-- Memória: os logotipos das IAs (Gemini, Copilot, OpenAI e outros) eram desenhados com 1898 × 1898 pixels, 14 MB cada, para aparecer com uns 20 pixels. Agora são desenhados no tamanho em que aparecem. No Gerenciador de Tarefas, a barra abre com cerca de 205 MB em vez de 253 MB.
+- Memória: os logotipos das IAs (Gemini, Copilot, OpenAI e outros) eram desenhados com 1898 × 1898 pixels, 14 MB cada, para aparecer com uns 20 pixels. Agora são desenhados no tamanho em que aparecem: só os ícones das cotas chegavam a ocupar 58 MB. No Gerenciador de Tarefas, a barra abre com cerca de 233 MB em vez de 253 MB.
 - Área de transferência: a imagem de uma cópia de tela é liberada logo depois de convertida, em vez de esperar a próxima coleta de memória.
 
 ## [1.4.7] - 2026-11-10 · compilação 20261110094036
