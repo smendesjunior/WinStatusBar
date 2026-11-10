@@ -440,6 +440,16 @@ public partial class App : Application
 
     public void UpdateTrayTooltip(string text) => _tray?.SetTooltip(text);
 
+    private Action? _balloonClick;
+
+    /// <summary>Balão da bandeja (respeita a opção de notificações); <paramref name="onClick"/> roda se o usuário clicar nele.</summary>
+    public void Notify(string title, string message, Action? onClick = null)
+    {
+        if (!Settings.Current.Notifications) return;
+        _balloonClick = onClick;
+        _tray?.ShowBalloon(title, message);
+    }
+
     private void ReleaseAppBars()
     {
         // Também roda fora da thread da interface (vigia da saída, ProcessExit): a lista pode mudar no meio.
