@@ -158,6 +158,15 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
+    public void DialogStartsUncheckedAndSwitchesStepsInPlace()
+    {
+        string dialog = Src("Views", "ContinueViaApiDialog.cs");
+        foreach (var piece in new[] { "IsChecked = false", "c.CanMark", "ApiResumeText.ShowParallelChoice(", "ShowModalAsync(", "svc.PrepareAsync(", "svc.Confirm(" })
+            Assert.Contains(piece, dialog);
+        Assert.True(Regex.Matches(dialog, @"args\.Cancel = true").Count >= 2);
+    }
+
+    [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
         string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");
