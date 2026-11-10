@@ -85,7 +85,7 @@ internal static class GoogleUsageSession
     private static int _live;
     /// <summary>Enquanto o menu de agentes ou os detalhes do Gemini estão abertos, relê a cada 2 s (pedido de 07/11/2026).</summary>
     public static void BeginLive() { if (++_live == 1 && _timer is not null) { _timer.Interval = TimeSpan.FromSeconds(2); Refresh(); } }
-    public static void EndLive() { if (_live > 0 && --_live == 0 && _timer is not null) _timer.Interval = _interval; }
+    public static void EndLive() { if (_live > 0 && --_live == 0 && _timer is not null) { _timer.Interval = _interval; CloseIfIdle(); } }
     private static TimeSpan _interval = TimeSpan.FromMinutes(5);
     /// <summary>Intervalo da atualização das cotas (Configurações › IA › Cotas das IAs), no mínimo 5 min.</summary>
     public static void SetInterval(TimeSpan interval) { _interval = interval; if (_live == 0 && _timer is not null) _timer.Interval = interval; }
@@ -108,6 +108,20 @@ internal static class GoogleUsageSession
 
     /// <summary>Saída da barra: para o timer e não abre mais a janela oculta (recriada depois do Exit, ela mantinha o processo vivo).</summary>
     public static void Stop() { _timer?.Stop(); _ui = null; }
+
+    /// <summary>
+    /// Fecha a janela oculta quando ninguém precisa dela (sem leitura em andamento, sem a janela de login aberta e sem o
+    /// menu que relê a cada 2 s): o navegador do WebView2 dela ocupava de 300 a 550 MB o tempo todo para trabalhar alguns
+    /// segundos a cada leitura. A próxima leitura abre outra, com o mesmo login (os cookies ficam gravados no perfil).
+    /// </summary>
+    private static void CloseIfIdle()
+    {
+        if (_busy || _interactive || _live > 0 || _window is not { } window) return;
+        var web = _web;
+        _window = null; _web = null;
+        try { web?.Close(); } catch { }
+        try { window.Close(); } catch { }
+    }
 
     private static async Task<WebView2> EnsureAsync(bool visible)
     {
@@ -178,6 +192,7 @@ internal static class GoogleUsageSession
         catch { }
         try { File.Delete(CacheFile); } catch { }
         Current = null; Changed?.Invoke();
+        CloseIfIdle();
     });
 
     /// <summary>Lê a página em segundo plano (sem ativar janelas); não faz nada com a janela de login aberta.</summary>
@@ -222,7 +237,7 @@ internal static class GoogleUsageSession
                 await ReadApiAsync(web);
         }
         catch (Exception ex) { App.Log("Cotas do Gemini: " + ex.Message); }
-        finally { _busy = false; }
+        finally { _busy = false; CloseIfIdle(); }
     });
 
     /// <summary>Lê a página oficial de limites do AI Studio (tabela por modelo) no mesmo WebView oculto.</summary>

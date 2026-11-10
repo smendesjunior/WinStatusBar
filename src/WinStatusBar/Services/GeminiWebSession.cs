@@ -134,14 +134,24 @@ internal static class GeminiWebSession
     /// Refazer as ligações (Configurações › Modelos): fecha a página escondida, e a próxima pergunta abre uma nova, com o
     /// mesmo login. Não mexe enquanto ela responde nem com a janela de login aberta.
     /// </summary>
-    public static Task<bool> ResetAsync() => OnUi(async () =>
+    public static Task<bool> ResetAsync() => CloseAsync(TimeSpan.FromSeconds(30));
+
+    /// <summary>
+    /// Página parada há 15 min: fecha (o navegador oculto dela ocupa centenas de MB). A próxima pergunta abre outra, com
+    /// o mesmo login e o histórico da barra como contexto. Ocupada respondendo, fica aberta.
+    /// </summary>
+    private static readonly IdleCloser Idle = new(TimeSpan.FromMinutes(15), () => CloseAsync(TimeSpan.Zero));
+
+    private static Task<bool> CloseAsync(TimeSpan waitIfBusy) => OnUi(async () =>
     {
-        if (!await Gate.WaitAsync(TimeSpan.FromSeconds(30))) return false;
+        if (!await Gate.WaitAsync(waitIfBusy)) return false;
         try
         {
             if (_interactive || _window is null) return _window is null;
             var window = _window;
+            var web = _web;
             _window = null; _web = null; _activeSession = null;
+            try { web?.Close(); } catch { }
             try { window.Close(); } catch { }
             return true;
         }
@@ -443,7 +453,7 @@ internal static class GeminiWebSession
             return new(text, null, "Interrompido");
         }
         catch (Exception ex) { App.Log("Gemini pela conta Google: " + ex.Message); return new(text, null, "Falha no Gemini pela conta Google: " + ex.Message); }
-        finally { Gate.Release(); }
+        finally { Gate.Release(); Idle.Restart(_ui); }
     }
 
     /// <summary>Diagnóstico local da estrutura da página (sem texto das conversas além de 120 caracteres por item).</summary>

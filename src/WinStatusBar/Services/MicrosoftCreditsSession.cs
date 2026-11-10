@@ -56,6 +56,20 @@ internal static class MicrosoftCreditsSession
     /// <summary>Saída da barra: para o timer e não abre mais a janela oculta (recriada depois do Exit, ela mantinha o processo vivo).</summary>
     public static void Stop() { _timer?.Stop(); _ui = null; }
 
+    /// <summary>
+    /// Fecha a janela oculta quando ninguém precisa dela (sem leitura em andamento e sem a janela de login aberta): o
+    /// navegador do WebView2 dela ocupava centenas de MB o tempo todo para trabalhar alguns segundos a cada leitura. A
+    /// próxima leitura abre outra, com o mesmo login (os cookies ficam gravados no perfil).
+    /// </summary>
+    private static void CloseIfIdle()
+    {
+        if (_busy || _interactive || _window is not { } window) return;
+        var web = _web;
+        _window = null; _web = null;
+        try { web?.Close(); } catch { }
+        try { window.Close(); } catch { }
+    }
+
     private static async Task<WebView2> EnsureAsync(bool visible)
     {
         if (_window is null || _web is null)
@@ -125,6 +139,7 @@ internal static class MicrosoftCreditsSession
         catch { }
         try { File.Delete(CacheFile); } catch { }
         Current = null; Changed?.Invoke();
+        CloseIfIdle();
     });
 
     /// <summary>Lê a página em segundo plano (sem ativar janelas); não faz nada com a janela de login aberta.</summary>
@@ -177,7 +192,7 @@ internal static class MicrosoftCreditsSession
                 Save(new(0, 0, null, DateTimeOffset.Now, false));
         }
         catch (Exception ex) { App.Log("Créditos do Copilot: " + ex.Message); }
-        finally { _busy = false; }
+        finally { _busy = false; CloseIfIdle(); }
     });
 
     internal static Snapshot? Parse(string text)

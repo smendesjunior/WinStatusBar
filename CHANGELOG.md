@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.4] - 2026-11-09 · compilação BUILD
+
+### Corrigido
+- Uso de memória: com tudo ligado, a barra ocupava cerca de 1,7 GB, dos quais 1,3 GB eram navegadores WebView2 ocultos abertos o tempo todo (no Gerenciador de Tarefas eles aparecem como "Microsoft Edge"). Agora esses navegadores abrem só quando são usados, e a barra fica em cerca de 350 MB entre uma leitura e outra.
+  - Cotas do Gemini, créditos da Microsoft e painel da OpenAI: o navegador abre para cada leitura (alguns segundos, no intervalo das cotas) e fecha em seguida. O login continua gravado. Com o menu de cotas aberto, as cotas do Gemini continuam atualizando a cada 2 segundos.
+  - Fechar a janela do painel da OpenAI agora fecha de verdade, em vez de só escondê-la.
+  - Conversas com o Copilot e o Gemini pelo site: a página fecha depois de 15 minutos sem uso. A próxima pergunta abre outra, com o mesmo login e com o histórico da conversa da barra.
+
 ## [1.4.3] - 2026-11-09 · compilação 20261109201912
 
 ### Corrigido

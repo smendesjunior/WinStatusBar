@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.4] - 2026-11-09 · build BUILD
+
+### Fixed
+- Memory use: with everything on, the bar used about 1.7 GB, of which 1.3 GB were hidden WebView2 browsers kept open all the time (Task Manager lists them as "Microsoft Edge"). These browsers now open only when they are used, and the bar stays around 350 MB between reads.
+  - Gemini quotas, Microsoft credits and the OpenAI dashboard: the browser opens for each read (a few seconds, at the quota interval) and closes right after. Sign-ins are kept. While the quota menu is open, Gemini quotas still refresh every 2 seconds.
+  - Closing the OpenAI dashboard window now really closes it instead of just hiding it.
+  - Copilot and Gemini conversations through their websites: the page closes after 15 idle minutes. The next question opens a new one, with the same sign-in and the bar's conversation history.
+
 ## [1.4.3] - 2026-11-09 · build 20261109201912
 
 ### Fixed

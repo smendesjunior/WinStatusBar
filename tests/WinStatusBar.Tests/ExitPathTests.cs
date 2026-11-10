@@ -64,10 +64,7 @@ public class ExitPathTests
 
     private static string ExitAppSource()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "WinStatusBar.sln"))) dir = dir.Parent;
-        Assert.NotNull(dir);
-        string app = File.ReadAllText(Path.Combine(dir!.FullName, "src", "WinStatusBar", "App.xaml.cs"));
+        string app = RepoSource.Read("src", "WinStatusBar", "App.xaml.cs");
         var match = Regex.Match(app, @"public void ExitApp\(\)\s*\{(?<body>.*?)\n    \}", RegexOptions.Singleline);
         Assert.True(match.Success, "ExitApp não encontrado em App.xaml.cs");
         return match.Groups["body"].Value;

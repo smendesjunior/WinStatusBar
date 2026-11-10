@@ -80,7 +80,7 @@ internal sealed class OpenAiDashboardView : Grid
                     if (_syncing && uri.AbsolutePath.EndsWith("credit_grants"))
                     {
                         _syncing = false; _status.Text = "Saldo e gráficos sincronizados com o menu.";
-                        if (!_interactive) _window?.AppWindow.Hide();
+                        CloseBackgroundWindow();
                     }
                 }
                 catch (Exception ex) { App.Log("Métricas do painel OpenAI: " + ex.Message); }
@@ -149,13 +149,11 @@ internal sealed class OpenAiDashboardView : Grid
         }
         window.AppWindow.MoveAndResize(bounds);
         if (File.Exists(App.IconPath)) window.AppWindow.SetIcon(App.IconPath);
-        window.AppWindow.Closing += (_, e) =>
+        // Fechar a janela fecha de verdade (antes só escondia e o navegador dela ficava aberto); a posição é lembrada.
+        window.AppWindow.Closing += (_, _) =>
         {
-            e.Cancel = true;
             if (_interactive) _visibleBounds = new(window.AppWindow.Position.X, window.AppWindow.Position.Y, window.AppWindow.Size.Width, window.AppWindow.Size.Height);
             _interactive = false;
-            window.AppWindow.Hide();
-            window.AppWindow.IsShownInSwitchers = false;
         };
         window.Closed += (_, _) => { view._closed = true; view._web.Close(); _window = null; _windowView = null; };
         view.BeginSync();
@@ -173,8 +171,19 @@ internal sealed class OpenAiDashboardView : Grid
         {
             _syncing = false;
             _status.Text = "Entre na conta para sincronizar o saldo e os gráficos.";
-            if (!_interactive) _window?.AppWindow.Hide();
+            CloseBackgroundWindow();
         }
+    }
+
+    /// <summary>
+    /// Sincronização em segundo plano terminada (ou sem login): fecha a janela em vez de só escondê-la. O navegador do
+    /// WebView2 dela ocupava centenas de MB o tempo todo; a próxima sincronização abre outra, com o mesmo login (os
+    /// cookies ficam gravados no perfil). Fora do evento da página, pela fila da interface.
+    /// </summary>
+    private void CloseBackgroundWindow()
+    {
+        if (_interactive || _closed || !ReferenceEquals(_windowView, this) || _window is not { } window) return;
+        window.DispatcherQueue.TryEnqueue(() => { if (!_interactive && ReferenceEquals(_windowView, this)) window.Close(); });
     }
     public static void Pause()
     {
