@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.7] - 2026-11-10 · compilação BUILD
+## [1.4.7] - 2026-11-10 · compilação 20261110094036
 
 ### Corrigido
 - Memória: na 1.4.6, a devolução ao Windows da memória que o .NET reserva na abertura (1 minuto depois de abrir a barra) não acontecia, porque o temporizador dela era descartado antes de disparar; só a devolução ao apagar a tela funcionava. Agora as duas funcionam (medido logo depois de abrir: de 80 para 26 MB reservados).
