@@ -103,16 +103,53 @@ public sealed class QuotaSnapshot
     public IReadOnlyList<ResetCredit> ResetCredits { get; init; } = [];
     /// <summary>Saldo de créditos / uso extra, quando informado.</summary>
     public string? CreditsText { get; init; }
+    /// <summary>Codex: o que a conta diz sobre poder usar (bloqueio, motivo, créditos). null = não informado.</summary>
+    public CodexAccess? Access { get; init; }
 
-    /// <summary>Copia os detalhes (que só a consulta oficial traz) para um snapshot mais recente vindo do rollout.</summary>
-    public QuotaSnapshot WithDetailsFrom(QuotaSnapshot? other) => other is null ? this : new QuotaSnapshot
+    /// <summary>Bloqueado pela conta (até uma consulta oficial liberar) ou por uma janela de 5 h/7 d em 100 % ainda válida.</summary>
+    public bool IsBlocked(DateTimeOffset now) => Access?.Blocks == true || FullWindows().Any(w => !w.IsExpired(now));
+
+    /// <summary>Horário previsto de volta: o informado pela conta ou a maior renovação das janelas em 100 %. null quando livre ou sem previsão.</summary>
+    public DateTimeOffset? BlockedUntil(DateTimeOffset now)
     {
-        Primary = Primary, Secondary = Secondary, PlanType = PlanType ?? other.PlanType, Error = Error, ObservedAt = ObservedAt,
-        AdditionalWindows = AdditionalWindows.Count > 0 ? AdditionalWindows : other.AdditionalWindows,
-        ResetCreditsAvailable = ResetCreditsAvailable ?? other.ResetCreditsAvailable,
-        ResetCredits = ResetCredits.Count > 0 ? ResetCredits : other.ResetCredits,
-        CreditsText = CreditsText ?? other.CreditsText,
-    };
+        if (!IsBlocked(now)) return null;
+        if (Access?.BannerResetAt is { } reset) return reset;
+        return FullWindows().Select(w => w.ResetsAt).Where(r => r is not null).Max();
+    }
+
+    private IEnumerable<QuotaWindow> FullWindows()
+    {
+        foreach (var w in new[] { Primary, Secondary })
+            if (w is not null && w.UsedPercent >= 100) yield return w;
+    }
+
+    /// <summary>Copia os detalhes (que só a consulta oficial traz) para um snapshot mais recente vindo do rollout.
+    /// Sem janelas próprias, herda as do outro; o acesso que vale é o observado mais tarde (empate: o próprio).</summary>
+    public QuotaSnapshot WithDetailsFrom(QuotaSnapshot? other)
+    {
+        if (other is null) return this;
+        bool ownWindows = Primary is not null || Secondary is not null;
+        return new QuotaSnapshot
+        {
+            Primary = ownWindows ? Primary : other.Primary, Secondary = ownWindows ? Secondary : other.Secondary,
+            PlanType = PlanType ?? other.PlanType, Error = Error, ObservedAt = ObservedAt,
+            AdditionalWindows = AdditionalWindows.Count > 0 ? AdditionalWindows : other.AdditionalWindows,
+            ResetCreditsAvailable = ResetCreditsAvailable ?? other.ResetCreditsAvailable,
+            ResetCredits = ResetCredits.Count > 0 ? ResetCredits : other.ResetCredits,
+            CreditsText = CreditsText ?? other.CreditsText,
+            Access = Access is null ? other.Access
+                : other.Access is null ? Access
+                : other.Access.ObservedAt > Access.ObservedAt ? other.Access : Access,
+        };
+    }
+}
+
+/// <summary>Bloqueio de uso informado pela conta do Codex (account/rateLimits/read) ou por uma linha de registro.</summary>
+public sealed record CodexAccess(bool? OrdinaryUsageAllowed, string? ReachedType, bool? SpendControlReached, bool? HasCredits,
+    string? CreditsBalance, string? BannerTitle, DateTimeOffset? BannerResetAt, DateTimeOffset ObservedAt, bool Official)
+{
+    /// <summary>A conta bloqueou o uso: proibido explicitamente, limite de gasto atingido, ou um motivo de limite sem liberação explícita.</summary>
+    public bool Blocks => OrdinaryUsageAllowed == false || SpendControlReached == true || (ReachedType is not null && OrdinaryUsageAllowed != true);
 }
 
 public interface IAiQuotaProvider

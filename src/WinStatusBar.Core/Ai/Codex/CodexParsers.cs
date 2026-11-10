@@ -5,13 +5,15 @@ namespace WinStatusBar.Core.Ai.Codex;
 /// <summary>Interpretação das respostas JSON-RPC do app-server e das linhas de rollout (~/.codex/sessions/**/*.jsonl).</summary>
 public static class CodexParsers
 {
-    /// <summary>Resultado de account/rateLimits/read (camelCase) ou rate_limits do rollout (snake_case).</summary>
-    public static QuotaSnapshot? ParseRateLimits(JsonElement rl, string source)
+    /// <summary>Resultado de account/rateLimits/read (camelCase) ou rate_limits do rollout (snake_case).
+    /// <paramref name="observedAt"/> é o horário do evento (linha do registro); sem ele, agora.</summary>
+    public static QuotaSnapshot? ParseRateLimits(JsonElement rl, string source, DateTimeOffset? observedAt = null)
     {
         if (rl.ValueKind != JsonValueKind.Object) return null;
         var outer = rl;
-        if (rl.TryGetProperty("rateLimits", out var inner) && inner.ValueKind == JsonValueKind.Object) rl = inner;
-        var now = DateTimeOffset.Now;
+        bool official = rl.TryGetProperty("rateLimits", out var inner) && inner.ValueKind == JsonValueKind.Object;
+        if (official) rl = inner;
+        var now = observedAt ?? DateTimeOffset.Now;
         QuotaWindow? Window(string name, string label) => WindowOf(rl, name, label);
         QuotaWindow? WindowOf(JsonElement container, string name, string label)
         {
@@ -26,7 +28,8 @@ public static class CodexParsers
         }
         var primary = Window("primary", "5h");
         var secondary = Window("secondary", "7d");
-        if (primary is null && secondary is null) return null;
+        var access = AccessOf(outer, rl, official, now);
+        if (primary is null && secondary is null && access is null) return null;
         string? plan = Str(rl, "planType") ?? Str(rl, "plan_type");
         string? mainId = Str(rl, "limitId") ?? Str(rl, "limit_id");
 
@@ -70,7 +73,38 @@ public static class CodexParsers
         {
             Primary = primary, Secondary = secondary, PlanType = plan, ObservedAt = now,
             AdditionalWindows = extra, ResetCreditsAvailable = resetCount, ResetCredits = credits, CreditsText = creditsText,
+            Access = access,
         };
+    }
+
+    /// <summary>Campos de bloqueio, lidos de dentro (rateLimits) para fora, em camelCase e snake_case.
+    /// Só existe acesso quando a leitura é oficial ou traz um motivo/limite de gasto.</summary>
+    private static CodexAccess? AccessOf(JsonElement outer, JsonElement rl, bool official, DateTimeOffset observedAt)
+    {
+        bool? B(string camel, string snake) => Bool(rl, camel) ?? Bool(rl, snake) ?? Bool(outer, camel) ?? Bool(outer, snake);
+        string? S(string camel, string snake) => Str(rl, camel) ?? Str(rl, snake) ?? Str(outer, camel) ?? Str(outer, snake);
+        bool? allowed = B("ordinaryUsageAllowed", "ordinary_usage_allowed");
+        string? reached = S("rateLimitReachedType", "rate_limit_reached_type");
+        bool? spend = B("spendControlReached", "spend_control_reached");
+        if (!official && reached is null && spend != true) return null;
+
+        var cr = rl.TryGetProperty("credits", out var c) && c.ValueKind == JsonValueKind.Object ? c : default;
+        bool? hasCredits = Bool(cr, "hasCredits") ?? Bool(cr, "has_credits");
+        string? balance = Str(cr, "balance");
+
+        var upsell = outer.TryGetProperty("rateLimitUpsell", out var u) && u.ValueKind == JsonValueKind.Object ? u
+            : outer.TryGetProperty("rate_limit_upsell", out u) && u.ValueKind == JsonValueKind.Object ? u : default;
+        string? title = Str(upsell, "title");
+        DateTimeOffset? resetAt = null;
+        foreach (var name in new[] { "reset_at", "resetAt" })
+        {
+            if (upsell.ValueKind != JsonValueKind.Object || !upsell.TryGetProperty(name, out var r)) continue;
+            if (r.ValueKind == JsonValueKind.Number && r.TryGetInt64(out var secs)) resetAt = DateTimeOffset.FromUnixTimeSeconds(secs);
+            else if (r.ValueKind == JsonValueKind.String && DateTimeOffset.TryParse(r.GetString(), System.Globalization.CultureInfo.InvariantCulture,
+                         System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed)) resetAt = parsed;
+            if (resetAt is not null) break;
+        }
+        return new CodexAccess(allowed, reached, spend, hasCredits, balance, title, resetAt, observedAt, official);
     }
 
     /// <summary>Aplica uma linha do rollout à sessão. Retorna uma cota se a linha trouxer rate_limits.</summary>
@@ -290,4 +324,7 @@ public static class CodexParsers
 
     internal static long? Long(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var l) ? l : null;
+
+    internal static bool? Bool(JsonElement e, string name) =>
+        e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind is JsonValueKind.True or JsonValueKind.False ? v.GetBoolean() : null;
 }
