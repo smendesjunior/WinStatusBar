@@ -4248,7 +4248,7 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S64E42D8BAA2B1843" xml:space="preserve">
     <value>Laisser Claude exécuter des commandes et modifier des fichiers</value>
   </data>
-  <data name="S46517AE5D727A3A8" xml:space="preserve">
-    <value>Désactivé (par défaut), les modèles Claude dans Codex répondent uniquement en texte. Activé, Claude Code modifie des fichiers et exécute des commandes (Bash et PowerShell), cherche et consulte le web dans le dossier de la conversation, sans demander d'autorisation à chaque étape. Les étapes longues (20 à 40 min) n'interrompent pas la réponse. À utiliser uniquement dans des dossiers de confiance. Cela ne résout pas un quota Codex épuisé : tant que le quota est bloqué, l'app Codex n'envoie rien.</value>
+  <data name="S4F37FF91F7921755" xml:space="preserve">
+    <value>Désactivé (par défaut), les modèles Claude dans Codex répondent uniquement en texte. Activé, Claude Code modifie des fichiers et exécute des commandes (Bash et PowerShell), cherche et consulte le web dans le dossier de la conversation, sans demander d'autorisation à chaque étape. Les étapes longues (20 à 40 min) n'interrompent pas la réponse. Quand vous arrêtez dans Codex, les commandes peuvent continuer jusqu'à 1 minute. À utiliser uniquement dans des dossiers de confiance. Cela ne résout pas un quota Codex épuisé : tant que le quota est bloqué, l'app Codex n'envoie rien.</value>
   </data>
 </root>

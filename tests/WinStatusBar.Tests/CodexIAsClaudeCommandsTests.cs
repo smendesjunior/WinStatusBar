@@ -274,7 +274,7 @@ public class CodexIAsClaudeCommandsBridgeTests : IDisposable
 
 public class CodexIAsClaudeCommandsSourceTests
 {
-    internal const string Help = "Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.";
+    internal const string Help = "Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.";
     private static readonly string[] Texts = ["Claude no seletor do Codex", "Deixar o Claude executar comandos e editar arquivos", Help];
 
     [Fact]
@@ -344,6 +344,22 @@ public class CodexIAsClaudeCommandsRegistryTests
         Assert.Equal(1, starts);
         now = now.AddMinutes(1).AddSeconds(1);
         await registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None);
+        Assert.Equal(2, starts);
+    }
+
+    [Fact]
+    public async Task Resposta_com_erro_nao_fica_guardada_e_a_repeticao_roda_de_novo()
+    {
+        var registry = new ClaudeRunRegistry();
+        int starts = 0;
+        Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> start = (text, status, ct) =>
+        {
+            starts++;
+            return Task.FromResult(starts == 1 ? new Answer("", "sobrecarregado") : new Answer("Pronto", null));
+        };
+        string key = ClaudeRunRegistry.KeyOf(Slug, null, Conv)!;
+        Assert.Equal("sobrecarregado", (await registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None)).Error);
+        Assert.Equal("Pronto", (await registry.RunAsync(key, start, _ => { }, _ => { }, CancellationToken.None)).Text);
         Assert.Equal(2, starts);
     }
 

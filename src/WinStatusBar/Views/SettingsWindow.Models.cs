@@ -119,7 +119,7 @@ public sealed partial class SettingsWindow
         // ------------------------------------------------------------ Claude no seletor do Codex
         page.Children.Add(GroupTitle(Localization.T("Claude no seletor do Codex")));
         page.Children.Add(Group(Toggle(Localization.T("Deixar o Claude executar comandos e editar arquivos"),
-            Localization.T("Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada."),
+            Localization.T("Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada."),
             s => s.CodexClaudeCommands, (s, v) => s.CodexClaudeCommands = v)));
 
         // ------------------------------------------------------------ corrigir problemas

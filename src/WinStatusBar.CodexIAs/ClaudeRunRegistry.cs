@@ -126,12 +126,13 @@ internal sealed class ClaudeRunRegistry
         }
     }
 
-    /// <summary>Terminou bem: guarda a resposta por 10 min. Cancelada ou com falha: esquece a entrada.</summary>
+    /// <summary>Terminou bem: guarda a resposta por 10 min. Cancelada ou com falha (inclusive uma resposta com erro,
+    /// como sobrecarga ou limite): esquece a entrada, para a repetição do Codex rodar de novo.</summary>
     private void Settle(string key, Entry entry, Task<Answer> run)
     {
         lock (_gate)
         {
-            if (run.IsCompletedSuccessfully)
+            if (run.IsCompletedSuccessfully && run.Result.Error is null)
             {
                 if (entry.Result is null) { entry.Result = run.Result; entry.FinishedAt = Clock(); }
             }
