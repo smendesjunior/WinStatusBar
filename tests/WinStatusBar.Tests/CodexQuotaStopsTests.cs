@@ -51,7 +51,7 @@ public class CodexQuotaStopsTests
             ["collaboration_mode"] = new JsonObject
             {
                 ["mode"] = "default",
-                ["settings"] = new JsonObject { ["model"] = model ?? "gpt-5.6-sol", ["reasoning_effort"] = collaborationEffort, ["developer_instructions"] = "…" },
+                ["settings"] = new JsonObject { ["model"] = model, ["reasoning_effort"] = collaborationEffort, ["developer_instructions"] = "…" },
             },
         });
 
@@ -229,6 +229,293 @@ public class CodexQuotaStopsTests
             Assert.Equal(Encoding.UTF8.GetByteCount(complete), t.CompleteLength);
         }
         finally { Directory.Delete(dir, true); }
+    }
+
+    // ---- CodexQuotaStops (A5) ----
+
+    internal static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-11-10T14:00:00Z");
+    private const string ScanLog = "Conversas paradas pela cota: 1 (excluídas: interrompidas por você=1, exec/scripts=1, subagentes=1, barra=1)";
+
+    internal static JsonObject Item(string id, string? title = null, string? path = null, DateTimeOffset? updatedAt = null, JsonNode? source = null,
+        string originator = "Codex Desktop", string? parent = null, string? role = null, string? threadSource = null, bool ephemeral = false,
+        string? model = "gpt-5.6-sol", string? effort = "medium") => new()
+    {
+        ["id"] = id, ["name"] = title, ["path"] = path, ["updatedAt"] = (updatedAt ?? Now.AddHours(-1)).ToUnixTimeSeconds(),
+        ["source"] = source ?? "vscode", ["originator"] = originator, ["parentThreadId"] = parent, ["agentRole"] = role,
+        ["threadSource"] = threadSource, ["ephemeral"] = ephemeral, ["model"] = model, ["reasoningEffort"] = effort,
+        ["cwd"] = Cwd, ["status"] = new JsonObject { ["type"] = "notLoaded" },
+    };
+
+    internal static JsonElement Page(IEnumerable<JsonObject> items, string? next = null)
+    {
+        var data = new JsonArray();
+        foreach (var i in items) data.Add(i);
+        return JsonDocument.Parse(new JsonObject { ["data"] = data, ["nextCursor"] = next, ["backwardsCursor"] = null }.ToJsonString()).RootElement.Clone();
+    }
+
+    internal static string SessionsDir(string home)
+    {
+        string dir = Path.Combine(home, "sessions", "2026", "11", "10");
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    private sealed class FakeList
+    {
+        public readonly List<JsonObject> Requests = [];
+        public Func<int, JsonElement> Respond = _ => Page([]);
+        public Task<JsonElement> Call(JsonObject request, CancellationToken ct)
+        {
+            Requests.Add((JsonObject)request.DeepClone());
+            return Task.FromResult(Respond(Requests.Count));
+        }
+    }
+
+    [Theory]
+    [InlineData("vscode", "codex_work_desktop", null, null, null, false, CodexThreadKind.User)]
+    [InlineData("vscode", "Codex Desktop", null, null, "user", false, CodexThreadKind.User)]
+    [InlineData("cli", "codex_cli_rs", null, null, null, false, CodexThreadKind.User)]
+    [InlineData("vscode", "codex_vscode", null, null, "chatgpt_handoff", false, CodexThreadKind.User)]
+    [InlineData("vscode", "winstatusbar", null, null, null, false, CodexThreadKind.Bar)]
+    [InlineData("exec", "codex_exec", null, null, null, false, CodexThreadKind.ExecOrScript)]
+    [InlineData("exec", "Codex Desktop", null, null, null, false, CodexThreadKind.ExecOrScript)]
+    [InlineData("vscode", "Codex Desktop", "01aa0000-0000-7000-8000-000000000003", null, null, false, CodexThreadKind.Subagent)]
+    [InlineData("vscode", "Codex Desktop", null, null, "agent_created_thread", false, CodexThreadKind.Subagent)]
+    [InlineData("vscode", "Codex Desktop", null, "worker", null, false, CodexThreadKind.Subagent)]
+    [InlineData("subagent", "Codex Desktop", null, null, null, false, CodexThreadKind.Subagent)]
+    [InlineData("vscode", "Codex Desktop", null, null, null, true, CodexThreadKind.Ephemeral)]
+    [InlineData("vscode", "outro_app", null, null, null, false, CodexThreadKind.UnknownOrigin)]
+    [InlineData("appServer", "Codex Desktop", null, null, null, false, CodexThreadKind.UnknownSource)]
+    public void ClassifiesTheRealSourceAndOriginPairs(string source, string originator, string? parent, string? role, string? threadSource, bool ephemeral, CodexThreadKind kind)
+    {
+        var t = new CodexThreadInfo(Id, Title, null, Now, source, originator, parent, role, threadSource, ephemeral, null, null);
+        Assert.Equal(kind, CodexQuotaStops.Classify(t));
+        Assert.Equal(kind == CodexThreadKind.User, CodexQuotaStops.IsUserThread(t));
+    }
+
+    [Fact]
+    public void ReadsThreadListItemsWithObjectSources()
+    {
+        var item = Item(Id, Title, source: JsonNode.Parse("""{"subAgent":{"thread_spawn":{"parent_thread_id":"p"}}}"""), parent: "p",
+            model: "gpt-5.6-sol", effort: "medium");
+        var t = CodexThreadInfo.FromThreadList(JsonDocument.Parse(item.ToJsonString()).RootElement);
+        Assert.Equal(("subagent", "p", "medium", "gpt-5.6-sol"), (t.Source, t.ParentThreadId, t.Effort, t.Model));
+        Assert.Equal(Now.AddHours(-1).ToUnixTimeSeconds(), t.UpdatedAt!.Value.ToUnixTimeSeconds());
+
+        var custom = CodexThreadInfo.FromThreadList(JsonDocument.Parse(Item(Id, source: JsonNode.Parse("""{"custom":"x"}""")).ToJsonString()).RootElement);
+        Assert.Equal("custom", custom.Source);
+    }
+
+    [Theory]
+    [InlineData(@"\\?\C:\Users\x\.codex\sessions\a.jsonl", @"C:\Users\x\.codex\sessions\a.jsonl")]
+    [InlineData(@"\\?\UNC\srv\share\a.jsonl", @"\\srv\share\a.jsonl")]
+    [InlineData(@"C:\a.jsonl", @"C:\a.jsonl")]
+    [InlineData(null, null)]
+    public void StripsTheLongPathPrefix(string? raw, string? expected) => Assert.Equal(expected, CodexQuotaStops.NormalizePath(raw));
+
+    [Fact]
+    public async Task ScanFindsTheStopThroughThreadList()
+    {
+        string home = TempDir();
+        try
+        {
+            string sessions = SessionsDir(home);
+            string stopPath = WriteRollout(sessions, Id, StoppedLines());
+            string otherPath = WriteRollout(sessions, OtherId, Meta(OtherId), Started("t1"), Context("t1"), Aborted("t1", "2026-11-10T03:05:00.000Z"));
+            var list = new FakeList
+            {
+                Respond = _ => Page([
+                    Item(Id, Title, @"\\?\" + stopPath),
+                    Item(OtherId, "Responder saudação", otherPath),
+                    Item("01aa0000-0000-7000-8000-000000000004", "Chat da barra", originator: "winstatusbar"),
+                    Item("01aa0000-0000-7000-8000-000000000005", "Script", source: "exec", originator: "codex_exec"),
+                    Item("01aa0000-0000-7000-8000-000000000006", "Subagente", source: JsonNode.Parse("""{"subAgent":{}}"""), parent: "01aa0000-0000-7000-8000-000000000003"),
+                ]),
+            };
+            var log = new List<string>();
+            var scan = await CodexQuotaStops.ScanAsync(home, list.Call, Now, CancellationToken.None, log.Add);
+
+            var stop = Assert.Single(scan.Stops);
+            Assert.Equal((Id, Title, stopPath), (stop.ThreadId, stop.Title, stop.RolloutPath));
+            Assert.Equal(("gpt-5.6-sol", "low", "workspace-write", "on-request"), (stop.Model, stop.Effort, stop.SandboxMode, stop.ApprovalPolicy));
+            Assert.Equal(("t1", DateTimeOffset.Parse(StopAt)), (stop.StoppedTurnId, stop.StoppedAt));
+            Assert.True(stop.Remarked);
+            Assert.Null(stop.Unavailable);
+            Assert.Equal([@"Z:\"], stop.ExtraRoots);
+            Assert.Equal(79123, stop.ContextTokens);
+            Assert.Equal(new FileInfo(stopPath).Length, stop.RolloutOffset);
+            Assert.Equal(new QuotaStopExclusions(1, 1, 1, 1, 0), scan.Excluded);
+            Assert.False(scan.UsedFallback);
+            Assert.Equal(ScanLog, scan.LogLine);
+            Assert.Contains(ScanLog, log);
+            var request = Assert.Single(list.Requests);
+            Assert.Equal("""{"archived":false,"sortKey":"updated_at","useStateDbOnly":true,"limit":50}""", request.ToJsonString());
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task ThreadListStopsAfterFourPagesOrWhenTwoWeeksOld()
+    {
+        string home = TempDir();
+        try
+        {
+            var many = new FakeList { Respond = n => Page([Item($"01aa0000-0000-7000-8000-0000000001{n:00}")], "c" + n) };
+            await CodexQuotaStops.ScanAsync(home, many.Call, Now, CancellationToken.None);
+            Assert.Equal(new[] { "", "c1", "c2", "c3" }, many.Requests.Select(r => (string?)r["cursor"] ?? "").ToArray());
+
+            var old = new FakeList { Respond = n => Page([Item($"01aa0000-0000-7000-8000-0000000002{n:00}", updatedAt: Now.AddDays(-20))], "c" + n) };
+            await CodexQuotaStops.ScanAsync(home, old.Call, Now, CancellationToken.None);
+            Assert.Single(old.Requests);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task StopOlderThanTheWindowIsNotListed()
+    {
+        string home = TempDir();
+        try
+        {
+            string old = Now.AddDays(-15).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            string path = WriteRollout(SessionsDir(home), Id, Meta(), Started("t1", Now.AddDays(-15).AddMinutes(-5).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")),
+                Context("t1", ts: Now.AddDays(-15).AddMinutes(-4).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")), QuotaEnd("t1", old));
+            var list = new FakeList { Respond = _ => Page([Item(Id, Title, path, updatedAt: Now)]) };
+            var scan = await CodexQuotaStops.ScanAsync(home, list.Call, Now, CancellationToken.None);
+            Assert.Empty(scan.Stops);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task FallsBackToLocalRecordsWhenThreadListFails()
+    {
+        string home = TempDir();
+        try
+        {
+            string path = WriteRollout(SessionsDir(home), Id, StoppedLines());
+            File.SetLastWriteTimeUtc(path, Now.UtcDateTime.AddHours(-1));
+            string archived = Path.Combine(home, "archived_sessions");
+            Directory.CreateDirectory(archived);
+            WriteRollout(archived, OtherId, Meta(OtherId), Started("t1"), Context("t1"), QuotaEnd());
+            File.WriteAllText(Path.Combine(home, "session_index.jsonl"),
+                new JsonObject { ["id"] = Id, ["thread_name"] = Title, ["updated_at"] = "2026-11-10T03:31:00Z" }.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n");
+
+            var log = new List<string>();
+            var scan = await CodexQuotaStops.ScanAsync(home, (_, _) => throw new IOException("boom"), Now, CancellationToken.None, log.Add);
+            Assert.True(scan.UsedFallback);
+            var stop = Assert.Single(scan.Stops);
+            Assert.Equal((Id, Title), (stop.ThreadId, stop.Title));
+            Assert.Contains("Conversas paradas pela cota: lista oficial indisponível (boom); usando os registros locais", log);
+            Assert.Contains("Conversas paradas pela cota: no modo local não dá para excluir as conversas arquivadas", log);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task FindsTheRolloutByIdWhenTheListHasNoPath()
+    {
+        string home = TempDir();
+        try
+        {
+            WriteRollout(SessionsDir(home), Id, StoppedLines());
+            var list = new FakeList { Respond = _ => Page([Item(Id, title: null, path: null)]) };
+            var stop = Assert.Single((await CodexQuotaStops.ScanAsync(home, list.Call, Now, CancellationToken.None)).Stops);
+            Assert.Equal("Conversa sem título", stop.Title);
+            Assert.True(stop.Remarked);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task StopWithoutAModelIsUnavailable()
+    {
+        string home = TempDir();
+        try
+        {
+            string path = WriteRollout(SessionsDir(home), Id, Meta(), Started("t1"), Context("t1", model: null, effort: null, collaborationEffort: null), QuotaEnd());
+            var list = new FakeList { Respond = _ => Page([Item(Id, Title, path)]) };
+            var stop = Assert.Single((await CodexQuotaStops.ScanAsync(home, list.Call, Now, CancellationToken.None)).Stops);
+            Assert.Equal(CodexQuotaText.MissingTurnData, stop.Unavailable);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task FindAsyncJoinsTheRunningScanAndCachesForMaxAge()
+    {
+        string home = TempDir();
+        try
+        {
+            int opens = 0;
+            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var clock = Now;
+            var finder = new QuotaStopFinder(_ => Task.CompletedTask, _ =>
+            {
+                Interlocked.Increment(ref opens);
+                return Task.FromResult(new ThreadListConnection(async (_, _) => { await gate.Task; return Page([]); }, null));
+            }, () => clock, TimeSpan.FromSeconds(30));
+
+            var a = finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None);
+            var b = finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None);
+            gate.SetResult();
+            var first = await a;
+            Assert.Same(first, await b);
+            Assert.Equal(1, opens);
+
+            clock = Now.AddSeconds(30);
+            Assert.Same(first, await finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None));
+            Assert.Equal(1, opens);
+
+            clock = Now.AddSeconds(61);
+            Assert.NotSame(first, await finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None));
+            Assert.Equal(2, opens);
+
+            await finder.FindAsync(home, TimeSpan.Zero, CancellationToken.None);
+            Assert.Equal(3, opens);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task FindAsyncWaitsForTheScreenWithoutTimingOut()
+    {
+        string home = TempDir();
+        try
+        {
+            int opens = 0;
+            var visible = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var finder = new QuotaStopFinder(_ => visible.Task, _ =>
+            {
+                Interlocked.Increment(ref opens);
+                return Task.FromResult(new ThreadListConnection((_, _) => Task.FromResult(Page([])), null));
+            }, () => Now, TimeSpan.FromMilliseconds(100));
+
+            var scan = finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None);
+            await Task.Delay(300);
+            Assert.False(scan.IsCompleted);
+            Assert.Equal(0, opens);
+            visible.SetResult();
+            Assert.False((await scan).UsedFallback);
+            Assert.Equal(1, opens);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public async Task FindAsyncFallsBackWhenTheConnectionFails()
+    {
+        string home = TempDir();
+        try
+        {
+            var finder = new QuotaStopFinder(_ => Task.CompletedTask, _ => throw new InvalidOperationException("Codex não encontrado."),
+                () => Now, TimeSpan.FromSeconds(30));
+            var log = new List<string>();
+            var scan = await finder.FindAsync(home, TimeSpan.FromSeconds(60), CancellationToken.None, log.Add);
+            Assert.True(scan.UsedFallback);
+            Assert.Contains("Conversas paradas pela cota: lista oficial indisponível (Codex não encontrado.); usando os registros locais", log);
+        }
+        finally { Directory.Delete(home, true); }
     }
 
     [Fact]
