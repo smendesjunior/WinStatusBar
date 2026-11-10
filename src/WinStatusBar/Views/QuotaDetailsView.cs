@@ -76,16 +76,25 @@ public static class QuotaDetailsView
         Grid.SetColumn(open, 2); header.Children.Add(open);
         root.Children.Add(header);
 
+        // Bloqueio da conta (Codex): antes do "sem janelas", porque existe snapshot só com o bloqueio.
+        bool accountBlocked = false;
+        if (isCodex && Core.Ai.Codex.CodexQuotaText.Banner(q, now) is { } blockBanner)
+        {
+            accountBlocked = q?.Access?.Blocks == true;
+            root.Children.Add(BlockBanner(blockBanner, theme));
+        }
+
         if (q?.Primary is null && q?.Secondary is null)
         {
-            root.Children.Add(Text(error ?? global::WinStatusBar.Services.Localization.T("Aguardando o primeiro dado da conta…"), "BodyTextBlockStyle", wrap: true));
+            if (!accountBlocked) // só com o bloqueio, o aviso já diz o que se sabe
+                root.Children.Add(Text(error ?? global::WinStatusBar.Services.Localization.T("Aguardando o primeiro dado da conta…"), "BodyTextBlockStyle", wrap: true));
             root.Children.Add(Footer(q, interval, isCodex));
             return root;
         }
 
         // Períodos principais e adicionais
-        if (q!.Primary is { } p5) root.Children.Add(WindowBlock(PeriodName(p5), p5, now));
-        if (q.Secondary is { } p7) root.Children.Add(WindowBlock(PeriodName(p7), p7, now));
+        if (q!.Primary is { } p5) root.Children.Add(WindowBlock(PeriodName(p5), p5, now, accountBlocked));
+        if (q.Secondary is { } p7) root.Children.Add(WindowBlock(PeriodName(p7), p7, now, accountBlocked));
         var extras = isCodex ? q.AdditionalWindows : hub.Claude.UsageExtras;
         if (extras.Count > 0)
         {
@@ -177,7 +186,30 @@ public static class QuotaDetailsView
         _ => w.Label,
     };
 
-    private static UIElement WindowBlock(string title, QuotaWindow w, DateTimeOffset now)
+    /// <summary>Aviso do bloqueio da conta do Codex: cinco linhas e o detalhe técnico em letra pequena (selecionável).</summary>
+    private static UIElement BlockBanner(Core.Ai.Codex.CodexBlockBanner banner, ElementTheme theme)
+    {
+        var panel = new StackPanel { Spacing = 2 };
+        panel.Children.Add(Text(banner.Title, "BodyStrongTextBlockStyle", wrap: true));
+        foreach (var line in new[] { banner.Reason, banner.Returns, banner.Effect, banner.Confirmed })
+            panel.Children.Add(Text(line, "BodyTextBlockStyle", wrap: true));
+        if (banner.Technical.Length > 0)
+            panel.Children.Add(new TextBlock
+            {
+                Text = banner.Technical, FontSize = 11, Opacity = 0.78, IsTextSelectionEnabled = true,
+                TextWrapping = TextWrapping.Wrap, MaxWidth = ContentWidth - 24, Margin = new Thickness(0, 4, 0, 0),
+            });
+        return new Border
+        {
+            Width = ContentWidth,
+            Padding = new Thickness(12, 10, 12, 10),
+            CornerRadius = new CornerRadius(6),
+            Background = WinStatusBar.Services.ThemeBrushes.ForTheme("SystemFillColorCautionBackgroundBrush", theme),
+            Child = panel,
+        };
+    }
+
+    private static UIElement WindowBlock(string title, QuotaWindow w, DateTimeOffset now, bool accountBlocked = false)
     {
         var panel = new StackPanel { Spacing = 4 };
         var top = new Grid { Width = ContentWidth, ColumnSpacing = 12 };
@@ -197,6 +229,8 @@ public static class QuotaDetailsView
         string usage = expired ? global::WinStatusBar.Services.Localization.T("O período renovou depois do último dado; aguardando nova leitura.")
             : $"{Math.Round(w.UsedPercent)}% usado · {Formatters.ResetTime(w.ResetsAt)}";
         panel.Children.Add(Caption(usage));
+        if (accountBlocked && !expired && w.UsedPercent < 100)
+            panel.Children.Add(Caption(global::WinStatusBar.Services.Localization.T("Há saldo nesta janela, mas o bloqueio da conta vale para todos os modelos")));
         return panel;
     }
 

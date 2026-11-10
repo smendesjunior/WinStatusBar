@@ -675,7 +675,8 @@ public sealed class MonitoringHub : IDisposable
         var now = DateTimeOffset.Now;
         Ring? R(string label, QuotaWindow? w) => w is null ? null : MakeRing(label, w.IsExpired(now) ? 0 : w.UsedPercent, remaining, ShortReset(w.ResetsAt));
         var r1 = R("5h", quota?.Primary); var r2 = R("7 dias", quota?.Secondary);
-        string? exhausted = quota?.Primary is { } p1 && !p1.IsExpired(now) && p1.UsedPercent >= 100 ? "Cota de 5h esgotada"
+        string? exhausted = kind == AgentKind.Codex && quota?.IsBlocked(now) == true ? CodexQuotaText.Pill(quota, now)
+            : quota?.Primary is { } p1 && !p1.IsExpired(now) && p1.UsedPercent >= 100 ? "Cota de 5h esgotada"
             : quota?.Secondary is { } p2 && !p2.IsExpired(now) && p2.UsedPercent >= 100 ? "Cota semanal esgotada" : null;
         var pill = !account.HasSession && !account.HasApiKey ? Pill("Não configurado")
             : top?.State == AgentState.Error ? Pill("Erro")

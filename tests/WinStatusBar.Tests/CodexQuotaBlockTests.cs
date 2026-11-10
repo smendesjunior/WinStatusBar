@@ -222,6 +222,22 @@ public class CodexQuotaBlockTests
         Assert.Equal("qui 12/11", CodexQuotaText.DayDate(DateTimeOffset.FromUnixTimeSeconds(1794535289)));
     }
 
+    // ---- Barra: menu da cota, dica e etiqueta (A10; WinUI, por isso lê o código) ----
+
+    [Fact]
+    public void BarShowsTheBlockInTheMenuTheTooltipAndThePill()
+    {
+        string view = RepoSource.Read("src", "WinStatusBar", "Views", "QuotaDetailsView.cs");
+        int banner = view.IndexOf("CodexQuotaText.Banner(q, now)", StringComparison.Ordinal);
+        int noWindows = view.IndexOf("if (q?.Primary is null && q?.Secondary is null)", StringComparison.Ordinal);
+        Assert.True(banner >= 0 && banner < noWindows, $"aviso={banner} semJanelas={noWindows}");
+        Assert.Contains("Há saldo nesta janela, mas o bloqueio da conta vale para todos os modelos", view);
+
+        Assert.Contains("CodexQuotaText.BlockedLine(codex, now)", RepoSource.Read("src", "WinStatusBar", "ViewModels", "BarViewModel.cs"));
+        Assert.Contains("kind == AgentKind.Codex && quota?.IsBlocked(now) == true ? CodexQuotaText.Pill(quota, now)",
+            RepoSource.Read("src", "WinStatusBar", "Services", "MonitoringHub.cs"));
+    }
+
     // ---- CodexProvider (A6) ----
 
     [Fact]

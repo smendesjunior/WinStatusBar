@@ -373,11 +373,12 @@ public sealed class BarViewModel : ObservableObject
         Claude5h = QuotaService.Text(claude?.Primary, remaining, now);
         Claude7d = QuotaService.Text(claude?.Secondary, remaining, now);
         string mode = remaining ? "restante" : "usado";
-        CodexQuotaTooltip = codex?.Primary is null && codex?.Secondary is null
+        string codexBlock = codex is null ? "" : global::WinStatusBar.Core.Ai.Codex.CodexQuotaText.BlockedLine(codex, now);
+        CodexQuotaTooltip = (codexBlock.Length > 0 ? codexBlock + "\n" : "") + (codex?.Primary is null && codex?.Secondary is null
             ? global::WinStatusBar.Services.Localization.T("Codex: cotas indisponíveis") + (codexError is null ? string.Empty : $"\n{codexError}")
             : global::WinStatusBar.Services.Localization.F("Codex — percentual {0}{1}\n", new object?[] {mode,(codex?.PlanType is null ? string.Empty : $" · plano {codex.PlanType}")})
               + QuotaLine("5h", codex?.Primary, remaining, now) + "\n" + QuotaLine("7d", codex?.Secondary, remaining, now)
-              + global::WinStatusBar.Services.Localization.F("\nFonte: {0} · {1:HH:mm}", new object?[] {codex?.Primary?.Source ?? codex?.Secondary?.Source,codex?.ObservedAt.ToLocalTime()});
+              + global::WinStatusBar.Services.Localization.F("\nFonte: {0} · {1:HH:mm}", new object?[] {codex?.Primary?.Source ?? codex?.Secondary?.Source,codex?.ObservedAt.ToLocalTime()}));
         ClaudeQuotaTooltip = claude?.Primary is null && claude?.Secondary is null
             ? global::WinStatusBar.Services.Localization.T("Claude: ") + (claudeError ?? global::WinStatusBar.Services.Localization.T("Aguardando a consulta automática da conta."))
             : global::WinStatusBar.Services.Localization.F("Claude — percentual {0}\n", new object?[] {mode}) + QuotaLine("5h", claude?.Primary, remaining, now) + "\n" + QuotaLine("7d", claude?.Secondary, remaining, now)
