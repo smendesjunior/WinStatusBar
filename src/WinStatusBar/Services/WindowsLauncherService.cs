@@ -20,6 +20,17 @@ public static class WindowsLauncherService
         else Shell(codex ? "codex://" : "claude://");
     }
 
+    /// <summary>Abre uma conversa no app do Codex (codex://threads/&lt;id&gt;). Id fora do formato é ignorado.</summary>
+    public static void CodexThread(string threadId)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(threadId ?? "", "^[0-9A-Za-z-]{8,64}$"))
+        {
+            App.Log("Abrir conversa do Codex: id inválido ignorado");
+            return;
+        }
+        Shell("codex://threads/" + threadId);
+    }
+
     public static void Shell(string target, string? args = null)
     {
         try

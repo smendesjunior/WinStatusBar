@@ -26,4 +26,22 @@ public class ApiResumeSourceTests
         Assert.Contains("ev == NIN_BALLOONUSERCLICK", callback);
         Assert.Contains("BalloonClicked?.Invoke()", callback);
     }
+
+    [Fact]
+    public void CodexThreadOpensTheCodexLink()
+    {
+        string launcher = Src("Services", "WindowsLauncherService.cs");
+        Assert.Contains("codex://threads/", launcher);
+        string body = Body(launcher, "public static void CodexThread(string threadId)");
+        Assert.Contains("Shell(\"codex://threads/\" + threadId)", body);
+        Assert.Contains("^[0-9A-Za-z-]{8,64}$", body);
+    }
+
+    [Fact]
+    public void VaultPresenceNeverReadsThePassword()
+    {
+        string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");
+        Assert.Contains("FindAllByResource", body);
+        Assert.DoesNotContain("RetrievePassword", body);
+    }
 }
