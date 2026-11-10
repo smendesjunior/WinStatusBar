@@ -107,7 +107,8 @@ public static class IconService
     /// </summary>
     public static async Task<ImageSource?> MonoLogoAsync(string name, bool dark)
     {
-        string key = $"mono|{name}|{dark}";
+        // Pixels no cache: com um monitor de escala maior, o logotipo é refeito nítido em vez de ampliado.
+        string key = $"mono|{name}|{dark}|{LogoPixels(BarLogoSize)}";
         if (Cache.TryGetValue(key, out var c)) return c;
         ImageSource? result = null;
         byte v = dark ? (byte)0xFF : (byte)0x1B;
@@ -134,7 +135,7 @@ public static class IconService
                         writer.DetachStream();
                     }
                     stream.Seek(0);
-                    var source = new SvgImageSource();
+                    var source = LogoSvg(BarLogoSize);
                     await source.SetSourceAsync(stream);
                     result = source;
                 }
@@ -143,6 +144,30 @@ public static class IconService
         catch (Exception ex) { App.Log($"Ícone monocromático ({name}) indisponível: {ex.Message}"); }
         Cache[key] = result;
         return result;
+    }
+
+    /// <summary>Maior tamanho (DIPs) dos logotipos na barra: 17 nos módulos de cota e no agente, 20 na lista de tarefas.</summary>
+    public const double BarLogoSize = 20;
+
+    /// <summary>
+    /// Pixels para rasterizar um logotipo SVG exibido com <paramref name="dip"/> DIPs no monitor de maior escala.
+    /// Sem tamanho explícito, o WinUI rasteriza o SVG carregado fora da árvore visual no tamanho da maior janela do app:
+    /// medido em 10/11/2026, 1898×1898 px (14 MB) por logotipo, contra ~3 KB no tamanho em que ele aparece.
+    /// </summary>
+    public static int LogoPixels(double dip)
+    {
+        double scale = 1;
+        try { foreach (var monitor in GetMonitors()) scale = Math.Max(scale, monitor.Dpi / 96.0); } catch { }
+        return (int)Math.Ceiling(dip * scale);
+    }
+
+    /// <summary>Logotipo SVG já com o tamanho de rasterização (<see cref="LogoPixels"/>); com <paramref name="uri"/>, lido do arquivo.</summary>
+    public static SvgImageSource LogoSvg(double dip, Uri? uri = null)
+    {
+        int px = LogoPixels(dip);
+        var source = new SvgImageSource { RasterizePixelWidth = px, RasterizePixelHeight = px };
+        if (uri is not null) source.UriSource = uri;
+        return source;
     }
 
     /// <summary>Recolore um glifo-modelo (preto + alfa) mantendo o canal alfa (saída pré-multiplicada).</summary>

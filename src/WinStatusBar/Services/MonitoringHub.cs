@@ -761,7 +761,7 @@ public sealed class MonitoringHub : IDisposable
     {
         if (ExtraLogos.TryGetValue(id, out var cached)) return cached;
         string path = Path.Combine(AppContext.BaseDirectory, "Assets", "AgentLogos", id + ".svg");
-        return ExtraLogos[id] = File.Exists(path) ? new Microsoft.UI.Xaml.Media.Imaging.SvgImageSource(new Uri(path)) : null;
+        return ExtraLogos[id] = File.Exists(path) ? IconService.LogoSvg(IconService.BarLogoSize, new Uri(path)) : null;
     }
 
     private DateTimeOffset _extraCheckedAt;

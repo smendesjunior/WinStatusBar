@@ -86,6 +86,55 @@ public class ResourceUseTests
     }
 
     [Fact]
+    public void LogoSvgsAreRasterizedAtTheirDisplaySize()
+    {
+        // Sem RasterizePixelWidth/Height, o WinUI rasteriza um SVG carregado fora da árvore visual no tamanho da maior
+        // janela do app: 1898×1898 px (14 MB) por logotipo neste PC (10/11/2026), para ícones de 17 a 24 DIPs.
+        var offenders = new List<string>();
+        foreach (string file in Directory.EnumerateFiles(Path.Combine(RepoSource.Root(), "src", "WinStatusBar"), "*.*", SearchOption.AllDirectories))
+        {
+            if (!(file.EndsWith(".cs") || file.EndsWith(".xaml")) || file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                || file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")) continue;
+            var lines = File.ReadAllLines(file);
+            for (int i = 0; i < lines.Length; i++)
+                if (System.Text.RegularExpressions.Regex.IsMatch(lines[i], @"new (Microsoft\.UI\.Xaml\.Media\.Imaging\.)?SvgImageSource\b|<SvgImageSource\b")
+                    && !lines[i].Contains("RasterizePixelWidth"))
+                    offenders.Add($"{Path.GetFileName(file)}:{i + 1}");
+        }
+        Assert.Empty(offenders);
+        Assert.Contains("RasterizePixelWidth = px", RepoSource.Read("src", "WinStatusBar", "Services", "IconService.cs"));
+    }
+
+    [Fact]
+    public void WindowsLetGoOfStaticEventsWhenTheyClose()
+    {
+        // Um evento estático guarda quem se inscreveu. Sem o "-=" ao fechar, a janela inteira fica presa na memória e
+        // continua trabalhando: Configurações deixava ~36 MB a cada abertura (10/11/2026).
+        string[] events = ["GoogleUsageSession.Changed", "MicrosoftCreditsSession.Changed", "OpenAiDashboardSession.Changed",
+            "AppUpdater.StatusChanged", "QiraBridge.QuotaChanged", "ActiveDocumentContext.ForegroundChanged", "Presence.Changed"];
+        foreach (string file in Directory.EnumerateFiles(Path.Combine(RepoSource.Root(), "src", "WinStatusBar", "Views"), "*.cs", SearchOption.AllDirectories))
+        {
+            string source = File.ReadAllText(file);
+            foreach (string e in events)
+                if (source.Contains(e + " +=")) Assert.True(source.Contains(e + " -="), $"{Path.GetFileName(file)}: {e} sem -=");
+        }
+        Assert.Contains("GoogleUsageSession.Changed -= changed", RepoSource.Read("src", "WinStatusBar", "Views", "SettingsWindow.AccountConnections.cs"));
+    }
+
+    [Fact]
+    public void SettingsWindowIsHiddenAndReusedInsteadOfClosed()
+    {
+        // O WinUI 1.8 não libera uma janela fechada (microsoft-ui-xaml#9960) e deixa a barra de título dela para trás (#12210):
+        // cada abertura de Configurações prendia de 10 a 36 MB (10/11/2026). Fechar esconde; só a saída da barra fecha.
+        string window = RepoSource.Read("src", "WinStatusBar", "Views", "SettingsWindow.xaml.cs");
+        Assert.Contains("e.Cancel = true; HideForReuse();", window);
+        Assert.Contains("_app.Hub.CpuSampled -= RefreshHardwareChoices;", window);
+        Assert.Contains("_settingsWindow?.CloseForExit()", RepoSource.Read("src", "WinStatusBar", "App.xaml.cs"));
+        // Escondida, a página de modelos não consulta mais o encaminhador a cada 15 s.
+        Assert.Contains("AppWindow.IsVisible && page.Visibility", RepoSource.Read("src", "WinStatusBar", "Views", "SettingsWindow.Models.cs"));
+    }
+
+    [Fact]
     public void ContinuousBarAnimationsRunOnTheSharedFrameClock()
     {
         // Animações sem fim do compositor ou do XAML mantinham a composição na taxa da tela (165 Hz) enquanto uma IA

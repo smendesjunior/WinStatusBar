@@ -471,7 +471,7 @@ public sealed partial class BarWindow
     {
         if (_agentLogos.TryGetValue(file, out var cached)) return cached;
         string path = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "AgentLogos", file);
-        ImageSource? logo = File.Exists(path) ? new Microsoft.UI.Xaml.Media.Imaging.SvgImageSource(new Uri(path)) : null;
+        ImageSource? logo = File.Exists(path) ? IconService.LogoSvg(18, new Uri(path)) : null; // 16 nos menus, 18 no destino
         return _agentLogos[file] = logo;
     }
 

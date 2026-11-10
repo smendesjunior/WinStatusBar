@@ -460,7 +460,7 @@ public partial class App : Application
         });
         foreach (var b in _bars.ToList()) ExitStep("barra", b.CloseBar);
         _bars.Clear();
-        ExitStep("configurações", () => _settingsWindow?.Close());
+        ExitStep("configurações", () => _settingsWindow?.CloseForExit());
         ExitStep("bandeja", () => _tray?.Dispose());
         ExitStep("ponte do Codex", CodexBridgeHost.Stop);
         ExitStep("monitoramento", () => Hub.Dispose());

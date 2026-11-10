@@ -454,7 +454,7 @@ public sealed partial class SettingsWindow
         // Estado ao vivo enquanto as Configurações estão abertas (só uma consulta local à porta 11435).
         var timer = DispatcherQueue.CreateTimer();
         timer.Interval = TimeSpan.FromSeconds(15);
-        timer.Tick += async (_, _) => { if (!busy && page.Visibility == Visibility.Visible) await RenderCodexAsync(); };
+        timer.Tick += async (_, _) => { if (!busy && AppWindow.IsVisible && page.Visibility == Visibility.Visible) await RenderCodexAsync(); };
         timer.Start();
         Closed += (_, _) => timer.Stop();
         page.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, async (_, _) =>

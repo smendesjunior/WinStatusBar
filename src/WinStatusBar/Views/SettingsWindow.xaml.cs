@@ -87,13 +87,40 @@ public sealed partial class SettingsWindow : Window
         _statusTimer.Start();
         _app.Hub.CpuSampled += RefreshHardwareChoices;
         Closed += (_, _) => { _app.Hub.CpuSampled -= RefreshHardwareChoices; FlushPendingSave(); _saveTimer.Stop(); _statusTimer.Stop(); };
+        AppWindow.Closing += (_, e) => { if (_closingForExit) return; e.Cancel = true; HideForReuse(); };
+    }
+
+    private bool _closingForExit;
+
+    /// <summary>Fecha de verdade (saída da barra), sem passar pelo "fechar só esconde".</summary>
+    public void CloseForExit() { _closingForExit = true; Close(); }
+
+    /// <summary>
+    /// Fechar esconde, e a mesma janela volta na próxima abertura (como o painel do chat). No WinUI 1.8 uma janela fechada
+    /// não é liberada (os eventos Closed e o x:Bind a prendem, microsoft-ui-xaml#9960) e ainda deixa a barra de título para
+    /// trás (#12210): cada abertura de Configurações prendia de 10 a 36 MB (medido em 10/11/2026). Escondida, ela para os
+    /// temporizadores e deixa de acompanhar a CPU; o estado ao vivo volta a ser lido ao reabrir.
+    /// </summary>
+    private void HideForReuse()
+    {
+        FlushPendingSave();
+        _statusTimer.Stop();
+        _app.Hub.CpuSampled -= RefreshHardwareChoices;
+        AppWindow.Hide();
     }
 
     public void ShowAndFocus(bool diagnostics)
     {
+        // Reaberta depois de escondida (HideForReuse): volta a acompanhar a CPU, o estado ao vivo e o tema atual.
+        _app.Hub.CpuSampled -= RefreshHardwareChoices;
+        _app.Hub.CpuSampled += RefreshHardwareChoices;
+        _statusTimer.Start();
+        Root.RequestedTheme = App.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
+        UpdateCaptionTheme();
         FlushPendingSave();
         LoadValues();
         LoadExtraValues();
+        AppWindow.Show();
         Activate();
         if (AppWindow.Presenter is OverlappedPresenter p && p.State == OverlappedPresenterState.Minimized) p.Restore();
         SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));

@@ -7,6 +7,13 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.8] - 2026-11-10 · build BUILD
+
+### Fixed
+- Memory: every time Settings was opened and closed, the whole window stayed in memory, about 36 MB each time, and kept refreshing on every Gemini quota read. WinUI does not release closed windows, so the same window is now reused: closing just hides it, and while hidden it does no reads. Measured: 4 openings kept 146 MB; now the first one costs about 18 MB once and the next ones add nothing.
+- Memory: the AI logos (Gemini, Copilot, OpenAI and others) were drawn at 1898 × 1898 pixels, 14 MB each, to be shown at about 20 pixels. They are now drawn at the size they are shown. In Task Manager, the bar now starts at about 205 MB instead of 253 MB.
+- Clipboard: the image from a screenshot copy is released right after it is converted, instead of waiting for the next memory collection.
+
 ## [1.4.7] - 2026-11-10 · build 20261110094036
 
 ### Fixed

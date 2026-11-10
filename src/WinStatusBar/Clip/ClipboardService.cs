@@ -82,7 +82,7 @@ public class ClipboardService
         {
             if (!opt.ClipboardCaptureImages) return;
             byte[] png = null;
-            if (fmts.Contains("PNG")) try { if (await v.GetDataAsync("PNG") is IRandomAccessStream s) png = await ReadAll(s); } catch { }
+            if (fmts.Contains("PNG")) try { if (await v.GetDataAsync("PNG") is IRandomAccessStream s) using (s) png = await ReadAll(s); } catch { }
             if (png == null && v.Contains(StandardDataFormats.Bitmap))
                 try { var r = await v.GetBitmapAsync(); using var s = await r.OpenReadAsync(); png = await ToPng(s); } catch { }
             if (png == null) return;
@@ -208,7 +208,9 @@ public class ClipboardService
     static async Task<byte[]> ReadAll(IRandomAccessStream s)
     {
         s.Seek(0);
-        var reader = new DataReader(s.GetInputStreamAt(0));
+        // Liberados na hora (aqui e em ToPng): guardam a imagem inteira em memória nativa, que o .NET só soltaria
+        // na próxima coleta completa (uma cópia de tela de 2560×1600 tem 16 MB decodificada).
+        using var reader = new DataReader(s.GetInputStreamAt(0));
         uint n = await reader.LoadAsync((uint)s.Size);
         var b = new byte[n];
         reader.ReadBytes(b);
@@ -218,8 +220,8 @@ public class ClipboardService
     static async Task<byte[]> ToPng(IRandomAccessStream s)
     {
         var dec = await BitmapDecoder.CreateAsync(s);
-        var sb = await dec.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-        var outS = new InMemoryRandomAccessStream();
+        using var sb = await dec.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+        using var outS = new InMemoryRandomAccessStream();
         var enc = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, outS);
         enc.SetSoftwareBitmap(sb);
         await enc.FlushAsync();

@@ -87,12 +87,15 @@ public sealed partial class SettingsWindow
             string color = ThemeBrushes.Get("TextFillColorPrimaryBrush") is SolidColorBrush text ? $"#{text.Color.R:X2}{text.Color.G:X2}{text.Color.B:X2}" : "white";
             return SvgFromText(File.ReadAllText(path).Replace("viewBox=\"-6 -6 36 36\"", "viewBox=\"0 0 24 24\"").Replace("fill=\"white\"", $"fill=\"{color}\""));
         }
-        return new Microsoft.UI.Xaml.Media.Imaging.SvgImageSource(new Uri(path));
+        return IconService.LogoSvg(AccountLogoSize, new Uri(path));
     }
+
+    /// <summary>Maior tamanho em que os logotipos das contas aparecem (cartões: 24; ordem das IAs: 20).</summary>
+    private const double AccountLogoSize = 24;
 
     private static ImageSource SvgFromText(string svg)
     {
-        var source = new Microsoft.UI.Xaml.Media.Imaging.SvgImageSource();
+        var source = IconService.LogoSvg(AccountLogoSize);
         _ = Load();
         return source;
         async Task Load()
@@ -354,7 +357,11 @@ public sealed partial class SettingsWindow
             GoogleUsageSession.SignOut(); await GeminiWebSession.SignOutAsync(); Refresh(); card.SetNote("Sessão Google da barra encerrada.");
         };
         Refresh(); _accountRefreshers.Add(Refresh);
-        GoogleUsageSession.Changed += () => DispatcherQueue.TryEnqueue(Refresh);
+        // Evento estático: sem cancelar a inscrição ao fechar, a janela ficava presa na memória e continuava se atualizando a
+        // cada leitura de cota. Escondida (ver HideForReuse), não se atualiza: o estado é relido ao reabrir.
+        Action changed = () => DispatcherQueue.TryEnqueue(() => { if (AppWindow.IsVisible) Refresh(); });
+        GoogleUsageSession.Changed += changed;
+        Closed += (_, _) => GoogleUsageSession.Changed -= changed;
         accounts.Children.Add(card.Root);
     }
 
