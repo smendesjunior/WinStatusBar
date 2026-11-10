@@ -57,6 +57,9 @@ public static class DetachedProcess
             si.StartupInfo.hStdError = errFile;
             si.lpAttributeList = attributes;
 
+            // O filho herda a marca "ignorar Ctrl+C" de quem o inicia (ex.: um terminal ou executor de testes que a ligou);
+            // com ela, o Parar não chegaria. A barra não tem console, então liberar o Ctrl+C aqui não a expõe a nada.
+            SetConsoleCtrlHandler(IntPtr.Zero, false);
             uint flags = CreateNoWindow | CreateUnicodeEnvironment | ExtendedStartupInfoPresent;
             string commandLine = WindowsCommandLine.Join(exe, args);
             bool ok = CreateProcessW(exe, new StringBuilder(commandLine), IntPtr.Zero, IntPtr.Zero, true, flags | CreateBreakawayFromJob,
@@ -210,4 +213,7 @@ public static class DetachedProcess
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetConsoleCtrlHandler(IntPtr handler, bool add);
 }

@@ -16,6 +16,14 @@ internal static class Program
     }
     private static async Task RunAsync(string[] args)
     {
+        // Ctrl+C seguro num codex.exe da continuação pela API: a barra nunca mexe no próprio console.
+        if (args.Length > 0 && args[0] == WinStatusBar.Core.Ai.Codex.ApiResume.ConsoleInterrupt.Command)
+        {
+            Environment.ExitCode = !WinStatusBar.Core.Ai.Codex.ApiResume.ConsoleInterrupt.TryParse(args, out int pid, out var createdAt, out string image) ? 2
+                : !WinStatusBar.Core.Ai.Codex.ApiResume.DetachedProcess.IsSame(pid, createdAt, image) ? 3
+                : WinStatusBar.Core.Ai.Codex.ApiResume.ConsoleInterrupt.ExitCode(WinStatusBar.Core.Ai.Codex.ApiResume.ConsoleInterrupt.Send(pid));
+            return;
+        }
         if (args.Length != 2 || !args[0].StartsWith("WinStatusBar.Desktop.",StringComparison.Ordinal) || !int.TryParse(args[1],out int parent)) return;
         // Sessão de controle de até 4 h (antes 30 min): tarefas longas não perdem o auxiliar no meio.
         using var lifetime=new CancellationTokenSource(TimeSpan.FromHours(4));
