@@ -4242,4 +4242,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S5C492F37A63F6E93" xml:space="preserve">
     <value>表示</value>
   </data>
+  <data name="S3C9EC6F1C032CB84" xml:space="preserve">
+    <value>Codex のモデル選択の Claude</value>
+  </data>
+  <data name="S64E42D8BAA2B1843" xml:space="preserve">
+    <value>Claude にコマンドの実行とファイルの編集を許可する</value>
+  </data>
+  <data name="S46517AE5D727A3A8" xml:space="preserve">
+    <value>オフ（既定）の場合、Codex の Claude モデルはテキストで回答するだけです。オンにすると、Claude Code は会話のフォルダーでファイルの編集やコマンド（Bash と PowerShell）の実行、検索や Web の参照を、各ステップで許可を求めずに行います。長いステップ（20〜40 分）でも回答は途切れません。信頼できるフォルダーでのみ使ってください。Codex のクォータ切れは解決しません。クォータがブロックされている間、Codex アプリは何も送信しません。</value>
+  </data>
 </root>

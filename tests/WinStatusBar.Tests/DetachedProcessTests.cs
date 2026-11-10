@@ -23,7 +23,9 @@ public class DetachedProcessTests
         var start = DetachedProcess.Start(Cmd, args, dir, stdout, stderr, env);
         for (int i = 0; i < 100 && DetachedProcess.IsSame(start.Pid, start.CreatedAt, "cmd.exe"); i++) await Task.Delay(100);
         Assert.False(DetachedProcess.IsSame(start.Pid, start.CreatedAt, "cmd.exe"));
-        return File.ReadAllText(stdout);
+        // Lê permitindo escrita compartilhada: um processo de outro teste em paralelo pode ter herdado o identificador.
+        using var fs = new FileStream(stdout, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        return new StreamReader(fs).ReadToEnd();
     }
 
     [Fact]

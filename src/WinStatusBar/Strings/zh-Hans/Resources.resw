@@ -4242,4 +4242,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S5C492F37A63F6E93" xml:space="preserve">
     <value>显示</value>
   </data>
+  <data name="S3C9EC6F1C032CB84" xml:space="preserve">
+    <value>Codex 模型选择器中的 Claude</value>
+  </data>
+  <data name="S64E42D8BAA2B1843" xml:space="preserve">
+    <value>允许 Claude 执行命令和编辑文件</value>
+  </data>
+  <data name="S46517AE5D727A3A8" xml:space="preserve">
+    <value>关闭（默认）时，Codex 中的 Claude 模型只以文本回答。开启后，Claude Code 会在对话文件夹中编辑文件、执行命令（Bash 和 PowerShell）、搜索和查阅网页，且每一步都不再请求授权。较长的步骤（20 到 40 分钟）不会中断回答。请只在您信任的文件夹中使用。它不能解决 Codex 配额用尽的问题：配额被阻止时，Codex 应用不会发送任何内容。</value>
+  </data>
 </root>

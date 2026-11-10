@@ -116,6 +116,12 @@ public sealed partial class SettingsWindow
         card.Children.Add(head); card.Children.Add(codexStatus); card.Children.Add(actionsScroll); card.Children.Add(codexFeedback); card.Children.Add(about);
         page.Children.Add(new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = card });
 
+        // ------------------------------------------------------------ Claude no seletor do Codex
+        page.Children.Add(GroupTitle(Localization.T("Claude no seletor do Codex")));
+        page.Children.Add(Group(Toggle(Localization.T("Deixar o Claude executar comandos e editar arquivos"),
+            Localization.T("Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada."),
+            s => s.CodexClaudeCommands, (s, v) => s.CodexClaudeCommands = v)));
+
         // ------------------------------------------------------------ corrigir problemas
         var repairAll = BigButton("Corrigir problemas", accent: false);
         var redoAll = BigButton("Refazer todas as ligações", accent: false);

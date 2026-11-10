@@ -272,6 +272,22 @@ public class CodexIAsClaudeCommandsBridgeTests : IDisposable
     }
 }
 
+public class CodexIAsClaudeCommandsSourceTests
+{
+    internal const string Help = "Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.";
+    private static readonly string[] Texts = ["Claude no seletor do Codex", "Deixar o Claude executar comandos e editar arquivos", Help];
+
+    [Fact]
+    public void Cartao_do_Claude_no_seletor_usa_a_opcao_e_tem_traducao_nos_seis_idiomas()
+    {
+        string page = RepoSource.Read("src", "WinStatusBar", "Views", "SettingsWindow.Models.cs");
+        Assert.Contains("s => s.CodexClaudeCommands, (s, v) => s.CodexClaudeCommands = v", page);
+        foreach (var t in Texts) Assert.Contains($"Localization.T(\"{t}\")", page);
+        foreach (var language in new[] { "pt-BR", "en-US", "es", "fr-FR", "ja-JP", "zh-Hans" })
+            CodexQuotaTranslationsTests.AssertTranslated(Texts, language);
+    }
+}
+
 public class CodexIAsClaudeCommandsRegistryTests
 {
     private static readonly Conversation Conv = new("Liste os arquivos", [("user", "Oi"), ("assistant", "Olá")], @"C:\Projetos\X", "conv-registro");

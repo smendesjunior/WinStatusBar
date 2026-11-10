@@ -4242,4 +4242,13 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S5C492F37A63F6E93" xml:space="preserve">
     <value>Mostrar</value>
   </data>
+  <data name="S3C9EC6F1C032CB84" xml:space="preserve">
+    <value>Claude no seletor do Codex</value>
+  </data>
+  <data name="S64E42D8BAA2B1843" xml:space="preserve">
+    <value>Deixar o Claude executar comandos e editar arquivos</value>
+  </data>
+  <data name="S46517AE5D727A3A8" xml:space="preserve">
+    <value>Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.</value>
+  </data>
 </root>
