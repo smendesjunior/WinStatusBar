@@ -39,4 +39,19 @@ public static class DashboardMetrics
         }
         return (Number(available), expiration);
     }
+
+    /// <summary>Gasto desde <paramref name="start"/>: a queda do saldo (quando não houve recarga); senão a diferença da soma
+    /// dos custos diários a partir do dia (UTC) do início, nunca negativa; sem painel, null. Nunca estima preço.</summary>
+    public static decimal? SpendSince(DashboardSnapshot? baseline, DashboardSnapshot? current, DateTimeOffset start)
+    {
+        if (baseline is null || current is null) return null;
+        if (baseline.Balance is { } before && current.Balance is { } now && now <= before) return before - now;
+        if (baseline.Days.Count > 0 && current.Days.Count > 0)
+        {
+            var from = start.UtcDateTime.Date;
+            decimal Sum(DashboardSnapshot s) => s.Days.Where(d => d.Date.UtcDateTime.Date >= from).Sum(d => d.Cost);
+            return Math.Max(0m, Sum(current) - Sum(baseline));
+        }
+        return null;
+    }
 }

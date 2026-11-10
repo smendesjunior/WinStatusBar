@@ -167,6 +167,8 @@ public sealed class AppSettings
     public bool PrivacyMode { get; set; }
     /// <summary>Minutos entre consultas oficiais das cotas do Codex; 0 = tempo real (eventos + consulta a cada minuto).</summary>
     public int CodexQuotaIntervalMin { get; set; } = 0;
+    /// <summary>Continuar pela API: false = uma de cada vez (fila, padrão); true = todas ao mesmo tempo. Sem limite de gasto.</summary>
+    public bool CodexApiParallel { get; set; } = false;
     /// <summary>Minutos entre consultas da conta Claude; 0 = tempo real (statusLine + consulta a cada minuto, respeitando Retry-After).</summary>
     public int ClaudeQuotaIntervalMin { get; set; } = 0;
     /// <summary>O usuário removeu a integração com o Claude Code: não reinstalar automaticamente.</summary>
