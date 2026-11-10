@@ -167,6 +167,37 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
+    public void SectionOnlyWithBlockOrJobs()
+    {
+        Assert.Contains("ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)", Src("Views", "CodexApiResumeView.cs"));
+        string quota = Src("Views", "QuotaDetailsView.cs");
+        int section = quota.IndexOf("CodexApiResumeView.Section(", StringComparison.Ordinal);
+        Assert.True(section >= 0 && section < quota.IndexOf("if (q?.Primary is null", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void QuotaMenuPausesWhileTheDialogIsOpen() =>
+        Assert.Contains("internal static bool ResetPending => _resetPending || ContinueViaApiDialog.IsOpen;", Src("Views", "QuotaDetailsView.cs"));
+
+    [Theory]
+    [InlineData("CodexApiResumeView.cs")]
+    [InlineData("ContinueViaApiDialog.cs")]
+    public void ViewsNeverSubscribeToEvents(string file)
+    {
+        string[] allowed = ["Click", "Checked", "Unchecked", "PrimaryButtonClick", "SecondaryButtonClick", "SelectionChanged"];
+        foreach (Match m in Regex.Matches(Src("Views", file), @"\.(\w+) \+="))
+            Assert.Contains(m.Groups[1].Value, allowed);
+    }
+
+    [Fact]
+    public void ButtonsComeFromTheCoreRules()
+    {
+        string view = Src("Views", "CodexApiResumeView.cs");
+        Assert.Contains("ApiResumeText.Actions(", view);
+        Assert.Contains("ApiResumeText.ActionLabel(", view);
+    }
+
+    [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
         string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");

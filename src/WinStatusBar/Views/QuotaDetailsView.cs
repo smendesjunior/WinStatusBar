@@ -18,7 +18,7 @@ public static class QuotaDetailsView
     public const double ContentWidth = 380;
     private static Brush? _accent;
     private static bool _resetPending;
-    internal static bool ResetPending => _resetPending;
+    internal static bool ResetPending => _resetPending || ContinueViaApiDialog.IsOpen;
     private static string? _resetMessage;
     private static readonly Dictionary<string, string> ResetAttempts = new();
 
@@ -83,6 +83,9 @@ public static class QuotaDetailsView
             accountBlocked = q?.Access?.Blocks == true;
             root.Children.Add(BlockBanner(blockBanner, theme));
         }
+
+        // Conversas paradas pela cota e continuações pela API (só com bloqueio ou com continuações).
+        if (isCodex && CodexApiResumeView.Section(App.Current.ApiResume, theme) is { } apiSection) root.Children.Add(apiSection);
 
         if (q?.Primary is null && q?.Secondary is null)
         {
