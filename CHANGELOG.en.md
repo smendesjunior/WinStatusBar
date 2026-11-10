@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.4.4] - 2026-11-09 · build BUILD
+## [1.4.4] - 2026-11-09 · build 20261110010828
 
 ### Fixed
 - Memory use: with everything on, the bar used about 1.7 GB, of which 1.3 GB were hidden WebView2 browsers kept open all the time (Task Manager lists them as "Microsoft Edge"). These browsers now open only when they are used, and the bar stays around 350 MB between reads.

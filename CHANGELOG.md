@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.4.4] - 2026-11-09 · compilação BUILD
+## [1.4.4] - 2026-11-09 · compilação 20261110010828
 
 ### Corrigido
 - Uso de memória: com tudo ligado, a barra ocupava cerca de 1,7 GB, dos quais 1,3 GB eram navegadores WebView2 ocultos abertos o tempo todo (no Gerenciador de Tarefas eles aparecem como "Microsoft Edge"). Agora esses navegadores abrem só quando são usados, e a barra fica em cerca de 350 MB entre uma leitura e outra.
