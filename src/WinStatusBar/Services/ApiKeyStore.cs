@@ -14,6 +14,13 @@ internal static class ApiKeyStore
         catch { return null; }
     }
 
+    /// <summary>Há credencial para o recurso? Não lê a senha (só a lista do Cofre).</summary>
+    public static bool Exists(string resource)
+    {
+        try { return new PasswordVault().FindAllByResource(resource).Count > 0; }
+        catch { return false; } // o Cofre lança quando não há nenhuma
+    }
+
     public static bool HasKey => !string.IsNullOrEmpty(Get());
 
     public static void Set(string? key, string resource = Resource)
