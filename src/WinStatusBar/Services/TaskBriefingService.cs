@@ -46,6 +46,8 @@ internal sealed class TaskBriefingService : IDisposable
     public Briefing Current => _currentValue;
     /// <summary>Etapas/estado mudaram: a barra recalcula o donut na hora, em vez de esperar o próximo ciclo de 5 s.</summary>
     public event EventHandler? Changed;
+    /// <summary>Verdadeiro para sessões cuja dedução por IA deve ficar parada (ex.: Codex com a cota bloqueada).</summary>
+    public Func<AgentSession, bool>? SkipInference { get; set; }
     private Briefing _current
     {
         get => _currentValue;
@@ -173,10 +175,14 @@ internal sealed class TaskBriefingService : IDisposable
         string fingerprint = "plan-v1:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(evidence)));
         bool changed = fingerprint != entry.Fingerprint;
         bool allowed = _enabled();
+        // Codex sem cota: a dedução falharia a cada 20-30 s abrindo processos à toa; fica parada até a cota voltar.
+        bool paused = allowed && SkipInference?.Invoke(session) == true;
         string waiting = !allowed ? "A IA não registrou etapas. A dedução automática está desativada nas configurações."
-            : entry.Inferred.Count == 0 ? "A IA não registrou etapas; montando o roteiro…" : "Roteiro deduzido pela IA a partir da conversa";
+            : entry.Inferred.Count > 0 ? "Roteiro deduzido pela IA a partir da conversa"
+            : paused ? Localization.T("A IA não registrou etapas; a dedução fica parada enquanto a cota do Codex estiver esgotada.")
+            : "A IA não registrou etapas; montando o roteiro…";
         _current = new(id, "", waiting, entry.UpdatedAt) { Steps = entry.Inferred, Inferred = entry.Inferred.Count > 0, StartedAt = digest.StartedAt };
-        if (!allowed || !changed || DateTimeOffset.UtcNow - entry.Attempt < TimeSpan.FromSeconds(Math.Max(20, _interval()))) return;
+        if (!allowed || paused || !changed || DateTimeOffset.UtcNow - entry.Attempt < TimeSpan.FromSeconds(Math.Max(20, _interval()))) return;
         entry.Attempt = DateTimeOffset.UtcNow;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
         timeout.CancelAfter(TimeSpan.FromSeconds(180));
