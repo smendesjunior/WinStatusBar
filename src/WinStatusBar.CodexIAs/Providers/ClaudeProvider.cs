@@ -83,7 +83,12 @@ public sealed class ClaudeProvider : IProvider
                 o.Efforts, o.DefaultEffort, -6))
             .DistinctBy(m => m.Slug).ToList();
 
-    public async Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct)
+    public Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct)
+        => RunAsync(model, effort, conversation, onText, _ => { }, ct);
+
+    /// <summary>Roda o claude -p. O texto vai por <paramref name="onText"/>; com a opção de comandos ligada, cada uso de
+    /// ferramenta (e cada recusa) vira uma linha de andamento por <paramref name="onStatus"/>, nunca no texto.</summary>
+    public async Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, Action<string> onStatus, CancellationToken ct)
     {
         string? exe = FindExecutable();
         if (exe is null) return new("", "Claude Code não encontrado neste PC.");
@@ -92,8 +97,7 @@ public sealed class ClaudeProvider : IProvider
         var args = Arguments(model, effort, commands);
         string prompt = ConversationReader.WithTranscript(conversation.Prompt, conversation.History);
 
-        var text = new StringBuilder();
-        string? final = null, error = null;
+        var output = new ClaudeOutput(commands, onText, onStatus);
         Process? proc = null;
         try
         {
@@ -107,42 +111,87 @@ public sealed class ClaudeProvider : IProvider
             proc.StandardInput.Close();
             var stderrTask = proc.StandardError.ReadToEndAsync(ct);
             using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } });
-            while (await proc.StandardOutput.ReadLineAsync(ct) is { } line)
-            {
-                if (line.Length == 0 || line[0] != '{') continue;
-                try
-                {
-                    using var doc = JsonDocument.Parse(line);
-                    var root = doc.RootElement;
-                    string type = Str(root, "type") ?? "";
-                    if (type == "stream_event" && root.TryGetProperty("event", out var ev)
-                        && Str(ev, "type") == "content_block_delta" && ev.TryGetProperty("delta", out var d) && Str(d, "type") == "text_delta")
-                    {
-                        text.Append(Str(d, "text"));
-                        onText(text.ToString());
-                    }
-                    else if (type == "assistant" && text.Length > 0 && !text.ToString().EndsWith("\n\n"))
-                        text.Append("\n\n"); // entre turnos (uso de ferramentas), separa os blocos
-                    else if (type == "result")
-                    {
-                        final = Str(root, "result");
-                        if (root.TryGetProperty("is_error", out var isErr) && isErr.ValueKind == JsonValueKind.True)
-                            error = final ?? "O Claude retornou um erro.";
-                    }
-                }
-                catch (JsonException) { }
-            }
+            while (await proc.StandardOutput.ReadLineAsync(ct) is { } line) output.Line(line);
             await proc.WaitForExitAsync(ct);
             string stderr = await stderrTask;
-            string answer = !string.IsNullOrWhiteSpace(final) ? final!.Trim() : text.ToString().Trim();
+            string? error = output.Error;
+            string answer = commands ? FinalText(output.Streamed, output.Result)
+                : !string.IsNullOrWhiteSpace(output.Result) ? output.Result!.Trim() : output.Streamed.Trim();
             if (error is null && answer.Length == 0 && proc.ExitCode != 0)
                 error = stderr.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault() ?? "O Claude terminou sem resposta.";
-            return new(error is null ? answer : text.ToString().Trim(), error);
+            return new(error is null ? answer : output.Streamed.Trim(), error);
         }
-        catch (OperationCanceledException) { return new(text.ToString().Trim(), "Interrompido"); }
-        catch (Exception ex) { return new(text.ToString().Trim(), ex.Message); }
+        catch (OperationCanceledException) { return new(output.Streamed.Trim(), "Interrompido"); }
+        catch (Exception ex) { return new(output.Streamed.Trim(), ex.Message); }
         finally { proc?.Dispose(); }
     }
 
+    /// <summary>Resposta final que começa pelo que já foi mostrado (o Codex só recebe o que falta).</summary>
+    internal static string FinalText(string streamed, string? result)
+    {
+        string shown = streamed.TrimEnd();
+        string r = result?.Trim() ?? "";
+        if (r.Length == 0) return shown;
+        if (shown.Length == 0) return r;
+        if (r.StartsWith(shown, StringComparison.Ordinal)) return r;
+        if (shown.EndsWith(r, StringComparison.Ordinal)) return shown;
+        return shown + "\n\n" + r;
+    }
+
     private static string? Str(JsonElement e, string name) => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+}
+
+/// <summary>
+/// Lê o stream-json do claude -p, linha a linha: o texto (text_delta) acumula em <see cref="Streamed"/> e vai por onText; com
+/// os comandos ligados, cada tool_use novo (pelo id, no evento assistant que traz o input completo) e cada recusa de
+/// permissão viram uma linha de andamento por onStatus.
+/// </summary>
+internal sealed class ClaudeOutput(bool commands, Action<string> onText, Action<string> onStatus)
+{
+    private readonly StringBuilder _text = new();
+    private readonly HashSet<string> _toolUses = new(StringComparer.Ordinal);
+
+    public string Streamed => _text.ToString();
+    public string? Result { get; private set; }
+    public string? Error { get; private set; }
+
+    public void Line(string line)
+    {
+        if (line.Length == 0 || line[0] != '{') return;
+        try
+        {
+            using var doc = JsonDocument.Parse(line);
+            var root = doc.RootElement;
+            string type = Str(root, "type") ?? "";
+            if (type == "stream_event" && root.TryGetProperty("event", out var ev)
+                && Str(ev, "type") == "content_block_delta" && ev.TryGetProperty("delta", out var d) && Str(d, "type") == "text_delta")
+            {
+                _text.Append(Str(d, "text"));
+                onText(_text.ToString());
+            }
+            else if (type == "assistant")
+            {
+                if (commands && root.TryGetProperty("message", out var message) && message.TryGetProperty("content", out var content)
+                    && content.ValueKind == JsonValueKind.Array)
+                    foreach (var block in content.EnumerateArray())
+                        if (Str(block, "type") == "tool_use" && Str(block, "id") is { } id && _toolUses.Add(id))
+                            onStatus(ClaudeToolStatus.Describe(Str(block, "name") ?? "ferramenta",
+                                block.TryGetProperty("input", out var input) ? input : default));
+                if (_text.Length > 0 && !_text.ToString().EndsWith("\n\n")) _text.Append("\n\n"); // entre turnos, separa os blocos
+            }
+            else if (type == "result")
+            {
+                Result = Str(root, "result");
+                if (root.TryGetProperty("is_error", out var isErr) && isErr.ValueKind == JsonValueKind.True)
+                    Error = Result ?? "O Claude retornou um erro.";
+                if (commands && root.TryGetProperty("permission_denials", out var denials) && denials.ValueKind == JsonValueKind.Array)
+                    foreach (var tool in denials.EnumerateArray().Select(x => Str(x, "tool_name")).Where(t => t is not null).Distinct())
+                        onStatus(ClaudeToolStatus.Denied(tool!));
+            }
+        }
+        catch (JsonException) { }
+    }
+
+    private static string? Str(JsonElement e, string name) =>
+        e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 }

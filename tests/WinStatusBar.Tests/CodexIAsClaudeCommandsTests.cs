@@ -99,6 +99,85 @@ public class CodexIAsClaudeCommandsArgumentsTests
     }
 }
 
+public class CodexIAsClaudeCommandsOutputTests
+{
+    private static readonly string[] Fixture =
+    [
+        """{"type":"system","subtype":"init","tools":["Bash","PowerShell"]}""",
+        """{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Vou listar."}}}""",
+        """{"type":"assistant","message":{"content":[{"type":"text","text":"Vou listar."}]}}""",
+        """{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_1","name":"PowerShell","input":{"command":"Get-ChildItem -Name"}}]}}""",
+        """{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_1","name":"PowerShell","input":{"command":"Get-ChildItem -Name"}}]}}""",
+        "não é json",
+        """{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"São 3 arquivos."}}}""",
+        """{"type":"result","subtype":"success","is_error":false,"result":"São 3 arquivos.","permission_denials":[{"tool_name":"WebFetch","tool_use_id":"a","tool_input":{}},{"tool_name":"WebFetch","tool_use_id":"b","tool_input":{}}]}""",
+    ];
+
+    private static (ClaudeOutput Output, List<string> Texts, List<string> Statuses) Read(bool commands)
+    {
+        var texts = new List<string>();
+        var statuses = new List<string>();
+        var output = new ClaudeOutput(commands, texts.Add, statuses.Add);
+        foreach (var line in Fixture) output.Line(line);
+        return (output, texts, statuses);
+    }
+
+    [Fact]
+    public void Uso_de_ferramenta_e_recusa_viram_andamento_fora_do_texto()
+    {
+        var (output, texts, statuses) = Read(commands: true);
+        Assert.Equal(["Executando: Get-ChildItem -Name", "Não liberado: WebFetch"], statuses);
+        Assert.Equal(["Vou listar.", "Vou listar.\n\nSão 3 arquivos."], texts);
+        Assert.Equal("São 3 arquivos.", output.Result);
+        Assert.Null(output.Error);
+    }
+
+    [Fact]
+    public void Desligada_nao_ha_andamento()
+    {
+        var (_, texts, statuses) = Read(commands: false);
+        Assert.Empty(statuses);
+        Assert.Equal(2, texts.Count);
+    }
+
+    [Theory]
+    [InlineData("A\n\nB", "B", "A\n\nB")]
+    [InlineData("Olá", "Olá, tudo bem?", "Olá, tudo bem?")]
+    [InlineData("", "R", "R")]
+    [InlineData("Parcial", "Outro texto", "Parcial\n\nOutro texto")]
+    [InlineData("Texto\n", null, "Texto")]
+    public void Resposta_final_comeca_pelo_que_ja_foi_mostrado(string streamed, string? result, string expected)
+    {
+        string final = ClaudeProvider.FinalText(streamed, result);
+        Assert.Equal(expected, final);
+        Assert.StartsWith(streamed.TrimEnd(), final);
+    }
+
+    private sealed class TextOnly : IProvider
+    {
+        public string Name => "x";
+        public string Label => "X";
+        public Task<Listing> ListAsync(CancellationToken ct) => Task.FromResult(new Listing([]));
+        public Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct)
+        {
+            onText("x");
+            return Task.FromResult(new Answer("x", null));
+        }
+    }
+
+    [Fact]
+    public async Task Provedor_sem_andamento_continua_so_com_texto()
+    {
+        IProvider provider = new TextOnly();
+        var texts = new List<string>();
+        var statuses = new List<string>();
+        var answer = await provider.RunAsync(CodexIAsClaudeCommandsArgumentsTests.Opus, null, new Conversation("oi", [], null, null), texts.Add, statuses.Add, CancellationToken.None);
+        Assert.Equal("x", answer.Text);
+        Assert.Equal(["x"], texts);
+        Assert.Empty(statuses);
+    }
+}
+
 public class CodexIAsClaudeCommandsJobTests
 {
     private static bool Alive(int pid)

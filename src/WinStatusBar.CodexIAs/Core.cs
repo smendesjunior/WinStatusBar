@@ -34,6 +34,9 @@ public interface IProvider
     /// <summary>Lê de novo da fonte (Claude Code, site, API…) as opções desta IA. Só na verificação manual.</summary>
     Task<Listing> ListAsync(CancellationToken ct);
     Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct);
+    /// <summary>Com linhas de andamento separadas do texto (só o Claude com comandos usa); os outros provedores só mandam texto.</summary>
+    Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, Action<string> onStatus, CancellationToken ct)
+        => RunAsync(model, effort, conversation, onText, ct);
 }
 
 internal static class Paths
