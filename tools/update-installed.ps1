@@ -8,6 +8,15 @@ Start-Transcript -Path $log -Force | Out-Null
 try {
     & (Join-Path $PSScriptRoot 'stop-bar.ps1')
     Get-Process WinStatusBar -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    # O encaminhador das IAs no Codex roda sem a barra e prende os arquivos de Automation: pede para sair (como o
+    # instalador), espera até 6 s e só então encerra à força o que roda a partir desta instalação.
+    try {
+        $quit = [System.Threading.EventWaitHandle]::OpenExisting('Local\WinStatusBar.CodexIAs.Sair')
+        [void]$quit.Set(); $quit.Dispose()
+    } catch { }
+    $deadline = (Get-Date).AddSeconds(6)
+    while ((Get-Date) -lt $deadline -and (Get-Process WinStatusBar.CodexIAs -ErrorAction SilentlyContinue)) { Start-Sleep -Milliseconds 200 }
+    Get-Process WinStatusBar.CodexIAs -ErrorAction SilentlyContinue | Where-Object { $_.Path -like (Join-Path $dst '*') } | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
     # O coletor dos hooks do Claude roda a partir desta pasta por instantes e pode prender uma DLL: tenta de novo.
     for ($try = 1; ; $try++) {
