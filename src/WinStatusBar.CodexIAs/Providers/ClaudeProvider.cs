@@ -34,7 +34,10 @@ public sealed class ClaudeProvider : IProvider
     }
 
     // Sem sessão salva, sem MCPs e sem hooks: a chamada do Codex não vira tarefa da barra nem carrega conectores.
-    private static readonly string[] Quiet = ["--no-session-persistence", "--strict-mcp-config", "--settings", "{\"disableAllHooks\":true}"];
+    private static readonly Lazy<KillOnCloseJob?> Job = new(KillOnCloseJob.Create);
+    private static int _jobWarned;
+
+    private static readonly string[] Quiet =["--no-session-persistence", "--strict-mcp-config", "--settings", "{\"disableAllHooks\":true}"];
 
     /// <summary>
     /// Só com o Claude Code instalado e com conta conectada. A lista é a mesma que a barra mostra (ClaudeModelList, lida
@@ -77,6 +80,9 @@ public sealed class ClaudeProvider : IProvider
         {
             proc = Process.Start(StartInfo(exe, args, workDir));
             if (proc is null) return new("", "Não foi possível iniciar o Claude Code.");
+            // No grupo que encerra tudo junto com o componente (fechado ou atualizado no meio: o claude e os comandos param).
+            if (Job.Value?.Add(proc) != true && Interlocked.Exchange(ref _jobWarned, 1) == 0)
+                Log.Write("Claude: grupo de processos do Windows indisponível; os comandos do Claude não param junto com o componente");
             // O pedido vai pela entrada padrão: sem limite de tamanho da linha de comando.
             await proc.StandardInput.WriteAsync(prompt.AsMemory(), ct);
             proc.StandardInput.Close();
