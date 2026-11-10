@@ -27,6 +27,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
     private readonly object _titleReadGate = new();
     private int _failures;
     private int _reconciling, _processingDirty;
+    private readonly object _quotaGate = new();
 
     public AgentKind Kind => AgentKind.Codex;
     public QuotaSnapshot? Quota { get; private set; }
@@ -108,7 +109,8 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
             // Reavalia a cada 5 s: mudanças no intervalo configurado valem imediatamente.
             // Backoff exponencial em falhas (até 1 h) para não sobrecarregar o Codex.
             var due = _failures == 0 ? QuotaInterval : TimeSpan.FromMinutes(Math.Min(60, Math.Pow(2, _failures)));
-            if (DateTimeOffset.Now - last >= due)
+            // O horário previsto de volta passou: pede uma consulta oficial na hora (só ela libera o bloqueio).
+            if (DateTimeOffset.Now - last >= due || ReturnDue(Quota, last, DateTimeOffset.Now))
             {
                 last = DateTimeOffset.Now;
                 await QueryQuotaAsync(ct);
@@ -123,11 +125,16 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         if (Executable is null) { LastError = global::WinStatusBar.Core.LocalizedText.T("Codex não encontrado"); _failures++; return; }
         var result = await _client.QueryAsync(Executable, TimeSpan.FromSeconds(45), ct);
         LastQuotaQuery = DateTimeOffset.Now;
+        ApplyQueryResult(result, DateTimeOffset.Now);
+    }
+
+    /// <summary>Resultado da consulta oficial: sucesso junta a cota; falha mantém o que já se sabe (inclusive o bloqueio).</summary>
+    internal void ApplyQueryResult(CodexAppServerClient.QueryResult result, DateTimeOffset now)
+    {
         if (result.Quota is not null)
         {
             _failures = 0; LastError = null;
-            Quota = result.Quota;
-            QuotaChanged?.Invoke(this, EventArgs.Empty);
+            ApplyQuota(result.Quota, official: true, now);
         }
         else
         {
@@ -136,6 +143,38 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
             if (Quota is null) { Quota = new QuotaSnapshot { Error = result.Error }; QuotaChanged?.Invoke(this, EventArgs.Empty); }
         }
     }
+
+    /// <summary>Junta a cota nova e avisa; registra no log só quando o bloqueio começa ou termina.</summary>
+    internal void ApplyQuota(QuotaSnapshot incoming, bool official, DateTimeOffset now)
+    {
+        bool wasBlocked, blocked;
+        QuotaSnapshot merged;
+        lock (_quotaGate)
+        {
+            var current = Quota;
+            wasBlocked = current?.IsBlocked(now) == true;
+            merged = MergeQuota(current, incoming, official);
+            if (ReferenceEquals(merged, current)) return;
+            Quota = merged;
+            blocked = merged.IsBlocked(now);
+        }
+        if (blocked != wasBlocked) Diagnostic?.Invoke(blocked ? CodexQuotaText.BlockLog(merged, now) : "Codex cota: uso liberado");
+        QuotaChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Oficial: vale a nova (com janelas) ou a nova com os detalhes da atual. Registro: só vence se for mais novo
+    /// (pelo horário do evento) ou se a atual não tiver janelas; senão a atual fica (mesma referência).</summary>
+    internal static QuotaSnapshot MergeQuota(QuotaSnapshot? current, QuotaSnapshot incoming, bool official)
+    {
+        bool incomingWindows = incoming.Primary is not null || incoming.Secondary is not null;
+        if (official) return incomingWindows ? incoming : incoming.WithDetailsFrom(current);
+        bool currentWindows = current?.Primary is not null || current?.Secondary is not null;
+        return current is null || !currentWindows || incoming.ObservedAt >= current.ObservedAt ? incoming.WithDetailsFrom(current) : current;
+    }
+
+    /// <summary>A volta prevista caiu entre a última consulta e agora: hora de perguntar à conta.</summary>
+    internal static bool ReturnDue(QuotaSnapshot? quota, DateTimeOffset lastQuery, DateTimeOffset now) =>
+        quota?.BlockedUntil(lastQuery) is { } at && lastQuery < at && at <= now;
 
     private void OnRolloutEvent(object sender, FileSystemEventArgs e)
     {
@@ -233,7 +272,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
                     lock (_gate)
                     {
                         var q = CodexParsers.ApplyRolloutLine(session, line);
-                        if (q is not null) quota = q;
+                        if (q is not null) quota = q.WithDetailsFrom(quota);
                     }
                     pendingLine.SetLength(0);
                     consumed = position + i + 1;
@@ -244,11 +283,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
             }
             _offsets[path] = consumed;
             lock (_gate) if (_titles.TryGetValue(id, out var title)) session.Title = title;
-            if (quota is not null && (Quota?.Primary is null || quota.ObservedAt >= Quota.ObservedAt))
-            {
-                Quota = quota.WithDetailsFrom(Quota); // mantém resets/créditos vindos da consulta oficial
-                QuotaChanged?.Invoke(this, EventArgs.Empty);
-            }
+            if (quota is not null) ApplyQuota(quota, official: false, DateTimeOffset.Now); // mantém resets/créditos vindos da consulta oficial
             if (previousState != session.State) Diagnostic?.Invoke($"Codex estado: sessão={id} turno={session.TurnId} {previousState} -> {session.State}; offset={consumed}; fonte=rollout");
             if (previousProgress != session.ProgressPercent) Diagnostic?.Invoke($"Codex progresso: sessão={id} turno={session.TurnId} valor={session.ProgressPercent:0.#}; base={session.ProgressBasis}");
             return true;

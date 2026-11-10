@@ -222,6 +222,61 @@ public class CodexQuotaBlockTests
         Assert.Equal("qui 12/11", CodexQuotaText.DayDate(DateTimeOffset.FromUnixTimeSeconds(1794535289)));
     }
 
+    // ---- CodexProvider (A6) ----
+
+    [Fact]
+    public void OldRolloutLineReadAgainDoesNotBeatTheOfficialRead()
+    {
+        var at = DateTimeOffset.Parse("2026-11-10T13:37:00Z");
+        var official = Parse(CreditsDepleted, at)!;
+        const string oldLine = """
+        {"limit_id":"codex","primary":{"used_percent":87,"window_minutes":300,"resets_at":1794292362},
+         "secondary":{"used_percent":100,"window_minutes":10080,"resets_at":1794535289},"rate_limit_reached_type":null}
+        """;
+        var old = Parse(oldLine, DateTimeOffset.Parse("2026-11-10T03:30:59Z"))!;
+        Assert.Same(official, CodexProvider.MergeQuota(official, old, official: false));
+
+        var newer = Parse(RolloutBlock, DateTimeOffset.Parse("2026-11-10T13:42:00Z"))!;
+        var merged = CodexProvider.MergeQuota(official, newer, official: false);
+        Assert.Equal(100, merged.Secondary!.UsedPercent);
+        Assert.Same(newer.Access, merged.Access);
+    }
+
+    [Fact]
+    public void AsksForAnOfficialReadRightWhenTheExpectedReturnPasses()
+    {
+        var blocked = Parse(CreditsDepleted, Seen)!;
+        Assert.True(CodexProvider.ReturnDue(blocked, Returns.AddMinutes(-5), Returns.AddSeconds(1)));
+        Assert.True(CodexProvider.ReturnDue(Snapshot(Seen, access: null), Returns.AddMinutes(-5), Returns.AddSeconds(1)));
+        Assert.False(CodexProvider.ReturnDue(blocked, Returns.AddMinutes(1), Returns.AddMinutes(2)));
+        Assert.False(CodexProvider.ReturnDue(blocked, Returns.AddMinutes(-5), Returns.AddMinutes(-1)));
+        Assert.False(CodexProvider.ReturnDue(Snapshot(Seen, Official(Seen, true), used7d: 10), Returns.AddMinutes(-5), Returns.AddSeconds(1)));
+        Assert.False(CodexProvider.ReturnDue(null, Returns.AddMinutes(-5), Returns.AddSeconds(1)));
+    }
+
+    [Fact]
+    public void ProviderLogsWhenTheBlockStartsAndEnds()
+    {
+        using var provider = new CodexProvider();
+        var log = new List<string>();
+        provider.Diagnostic += log.Add;
+        provider.ApplyQuota(Parse(CreditsDepleted, Seen)!, official: true, Seen);
+        provider.ApplyQuota(Parse(CreditsDepleted, Seen.AddMinutes(10))!, official: true, Seen.AddMinutes(10));
+        provider.ApplyQuota(Snapshot(Seen.AddHours(1), Official(Seen.AddHours(1), true), used7d: 10), official: true, Seen.AddHours(1));
+        Assert.Equal(["Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01", "Codex cota: uso liberado"], log);
+    }
+
+    [Fact]
+    public void FailedQueryKeepsTheKnownBlock()
+    {
+        using var provider = new CodexProvider();
+        provider.ApplyQueryResult(new CodexAppServerClient.QueryResult(Parse(CreditsDepleted, Seen), null, null), Seen);
+        provider.ApplyQueryResult(new CodexAppServerClient.QueryResult(null, null, "tempo esgotado"), Seen.AddMinutes(10));
+        Assert.True(provider.Quota!.IsBlocked(Seen.AddMinutes(10)));
+        Assert.Equal("tempo esgotado", provider.LastError);
+        Assert.Equal("Confirmado pela conta às 10:37.", CodexQuotaText.Banner(provider.Quota, Seen.AddMinutes(10))!.Confirmed);
+    }
+
     [Fact]
     public void FullWindowBlocksOnlyUntilItRenewsAndSpendControlBlocks()
     {
