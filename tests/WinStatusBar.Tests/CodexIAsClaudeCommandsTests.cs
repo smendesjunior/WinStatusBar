@@ -99,6 +99,179 @@ public class CodexIAsClaudeCommandsArgumentsTests
     }
 }
 
+internal sealed class ScriptedProvider(Func<Action<string>, Action<string>, CancellationToken, Task<Answer>> script) : IProvider
+{
+    private int _runs;
+    public int Runs => _runs;
+    public string Name => "claude";
+    public string Label => "Claude";
+    public Task<Listing> ListAsync(CancellationToken ct) => Task.FromResult(new Listing([]));
+    public Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct)
+        => RunAsync(model, effort, conversation, onText, _ => { }, ct);
+    public Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, Action<string> onStatus, CancellationToken ct)
+    {
+        Interlocked.Increment(ref _runs);
+        return script(onText, onStatus, ct);
+    }
+}
+
+internal static class BridgeHarness
+{
+    public static System.Text.Json.Nodes.JsonObject Payload(string? key, bool stream) => new()
+    {
+        ["model"] = CodexIAsClaudeCommandsArgumentsTests.Opus.Slug,
+        ["stream"] = stream,
+        ["prompt_cache_key"] = key,
+        ["input"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject
+        {
+            ["type"] = "message", ["role"] = "user",
+            ["content"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["type"] = "input_text", ["text"] = "Oi" }),
+        }),
+    };
+
+    /// <summary>Eventos SSE (ou, sem streaming, o corpo JSON numa lista de um item).</summary>
+    public static async Task<List<System.Text.Json.Nodes.JsonObject>> RunAsync(IProvider provider, bool commands, string? key = null, bool stream = true)
+    {
+        using var ms = new MemoryStream();
+        using var run = new CancellationTokenSource();
+        var connection = new BridgeConnection(run, commands);
+        var model = CodexIAsClaudeCommandsArgumentsTests.Opus;
+        await BridgeServer.RespondCoreAsync(ms, model.Slug, (provider, model), Payload(key, stream), commands, run, connection);
+        string text = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        string body = text[(text.IndexOf("\r\n\r\n", StringComparison.Ordinal) + 4)..];
+        if (!stream) return [System.Text.Json.Nodes.JsonNode.Parse(body)!.AsObject()];
+        return body.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
+            .Select(block => block.Split('\n').FirstOrDefault(l => l.StartsWith("data: ", StringComparison.Ordinal)))
+            .Where(l => l is not null)
+            .Select(l => System.Text.Json.Nodes.JsonNode.Parse(l!["data: ".Length..])!.AsObject()).ToList();
+    }
+
+    public static string TypeOf(System.Text.Json.Nodes.JsonObject e) => e["type"]!.GetValue<string>();
+    public static List<string> Types(List<System.Text.Json.Nodes.JsonObject> events) =>
+        events.Select(TypeOf).Where(t => t != "response.in_progress").ToList();
+    public static List<string> Collapsed(List<System.Text.Json.Nodes.JsonObject> events)
+    {
+        var result = new List<string>();
+        foreach (var t in Types(events)) if (result.Count == 0 || result[^1] != t) result.Add(t);
+        return result;
+    }
+    public static List<System.Text.Json.Nodes.JsonObject> OfType(List<System.Text.Json.Nodes.JsonObject> events, string type) =>
+        events.Where(e => TypeOf(e) == type).ToList();
+
+    public static ScriptedProvider TextAndStatus() => new(async (text, status, ct) =>
+    {
+        status("Executando: git status");
+        text("Olá");
+        await Task.Delay(50, ct);
+        status("Lendo README.md");
+        text("Olá, mundo");
+        return new Answer("Olá, mundo", null);
+    });
+}
+
+[Collection("CodexIAsClaudeCommandsCollection")]
+public class CodexIAsClaudeCommandsBridgeTests : IDisposable
+{
+    private readonly TimeSpan _keepAlive = BridgeServer.KeepAliveInterval, _grace = BridgeServer.CloseGrace;
+    private readonly bool _reasoning = BridgeServer.ProgressAsReasoning;
+
+    public CodexIAsClaudeCommandsBridgeTests()
+    {
+        BridgeServer.KeepAliveInterval = TimeSpan.FromSeconds(10);
+        BridgeServer.ProgressAsReasoning = false;
+        CodexIAs.Log.Enabled = false;
+    }
+
+    public void Dispose()
+    {
+        BridgeServer.KeepAliveInterval = _keepAlive;
+        BridgeServer.CloseGrace = _grace;
+        BridgeServer.ProgressAsReasoning = _reasoning;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sem_andamento_como_raciocinio_o_fluxo_e_o_de_hoje(bool commands)
+    {
+        var ev = await BridgeHarness.RunAsync(BridgeHarness.TextAndStatus(), commands);
+        Assert.Equal(["response.created", "response.output_item.added", "response.output_text.delta", "response.output_item.done", "response.completed"],
+            BridgeHarness.Collapsed(ev));
+        var added = BridgeHarness.OfType(ev, "response.output_item.added").Single();
+        Assert.Equal(("message", 0), (added["item"]!["type"]!.GetValue<string>(), added["output_index"]!.GetValue<int>()));
+        Assert.Equal("Olá, mundo", string.Concat(BridgeHarness.OfType(ev, "response.output_text.delta").Select(d => d["delta"]!.GetValue<string>())));
+        var output = BridgeHarness.OfType(ev, "response.completed").Single()["response"]!["output"]!.AsArray();
+        Assert.Equal("Olá, mundo", Assert.Single(output)!["content"]![0]!["text"]!.GetValue<string>());
+        Assert.DoesNotContain(BridgeHarness.Types(ev), t => t.StartsWith("response.reasoning", StringComparison.Ordinal));
+        Assert.DoesNotContain(ev, e => e.ToJsonString().Contains("Executando"));
+    }
+
+    [Fact]
+    public async Task Silencio_longo_recebe_o_aviso_ainda_trabalhando()
+    {
+        BridgeServer.KeepAliveInterval = TimeSpan.FromMilliseconds(50);
+        var ev = await BridgeHarness.RunAsync(new ScriptedProvider(async (text, status, ct) =>
+        {
+            await Task.Delay(400, ct);
+            return new Answer("ok", null);
+        }), commands: true);
+        int completed = ev.FindIndex(e => BridgeHarness.TypeOf(e) == "response.completed");
+        Assert.True(ev.Take(completed).Count(e => BridgeHarness.TypeOf(e) == "response.in_progress") >= 3);
+    }
+
+    [Fact]
+    public async Task Com_a_opcao_ligada_a_queda_da_conexao_espera_antes_de_cancelar()
+    {
+        BridgeServer.CloseGrace = TimeSpan.FromMilliseconds(300);
+        using var off = new CancellationTokenSource();
+        var plain = new BridgeConnection(off, keepRunning: false);
+        plain.Lose();
+        Assert.True(plain.Lost);
+        Assert.True(off.IsCancellationRequested);
+
+        using var on = new CancellationTokenSource();
+        var grace = new BridgeConnection(on, keepRunning: true);
+        grace.Lose();
+        grace.Lose();
+        Assert.True(grace.Lost);
+        Assert.False(on.IsCancellationRequested);
+        for (int i = 0; i < 30 && !on.IsCancellationRequested; i++) await Task.Delay(100);
+        Assert.True(on.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task Pedido_repetido_nao_roda_o_Claude_de_novo()
+    {
+        string key = "conv-repetido-" + Guid.NewGuid().ToString("N");
+        var provider = new ScriptedProvider((text, status, ct) => { text("Feito."); return Task.FromResult(new Answer("Feito.", null)); });
+        foreach (var _ in new[] { 1, 2 })
+        {
+            var ev = await BridgeHarness.RunAsync(provider, commands: true, key);
+            Assert.Equal("Feito.", BridgeHarness.OfType(ev, "response.completed").Single()["response"]!["output"]![0]!["content"]![0]!["text"]!.GetValue<string>());
+        }
+        Assert.Equal(1, provider.Runs);
+        await BridgeHarness.RunAsync(provider, commands: false, key);
+        await BridgeHarness.RunAsync(provider, commands: false, key);
+        Assert.Equal(3, provider.Runs);
+    }
+
+    [Fact]
+    public void Itens_de_raciocinio_do_historico_sao_ignorados()
+    {
+        var payload = System.Text.Json.Nodes.JsonNode.Parse("""
+        {"input":[
+          {"type":"message","role":"user","content":[{"type":"input_text","text":"Primeira"}]},
+          {"type":"reasoning","id":"rs_cdx_1","summary":[{"type":"summary_text","text":"Executando: dir"}],"content":null,"encrypted_content":null},
+          {"type":"message","role":"assistant","content":[{"type":"output_text","text":"Feito"}]},
+          {"type":"message","role":"user","content":[{"type":"input_text","text":"Segunda"}]}]}
+        """)!;
+        var c = ConversationReader.Read(payload);
+        Assert.Equal("Segunda", c.Prompt);
+        Assert.Equal([("user", "Primeira"), ("assistant", "Feito")], c.History);
+        Assert.DoesNotContain(BridgeServer.Compact(payload)["output"]!.AsArray(), i => i!["type"]!.GetValue<string>() == "reasoning");
+    }
+}
+
 public class CodexIAsClaudeCommandsRegistryTests
 {
     private static readonly Conversation Conv = new("Liste os arquivos", [("user", "Oi"), ("assistant", "Olá")], @"C:\Projetos\X", "conv-registro");

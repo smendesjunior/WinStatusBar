@@ -49,26 +49,46 @@ public static partial class BridgeServer
     public static string? EffortOf(JsonNode payload)
         => payload["reasoning"]?["effort"]?.GetValue<string>() is { Length: > 0 } e && e != "none" ? e : null;
 
+    /// <summary>Intervalo do aviso "ainda trabalhando" (response.in_progress) nos silêncios; trocável só nos testes.</summary>
+    internal static TimeSpan KeepAliveInterval { get; set; } = TimeSpan.FromSeconds(5);
+    /// <summary>Com os comandos do Claude ligados, quanto o Claude segue rodando depois que o Codex fecha a conexão (para uma repetição se juntar).</summary>
+    internal static TimeSpan CloseGrace { get; set; } = TimeSpan.FromSeconds(60);
+    /// <summary>
+    /// Andamento do Claude como itens "reasoning". Conferência C1 (10/11/2026): o codex exec aceita e mostra os itens
+    /// (REASONING = PASS-default), mas no turno seguinte da mesma conversa com um GPT o Codex reenvia esses itens à OpenAI
+    /// sem encrypted_content (OPENAI-HISTORY = unsafe), o que pode quebrar a conversa; fica só o aviso "ainda trabalhando".
+    /// </summary>
+    internal static bool ProgressAsReasoning { get; set; } = false;
+    private static int _reasoningNoticeLogged;
+
     /// <summary>Responde um pedido do Codex para um modelo do componente, em streaming, vigiando a conexão.</summary>
     internal static async Task RespondAsync(Stream stream, Socket socket, string slug, (IProvider Provider, AiModel Model)? target, JsonNode payload, CancellationToken stop)
     {
-        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(stop);
+        bool commands = target is { Provider: Providers.ClaudeProvider } && BarSettings.ClaudeCommands;
+        using var run = CancellationTokenSource.CreateLinkedTokenSource(stop);
         using var finished = new CancellationTokenSource();
+        var connection = new BridgeConnection(run, keepRunning: commands);
         // Vigia a conexão: se o Codex parar o pedido, a IA para também (sem esperar a próxima escrita). Evita, por
-        // exemplo, gastar um crédito do Qira depois que a pessoa desistiu.
+        // exemplo, gastar um crédito do Qira depois que a pessoa desistiu. Com os comandos do Claude ligados, espera 60 s
+        // antes de cancelar: o Codex costuma repetir o pedido, que se junta à execução em andamento.
         var watcher = Task.Run(async () =>
         {
             try
             {
-                while (!finished.IsCancellationRequested && !cancel.IsCancellationRequested)
+                while (!finished.IsCancellationRequested && !run.IsCancellationRequested && !connection.Lost)
                 {
                     await Task.Delay(1000, finished.Token);
-                    if (!finished.IsCancellationRequested && Closed(socket)) { Log.Write("O Codex encerrou o pedido; a IA foi interrompida"); cancel.Cancel(); }
+                    if (!finished.IsCancellationRequested && Closed(socket))
+                    {
+                        Log.Write(commands ? "O Codex encerrou o pedido; o Claude continua por 60 s à espera de uma repetição"
+                            : "O Codex encerrou o pedido; a IA foi interrompida");
+                        connection.Lose();
+                    }
                 }
             }
             catch (OperationCanceledException) { }
         });
-        try { await RespondCoreAsync(stream, slug, target, payload, cancel); }
+        try { await RespondCoreAsync(stream, slug, target, payload, commands, run, connection); }
         finally
         {
             finished.Cancel();
@@ -76,51 +96,50 @@ public static partial class BridgeServer
         }
     }
 
-    private static async Task RespondCoreAsync(Stream stream, string slug, (IProvider Provider, AiModel Model)? target, JsonNode payload, CancellationTokenSource cancel)
+    internal static async Task RespondCoreAsync(Stream stream, string slug, (IProvider Provider, AiModel Model)? target, JsonNode payload,
+        bool commands, CancellationTokenSource run, BridgeConnection connection)
     {
         var conversation = ConversationReader.Read(payload);
-        string responseId = "resp_cdx_" + Guid.NewGuid().ToString("N"), messageId = "msg_cdx_" + Guid.NewGuid().ToString("N");
+        string responseId = "resp_cdx_" + Guid.NewGuid().ToString("N");
         bool streaming = payload["stream"]?.GetValue<bool>() ?? false;
         var updates = Channel.CreateUnbounded<string>(new() { SingleReader = true });
-        string sent = "";
 
         async Task Event(JsonObject data)
         {
-            if (!streaming || cancel.IsCancellationRequested) return;
+            if (!streaming || connection.Lost || run.IsCancellationRequested) return;
             byte[] bytes = Encoding.UTF8.GetBytes($"event: {data["type"]}\ndata: {data.ToJsonString()}\n\n");
-            try { await stream.WriteAsync(bytes, cancel.Token); await stream.FlushAsync(cancel.Token); }
-            catch (Exception ex) when (ex is IOException or ObjectDisposedException or OperationCanceledException) { cancel.Cancel(); } // o Codex parou o pedido
+            try { await stream.WriteAsync(bytes, run.Token); await stream.FlushAsync(run.Token); }
+            catch (Exception ex) when (ex is IOException or ObjectDisposedException or OperationCanceledException) { connection.Lose(); } // o Codex parou o pedido
         }
         JsonObject Response(string status, JsonArray? output = null) => new()
         {
             ["id"] = responseId, ["object"] = "response", ["created_at"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), ["status"] = status,
             ["model"] = slug, ["output"] = output ?? new JsonArray(),
         };
+        var response = new ResponseStream(Event);
 
         if (streaming)
         {
-            await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n"), cancel.Token);
+            try { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n"), run.Token); }
+            catch (Exception ex) when (ex is IOException or ObjectDisposedException or OperationCanceledException) { connection.Lose(); }
             await Event(new() { ["type"] = "response.created", ["response"] = Response("in_progress") });
-            await Event(new() { ["type"] = "response.output_item.added", ["output_index"] = 0,
-                ["item"] = new JsonObject { ["type"] = "message", ["id"] = messageId, ["role"] = "assistant", ["status"] = "in_progress", ["content"] = new JsonArray() } });
+            await response.StartAsync();
         }
 
-        // Um único escritor: os trechos chegam de qualquer thread; pausas recebem "in_progress" a cada 5 s, para o Codex
-        // não desistir por inatividade.
+        // Um único escritor: os trechos chegam de qualquer thread; pausas recebem "in_progress" a cada KeepAliveInterval,
+        // para o Codex não desistir por inatividade.
         var writer = Task.Run(async () =>
         {
             var reader = updates.Reader;
             while (true)
             {
-                var wait = reader.WaitToReadAsync(cancel.Token).AsTask();
-                if (await Task.WhenAny(wait, Task.Delay(5000, cancel.Token)) != wait)
+                var wait = reader.WaitToReadAsync(run.Token).AsTask();
+                if (await Task.WhenAny(wait, Task.Delay(KeepAliveInterval, run.Token)) != wait)
                 { await Event(new() { ["type"] = "response.in_progress", ["response"] = Response("in_progress") }); continue; }
                 if (!await wait) return;
-                string latest = sent;
+                string latest = response.Sent;
                 while (reader.TryRead(out var text)) if (!IsStatusLine(text)) latest = text;
-                if (latest.Length > sent.Length && latest.StartsWith(sent, StringComparison.Ordinal))
-                    await Event(new() { ["type"] = "response.output_text.delta", ["item_id"] = messageId, ["output_index"] = 0, ["content_index"] = 0, ["delta"] = latest[sent.Length..] });
-                sent = latest;
+                await response.TextAsync(latest);
             }
         });
 
@@ -134,38 +153,58 @@ public static partial class BridgeServer
             string? effort = EffortOf(payload);
             if (effort is not null && model.Efforts.Count > 0 && !model.Efforts.Contains(effort)) effort = model.DefaultEffort;
             if (model.Efforts.Count == 0) effort = null;
-            Log.Write($"Pedido: {model.DisplayName}{(effort is null ? "" : " · esforço " + effort)}");
+            Log.Write($"Pedido: {model.DisplayName}{(effort is null ? "" : " · esforço " + effort)}{(commands ? " · com comandos" : "")}");
+            if (commands && !ProgressAsReasoning && Interlocked.Exchange(ref _reasoningNoticeLogged, 1) == 0)
+                Log.Write("Andamento do Claude no Codex: só o aviso \"ainda trabalhando\" (o raciocínio fica desligado)");
+            Action<string> onText = text => updates.Writer.TryWrite(text);
+            Action<string> onStatus = _ => { };
             var started = DateTime.UtcNow;
-            try { result = await provider.RunAsync(model, effort, conversation, text => updates.Writer.TryWrite(text), cancel.Token); }
-            catch (OperationCanceledException) { result = new(sent, "Interrompido"); }
-            catch (Exception ex) { result = new(sent, ex.Message); }
+            try
+            {
+                result = commands && ClaudeRunRegistry.KeyOf(slug, effort, conversation) is { } key
+                    ? await ClaudeRunRegistry.Shared.RunAsync(key, (t, s, ct) => provider.RunAsync(model, effort, conversation, t, s, ct), onText, onStatus, run.Token)
+                    : await provider.RunAsync(model, effort, conversation, onText, onStatus, run.Token);
+            }
+            catch (OperationCanceledException) { result = new(response.Sent, "Interrompido"); }
+            catch (Exception ex) { result = new(response.Sent, ex.Message); }
             Log.Write($"Resposta: {model.DisplayName} em {(DateTime.UtcNow - started).TotalSeconds:0.0} s{(result.Error is null ? "" : " · " + result.Error)}");
         }
         updates.Writer.TryComplete();
         try { await writer; } catch (OperationCanceledException) { }
-        if (cancel.IsCancellationRequested) return;
+        if (run.IsCancellationRequested || connection.Lost) return;
 
         // Falhas viram texto da resposta: o Codex repetiria o pedido várias vezes se recebesse "response.failed".
         string answer = IsStatusLine(result.Text) ? "" : result.Text;
         string final = result.Error is { Length: > 0 } error
             ? (string.IsNullOrWhiteSpace(answer) ? "" : answer.TrimEnd() + "\n\n") + "⚠ " + name + ": " + error
             : answer;
-        if (final.Length > sent.Length && final.StartsWith(sent, StringComparison.Ordinal))
-            await Event(new() { ["type"] = "response.output_text.delta", ["item_id"] = messageId, ["output_index"] = 0, ["content_index"] = 0, ["delta"] = final[sent.Length..] });
-        var item = new JsonObject
-        {
-            ["type"] = "message", ["id"] = messageId, ["role"] = "assistant", ["status"] = "completed",
-            ["content"] = new JsonArray(new JsonObject { ["type"] = "output_text", ["text"] = final, ["annotations"] = new JsonArray() }),
-        };
+        var items = await response.FinishAsync(final);
         int input = Math.Max(1, (conversation.Prompt.Length + conversation.History.Sum(h => h.Content.Length)) / 4), output = Math.Max(1, final.Length / 4);
-        var done = Response("completed", new JsonArray(item.DeepClone()));
+        var done = Response("completed", items);
         done["usage"] = new JsonObject
         {
             ["input_tokens"] = input, ["input_tokens_details"] = new JsonObject { ["cached_tokens"] = 0 },
             ["output_tokens"] = output, ["output_tokens_details"] = new JsonObject { ["reasoning_tokens"] = 0 }, ["total_tokens"] = input + output,
         };
         if (!streaming) { await JsonAsync(stream, done); return; }
-        await Event(new() { ["type"] = "response.output_item.done", ["output_index"] = 0, ["item"] = item });
         await Event(new() { ["type"] = "response.completed", ["response"] = done });
+    }
+}
+
+/// <summary>A conexão com o Codex: perdida, cancela a execução na hora, ou (comandos do Claude ligados) depois de <see cref="BridgeServer.CloseGrace"/>.</summary>
+internal sealed class BridgeConnection(CancellationTokenSource run, bool keepRunning)
+{
+    private int _lost;
+    public bool Lost => Volatile.Read(ref _lost) == 1;
+
+    public void Lose()
+    {
+        if (Interlocked.Exchange(ref _lost, 1) == 1) return;
+        try
+        {
+            if (keepRunning) run.CancelAfter(BridgeServer.CloseGrace);
+            else run.Cancel();
+        }
+        catch (ObjectDisposedException) { }
     }
 }
