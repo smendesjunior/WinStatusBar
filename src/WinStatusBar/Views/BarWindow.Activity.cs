@@ -22,9 +22,24 @@ public sealed partial class BarWindow
         var plan = new StackPanel { Spacing = 8 };
         var planCard = new Border { Child = plan, Padding = new Thickness(12), CornerRadius = new CornerRadius(8),
             Background = PanelKit.Res("ControlFillColorDefaultBrush"), BorderBrush = PanelKit.Res("SurfaceStrokeColorDefaultBrush"), BorderThickness = new Thickness(1) };
+        // Continuar pela API: faixa quando outra conversa roda pela API, e o cartão da conversa mostrada.
+        var apiBannerText = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+        var apiBannerShow = new Button { Content = global::WinStatusBar.Services.Localization.T("Mostrar"), Padding = new Thickness(8, 3, 8, 3) };
+        var apiBannerGrid = new Grid { ColumnSpacing = 8 };
+        apiBannerGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        apiBannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        apiBannerGrid.Children.Add(apiBannerText);
+        Grid.SetColumn(apiBannerShow, 1); apiBannerGrid.Children.Add(apiBannerShow);
+        var apiBanner = new Border { Child = apiBannerGrid, Padding = new Thickness(10, 6, 10, 6), CornerRadius = new CornerRadius(6),
+            Background = PanelKit.Res("SystemFillColorAttentionBackgroundBrush"), Visibility = Visibility.Collapsed };
+        var apiCard = new ContentControl { HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        string? apiOtherThread = null;
+        apiBannerShow.Click += (_, _) => { if (apiOtherThread is { } other) _hub.SelectAgent(other); };
         // Largura no viewport, não no conteúdo rolável: o texto sempre mede dentro da área visível.
         var body = new StackPanel { Spacing = 10, HorizontalAlignment = HorizontalAlignment.Stretch };
+        body.Children.Add(apiBanner);
         body.Children.Add(heading); body.Children.Add(task); body.Children.Add(state);
+        body.Children.Add(apiCard);
         body.Children.Add(planCard);
         var scroll = new ScrollViewer { Content = body, Width = 440, MaxHeight = 540, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -38,7 +53,7 @@ public sealed partial class BarWindow
         style.Setters.Add(new Setter(FlyoutPresenter.MaxWidthProperty, 500d));
         _activityFlyout.FlyoutPresenterStyle = style;
         TaskModule.Flyout = _activityFlyout;
-        string planKey = "";
+        string planKey = "", apiKey = "";
         void Update()
         {
             if (_closing) return;
@@ -61,6 +76,23 @@ public sealed partial class BarWindow
             var steps = brief.Session == id ? brief.Steps : [];
             bool inferred = brief.Session == id && brief.Inferred;
             string key = id + inferred + selected?.TurnId + selected?.State + selected?.ProgressPercent + _settings.Current.EstimateProgressWithoutPlan + string.Join("\n", steps.Select(s => s.Status + ":" + s.Text));
+            var svc = App.Current.ApiResume;
+            if (svc is not null)
+            {
+                var job = svc.JobFor(selected);
+                var other = svc.ActiveElsewhere(selected);
+                var now = DateTimeOffset.Now;
+                if (job is not null) heading.Text = WinStatusBar.Core.Ai.Codex.ApiResume.ApiResumeText.CardTitle;
+                string nextApiKey = $"{job?.Id}|{job?.State}|{job?.Detail}|{job?.Tokens}|{job?.Spend}|{job?.ForceOffered}|{(job?.StartedAt is { } s ? (int)(now - s).TotalMinutes : -1)}|{other?.Id}|{(other?.StartedAt is { } o ? (int)(now - o).TotalMinutes : -1)}";
+                if (nextApiKey != apiKey)
+                {
+                    apiKey = nextApiKey;
+                    apiCard.Content = job is null ? null : CodexApiResumeView.JobCard(job, svc);
+                    apiOtherThread = other?.ThreadId;
+                    apiBannerText.Text = other is null ? "" : WinStatusBar.Core.Ai.Codex.ApiResume.ApiResumeText.Banner(other, now);
+                    apiBanner.Visibility = other is null ? Visibility.Collapsed : Visibility.Visible;
+                }
+            }
             if (planKey == key) return;
             planKey = key;
             plan.Children.Clear();

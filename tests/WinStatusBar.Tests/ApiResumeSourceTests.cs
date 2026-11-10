@@ -198,6 +198,16 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
+    public void ActivityShowsTheApiCardBeforeThePlanEarlyReturn()
+    {
+        string activity = Src("Views", "BarWindow.Activity.cs");
+        Assert.Contains("svc.JobFor(selected)", activity);
+        Assert.True(activity.IndexOf("svc.JobFor(selected)", StringComparison.Ordinal) < activity.IndexOf("if (planKey == key) return;", StringComparison.Ordinal));
+        foreach (var piece in new[] { "ApiResumeText.CardTitle", "ApiResumeText.Banner(", "_hub.SelectAgent(", "apiKey", "CodexApiResumeView.JobCard(" })
+            Assert.Contains(piece, activity);
+    }
+
+    [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
         string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");
