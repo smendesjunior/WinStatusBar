@@ -519,6 +519,29 @@ public class CodexQuotaStopsTests
     }
 
     [Fact]
+    public async Task FindAsyncFallsBackWhenTheListOrTheConnectionTimesOut()
+    {
+        string home = TempDir();
+        try
+        {
+            WriteRollout(SessionsDir(home), Id, StoppedLines());
+            var hangingList = new QuotaStopFinder(_ => Task.CompletedTask,
+                _ => Task.FromResult(new ThreadListConnection(async (_, t) => { await Task.Delay(Timeout.Infinite, t); return Page([]); }, null)),
+                () => Now, TimeSpan.FromMilliseconds(200));
+            var log = new List<string>();
+            var scan = await hangingList.FindAsync(home, TimeSpan.Zero, CancellationToken.None, log.Add);
+            Assert.True(scan.UsedFallback);
+            Assert.Single(scan.Stops);
+            Assert.Contains(log, l => l.StartsWith("Conversas paradas pela cota: lista oficial indisponível (", StringComparison.Ordinal));
+
+            var hangingConnect = new QuotaStopFinder(_ => Task.CompletedTask, _ => new TaskCompletionSource<ThreadListConnection>().Task,
+                () => Now, TimeSpan.FromMilliseconds(200));
+            Assert.True((await hangingConnect.FindAsync(home, TimeSpan.Zero, CancellationToken.None)).UsedFallback);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
     public void CachedResultFollowsTheFile()
     {
         string dir = TempDir();

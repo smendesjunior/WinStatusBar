@@ -106,7 +106,9 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         }
         catch (Exception e)
         {
-            Diagnostic?.Invoke($"Conversas paradas pela cota: a busca falhou ({e.GetType().Name}: {e.Message})");
+            // A próxima leitura oficial bloqueada tenta de novo (senão só depois de a conta liberar e bloquear outra vez).
+            lock (_quotaGate) _lastOfficialBlocked = null;
+            Diagnostic?.Invoke($"Conversas paradas pela cota: a busca falhou ({e.GetType().Name}: {e.Message}); nova tentativa na próxima consulta da cota");
         }
     }
 
@@ -119,11 +121,17 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         {
             foreach (var stop in stops)
             {
-                if (_sessions.TryGetValue(stop.ThreadId, out var existing) && existing.LastStateEvent >= stop.StoppedAt) continue;
+                if (_sessions.TryGetValue(stop.ThreadId, out var existing) && existing.LastStateEvent >= stop.StoppedAt)
+                {
+                    // Já mostra esta parada (ou algo mais novo): só marca que é uma conversa do usuário listada pelo detector.
+                    if (existing.StopReason == CodexParsers.UsageLimitExceeded && existing.TurnId == stop.StoppedTurnId) existing.UserQuotaStop = true;
+                    continue;
+                }
                 var s = existing ?? new AgentSession { Kind = AgentKind.Codex, Id = stop.ThreadId, ObservationSource = "Registro local do Codex" };
                 s.Title ??= stop.Title;
                 s.State = AgentState.Interrupted; s.ExecutionEnded = true; s.ObservationStale = false;
                 s.TurnId = stop.StoppedTurnId; s.StopReason = CodexParsers.UsageLimitExceeded; s.LastReachedType = stop.ReachedType;
+                s.UserQuotaStop = true;
                 s.Caption = CodexQuotaText.StoppedCaption(stop.ReachedType);
                 s.LastActivity = stop.StoppedAt; s.LastStateEvent = stop.StoppedAt;
                 s.ProjectDir ??= stop.Cwd; s.Model ??= stop.Model; s.TranscriptPath ??= stop.RolloutPath;
@@ -470,14 +478,16 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
     private IReadOnlyList<DateTimeOffset>? _execStarts;
     private DateTimeOffset _execStartsAt = DateTimeOffset.MinValue;
 
+    /// <summary>Conversa do usuário (listada pelo detector) parada pela cota enquanto o bloqueio dura: não envelhece nem some.
+    /// O bloqueio vale até a conta confirmar a liberação, mesmo que uma janela em 100 % já tenha vencido.</summary>
+    private bool Held(AgentSession s, DateTimeOffset now) =>
+        s.UserQuotaStop && s.StopReason == CodexParsers.UsageLimitExceeded && (Quota?.IsBlocked(now) == true || _lastOfficialBlocked == true);
+
     /// <summary>
     /// Sessões do `codex exec` ainda marcadas como ativas, em silêncio há mais de 2 min, sem nenhum processo
     /// `codex exec` que possa ser o dono delas (iniciado até 30 s depois do turno). A consulta de processos
     /// roda fora da trava e só quando há candidatas, no máximo a cada 20 s.
     /// </summary>
-    /// <summary>Parada pela cota enquanto a conta continua bloqueada: não envelhece nem some.</summary>
-    private bool Held(AgentSession s, DateTimeOffset now) => s.StopReason == CodexParsers.UsageLimitExceeded && Quota?.IsBlocked(now) == true;
-
     private HashSet<string> FindOrphanExecSessions(DateTimeOffset now)
     {
         List<(string Id, DateTimeOffset Start)> candidates;

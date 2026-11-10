@@ -301,17 +301,29 @@ internal sealed class QuotaStopFinder(Func<CancellationToken, Task> waitVisible,
         try
         {
             await waitVisible(CancellationToken.None).ConfigureAwait(false);
-            using var timeout = new CancellationTokenSource(scanTimeout);
+            // A lista oficial tem o seu prazo; se ele vencer (app-server travado), vale o plano B, com prazo novo para os registros locais.
+            using var listTimeout = new CancellationTokenSource(scanTimeout);
             ThreadListConnection connection;
-            try { connection = await connect(timeout.Token).ConfigureAwait(false); }
-            catch (Exception e) when (e is not OperationCanceledException)
+            try { connection = await connect(listTimeout.Token).WaitAsync(listTimeout.Token).ConfigureAwait(false); }
+            catch (Exception e)
             {
-                string message = e.Message;
+                string message = e is OperationCanceledException ? "tempo esgotado ao abrir o Codex" : e.Message;
                 connection = new ThreadListConnection((_, _) => throw new IOException(message), null);
             }
+            var openList = connection.List;
+            using var readTimeout = new CancellationTokenSource(); // o prazo da leitura local começa quando a lista termina
+            CodexQuotaStops.ThreadListCall guarded = async (request, _) =>
+            {
+                try { return await openList(request, listTimeout.Token).WaitAsync(listTimeout.Token).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (listTimeout.IsCancellationRequested)
+                {
+                    throw new IOException("tempo esgotado ao listar as conversas");
+                }
+                finally { readTimeout.CancelAfter(scanTimeout); }
+            };
             try
             {
-                var scan = await CodexQuotaStops.ScanAsync(codexHome, connection.List, clock(), timeout.Token, log).ConfigureAwait(false);
+                var scan = await CodexQuotaStops.ScanAsync(codexHome, guarded, clock(), readTimeout.Token, log).ConfigureAwait(false);
                 lock (_gate) _last = scan;
                 return scan;
             }

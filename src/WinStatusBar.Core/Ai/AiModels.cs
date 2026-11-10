@@ -72,6 +72,8 @@ public sealed class AgentSession
     public TokenUsage? TurnTokens { get; set; }
     /// <summary>Último motivo de cota visto nos token_count do turno.</summary>
     internal string? LastReachedType { get; set; }
+    /// <summary>Codex: parada pela cota de uma conversa do usuário, listada pelo detector (só essas ficam visíveis o bloqueio inteiro).</summary>
+    internal bool UserQuotaStop { get; set; }
 
     public string ProjectName => string.IsNullOrWhiteSpace(ProjectDir) ? string.Empty : Path.GetFileName(ProjectDir.TrimEnd('\\', '/'));
 

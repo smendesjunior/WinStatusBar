@@ -215,6 +215,57 @@ public class CodexStopReasonTests
     }
 
     [Fact]
+    public async Task FailedScanIsRetriedOnTheNextBlockedOfficialRead()
+    {
+        using var p = new CodexProvider();
+        int scans = 0;
+        p.FindQuotaStops = _ => ++scans == 1
+            ? Task.FromException<QuotaStopScan>(new TimeoutException("tempo esgotado"))
+            : Task.FromResult(new QuotaStopScan([Stopped()], new QuotaStopExclusions(0, 0, 0, 0, 0), false, StoppedAt));
+        var t = StoppedAt.AddHours(1);
+        p.ApplyQuota(Blocked(t), official: true, t);
+        await p.LastQuotaScan!;
+        Assert.Null(p.SessionById(CodexQuotaStopsTests.Id));
+        p.ApplyQuota(Blocked(t.AddMinutes(10)), official: true, t.AddMinutes(10));
+        await p.LastQuotaScan!;
+        Assert.Equal(2, scans);
+        Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+    }
+
+    [Fact]
+    public void StopOfAWindowOnlyBlockIsHeldUntilTheOfficialRelease()
+    {
+        using var p = new CodexProvider();
+        var t0 = StoppedAt.AddMinutes(1);
+        var windowOnly = CodexQuotaBlockTests.Snapshot(t0, CodexQuotaBlockTests.Official(t0, true), used7d: 100, resets7d: StoppedAt.AddHours(5));
+        p.ApplyQuota(windowOnly, official: true, t0);
+        p.AdoptQuotaStops([Stopped()], t0);
+        p.Expire(StoppedAt.AddHours(6)); // a janela venceu, mas a conta ainda não confirmou
+        Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+        var released = StoppedAt.AddHours(6);
+        p.ApplyQuota(Allowed(released), official: true, released);
+        Assert.Equal("Cota liberada · pode continuar no app", p.SessionById(CodexQuotaStopsTests.Id)!.Caption);
+    }
+
+    [Fact]
+    public void StopsTheDetectorDidNotListAreNotHeld()
+    {
+        string dir = CodexQuotaStopsTests.TempDir();
+        try
+        {
+            string path = CodexQuotaStopsTests.WriteRollout(dir, CodexQuotaStopsTests.Id, CodexQuotaStopsTests.Meta(originator: "codex_exec"),
+                CodexQuotaStopsTests.Started("t1"), CodexQuotaStopsTests.Context("t1"), CodexQuotaStopsTests.TokenCount(), CodexQuotaStopsTests.QuotaEnd());
+            using var p = new CodexProvider();
+            p.ReadFile(path, true);
+            p.ApplyQuota(Blocked(StoppedAt.AddMinutes(1)), official: true, StoppedAt.AddMinutes(1));
+            Assert.Equal(AgentState.Interrupted, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+            p.Expire(StoppedAt.AddMinutes(20));
+            Assert.Equal(AgentState.Idle, p.SessionById(CodexQuotaStopsTests.Id)!.State);
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
     public void ExecTriggeredTurnWithoutItsProcessIsOrphaned()
     {
         string dir = CodexQuotaStopsTests.TempDir();
