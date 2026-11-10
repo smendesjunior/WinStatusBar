@@ -95,6 +95,8 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
     internal Func<CancellationToken, Task<QuotaStopScan>>? FindQuotaStops { get; set; }
     /// <summary>Última busca disparada pela cota oficial bloqueada.</summary>
     internal Task? LastQuotaScan { get; private set; }
+    /// <summary>Resultado da última busca bem-sucedida (o menu da cota começa por ela).</summary>
+    public QuotaStopScan? LastStopScan { get; private set; }
 
     internal async Task ScanQuotaStopsAsync(CancellationToken ct)
     {
@@ -102,6 +104,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         try
         {
             var scan = await find(ct).ConfigureAwait(false);
+            LastStopScan = scan;
             AdoptQuotaStops(scan.Stops, DateTimeOffset.Now);
         }
         catch (Exception e)

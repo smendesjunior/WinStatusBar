@@ -40,6 +40,10 @@ public class ApiResumeSourceTests
     private static string Svc() => Src("Services", "CodexApiResumeService.cs");
 
     [Fact]
+    public void TheQuotaMenuStartsFromTheBarsBlockScan() =>
+        Assert.Contains("LastScan => _lastScan ?? _hub.Codex.LastStopScan", Svc());
+
+    [Fact]
     public void KeepsThePcAwakeButNotTheScreen()
     {
         string svc = Svc();

@@ -188,6 +188,19 @@ public class CodexStopReasonTests
     }
 
     [Fact]
+    public async Task TheBlockScanIsKeptForTheQuotaMenu()
+    {
+        using var p = new CodexProvider();
+        var found = new QuotaStopScan([Stopped()], new QuotaStopExclusions(0, 0, 0, 0, 0), false, StoppedAt);
+        p.FindQuotaStops = _ => Task.FromResult(found);
+        Assert.Null(p.LastStopScan);
+        var t = StoppedAt.AddHours(1);
+        p.ApplyQuota(Blocked(t), official: true, t);
+        await p.LastQuotaScan!;
+        Assert.Same(found, p.LastStopScan);
+    }
+
+    [Fact]
     public async Task ScanRunsOnTheFirstBlockedOfficialReadAndOnEachNewBlock()
     {
         using var p = new CodexProvider();

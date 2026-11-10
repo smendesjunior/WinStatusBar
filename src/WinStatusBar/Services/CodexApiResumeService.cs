@@ -41,7 +41,9 @@ internal sealed class CodexApiResumeService : IApiResumeHost
     /// <summary>Versão da Loja: fechar ou atualizar a barra encerraria a continuação no meio, então o botão fica desligado.</summary>
     public bool IsStoreBuild => PackageContext.IsPackaged;
     public bool CodexBlocked => _hub.Codex.Quota?.IsBlocked(Now) == true;
-    public QuotaStopScan? LastScan { get; private set; }
+    /// <summary>A busca do menu; até ela terminar, a que a barra fez quando a conta bloqueou.</summary>
+    public QuotaStopScan? LastScan => _lastScan ?? _hub.Codex.LastStopScan;
+    private QuotaStopScan? _lastScan;
 
     /// <summary>Há chave? Só confere a existência (arquivo protegido ou credencial do Cofre), nunca carrega a chave. Cache de 30 s.</summary>
     public bool HasKey
@@ -95,7 +97,7 @@ internal sealed class CodexApiResumeService : IApiResumeHost
         try
         {
             var scan = await CodexQuotaStops.FindAsync(_hub.Codex.Home, maxAge, _cts.Token, App.Log).ConfigureAwait(false);
-            LastScan = scan;
+            _lastScan = scan;
             _hub.Codex.AdoptQuotaStops(scan.Stops, Now);
             return scan;
         }
