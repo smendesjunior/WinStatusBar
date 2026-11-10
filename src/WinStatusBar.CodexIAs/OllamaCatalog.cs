@@ -65,12 +65,17 @@ internal static class OllamaCatalog
 
     private static string NameOf(JsonNode? n) => n?["display_name"]?.GetValue<string>() ?? CodexCatalog.SlugOf(n);
 
-    /// <summary>Pensamento do modelo no roteamento do Ollama (mesmo formato que o "ollama launch" grava).</summary>
+    /// <summary>
+    /// Pensamento do modelo no roteamento do Ollama (mesmo formato que o "ollama launch" grava). Nos modelos locais ele é
+    /// só ligado/desligado, e o Codex não mostra o nível "none" (os modelos dele começam em "low"): com "none" e "high" o
+    /// seletor ficava só com "Alto". O desligado vai como "low" (Baixo) e o ligado como "high" (Alto); "none" continua
+    /// valendo desligado para pedidos antigos.
+    /// </summary>
     private static JsonObject ThinkingOf(bool thinking) => thinking
         ? new JsonObject
         {
-            ["supported"] = true, ["levels"] = new JsonArray("none", "high"),
-            ["values"] = new JsonObject { ["high"] = true, ["none"] = false },
+            ["supported"] = true, ["levels"] = new JsonArray("low", "high"),
+            ["values"] = new JsonObject { ["none"] = false, ["low"] = false, ["high"] = true },
             ["controls"] = new JsonObject { ["values"] = new JsonArray(false, true), ["default"] = true },
         }
         : new JsonObject
@@ -80,6 +85,30 @@ internal static class OllamaCatalog
             ["controls"] = new JsonObject { ["values"] = new JsonArray(false), ["default"] = false },
         };
 
+    /// <summary>Níveis do modelo no catálogo do Codex, os mesmos do roteamento.</summary>
+    private static JsonArray LevelsOf(bool thinking) => thinking
+        ? new JsonArray(new JsonObject { ["effort"] = "low", ["description"] = "Sem raciocínio, mais rápido" },
+            new JsonObject { ["effort"] = "high", ["description"] = "Pensa antes de responder" })
+        : new JsonArray(new JsonObject { ["effort"] = "none", ["description"] = "Pensamento desligado" });
+
+    /// <summary>Modelos que pensam com "none" e "high" (como o "ollama launch" grava) passam a Baixo e Alto.</summary>
+    private static void UpgradeThinkingLevels(JsonArray catalog, JsonArray routes)
+    {
+        foreach (var route in routes.OfType<JsonObject>())
+        {
+            if (route["thinking"]?["levels"] is not JsonArray levels
+                || !levels.Select(l => l?.GetValue<string>()).SequenceEqual(["none", "high"])) continue;
+            string? slug = route["slug"]?.GetValue<string>();
+            route["thinking"] = ThinkingOf(true);
+            foreach (var entry in catalog.OfType<JsonObject>().Where(n => CodexCatalog.SlugOf(n) == slug))
+            {
+                entry["supported_reasoning_levels"] = LevelsOf(true);
+                if (entry["default_reasoning_level"]?.GetValue<string>() != "high") entry["default_reasoning_level"] = "low";
+            }
+            Log.Write($"Ollama: {slug} com os níveis Baixo e Alto no seletor do Codex");
+        }
+    }
+
     /// <summary>
     /// Acrescenta os modelos novos do Ollama ao catálogo e ao roteamento e tira os que foram apagados do Ollama.
     /// Devolve os nomes que entraram e os que saíram.
@@ -87,6 +116,7 @@ internal static class OllamaCatalog
     public static (List<string> Added, List<string> Removed) MergeInto(JsonArray catalog, JsonObject routing, IReadOnlyList<Local> installed)
     {
         if (routing["models"] is not JsonArray routes) routing["models"] = routes = new JsonArray();
+        UpgradeThinkingLevels(catalog, routes);
         var names = installed.Select(i => i.Name).ToHashSet(StringComparer.Ordinal);
         var added = new List<string>();
         var removed = new List<string>();
@@ -118,10 +148,7 @@ internal static class OllamaCatalog
             entry["context_window"] = local.Context;
             entry["max_context_window"] = local.Context;
             entry["input_modalities"] = local.Vision ? new JsonArray("text", "image") : new JsonArray("text");
-            entry["supported_reasoning_levels"] = local.Thinking
-                ? new JsonArray(new JsonObject { ["effort"] = "none", ["description"] = "Pensamento desligado" },
-                    new JsonObject { ["effort"] = "high", ["description"] = "Pensamento ligado" })
-                : new JsonArray(new JsonObject { ["effort"] = "none", ["description"] = "Pensamento desligado" });
+            entry["supported_reasoning_levels"] = LevelsOf(local.Thinking);
             entry["default_reasoning_level"] = local.Thinking ? "high" : "none";
             entry["visibility"] = "list";
             entry["priority"] = 1000;

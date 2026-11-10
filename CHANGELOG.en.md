@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.4.5] - 2026-11-09 · build BUILD
+
+### Fixed
+- Memory and disk with long Claude Code or Codex sessions: on every change to the conversation, the bar re-read the whole conversation file (8.8 MB in a long session, several times a minute) to follow the task's steps. The large lines piled up in memory (about 280 MB extra) and the disk was read all the time. It now reads only what was added since the last time (measured: disk reads from 184 to 10 KB/s, and the bar at about 350 MB instead of 600 to 660 MB).
+- CPU and graphics card use while an AI is working: the colored glow around the agent module was re-blurred on every screen frame (165 times per second on this PC, on both bars) and took 18 to 35% of a CPU core and 8% of the graphics card. The blurred outline is now drawn once and the colors move behind it 30 times per second. It looks the same and uses about half the CPU and graphics card (measured: from 17.9% to 8.3% of a core and from 8.4% to 3.6% of the graphics card).
+- Local AI: when the graphics card makes a calculation error (a CUDA error such as "illegal memory access" or "misaligned address", common when the card is overclocked beyond what it can handle), the message now says so and suggests lowering the overclock. Before, it blamed missing memory. If Ollama is reloading the model after a crash, the bar asks you to try again in a few seconds instead of saying the service is unstable and "not your PC's fault".
+- Local models that think (such as Qwen 3.5) in Codex: the picker only showed "High", with nothing to choose, because Codex does not show the "no reasoning" level. It now shows **Low** (no reasoning, faster) and **High** (thinks before answering), and Low really turns reasoning off. Models already in the picker get both levels at the next check of the bar's AIs in Codex.
+
 ## [1.4.4] - 2026-11-09 · build 20261110010828
 
 ### Fixed

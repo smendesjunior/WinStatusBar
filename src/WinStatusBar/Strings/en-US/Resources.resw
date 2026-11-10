@@ -3762,4 +3762,16 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SECAEBA31021242CD" xml:space="preserve">
     <value>Text too long for Gemini through the Google account. Start a new conversation or use the API key.</value>
   </data>
+  <data name="S6F6DC5C2A715F73D" xml:space="preserve">
+    <value>graphics card error</value>
+  </data>
+  <data name="S02E00F4553B4C2AE" xml:space="preserve">
+    <value>The graphics card made a calculation error while running the model {0} (CUDA error). This usually happens when the card is overclocked: lower or turn off the overclock and try again. Without overclock, update the graphics card driver.</value>
+  </data>
+  <data name="S9DA365C459C4FE21" xml:space="preserve">
+    <value>local AI restarting</value>
+  </data>
+  <data name="SA0DBBA527195B60F" xml:space="preserve">
+    <value>The local AI (Ollama) stopped in the middle of the answer and is reloading the model. Try again in a few seconds. If it happens again, the cause is usually the graphics card: with overclock, lower it or turn it off; without overclock, choose a smaller model.</value>
+  </data>
 </root>

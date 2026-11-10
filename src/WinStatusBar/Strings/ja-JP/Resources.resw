@@ -3762,4 +3762,16 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SECAEBA31021242CD" xml:space="preserve">
     <value>Google アカウント経由の Gemini には長すぎるテキストです。新しい会話を始めるか、API キーを使ってください。</value>
   </data>
+  <data name="S6F6DC5C2A715F73D" xml:space="preserve">
+    <value>グラフィックス カードのエラー</value>
+  </data>
+  <data name="S02E00F4553B4C2AE" xml:space="preserve">
+    <value>モデル {0} の実行中にグラフィックス カードが計算を誤りました (CUDA エラー)。カードをオーバークロックしているときによく起こります。オーバークロックを下げるかオフにして、もう一度お試しください。オーバークロックしていない場合は、グラフィックス ドライバーを更新してください。</value>
+  </data>
+  <data name="S9DA365C459C4FE21" xml:space="preserve">
+    <value>ローカル AI を再起動中</value>
+  </data>
+  <data name="SA0DBBA527195B60F" xml:space="preserve">
+    <value>ローカル AI (Ollama) が応答の途中で停止し、モデルを読み込み直しています。数秒後にもう一度お試しください。繰り返す場合、原因はたいていグラフィックス カードです。オーバークロックしている場合は下げるかオフにし、していない場合はより小さいモデルを選んでください。</value>
+  </data>
 </root>

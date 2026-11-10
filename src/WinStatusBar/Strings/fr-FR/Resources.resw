@@ -3762,4 +3762,16 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SECAEBA31021242CD" xml:space="preserve">
     <value>Texte trop long pour Gemini via le compte Google. Démarrez une nouvelle conversation ou utilisez la clé d'API.</value>
   </data>
+  <data name="S6F6DC5C2A715F73D" xml:space="preserve">
+    <value>erreur de la carte graphique</value>
+  </data>
+  <data name="S02E00F4553B4C2AE" xml:space="preserve">
+    <value>La carte graphique a fait une erreur de calcul en exécutant le modèle {0} (erreur CUDA). Cela arrive généralement quand la carte est overclockée : réduisez ou désactivez l'overclocking et réessayez. Sans overclocking, mettez à jour le pilote de la carte graphique.</value>
+  </data>
+  <data name="S9DA365C459C4FE21" xml:space="preserve">
+    <value>IA locale en redémarrage</value>
+  </data>
+  <data name="SA0DBBA527195B60F" xml:space="preserve">
+    <value>L'IA locale (Ollama) s'est arrêtée au milieu de la réponse et recharge le modèle. Réessayez dans quelques secondes. Si cela se reproduit, la cause est généralement la carte graphique : avec overclocking, réduisez-le ou désactivez-le ; sans overclocking, choisissez un modèle plus petit.</value>
+  </data>
 </root>

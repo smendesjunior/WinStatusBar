@@ -57,32 +57,40 @@ public static class AiErrorExplainer
         if (status == 413 || Has(all, @"context (length|window)|context_length|maximum context|prompt is too long|too many tokens|input is too long|request too large|payload too large|request entity too large|token limit|exceeds the (maximum|limit)"))
             return E("conversa longa demais", LocalizedText.F("A conversa ficou grande demais para o modelo {0} (mensagens, anexos e contexto da tela somados). Comece uma nova conversa, remova anexos grandes ou escolha um modelo com mais contexto.", new object?[] { m }));
 
-        // 4) Memória do PC (IA local).
+        // 4) Placa de vídeo errando cálculos (erro de CUDA que não é falta de memória): costuma ser overclock instável.
+        //    Caso real (09/11/2026): RTX 4050 com o núcleo a +300 MHz quebrava o Ollama em pedidos grandes.
+        if (Has(all, @"illegal memory access|misaligned address|illegal instruction|illegal address|unspecified launch failure|device-side assert"))
+            return E("falha da placa de vídeo", LocalizedText.F("A placa de vídeo errou um cálculo ao rodar o modelo {0} (erro de CUDA). Isso costuma acontecer com a placa em overclock: reduza ou desligue o overclock e tente de novo. Sem overclock, atualize o driver da placa de vídeo.", new object?[] { m }));
+        // O motor do Ollama caiu no meio da resposta e está reabrindo o modelo (falha da placa ou falta de memória).
+        if (target == AgentPrompt.Target.Local && Has(all, @"health resp"))
+            return E("IA local reiniciando", LocalizedText.T("A IA local (Ollama) parou no meio da resposta e está reabrindo o modelo. Tente de novo em alguns segundos. Se repetir, a causa costuma ser a placa de vídeo: com overclock, reduza ou desligue; sem overclock, escolha um modelo menor."));
+
+        // 5) Memória do PC (IA local).
         if (Has(all, @"out of memory|requires more system memory|unable to allocate|insufficient memory|not enough memory|cudaMalloc|CUDA error|llama runner process has terminated|failed to load model"))
             return E("falta memória", LocalizedText.F("O PC não conseguiu carregar o modelo {0}: falta memória (RAM ou placa de vídeo). Feche programas pesados ou escolha um modelo menor.", new object?[] { m }));
 
-        // 5) Cota, créditos e limites de uso.
+        // 6) Cota, créditos e limites de uso.
         if (status == 402 || Has(all, @"credit balance|insufficient_quota|exceeded your current quota|quota exceeded|billing|payment required|usage limit|(?<!rate )limit reached|hit your (usage )?limit|out of credits|purchase more credits|plan limit"))
             return E("cota esgotada", LocalizedText.F("A cota ou os créditos da sua conta {0} acabaram.", new object?[] { who.In }) + ResetHint(all)
                 + " " + LocalizedText.T("Veja quando renova no menu Cotas da barra e, até lá, use outra IA."));
         if (status == 429 || Has(all, @"rate.?limit|too many requests|resource_exhausted|requests per minute"))
             return E("muitos pedidos", LocalizedText.F("Foram muitos pedidos em pouco tempo e {0} pediu para esperar. Aguarde um minuto e envie de novo.", new object?[] { who.Lower }));
 
-        // 6) Login, chave e permissão.
+        // 7) Login, chave e permissão.
         if (status == 401 || Has(all, @"unauthori[sz]ed|invalid.{0,12}api.?key|api key not valid|api_key_invalid|x-api-key|authentication|not logged in|please run /login|login required|log ?in again|token (has )?expired|expired token|invalid_grant|invalid token|refresh token"))
             return E("login recusado", LocalizedText.F("{0} recusou o login ou a chave da sua conta (expirou ou é inválida).", new object?[] { who.Subject }) + " " + LoginAction(target));
         if (status == 403 || Has(all, @"forbidden|permission.?denied|not allowed to|does not have access|access denied|not authori[sz]ed|unsupported (country|region)|region not supported"))
             return E("sem permissão", LocalizedText.F("A sua conta não tem permissão para usar isso {0} (modelo, recurso ou região). Escolha outro modelo ou confira o plano da conta.", new object?[] { who.In }));
 
-        // 7) Regras de segurança do provedor.
+        // 8) Regras de segurança do provedor.
         if (Has(all, @"content[ _-]?(policy|filter|management)|safety (system|filter|settings)|finish_?reason.{0,5}safety|blocked by|flagged|violat\w* (our|the) (usage )?polic"))
             return E("bloqueado pela IA", LocalizedText.F("{0} bloqueou o pedido ou a resposta pelas próprias regras de segurança. Reformule o pedido com outras palavras.", new object?[] { who.Subject }));
 
-        // 8) Serviço fora do ar ou sobrecarregado.
+        // 9) Serviço fora do ar ou sobrecarregado.
         if (status is >= 500 and <= 599 || Has(all, @"overloaded|internal server error|service unavailable|bad gateway|gateway time-?out|server_error|server error|temporarily unavailable|upstream"))
             return E("serviço instável", LocalizedText.F("O serviço {0} está com problema ou sobrecarregado agora; não é falha do seu PC. Tente de novo em alguns minutos ou use outra IA.", new object?[] { who.Of }));
 
-        // 9) Conexão e tempo.
+        // 10) Conexão e tempo.
         if (target == AgentPrompt.Target.Local && Has(all, @"refused|no connection could be made|econnrefused|11434|nenhum servidor local respondeu|connection reset"))
             return E("IA local fechada", LocalizedText.T("O servidor da IA local (Ollama, LM Studio ou outro) não está aberto, então ninguém respondeu no PC. Abra o Ollama pelo menu Iniciar e envie de novo."));
         if (Has(all, @"no such host|name or service not known|network is unreachable|\bssl\b|certificate|could not be established|connection (was )?(reset|closed|aborted|refused)|actively refused|no connection could be made|econnreset|econnrefused|enotfound|eai_again|fetch failed|stream disconnected|socket|proxy|connection attempt failed|error while copying content|httprequestexception"))
@@ -90,19 +98,19 @@ public static class AiErrorExplainer
         if (status == 408 || Has(all, @"timed? ?out|timeout|tempo limite|tempo esgotado|deadline exceeded"))
             return E("tempo esgotado", LocalizedText.F("{0} demorou demais e a resposta não chegou a tempo. Tente de novo; se repetir, encurte o pedido ou escolha um modelo mais rápido.", new object?[] { who.Subject }));
 
-        // 10) Respostas vazias e programas ausentes.
+        // 11) Respostas vazias e programas ausentes.
         if (Has(all, @"^sem resposta$|terminou sem resposta|^o qira não respondeu\.?$|no response|empty response"))
             return E("sem resposta", LocalizedText.F("{0} terminou sem mandar nenhum texto. Tente de novo; se repetir, escolha outro modelo ou outra IA.", new object?[] { who.Subject }));
         if (Has(all, @"não encontrado neste pc|is not recognized as|enoent|cannot find the file|não foi possível iniciar"))
             return E("programa ausente", LocalizedText.F("O programa {0} não foi encontrado ou não abriu neste PC.", new object?[] { who.Of }) + " " + InstallAction(target));
 
-        // 11) Pedido recusado sem motivo reconhecido.
+        // 12) Pedido recusado sem motivo reconhecido.
         if (status == 400 || Has(all, @"bad request|invalid_request|invalid request|invalid_argument|malformed"))
             return E("pedido recusado", LocalizedText.F("{0} recusou o pedido como inválido: algo no envio (anexo, contexto da tela ou opção do modelo {1}) não é aceito. Tente sem anexos e sem o Contexto, ou escolha outro modelo.", new object?[] { who.Subject, m }));
         if (status == 404)
             return E("endereço não encontrado", LocalizedText.F("O endereço do serviço {0} não foi encontrado. Confira o endereço e o modelo em Configurações › IA.", new object?[] { who.Of }));
 
-        // 12) Mensagens da própria barra, já explicadas (frase em português, sem códigos), no idioma do app.
+        // 13) Mensagens da própria barra, já explicadas (frase em português, sem códigos), no idioma do app.
         if (technical is null) { string shown = LocalizedText.T(text); return new(ShortOf(shown), shown, null); }
         return E("erro desconhecido", LocalizedText.F("{0} devolveu um erro que a barra ainda não reconhece. Tente de novo; se repetir, escolha outro modelo ou outra IA. O texto original está abaixo.", new object?[] { who.Subject }));
     }

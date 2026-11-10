@@ -37,6 +37,43 @@ public class TaskStepsTests
         finally { File.Delete(path); }
     }
 
+    [Fact] public void GrowingTranscriptIsReadOnlyFromWhereItStopped()
+    {
+        // Memória e disco (09/11/2026): a cada mudança da conversa a barra relia o arquivo inteiro (8,8 MB numa sessão
+        // longa do Claude Code), e as linhas grandes se acumulavam no heap de objetos grandes (~280 MB).
+        string path = Path.Combine(Path.GetTempPath(), $"wsb-digest-{Guid.NewGuid():N}.jsonl");
+        try
+        {
+            var sb = new StringBuilder().AppendLine("{\"type\":\"user\",\"timestamp\":\"2026-11-07T13:00:00Z\",\"message\":{\"role\":\"user\",\"content\":\"Ajuste o painel\"}}").AppendLine(PlanSet);
+            string filler = "{\"type\":\"attachment\",\"text\":\"" + new string('x', 64 * 1024) + "\"}";
+            for (int i = 0; i < 40; i++) sb.AppendLine(filler);
+            File.WriteAllText(path, sb.ToString());
+            var first = ActivityDigest.Read(path);
+            Assert.True(ActivityDigest.LastBytesRead > 2 * 1024 * 1024); // primeira vez: o arquivo todo
+            Assert.Equal(["in_progress", "pending", "pending"], first.Steps.Select(s => s.Status));
+
+            // A IA avança o plano e escreve; a última linha ainda está sendo gravada (sem quebra de linha).
+            string reply = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Editando o painel\"}]}}";
+            File.AppendAllText(path, Advance + "\n" + reply[..20]);
+            var second = ActivityDigest.Read(path);
+            Assert.True(ActivityDigest.LastBytesRead < 4096); // só o que foi acrescentado
+            Assert.Equal(["Ler", "Editar", "Testar"], second.Steps.Select(s => s.Text)); // a lista inicial, de fora do trecho final
+            Assert.Equal(["completed", "in_progress", "pending"], second.Steps.Select(s => s.Status));
+            Assert.Equal(DateTimeOffset.Parse("2026-11-07T13:00:00Z"), second.StartedAt);
+
+            File.AppendAllText(path, reply[20..] + "\n"); // a linha termina de ser gravada
+            var third = ActivityDigest.Read(path);
+            Assert.Equal("Editando o painel", third.Updates.Last().Text);
+            Assert.Equal(["completed", "in_progress", "pending"], third.Steps.Select(s => s.Status));
+
+            // Arquivo trocado por um menor (as duas primeiras linhas): lê de novo do começo.
+            File.WriteAllText(path, string.Join("\n", sb.ToString().Split('\n')[..2]) + "\n");
+            var fresh = ActivityDigest.Read(path);
+            Assert.Equal(["in_progress", "pending", "pending"], fresh.Steps.Select(s => s.Status));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact] public void InferredPlanParsesStatusLinesAndIgnoresNoise()
     {
         var steps = InferredPlan.Parse("Aqui está:\nc|Ler o código\n- i | Ajustar o painel\n2. p|Compilar\ni|Outra em andamento\nqualquer coisa");

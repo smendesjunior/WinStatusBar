@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.4.5] - 2026-11-09 · compilação BUILD
+
+### Corrigido
+- Memória e disco com sessões longas do Claude Code ou do Codex: a cada mudança da conversa, a barra relia o arquivo inteiro da conversa (8,8 MB numa sessão longa, várias vezes por minuto) para acompanhar as etapas da tarefa. As linhas grandes se acumulavam na memória (cerca de 280 MB a mais) e o disco ficava sendo lido o tempo todo. Agora ela lê só o que foi acrescentado desde a última vez (medido: leitura de disco de 184 para 10 KB/s, e a barra em cerca de 350 MB em vez de 600 a 660 MB).
+- Uso de CPU e placa de vídeo enquanto uma IA trabalha: o brilho colorido em volta do módulo do agente era refeito com desfoque a cada quadro da tela (165 vezes por segundo neste PC, nas duas barras) e chegava a ocupar de 18 a 35% de um núcleo e 8% da placa de vídeo. Agora o contorno desfocado é desenhado uma vez só e as cores passam por trás dele 30 vezes por segundo. O visual é o mesmo, com cerca de metade da CPU e da placa de vídeo (medido: de 17,9% para 8,3% de um núcleo e de 8,4% para 3,6% da placa).
+- IA local: quando a placa de vídeo erra um cálculo (erro de CUDA como "illegal memory access" ou "misaligned address", comum com overclock acima do que a placa aguenta), a mensagem agora diz isso e sugere reduzir o overclock. Antes ela falava em falta de memória. Se o Ollama estiver reabrindo o modelo depois de cair, a barra pede para tentar de novo em alguns segundos, em vez de dizer que o serviço está instável e que "não é falha do seu PC".
+- Modelos locais que pensam (como o Qwen 3.5) no Codex: o seletor mostrava só "Alto", sem escolha, porque o Codex não exibe o nível "sem raciocínio". Agora aparecem **Baixo** (sem raciocínio, mais rápido) e **Alto** (pensa antes de responder), e o Baixo de fato desliga o raciocínio. Os modelos já no seletor passam a ter os dois níveis na próxima verificação das IAs no Codex.
+
 ## [1.4.4] - 2026-11-09 · compilação 20261110010828
 
 ### Corrigido

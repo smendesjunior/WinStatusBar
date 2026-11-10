@@ -3762,4 +3762,16 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SECAEBA31021242CD" xml:space="preserve">
     <value>Texto longo demais para o Gemini pela conta Google. Inicie uma nova conversa ou use a chave de API.</value>
   </data>
+  <data name="S6F6DC5C2A715F73D" xml:space="preserve">
+    <value>falha da placa de vídeo</value>
+  </data>
+  <data name="S02E00F4553B4C2AE" xml:space="preserve">
+    <value>A placa de vídeo errou um cálculo ao rodar o modelo {0} (erro de CUDA). Isso costuma acontecer com a placa em overclock: reduza ou desligue o overclock e tente de novo. Sem overclock, atualize o driver da placa de vídeo.</value>
+  </data>
+  <data name="S9DA365C459C4FE21" xml:space="preserve">
+    <value>IA local reiniciando</value>
+  </data>
+  <data name="SA0DBBA527195B60F" xml:space="preserve">
+    <value>A IA local (Ollama) parou no meio da resposta e está reabrindo o modelo. Tente de novo em alguns segundos. Se repetir, a causa costuma ser a placa de vídeo: com overclock, reduza ou desligue; sem overclock, escolha um modelo menor.</value>
+  </data>
 </root>

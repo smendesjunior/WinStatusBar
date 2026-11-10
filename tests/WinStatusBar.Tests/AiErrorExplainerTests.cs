@@ -41,6 +41,11 @@ public class AiErrorExplainerTests
     [InlineData(T.Api, "No such host is known. (api.exemplo.com:443)", "sem conexão", "com a API")]
     [InlineData(T.Api, "HTTP 400: This model's maximum context length is 8192 tokens.", "conversa longa demais", "nova conversa")]
     [InlineData(T.Local, "HTTP 500: model requires more system memory (12.0 GiB) than is available (8.1 GiB)", "falta memória", "modelo menor")]
+    [InlineData(T.Local, "HTTP 500: CUDA error: out of memory", "falta memória", "modelo menor")]
+    // Casos reais (09/11/2026): placa de vídeo com overclock instável errando cálculos do Ollama, e o motor dele reiniciando.
+    [InlineData(T.Local, "HTTP 500: an error was encountered while running the model: CUDA error\nCUDA error: an illegal memory access was encountered", "falha da placa de vídeo", "overclock")]
+    [InlineData(T.Local, "HTTP 500: {\"error\":\"an error was encountered while running the model: CUDA error: misaligned address\"}", "falha da placa de vídeo", "overclock")]
+    [InlineData(T.Local, "HTTP 500: health resp: Get \"http://127.0.0.1:55478/health\": dial tcp 127.0.0.1:55478: connectex: No connection could be made because the target machine actively refused it.", "IA local reiniciando", "Tente de novo em alguns segundos")]
     [InlineData(T.Local, "HTTP 400: \"phi4-mini:latest\" does not support thinking", "modelo sem raciocínio", "Sem raciocínio")]
     [InlineData(T.Claude, "Claude Code não encontrado neste PC", "programa ausente", "Instale o Claude Code")]
     [InlineData(T.Local, "Sem resposta", "sem resposta", "terminou sem mandar")]

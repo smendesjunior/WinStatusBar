@@ -3762,4 +3762,16 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SECAEBA31021242CD" xml:space="preserve">
     <value>文字过长，通过 Google 账户使用的 Gemini 无法处理。请开始新对话或使用 API 密钥。</value>
   </data>
+  <data name="S6F6DC5C2A715F73D" xml:space="preserve">
+    <value>显卡出错</value>
+  </data>
+  <data name="S02E00F4553B4C2AE" xml:space="preserve">
+    <value>显卡在运行模型 {0} 时计算出错（CUDA 错误）。这通常发生在显卡超频时：请降低或关闭超频后重试。如果没有超频，请更新显卡驱动程序。</value>
+  </data>
+  <data name="S9DA365C459C4FE21" xml:space="preserve">
+    <value>本地 AI 正在重启</value>
+  </data>
+  <data name="SA0DBBA527195B60F" xml:space="preserve">
+    <value>本地 AI (Ollama) 在回答中途停止，正在重新加载模型。请几秒后重试。如果再次发生，原因通常是显卡：如果超频，请降低或关闭超频；如果没有超频，请选择更小的模型。</value>
+  </data>
 </root>

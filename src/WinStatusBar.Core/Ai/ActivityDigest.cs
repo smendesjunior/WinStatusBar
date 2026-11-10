@@ -11,37 +11,85 @@ public sealed record ActivityDigest(string? Request, IReadOnlyList<ActivityUpdat
     /// <summary>Primeiro horário registrado na conversa (início da tarefa), mesmo depois de a barra reiniciar.</summary>
     public DateTimeOffset? StartedAt { get; init; }
 
+    private const int TailLimit = 2 * 1024 * 1024;
+
+    /// <summary>
+    /// Até onde cada transcript já foi lido. Eles só crescem no fim; antes, cada mudança relia o arquivo inteiro
+    /// (8,8 MB numa sessão longa, várias vezes por minuto), e as linhas grandes se acumulavam no heap de objetos grandes
+    /// do .NET (~280 MB medidos em 09/11/2026), além de manter o disco ocupado.
+    /// </summary>
+    private sealed class Cursor
+    {
+        public long Offset;                      // fim da última linha completa já lida
+        public List<ActivityStep> EarlierSteps = []; // plano das linhas que já saíram do trecho final
+        public readonly LinkedList<string> Tail = new();
+        public long TailChars;
+        public DateTimeOffset? Started;
+        public bool Partial;
+    }
+
+    private static readonly Dictionary<string, Cursor> Cursors = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Lock CursorGate = new();
+    /// <summary>Bytes lidos do arquivo na última leitura (testes).</summary>
+    internal static long LastBytesRead { get; private set; }
+
     public static ActivityDigest Read(string? path)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return Parse([], hasTranscript: false);
-        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        const int limit = 2 * 1024 * 1024;
-        bool partial = file.Length > limit;
-        using var reader = new StreamReader(file, Encoding.UTF8);
-        if (!partial)
+        lock (CursorGate)
         {
-            var all = new List<string>();
-            while (reader.ReadLine() is { } line) all.Add(line);
-            return Parse(all, partial);
-        }
-        // Transcript grande (o app desktop do Claude grava blocos enormes): mensagens só do trecho final,
-        // mas as operações de plano do arquivo inteiro, para a lista inicial de etapas não se perder.
-        var earlierPlan = new List<string>();
-        var tail = new LinkedList<string>();
-        long tailChars = 0;
-        DateTimeOffset? started = null;
-        while (reader.ReadLine() is { } line)
-        {
-            if (started is null && line.Contains("\"timestamp\"", StringComparison.Ordinal)) started = TimestampOf(line);
-            tail.AddLast(line); tailChars += line.Length;
-            while (tailChars > limit && tail.First is { } first)
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            string key = Path.GetFullPath(path);
+            if (!Cursors.TryGetValue(key, out var cursor) || file.Length < cursor.Offset) // novo, ou trocado por um menor
             {
-                tail.RemoveFirst(); tailChars -= first.Value.Length;
-                if (IsPlanLine(first.Value)) earlierPlan.Add(first.Value);
+                if (!Cursors.ContainsKey(key) && Cursors.Count >= 20) Cursors.Remove(Cursors.Keys.First());
+                Cursors[key] = cursor = new Cursor();
             }
+            long before = cursor.Offset;
+            file.Seek(cursor.Offset, SeekOrigin.Begin);
+            ReadNewLines(file, cursor);
+            LastBytesRead = cursor.Offset - before;
+            // Transcript grande (o app desktop do Claude grava blocos enormes): mensagens só do trecho final, mas o plano
+            // do arquivo inteiro, para a lista inicial de etapas não se perder.
+            var digest = Parse(cursor.Tail, cursor.Partial, initialSteps: cursor.EarlierSteps);
+            return cursor.Started is null || digest.StartedAt <= cursor.Started ? digest : digest with { StartedAt = cursor.Started };
         }
-        var digest = Parse(earlierPlan.Concat(tail), partial);
-        return started is null || digest.StartedAt <= started ? digest : digest with { StartedAt = started };
+    }
+
+    /// <summary>Lê só as linhas completas acrescentadas; a última, ainda sendo gravada, fica para a próxima leitura.</summary>
+    private static void ReadNewLines(FileStream file, Cursor cursor)
+    {
+        var buffer = new byte[64 * 1024];
+        using var line = new MemoryStream();
+        long consumed = 0;
+        int n;
+        while ((n = file.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            int start = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (buffer[i] != (byte)'\n') continue;
+                line.Write(buffer, start, i - start);
+                consumed += line.Length + 1;
+                Add(cursor, Encoding.UTF8.GetString(line.GetBuffer(), 0, (int)line.Length).TrimEnd('\r'));
+                line.SetLength(0);
+                start = i + 1;
+            }
+            line.Write(buffer, start, n - start);
+        }
+        cursor.Offset += consumed;
+    }
+
+    private static void Add(Cursor cursor, string line)
+    {
+        if (cursor.Started is null && line.Contains("\"timestamp\"", StringComparison.Ordinal)) cursor.Started = TimestampOf(line);
+        cursor.Tail.AddLast(line); cursor.TailChars += line.Length;
+        while (cursor.TailChars > TailLimit && cursor.Tail.First is { } first)
+        {
+            cursor.Tail.RemoveFirst(); cursor.TailChars -= first.Value.Length;
+            cursor.Partial = true;
+            if (IsPlanLine(first.Value)) cursor.EarlierSteps = Parse([first.Value], initialSteps: cursor.EarlierSteps).Steps.ToList();
+        }
     }
 
     private static DateTimeOffset? TimestampOf(string line)
@@ -58,11 +106,11 @@ public sealed record ActivityDigest(string? Request, IReadOnlyList<ActivityUpdat
         => line.Contains("update_plan", StringComparison.Ordinal) || line.Contains("\"TodoWrite\"", StringComparison.Ordinal);
 
     /// <summary>Extrai apenas mensagens públicas e planos registrados; não lê raciocínio interno nem saídas de ferramentas.</summary>
-    public static ActivityDigest Parse(IEnumerable<string> lines, bool partial = false, bool hasTranscript = true)
+    public static ActivityDigest Parse(IEnumerable<string> lines, bool partial = false, bool hasTranscript = true, IReadOnlyList<ActivityStep>? initialSteps = null)
     {
         string? request = null;
         var updates = new List<ActivityUpdate>();
-        var steps = new List<ActivityStep>();
+        var steps = initialSteps is null ? new List<ActivityStep>() : new List<ActivityStep>(initialSteps);
         DateTimeOffset? started = null;
         foreach (string line in lines)
         {

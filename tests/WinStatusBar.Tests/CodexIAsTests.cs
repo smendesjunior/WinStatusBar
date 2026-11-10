@@ -523,12 +523,58 @@ public class CodexIAsLocalAndApiTests
         Assert.Equal(["text", "image"], qwen["input_modalities"]!.AsArray().Select(x => x!.GetValue<string>()).ToArray());
         var routes = routing["models"]!.AsArray();
         Assert.Equal(["phi4-mini:latest", "qwen3:8b"], routes.Select(r => r!["slug"]!.GetValue<string>()).ToArray());
-        Assert.Equal(["none", "high"], routes[1]!["thinking"]!["levels"]!.AsArray().Select(x => x!.GetValue<string>()).ToArray());
+        // Pensamento liga/desliga como Baixo/Alto (o Codex não mostra "none"; com só "Alto" não havia o que escolher).
+        Assert.Equal(["low", "high"], routes[1]!["thinking"]!["levels"]!.AsArray().Select(x => x!.GetValue<string>()).ToArray());
+        Assert.Equal(["low", "high"], qwen["supported_reasoning_levels"]!.AsArray().Select(x => x!["effort"]!.GetValue<string>()).ToArray());
         Assert.Equal("selected", routing["auto_review_model"]!.GetValue<string>()); // o resto do roteamento fica igual
         Assert.Equal(2, OllamaCatalog.Count(routing));
 
         var again = OllamaCatalog.MergeInto(catalog, routing, installed); // de novo: nada muda
         Assert.Empty(again.Added);
         Assert.Empty(again.Removed);
+    }
+
+    [Fact]
+    public void Modelo_do_Ollama_que_pensa_passa_de_none_high_para_Baixo_Alto()
+    {
+        // Como o "ollama launch codex" grava (09/11/2026): o Codex só mostrava "Alto" para o qwen3.5:4b.
+        static JsonObject Thinking(params string[] levels) => new()
+        {
+            ["supported"] = true, ["levels"] = new JsonArray(levels.Select(l => (JsonNode)l).ToArray()),
+            ["values"] = new JsonObject(levels.Select(l => KeyValuePair.Create(l, (JsonNode?)JsonValue.Create(l))).ToArray()),
+        };
+        static JsonObject Entry(string slug, string def, params string[] levels) => new()
+        {
+            ["slug"] = slug, ["display_name"] = slug, ["visibility"] = "list", ["default_reasoning_level"] = def,
+            ["supported_reasoning_levels"] = new JsonArray(levels.Select(l => (JsonNode)new JsonObject { ["effort"] = l }).ToArray()),
+        };
+        var catalog = new JsonArray(Entry("qwen3.5:4b", "none", "none", "high"), Entry("phi4-mini:latest", "none", "none"), Entry("gpt-oss:20b", "medium", "low", "medium", "high"));
+        var routing = new JsonObject
+        {
+            ["models"] = new JsonArray(
+                new JsonObject { ["slug"] = "qwen3.5:4b", ["thinking"] = Thinking("none", "high") },
+                new JsonObject { ["slug"] = "phi4-mini:latest", ["thinking"] = Thinking("none") },
+                new JsonObject { ["slug"] = "gpt-oss:20b", ["thinking"] = Thinking("low", "medium", "high") }),
+        };
+        var installed = new[] { new OllamaCatalog.Local("qwen3.5:4b", true, true, 32768), new OllamaCatalog.Local("phi4-mini:latest", false, false, 131072), new OllamaCatalog.Local("gpt-oss:20b", true, false, 131072) };
+        OllamaCatalog.MergeInto(catalog, routing, installed);
+
+        static string[] Levels(JsonNode? n) => n!.AsArray().Select(x => (x is JsonObject o ? o["effort"] : x)!.GetValue<string>()).ToArray();
+        var routes = routing["models"]!.AsArray();
+        Assert.Equal(["low", "high"], Levels(routes[0]!["thinking"]!["levels"]));
+        var values = routes[0]!["thinking"]!["values"]!;
+        Assert.False(values["low"]!.GetValue<bool>()); // Baixo = sem raciocínio (mais rápido)
+        Assert.False(values["none"]!.GetValue<bool>()); // pedidos antigos com "none" continuam sem raciocínio
+        Assert.True(values["high"]!.GetValue<bool>());
+        Assert.Equal(["low", "high"], Levels(catalog[0]!["supported_reasoning_levels"]));
+        Assert.Equal("low", catalog[0]!["default_reasoning_level"]!.GetValue<string>()); // "none" vira o equivalente
+        // Quem não pensa e quem já tem níveis de verdade (gpt-oss) não mudam.
+        Assert.Equal(["none"], Levels(routes[1]!["thinking"]!["levels"]));
+        Assert.Equal(["low", "medium", "high"], Levels(routes[2]!["thinking"]!["levels"]));
+        Assert.Equal("medium", catalog[2]!["default_reasoning_level"]!.GetValue<string>());
+
+        string before = catalog.ToJsonString() + routing.ToJsonString();
+        OllamaCatalog.MergeInto(catalog, routing, installed); // de novo: nada muda
+        Assert.Equal(before, catalog.ToJsonString() + routing.ToJsonString());
     }
 }
