@@ -34,6 +34,8 @@ public partial class App : Application
 
     public SettingsService Settings { get; } = new();
     public MonitoringHub Hub { get; private set; } = null!;
+    /// <summary>Continuar pela API (interno: o serviço é interno).</summary>
+    internal CodexApiResumeService ApiResume { get; private set; } = null!;
     public IReadOnlyList<BarWindow> Bars => _bars;
 
     public App()
@@ -113,6 +115,8 @@ public partial class App : Application
         Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;
         Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
         Hub.Start();
+        ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);
+        ApiResume.Start();
         StartApiUsageAutoRefresh();
         CopilotWebSession.Install(_dispatcher!);
         QiraHubSession.Install();
@@ -144,6 +148,7 @@ public partial class App : Application
         MemoryTrim.Start(_dispatcher);
         _tray.HardwareChanged += Hub.HardwareChanged;
         _tray.CommandInvoked += OnTrayCommand;
+        _tray.BalloonClicked += () => _dispatcher.TryEnqueue(() => { var click = _balloonClick; _balloonClick = null; click?.Invoke(); });
         _tray.MenuRequested += (x, y) => _dispatcher.TryEnqueue(() =>
             _bars.FirstOrDefault()?.ShowTrayMenu(x, y, OnTrayCommand));
 
@@ -470,6 +475,7 @@ public partial class App : Application
             _displayDebounce?.Stop();
             GoogleUsageSession.Stop();
             MicrosoftCreditsSession.Stop();
+            ApiResume?.Shutdown(); // só laço e timers; a continuação pela API segue rodando
         });
         foreach (var b in _bars.ToList()) ExitStep("barra", b.CloseBar);
         _bars.Clear();

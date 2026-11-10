@@ -110,6 +110,53 @@ public class ApiResumeSourceTests
         }
     }
 
+    private static string App() => Src("App.xaml.cs");
+
+    [Fact]
+    public void ServiceStartsAfterTheHubAndBeforeTheTray()
+    {
+        string app = App();
+        int hub = app.IndexOf("Hub.Start();", StringComparison.Ordinal);
+        int create = app.IndexOf("ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);", StringComparison.Ordinal);
+        int start = app.IndexOf("ApiResume.Start();", StringComparison.Ordinal);
+        int tray = app.IndexOf("_tray = new TrayIconService(IconPath);", StringComparison.Ordinal);
+        Assert.True(hub >= 0 && hub < create && create < start && start < tray, $"{hub} {create} {start} {tray}");
+    }
+
+    [Fact]
+    public void ApiResumePropertyIsInternal() =>
+        Assert.Contains("internal CodexApiResumeService ApiResume { get; private set; }", App());
+
+    [Fact]
+    public void NotifyFollowsTheNotificationsOption()
+    {
+        string app = App();
+        string body = Body(app, "public void Notify(");
+        Assert.Contains("Settings.Current.Notifications", body);
+        Assert.Contains("_balloonClick = onClick", body);
+        Assert.Contains("_tray?.ShowBalloon(title, message)", body);
+        Assert.Contains("_tray.BalloonClicked +=", app);
+    }
+
+    [Fact]
+    public void ShutdownIsInsideTheFirstTimersStep()
+    {
+        string exit = Body(App(), "public void ExitApp()");
+        int first = exit.IndexOf("ExitStep(", StringComparison.Ordinal);
+        Assert.True(exit[first..].StartsWith("ExitStep(\"timers\"", StringComparison.Ordinal));
+        int next = exit.IndexOf("ExitStep(", first + 1, StringComparison.Ordinal);
+        Assert.Contains("ApiResume?.Shutdown();", exit[first..(next < 0 ? exit.Length : next)]);
+    }
+
+    [Fact]
+    public void ExitNeverKillsCodex()
+    {
+        string exit = Body(App(), "public void ExitApp()");
+        Assert.DoesNotContain("KillTree", exit);
+        Assert.DoesNotContain("codex.exe", exit);
+        Assert.DoesNotContain("GetProcessesByName(\"codex", App());
+    }
+
     [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
