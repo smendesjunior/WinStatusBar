@@ -137,9 +137,56 @@ public static class CodexParsers
                 case "response_item":
                     ApplyResponseItem(session, ptype, p, ts);
                     return null;
+                case "token_usage_record":
+                    if (Str(p, "thread_id") is { } owner && owner != session.Id) return null;
+                    if (Str(p, "turn_id") is { } turnId && turnId == session.TurnId
+                        && p.TryGetProperty("turn_token_usage", out var usage) && Tokens(usage) is { } tokens)
+                        session.TurnTokens = tokens;
+                    return null;
             }
             return null;
         }
+    }
+
+    /// <summary>Código de erro com que o Codex encerra um turno quando a cota acaba.</summary>
+    public const string UsageLimitExceeded = "usage_limit_exceeded";
+
+    /// <summary>Lê input/cached_input/output/reasoning_output_tokens; null se não for um objeto de uso.</summary>
+    internal static TokenUsage? Tokens(JsonElement usage)
+    {
+        if (usage.ValueKind != JsonValueKind.Object) return null;
+        long? input = Long(usage, "input_tokens");
+        long? output = Long(usage, "output_tokens");
+        if (input is null && output is null) return null;
+        return new TokenUsage(input ?? 0, Long(usage, "cached_input_tokens") ?? 0, output ?? 0, Long(usage, "reasoning_output_tokens") ?? 0);
+    }
+
+    /// <summary>Fim de turno: com o código de cota vira Interrompida; com outro erro, Erro com o rótulo do explicador; sem erro, Concluída.</summary>
+    private static void FinishTurn(AgentSession s, JsonElement p)
+    {
+        if (!p.TryGetProperty("error", out var error) || error.ValueKind != JsonValueKind.Object)
+        {
+            ExecutionProgress.FinishResponse(s);
+            return;
+        }
+        string code = "error";
+        if (error.TryGetProperty("codex_error_info", out var info))
+        {
+            if (info.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(info.GetString())) code = info.GetString()!;
+            else if (info.ValueKind == JsonValueKind.Object)
+                foreach (var prop in info.EnumerateObject()) { code = prop.Name; break; }
+        }
+        s.ExecutionEnded = true;
+        s.StopReason = code;
+        if (code == UsageLimitExceeded)
+        {
+            s.State = AgentState.Interrupted;
+            s.Caption = CodexQuotaText.StoppedCaption(s.LastReachedType);
+            return;
+        }
+        s.State = AgentState.Error;
+        s.Caption = global::WinStatusBar.Core.LocalizedText.F("Falha na execução · {0}",
+            AiErrorExplainer.Explain(AgentPrompt.Target.Codex, Str(error, "message") ?? code).Short);
     }
 
     private static QuotaSnapshot? ApplyEvent(AgentSession s, string? ptype, JsonElement p, DateTimeOffset ts)
@@ -158,9 +205,11 @@ public static class CodexParsers
                 s.PendingPlans.Clear(); s.TurnId = turn; s.ExecutionEnded = false; s.ScopeChanged = false; s.PlanSteps = null;
                 s.State = AgentState.Running; s.StartedAt = ts; s.LastActivity = ts;
                 s.Caption = global::WinStatusBar.Core.LocalizedText.T("Processando a solicitação…"); s.ProgressPercent = null;
+                s.TurnTrigger = p.TryGetProperty("turn_attribution", out var attribution) ? Str(attribution, "turn_trigger") : null;
+                s.StopReason = null; s.TurnTokens = null; s.LastReachedType = null;
                 break;
             case "task_complete":
-                ExecutionProgress.FinishResponse(s); s.LastActivity = ts;
+                FinishTurn(s, p); s.LastActivity = ts;
                 break;
             case "turn_aborted":
                 s.State = AgentState.Interrupted; s.ExecutionEnded = true; s.LastActivity = ts; s.Caption = "Execução interrompida";
@@ -204,7 +253,12 @@ public static class CodexParsers
                 break;
             case "token_count":
                 s.LastActivity = ts;
-                if (p.TryGetProperty("rate_limits", out var rl)) return ParseRateLimits(rl, global::WinStatusBar.Core.LocalizedText.T("Codex rollout"));
+                if (p.TryGetProperty("rate_limits", out var rl))
+                {
+                    var quota = ParseRateLimits(rl, global::WinStatusBar.Core.LocalizedText.T("Codex rollout"), ts);
+                    if (quota?.Access?.ReachedType is { Length: > 0 } reached) s.LastReachedType = reached;
+                    return quota;
+                }
                 break;
         }
         return null;

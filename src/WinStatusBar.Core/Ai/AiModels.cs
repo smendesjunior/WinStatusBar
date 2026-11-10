@@ -64,6 +64,14 @@ public sealed class AgentSession
     public string? TranscriptPath { get; set; }
     /// <summary>Quem abriu a conversa (session_meta.originator do Codex; "winstatusbar" = a própria barra).</summary>
     public string? Originator { get; set; }
+    /// <summary>Código do erro que encerrou o turno (Codex: codex_error_info; "usage_limit_exceeded" = parada pela cota).</summary>
+    public string? StopReason { get; set; }
+    /// <summary>Quem iniciou o turno atual (Codex: turn_attribution.turn_trigger; "exec" = codex exec).</summary>
+    public string? TurnTrigger { get; set; }
+    /// <summary>Tokens acumulados do turno atual (Codex: token_usage_record.turn_token_usage).</summary>
+    public TokenUsage? TurnTokens { get; set; }
+    /// <summary>Último motivo de cota visto nos token_count do turno.</summary>
+    internal string? LastReachedType { get; set; }
 
     public string ProjectName => string.IsNullOrWhiteSpace(ProjectDir) ? string.Empty : Path.GetFileName(ProjectDir.TrimEnd('\\', '/'));
 
@@ -82,6 +90,9 @@ public sealed record QuotaWindow(AgentKind Kind, string Label, double UsedPercen
     /// <summary>Uma janela cujo horário de renovação já passou não pode mais ser exibida como valor atual.</summary>
     public bool IsExpired(DateTimeOffset now) => ResetsAt is not null && now >= ResetsAt.Value;
 }
+
+/// <summary>Tokens de um turno: entrada (inclui a parte em cache), entrada em cache, saída e raciocínio.</summary>
+public sealed record TokenUsage(long Input, long CachedInput, long Output, long Reasoning);
 
 public sealed record ResetCredit(string Title, string? Description, DateTimeOffset? ExpiresAt, string Status)
 {
