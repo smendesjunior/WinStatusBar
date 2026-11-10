@@ -9,6 +9,8 @@ public sealed class TrayIconService : IDisposable
     public enum Command { Settings = 1, Refresh, RestartIntegration, Diagnostics, Exit, Clipboard, Emoji, ClipPause, ClipData }
 
     private static readonly uint CallbackMsg = WM_USER + 77;
+    /// <summary>Clique no balão (0x405), entregue no LOWORD do lParam com NOTIFYICON_VERSION_4.</summary>
+    private const uint NIN_BALLOONUSERCLICK = WM_USER + 5;
     private static readonly uint TaskbarCreated = RegisterWindowMessageW("TaskbarCreated");
     private readonly WNDPROC _proc;
     private readonly IntPtr _hwnd;
@@ -18,6 +20,8 @@ public sealed class TrayIconService : IDisposable
     public event Action<Command>? CommandInvoked;
     public event Action<int, int>? MenuRequested;
     public event Action? HardwareChanged;
+    /// <summary>O usuário clicou no último balão mostrado.</summary>
+    public event Action? BalloonClicked;
 
     public TrayIconService(string iconPath)
     {
@@ -178,6 +182,7 @@ public sealed class TrayIconService : IDisposable
             uint ev = (uint)((long)lParam & 0xFFFF);
             if (ev is WM_RBUTTONUP or WM_CONTEXTMENU) ShowMenu();
             else if (ev is WM_LBUTTONUP or WM_LBUTTONDBLCLK) CommandInvoked?.Invoke(Command.Settings);
+            else if (ev == NIN_BALLOONUSERCLICK) BalloonClicked?.Invoke();
             return IntPtr.Zero;
         }
         // Explorer reiniciado ou escala alterada: recarrega no novo tamanho e registra de novo.
