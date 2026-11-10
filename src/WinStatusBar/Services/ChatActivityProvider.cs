@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using WinStatusBar.Core.Ai;
+using WinStatusBar.Core.Ai.Codex;
 
 namespace WinStatusBar.Services;
 
@@ -37,6 +38,10 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
 
     public AgentKind Kind { get; }
     public event EventHandler? SessionsChanged;
+    /// <summary>Títulos das conversas do Codex (só o ChatGPT usa): uma conversa com registro é deixada para o registro.</summary>
+    public Func<IEnumerable<string?>>? CodexThreadTitles { get; set; }
+    /// <summary>Motivo curto do bloqueio do Codex, ou null quando livre (só o ChatGPT usa).</summary>
+    public Func<string?>? CodexBlockedReason { get; set; }
     /// <summary>Duração da última consulta à janela (diagnóstico do custo).</summary>
     public TimeSpan LastProbeCost { get; private set; }
 
@@ -176,7 +181,7 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
 
     private void Apply(List<(string Title, string Caption)> found)
     {
-        var skip = new HashSet<string>(_skipTitles().Where(t => !string.IsNullOrWhiteSpace(t))!, StringComparer.OrdinalIgnoreCase);
+        var skip = _skipTitles().Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
         var now = DateTimeOffset.Now;
         bool changed = false;
         lock (_gate)
@@ -184,7 +189,7 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
             var live = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var (title, caption) in found)
             {
-                if (skip.Contains(title)) continue;
+                if (ChatProbeSchedule.MatchesThread(title, skip)) continue;
                 string id = $"{(_app == App.Qira ? "qira" : _app == App.ChatGpt ? "chatgpt" : "claude-chat")}:{title}";
                 if (!live.Add(id)) continue;
                 if (!_sessions.TryGetValue(id, out var s))
@@ -202,8 +207,28 @@ public sealed class ChatActivityProvider : IAgentActivityProvider, IDisposable
             {
                 if (s.State == AgentState.Running)
                 {
-                    WinStatusBar.App.Log($"Chat {_app}: indicador ausente; conclusão não confirmada · {s.Title} após {(now - (s.StartedAt ?? now)).TotalSeconds:0} s");
-                    s.State = AgentState.Unknown; s.Caption = "Indicador não observado · conclusão não confirmada"; s.LastActivity = now; s.StartedAt = null;
+                    // Só o ChatGPT consulta o Codex: com registro, o registro manda; sem registro e com o Codex sem cota, foi a cota.
+                    string? blocked = null;
+                    var action = _app == App.ChatGpt
+                        ? ChatProbeSchedule.OnIndicatorGone(ChatProbeSchedule.MatchesThread(s.Title, CodexThreadTitles?.Invoke() ?? []),
+                            blocked = CodexBlockedReason?.Invoke())
+                        : IndicatorGoneAction.Unconfirmed;
+                    double seconds = (now - (s.StartedAt ?? now)).TotalSeconds;
+                    switch (action)
+                    {
+                        case IndicatorGoneAction.Remove:
+                            WinStatusBar.App.Log($"Chat {_app}: indicador ausente · {s.Title} · a conversa está no registro do Codex, que define o estado");
+                            _sessions.Remove(s.Id);
+                            break;
+                        case IndicatorGoneAction.BlockedByQuota:
+                            WinStatusBar.App.Log($"Chat {_app}: indicador ausente · {s.Title} · Codex sem cota ({blocked}) após {seconds:0} s");
+                            s.State = AgentState.Interrupted; s.Caption = CodexQuotaText.ChatRefused(blocked!); s.LastActivity = now; s.StartedAt = null;
+                            break;
+                        default:
+                            WinStatusBar.App.Log($"Chat {_app}: indicador ausente; conclusão não confirmada · {s.Title} após {seconds:0} s");
+                            s.State = AgentState.Unknown; s.Caption = "Indicador não observado · conclusão não confirmada"; s.LastActivity = now; s.StartedAt = null;
+                            break;
+                    }
                     changed = true;
                 }
                 else if (now - s.LastActivity > KeepFinished) { _sessions.Remove(s.Id); changed = true; }
