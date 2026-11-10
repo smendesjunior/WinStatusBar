@@ -15,4 +15,17 @@ public class TaskBriefingSkipTests
         int infer = source.IndexOf("await InferAsync(", StringComparison.Ordinal);
         Assert.True(paused >= 0 && paused < guard && guard < infer, $"ordem: paused={paused} guard={guard} infer={infer}");
     }
+
+    [Theory]
+    [InlineData("Hub.ChatGptChat.CodexThreadTitles = () => Hub.Codex.KnownTitles;")]
+    [InlineData("Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;")]
+    [InlineData("Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;")]
+    public void AppWiresTheCodexBlockBeforeTheHubStarts(string line)
+    {
+        string app = RepoSource.Read("src", "WinStatusBar", "App.xaml.cs");
+        int created = app.IndexOf("Hub = new MonitoringHub(_dispatcher, Settings);", StringComparison.Ordinal);
+        int started = app.IndexOf("Hub.Start();", created, StringComparison.Ordinal);
+        int wired = app.IndexOf(line, StringComparison.Ordinal);
+        Assert.True(created >= 0 && created < wired && wired < started, $"criado={created} ligado={wired} iniciado={started}");
+    }
 }

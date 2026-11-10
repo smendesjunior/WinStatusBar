@@ -109,6 +109,9 @@ public partial class App : Application
         _ui.ColorValuesChanged += (_, _) => _dispatcher.TryEnqueue(() => { UpdateTheme(); foreach (var b in _bars) b.ApplyAppearance(); Hub.QueueAgentRefresh(); });
 
         Hub = new MonitoringHub(_dispatcher, Settings);
+        Hub.ChatGptChat.CodexThreadTitles = () => Hub.Codex.KnownTitles;
+        Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;
+        Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
         Hub.Start();
         StartApiUsageAutoRefresh();
         CopilotWebSession.Install(_dispatcher!);
