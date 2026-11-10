@@ -115,6 +115,35 @@ public static class AiErrorExplainer
         return E("erro desconhecido", LocalizedText.F("{0} devolveu um erro que a barra ainda não reconhece. Tente de novo; se repetir, escolha outro modelo ou outra IA. O texto original está abaixo.", new object?[] { who.Subject }));
     }
 
+    /// <summary>
+    /// Erro da continuação pela API (codex exec resume em api.openai.com): as regras próprias vêm antes das atuais e
+    /// nenhuma explicação sugere trocar de modelo ou de nível (a barra nunca troca). <see cref="Explain"/> não muda.
+    /// </summary>
+    public static AiErrorExplanation ExplainApiResume(string? raw, string? model, DateTimeOffset? quotaReturns)
+    {
+        string text = raw ?? "";
+        AiErrorExplanation For(Codex.ApiResume.ApiResumeProblem p) =>
+            Codex.ApiResume.ApiResumeErrors.For(p, model, quotaReturns: quotaReturns, technical: raw);
+        if (Has(text, @"active writer")) return For(Codex.ApiResume.ApiResumeProblem.WriterConflict);
+        if (Has(text, @"insufficient_quota|exceeded your current quota")) return For(Codex.ApiResume.ApiResumeProblem.ApiNoCredits);
+        if (Has(text, @"no (conversation|thread|rollout) found|thread not found|conversation not found")) return For(Codex.ApiResume.ApiResumeProblem.ThreadNotFound);
+        if (Has(text, @"model_not_found|does not exist") || (Has(text, @"HTTP 403|does not have access") && Has(text, @"model")))
+            return For(Codex.ApiResume.ApiResumeProblem.ModelNotInApi);
+        if (Has(text, @"forced_login_method")) return For(Codex.ApiResume.ApiResumeProblem.ForcedChatGptLogin);
+        if (Has(text, @"HTTP 401|incorrect api key|invalid_api_key")) return For(Codex.ApiResume.ApiResumeProblem.KeyRejected);
+
+        // Limite de pedidos, servidor, rede e contexto grande: as regras atuais da API valem. Os outros rótulos atuais sugerem
+        // trocar de modelo, o que a continuação nunca faz.
+        var general = Explain(AgentPrompt.Target.Api, raw, model);
+        string technical = Codex.ApiResume.ApiResumeErrors.Redact(raw);
+        string[] kept = [LocalizedText.T("muitos pedidos"), LocalizedText.T("serviço instável"), LocalizedText.T("sem conexão"),
+            LocalizedText.T("tempo esgotado"), LocalizedText.T("conversa longa demais")];
+        if (kept.Contains(general.Short)) return general with { Technical = technical.Length > 0 ? technical : null };
+        return new(LocalizedText.T("erro desconhecido"),
+            LocalizedText.T("O Codex devolveu um erro que a barra ainda não reconhece. A barra não troca de modelo nem de nível; confira o detalhe técnico e clique em Tentar de novo."),
+            technical.Length > 0 ? technical : null);
+    }
+
     public static Names Who(AgentPrompt.Target target)
     {
         (string name, bool feminine) = target switch
