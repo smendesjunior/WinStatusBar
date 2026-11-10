@@ -19,7 +19,21 @@ public sealed class ClaudeProvider : IProvider
     /// <summary>O mesmo Claude Code que a barra usa.</summary>
     public static string? FindExecutable() => WinStatusBar.Core.Ai.AgentPrompt.FindClaudeExecutable();
 
-    private static ProcessStartInfo StartInfo(string exe, IEnumerable<string> args, string workDir)
+    /// <summary>Ferramentas liberadas com a opção ligada (WebFetch fica mesmo ausente no Claude Code 2.1.317: é ignorada sem erro).</summary>
+    internal static readonly string[] CommandTools = ["Bash", "PowerShell", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"];
+
+    /// <summary>Argumentos do claude -p: os de hoje e, com a opção ligada, as permissões no fim (--allowedTools aceita vários valores).</summary>
+    internal static List<string> Arguments(AiModel model, string? effort, bool commands)
+    {
+        var args = new List<string> { "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages" };
+        if (model.Id != "default") args.AddRange(["--model", model.Id]);
+        if (!string.IsNullOrEmpty(effort)) args.AddRange(["--effort", effort]);
+        args.AddRange(Quiet);
+        if (commands) { args.AddRange(["--permission-mode", "acceptEdits", "--allowedTools"]); args.AddRange(CommandTools); }
+        return args;
+    }
+
+    internal static ProcessStartInfo StartInfo(string exe, IEnumerable<string> args, string workDir, bool commands)
     {
         bool viaCmd = exe.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase);
         var psi = new ProcessStartInfo(viaCmd ? Path.Combine(Environment.SystemDirectory, "cmd.exe") : exe)
@@ -30,6 +44,12 @@ public sealed class ClaudeProvider : IProvider
         };
         if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
         foreach (var a in args) psi.ArgumentList.Add(a);
+        if (commands)
+        {
+            // Sem isso o Claude Code corta cada comando em 2 a 10 min; etapas de 20 a 40 min precisam caber.
+            psi.Environment["BASH_DEFAULT_TIMEOUT_MS"] = "2400000";
+            psi.Environment["BASH_MAX_TIMEOUT_MS"] = "3600000";
+        }
         return psi;
     }
 
@@ -50,15 +70,16 @@ public sealed class ClaudeProvider : IProvider
         var reading = await ClaudeModelList.RefreshNowAsync(exe, ct);
         if (reading is null) return Listing.Fail("o Claude Code não respondeu");
         if (!reading.SignedIn) return Listing.Off("Claude Code sem conta conectada (entre na conta no Claude Code)");
-        return new(ToModels(reading.Models));
+        return new(ToModels(reading.Models, BarSettings.ClaudeCommands));
     }
 
     /// <summary>Opções da barra → opções do Codex (mesma ordem do Claude Code).</summary>
-    internal static IReadOnlyList<AiModel> ToModels(IReadOnlyList<AgentPrompt.ModelOption> options)
+    internal static IReadOnlyList<AiModel> ToModels(IReadOnlyList<AgentPrompt.ModelOption> options, bool commands = false)
         => options.Select(o => new AiModel(
                 "codexias-claude-" + Slug.From(o.Id.StartsWith("claude-", StringComparison.Ordinal) ? o.Id["claude-".Length..] : o.Id),
                 "claude", o.Id, "Claude " + o.Label,
-                "Claude Code pela conta, pela WinStatusBar. Responde em texto e pode ler a pasta da conversa.",
+                commands ? "Claude Code pela conta, pela WinStatusBar. Pode executar comandos e editar arquivos na pasta da conversa."
+                    : "Claude Code pela conta, pela WinStatusBar. Responde em texto e pode ler a pasta da conversa.",
                 o.Efforts, o.DefaultEffort, -6))
             .DistinctBy(m => m.Slug).ToList();
 
@@ -67,10 +88,8 @@ public sealed class ClaudeProvider : IProvider
         string? exe = FindExecutable();
         if (exe is null) return new("", "Claude Code não encontrado neste PC.");
         string workDir = conversation.Cwd is { } wd && Directory.Exists(wd) ? wd : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var args = new List<string> { "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages" };
-        if (model.Id != "default") args.AddRange(["--model", model.Id]);
-        if (!string.IsNullOrEmpty(effort)) args.AddRange(["--effort", effort]);
-        args.AddRange(Quiet);
+        bool commands = BarSettings.ClaudeCommands;
+        var args = Arguments(model, effort, commands);
         string prompt = ConversationReader.WithTranscript(conversation.Prompt, conversation.History);
 
         var text = new StringBuilder();
@@ -78,7 +97,7 @@ public sealed class ClaudeProvider : IProvider
         Process? proc = null;
         try
         {
-            proc = Process.Start(StartInfo(exe, args, workDir));
+            proc = Process.Start(StartInfo(exe, args, workDir, commands));
             if (proc is null) return new("", "Não foi possível iniciar o Claude Code.");
             // No grupo que encerra tudo junto com o componente (fechado ou atualizado no meio: o claude e os comandos param).
             if (Job.Value?.Add(proc) != true && Interlocked.Exchange(ref _jobWarned, 1) == 0)

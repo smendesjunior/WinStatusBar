@@ -57,6 +57,48 @@ public class CodexIAsClaudeCommandsSettingsTests : IDisposable
     }
 }
 
+public class CodexIAsClaudeCommandsArgumentsTests
+{
+    internal static readonly AiModel Opus = new("codexias-claude-opus-5-5", "claude", "claude-opus-5-5", "Claude Opus 5.5", "", ["low", "medium", "high"], "medium", -6);
+    private static readonly string[] Today = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--model", "claude-opus-5-5",
+        "--effort", "high", "--no-session-persistence", "--strict-mcp-config", "--settings", "{\"disableAllHooks\":true}"];
+    private static readonly string[] Tools = ["Bash", "PowerShell", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"];
+
+    [Fact]
+    public void Desligada_os_argumentos_nao_mudam() => Assert.Equal(Today, ClaudeProvider.Arguments(Opus, "high", false));
+
+    [Fact]
+    public void Ligada_entram_acceptEdits_e_as_ferramentas_uma_por_argumento()
+    {
+        Assert.Equal([.. Today, "--permission-mode", "acceptEdits", "--allowedTools", .. Tools], ClaudeProvider.Arguments(Opus, "high", true));
+        var plain = ClaudeProvider.Arguments(Opus with { Id = "default" }, null, true);
+        Assert.DoesNotContain("--model", plain);
+        Assert.DoesNotContain("--effort", plain);
+        Assert.Contains("acceptEdits", plain);
+    }
+
+    [Fact]
+    public void Ligada_o_tempo_do_Bash_e_ampliado()
+    {
+        var on = ClaudeProvider.StartInfo(@"C:\x\claude.exe", [], Path.GetTempPath(), true);
+        Assert.Equal("2400000", on.Environment["BASH_DEFAULT_TIMEOUT_MS"]);
+        Assert.Equal("3600000", on.Environment["BASH_MAX_TIMEOUT_MS"]);
+        var off = ClaudeProvider.StartInfo(@"C:\x\claude.exe", [], Path.GetTempPath(), false);
+        Assert.Equal(Environment.GetEnvironmentVariable("BASH_DEFAULT_TIMEOUT_MS"), off.Environment.TryGetValue("BASH_DEFAULT_TIMEOUT_MS", out var v) ? v : null);
+    }
+
+    [Fact]
+    public void Descricao_no_seletor_acompanha_a_opcao()
+    {
+        const string models = """[{"value":"opus","resolvedModel":"claude-opus-5-5","displayName":"Opus 5.5","description":"x","supportedEffortLevels":["low"]}]""";
+        using var doc = JsonDocument.Parse(models);
+        var options = WinStatusBar.Core.Ai.Claude.ClaudeModelList.Parse(doc.RootElement);
+        Assert.Equal("Claude Code pela conta, pela WinStatusBar. Responde em texto e pode ler a pasta da conversa.", ClaudeProvider.ToModels(options)[0].Description);
+        Assert.Equal("Claude Code pela conta, pela WinStatusBar. Pode executar comandos e editar arquivos na pasta da conversa.",
+            ClaudeProvider.ToModels(options, commands: true)[0].Description);
+    }
+}
+
 public class CodexIAsClaudeCommandsJobTests
 {
     private static bool Alive(int pid)
