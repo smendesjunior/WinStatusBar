@@ -7,7 +7,7 @@ namespace CodexIAs;
 
 /// <summary>
 /// As opções das IAs configuradas na barra: guardadas em modelos.json (o que a última verificação achou) e relidas das
-/// fontes só na verificação manual (Configurações › Modelos › Verificar e atualizar). A verificação também põe o seletor
+/// fontes só na verificação manual (Configurações › Codex e modelos › Verificar e atualizar). A verificação também põe o seletor
 /// do Codex em dia (só com a ligação ligada) e grava o relatório que a barra mostra: a lista das IAs deste PC, cada uma
 /// com o seu estado no Codex.
 /// </summary>

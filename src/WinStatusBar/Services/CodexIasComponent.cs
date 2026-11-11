@@ -10,7 +10,7 @@ namespace WinStatusBar.Services;
 /// <summary>
 /// O componente das IAs no Codex (Automation\WinStatusBar.CodexIAs.exe): encaminhador do Codex e verificação de
 /// modelos. A barra o inicia ao abrir quando a ligação com o Codex está ligada (ele continua rodando com a barra fechada)
-/// e o usa pela aba Configurações › Modelos.
+/// e o usa pela aba Configurações › Codex e modelos.
 /// </summary>
 internal static class CodexIasComponent
 {

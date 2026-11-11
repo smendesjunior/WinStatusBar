@@ -108,7 +108,7 @@ public static class AiErrorExplainer
         if (status == 400 || Has(all, @"bad request|invalid_request|invalid request|invalid_argument|malformed"))
             return E("pedido recusado", LocalizedText.F("{0} recusou o pedido como inválido: algo no envio (anexo, contexto da tela ou opção do modelo {1}) não é aceito. Tente sem anexos e sem o Contexto, ou escolha outro modelo.", new object?[] { who.Subject, m }));
         if (status == 404)
-            return E("endereço não encontrado", LocalizedText.F("O endereço do serviço {0} não foi encontrado. Confira o endereço e o modelo em Configurações › IA.", new object?[] { who.Of }));
+            return E("endereço não encontrado", LocalizedText.F("O endereço do serviço {0} não foi encontrado. Confira o endereço e o modelo em Configurações › IAs e contas.", new object?[] { who.Of }));
 
         // 13) Mensagens da própria barra, já explicadas (frase em português, sem códigos), no idioma do app.
         if (technical is null) { string shown = LocalizedText.T(text); return new(ShortOf(shown), shown, null); }
@@ -221,18 +221,18 @@ public static class AiErrorExplainer
     {
         AgentPrompt.Target.Claude => LocalizedText.T("Entre de novo no Claude Code: abra o app Claude (ou rode claude no terminal e use /login)."),
         AgentPrompt.Target.Codex => LocalizedText.T("Entre de novo na sua conta no app Codex (ou rode codex login no terminal)."),
-        AgentPrompt.Target.Gemini => LocalizedText.T("Entre de novo com a conta Google ou confira a chave em Configurações › IA › Gemini."),
-        AgentPrompt.Target.Copilot => LocalizedText.T("Entre de novo em Configurações › IA › Microsoft Copilot."),
+        AgentPrompt.Target.Gemini => LocalizedText.T("Entre de novo com a conta Google ou confira a chave em Configurações › IAs e contas › Gemini."),
+        AgentPrompt.Target.Copilot => LocalizedText.T("Entre de novo em Configurações › IAs e contas › Microsoft Copilot."),
         AgentPrompt.Target.Qira => LocalizedText.T("Abra o app do Qira e entre de novo na conta Lenovo."),
         AgentPrompt.Target.Local => LocalizedText.T("O servidor local pediu uma chave; confira a configuração dele."),
-        _ => LocalizedText.T("Confira ou troque a chave em Configurações › IA."),
+        _ => LocalizedText.T("Confira ou troque a chave em Configurações › IAs e contas."),
     };
 
     private static string InstallAction(AgentPrompt.Target target) => target switch
     {
         AgentPrompt.Target.Claude => LocalizedText.T("Instale o Claude Code (ou o app Claude para desktop) e tente de novo, ou escolha outra IA."),
         AgentPrompt.Target.Codex => LocalizedText.T("Instale o app Codex e tente de novo, ou escolha outra IA."),
-        AgentPrompt.Target.Gemini => LocalizedText.T("Instale o Gemini CLI em Configurações › IA › Gemini, ou use a conta Google."),
+        AgentPrompt.Target.Gemini => LocalizedText.T("Instale o Gemini CLI em Configurações › IAs e contas › Gemini, ou use a conta Google."),
         _ => LocalizedText.T("Reinstale o programa ou escolha outra IA."),
     };
 

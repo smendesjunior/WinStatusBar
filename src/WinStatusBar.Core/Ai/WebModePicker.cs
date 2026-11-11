@@ -269,7 +269,7 @@ public sealed class WebModePicker
         if (target is null)
         {
             await CloseAsync();
-            return ($"O modo \"{string.Join(" › ", path)}\" não existe mais no {_label}. Na WinStatusBar, abra Configurações › Modelos e clique em Verificar e atualizar.", null);
+            return ($"O modo \"{string.Join(" › ", path)}\" não existe mais no {_label}. Na WinStatusBar, abra Configurações › Codex e modelos e clique em Verificar e atualizar.", null);
         }
         if (target.Disabled) { await CloseAsync(); return ($"O modo \"{target.Label}\" está indisponível na sua conta do {_label}.", null); }
         if (target.Selected) { await CloseAsync(); return (null, null); }

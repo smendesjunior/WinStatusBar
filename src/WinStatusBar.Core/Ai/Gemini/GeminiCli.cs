@@ -83,11 +83,11 @@ public static class GeminiCli
         if (error is null) return null;
         if (error.Contains("UNSUPPORTED_CLIENT", StringComparison.OrdinalIgnoreCase) || error.Contains("IneligibleTier", StringComparison.OrdinalIgnoreCase)
             || error.Contains("no longer supported for Gemini Code Assist", StringComparison.OrdinalIgnoreCase))
-            return LocalizedText.T("O Google recusou o login desta conta no Gemini CLI: o nível gratuito \"Gemini Code Assist para pessoas físicas\" não é mais aceito neste cliente. Use Gemini · chave de API (chave gratuita no Google AI Studio). Com Gemini Code Assist Standard/Enterprise, informe o projeto do Google Cloud em Configurações › IA › Gemini.");
+            return LocalizedText.T("O Google recusou o login desta conta no Gemini CLI: o nível gratuito \"Gemini Code Assist para pessoas físicas\" não é mais aceito neste cliente. Use Gemini · chave de API (chave gratuita no Google AI Studio). Com Gemini Code Assist Standard/Enterprise, informe o projeto do Google Cloud em Configurações › IAs e contas › Gemini.");
         if (error.Contains("API key not valid", StringComparison.OrdinalIgnoreCase) || error.Contains("API_KEY_INVALID", StringComparison.OrdinalIgnoreCase))
-            return LocalizedText.T("A chave do Gemini foi recusada pelo Google. Confira ou troque a chave em Configurações › IA › Gemini.");
+            return LocalizedText.T("A chave do Gemini foi recusada pelo Google. Confira ou troque a chave em Configurações › IAs e contas › Gemini.");
         if (error.Contains("Please set an Auth method", StringComparison.OrdinalIgnoreCase) || error.Contains("Login required", StringComparison.OrdinalIgnoreCase))
-            return LocalizedText.T("Gemini sem autenticação. Entre com a conta Google ou salve uma chave em Configurações › IA › Gemini.");
+            return LocalizedText.T("Gemini sem autenticação. Entre com a conta Google ou salve uma chave em Configurações › IAs e contas › Gemini.");
         return error;
     }
 
@@ -107,7 +107,7 @@ public static class GeminiCli
         {
             string? webError = WebAvailable?.Invoke();
             if (webError is not null) return new([], "app", null, webError);
-            // Modos do seletor do site (ex.: "Rápido", "Pro"), lidos na última verificação de Configurações › Modelos.
+            // Modos do seletor do site (ex.: "Rápido", "Pro"), lidos na última verificação de Configurações › Codex e modelos.
             var modes = new List<AgentPrompt.ModelOption> { new("app", "Modo escolhido no Gemini (conta Google)", [], null) };
             modes.AddRange(Codex.CodexIntegration.SiteModes("gemini").Select(m => new AgentPrompt.ModelOption(m.Id, m.Label, [], null)));
             return new(modes, "app", null, null);
@@ -166,8 +166,8 @@ public static class GeminiCli
             if (!models.Any(m => m.Id == id)) models.Add(new(id, AgentPrompt.Pretty(id), [], null));
         model ??= DefaultModel;
         string? error = Find() is null ? LocalizedText.T("Gemini CLI não encontrado neste PC")
-            : !SignedIn() ? (UsesApiKey ? LocalizedText.T("Salve uma chave do Google AI Studio em Configurações › IA › Gemini › Chave de API")
-                : LocalizedText.T("Entre com a conta Google em Configurações › IA › Gemini › Entrar")) : null;
+            : !SignedIn() ? (UsesApiKey ? LocalizedText.T("Salve uma chave do Google AI Studio em Configurações › IAs e contas › Gemini › Chave de API")
+                : LocalizedText.T("Entre com a conta Google em Configurações › IAs e contas › Gemini › Entrar")) : null;
         return new(models, model, null, error);
     }
 

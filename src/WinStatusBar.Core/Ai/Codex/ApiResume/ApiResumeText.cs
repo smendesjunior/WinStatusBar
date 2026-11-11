@@ -11,7 +11,7 @@ public static class ApiResumeText
 
     public static string SectionTitle => LocalizedText.T("Conversas paradas pela cota");
     public static string ContinueButton => LocalizedText.T("Continuar pela API…");
-    public static string NoKeyHint => LocalizedText.T("Cadastre a chave da API da OpenAI em Configurações › IA e tarefas (API própria, endereço https://api.openai.com/v1)");
+    public static string NoKeyHint => LocalizedText.T("Cadastre a chave da API da OpenAI em Configurações › IAs e contas (API própria, endereço https://api.openai.com/v1)");
     public static string StoreHint => LocalizedText.T("Disponível na versão do instalador tradicional: na versão da Loja, fechar ou atualizar a barra encerraria a continuação no meio.");
     public static string OpenInApp => LocalizedText.T("Aberta no app do Codex: começa sozinha assim que você fechar o app");
     public static string AlreadyQueued => LocalizedText.T("Já está na fila");

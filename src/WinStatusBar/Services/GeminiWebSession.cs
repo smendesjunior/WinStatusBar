@@ -56,7 +56,7 @@ internal static class GeminiWebSession
     {
         _ui = ui;
         WinStatusBar.Core.Ai.Gemini.GeminiCli.WebRunner = RunAsync;
-        WinStatusBar.Core.Ai.Gemini.GeminiCli.WebAvailable = () => SignedIn ? null : "Entre na conta Google em Configurações › IA › Gemini › Conta Google (uma vez).";
+        WinStatusBar.Core.Ai.Gemini.GeminiCli.WebAvailable = () => SignedIn ? null : "Entre na conta Google em Configurações › IAs e contas › Gemini › Conta Google (uma vez).";
     }
 
     private static Task<T> OnUi<T>(Func<Task<T>> work)
@@ -131,7 +131,7 @@ internal static class GeminiWebSession
     public static void ShowSignIn() => GoogleUsageSession.ShowSignIn();
 
     /// <summary>
-    /// Refazer as ligações (Configurações › Modelos): fecha a página escondida, e a próxima pergunta abre uma nova, com o
+    /// Refazer as ligações (Configurações › Codex e modelos): fecha a página escondida, e a próxima pergunta abre uma nova, com o
     /// mesmo login. Não mexe enquanto ela responde nem com a janela de login aberta.
     /// </summary>
     public static Task<bool> ResetAsync() => CloseAsync(TimeSpan.FromSeconds(30));
@@ -314,7 +314,7 @@ internal static class GeminiWebSession
             if (!ready)
             {
                 await DumpAsync(web, "carregamento");
-                if (signInSeen) { Save(new(false, null, null)); return new("", null, "O Google pede login. Entre em Configurações › IA › Gemini › Conta Google."); }
+                if (signInSeen) { Save(new(false, null, null)); return new("", null, "O Google pede login. Entre em Configurações › IAs e contas › Gemini › Conta Google."); }
                 return new("", null, "A página do Gemini não carregou o campo de conversa. Tente de novo em instantes.");
             }
             if (!_account.SignedIn) Save(new(true, _account.Name, _account.Email));

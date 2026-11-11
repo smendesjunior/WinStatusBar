@@ -10,7 +10,7 @@ using WinStatusBar.Services;
 namespace WinStatusBar.Views;
 
 /// <summary>
-/// Configurações › Modelos: a ligação das IAs da barra com o Codex (estado em selo colorido, ligar, desligar e corrigir),
+/// Configurações › Codex e modelos: a ligação das IAs da barra com o Codex (estado em selo colorido, ligar, desligar e corrigir),
 /// a lista das IAs detectadas neste PC com o estado de cada uma no Codex e a verificação manual dos modelos (novos, que
 /// saíram, IAs fora e por quê), que atualiza as listas da barra e o seletor do Codex.
 /// O trabalho é do componente das IAs no Codex (Automation\WinStatusBar.CodexIAs.exe); esta página só o chama e mostra o
@@ -26,7 +26,7 @@ public sealed partial class SettingsWindow
     /// <summary>Abre a página Modelos e roda a correção dos problemas das IAs.</summary>
     public void StartRepair()
     {
-        if (Nav.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => (string)i.Tag == "models") is { } item) Nav.SelectedItem = item;
+        ShowPage("models");
         _startRepair?.Invoke();
     }
 
@@ -70,9 +70,10 @@ public sealed partial class SettingsWindow
 
     private void BuildModelsPage()
     {
-        var page = AddPage("models", "Modelos",
-            "Atualize as listas de modelos da barra e do Codex e ligue as IAs configuradas neste PC no seletor de modelos do Codex. Nada é verificado sozinho: só quando você clica.",
+        var page = AddPage("models", Localization.T("Codex e modelos"),
+            Localization.T("Atualize as listas de modelos da barra e do Codex e ligue as IAs configuradas neste PC no seletor de modelos do Codex. Nada é verificado sozinho: só quando você clica."),
             "");
+        page.Children.Add(GroupTitle(Localization.T("Modelos")));
 
         // ------------------------------------------------------------ listas de modelos (barra e Codex)
         var check = BigButton("Verificar e atualizar modelos", accent: true);
@@ -81,7 +82,6 @@ public sealed partial class SettingsWindow
         checkRow.Children.Add(check); checkRow.Children.Add(ring);
         var feedback = new TextBlock { Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         var listsCard = new StackPanel { Spacing = 10, Padding = new Thickness(16, 14, 16, 16) };
-        listsCard.Children.Add(new TextBlock { Text = "Listas de modelos da barra e do Codex", FontSize = 18, FontWeight = FontWeights.SemiBold });
         listsCard.Children.Add(new TextBlock
         {
             Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap,
@@ -90,10 +90,16 @@ public sealed partial class SettingsWindow
         listsCard.Children.Add(checkRow);
         listsCard.Children.Add(feedback);
         page.Children.Add(new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = listsCard });
+        // IAs detectadas e relatório: logo abaixo do botão que os preenche.
+        var listTitle = GroupTitle("IAs detectadas neste PC");
+        page.Children.Add(listTitle);
+        var report = new StackPanel { Spacing = 12 };
+        page.Children.Add(report);
 
+        page.Children.Add(GroupTitle(Localization.T("IAs da barra dentro do Codex")));
         // ------------------------------------------------------------ ligação com o Codex
         var (badge, setBadge) = StatusBadge(large: true);
-        var title = new TextBlock { Text = "Ligação com o Codex", FontSize = 18, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        var title = new TextBlock { Text = Localization.T("Estado da ligação"), Style = (Style)Root.Resources["SettingTitle"], VerticalAlignment = VerticalAlignment.Center };
         var head = new Grid { ColumnSpacing = 12 };
         head.ColumnDefinitions.Add(new ColumnDefinition());
         head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -138,7 +144,6 @@ public sealed partial class SettingsWindow
         var repairStatus = new TextBlock { Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
         var repairResults = new StackPanel();
         var repairCard = new StackPanel { Spacing = 10, Padding = new Thickness(16, 14, 16, 16) };
-        repairCard.Children.Add(new TextBlock { Text = "Corrigir problemas das IAs", FontSize = 18, FontWeight = FontWeights.SemiBold });
         repairCard.Children.Add(new TextBlock
         {
             Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap,
@@ -149,13 +154,9 @@ public sealed partial class SettingsWindow
         repairCard.Children.Add(repairStatus);
         repairCard.Children.Add(repairResults);
         var repairBorder = new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = repairCard };
+        page.Children.Add(GroupTitle(Localization.T("Corrigir problemas")));
         page.Children.Add(repairBorder);
 
-        // ------------------------------------------------------------ IAs detectadas e relatório
-        var listTitle = GroupTitle("IAs detectadas neste PC");
-        page.Children.Add(listTitle);
-        var report = new StackPanel { Spacing = 12 };
-        page.Children.Add(report);
 
         bool busy = false;
         TextBlock output = feedback; // onde aparece a mensagem do comando em andamento

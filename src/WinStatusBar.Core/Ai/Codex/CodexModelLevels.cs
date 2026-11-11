@@ -7,7 +7,7 @@ namespace WinStatusBar.Core.Ai.Codex;
 /// <summary>
 /// Níveis de pensamento de cada modelo da OpenAI, tirados da lista do Codex instalado ("codex debug models --bundled").
 /// O Codex se atualiza sozinho; um modelo novo da API (ex.: gpt-6.2-sol) aparece no seletor da barra com os níveis
-/// certos, sem tabela fixa, quando a pessoa clica em "Verificar e atualizar" (Configurações › Modelos).
+/// certos, sem tabela fixa, quando a pessoa clica em "Verificar e atualizar" (Configurações › Codex e modelos).
 /// </summary>
 public static class CodexModelLevels
 {

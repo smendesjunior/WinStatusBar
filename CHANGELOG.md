@@ -7,6 +7,34 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.7.0] - 2026-11-11 · compilação BUILD
+
+### Alterado
+- Configurações reorganizadas: 13 páginas viraram 10. Geral, Barra e aparência, IAs e contas, Cotas e tarefas, Chat da barra, Codex e modelos, Hardware, Rede e bateria, Área de transferência e, no rodapé, Sobre e suporte.
+- IAs e contas (página nova): o login, as chaves e os conectores de cada IA saíram do meio de "IA e tarefas" e ficam num lugar só, com a API própria ("Outra IA por chave").
+- Barra e aparência: os botões de atalho ficam logo abaixo dos itens da barra, e a intensidade da cor fica junto do fundo.
+- Chat da barra: todas as permissões num grupo (edição de arquivos, acesso ao PC e conectores); os atalhos de voz ganharam título.
+- Cotas e tarefas: o que acompanhar, as cotas na barra e a tarefa na barra em três grupos; a integração do Claude Code e os outros programas de IA local foram para "Avançado".
+- Hardware: os painéis de detalhes abrem a página; frequência das leituras e drivers de sensores ficam em "Avançado".
+- Sobre e suporte reúne Atualizações, Diagnóstico e Sobre. "O que mudou" fica recolhido e só é montado ao abrir.
+- Nomes mais claros: "Avisos do WinStatusBar", "Mostrar as cotas como", "Atualizar cotas agora", "Tipo de API", "Endereço do serviço (URL)", "Remover chave", "Instalar driver de um arquivo…", entre outros.
+- Os atalhos da barra abrem a página certa: "Gemini · configurar…" e "Configurar" do menu de agentes levam a IAs e contas; "Configurações da IA…" leva a Chat da barra.
+- Títulos das páginas, dos grupos e das opções novas traduzidos nos seis idiomas.
+
+### Removido
+- Opções repetidas: o interruptor da bateria (fica em "Itens da barra"), o segundo botão da pasta de dados, o segundo botão de login do Gemini e o "Entrar/Sair" do DeepSeek e do Grok, que fazia o mesmo que "Configurar chave…" e "Remover chave". Nenhuma preferência salva mudou.
+
+### Corrigido
+- Atualização: se a troca de arquivos falhasse, a barra fechava e reabria a cada minuto. Agora são 3 tentativas por compilação e depois uma espera de 6 horas; a barra volta a abrir mesmo se um passo final falhar, e a atualização espera uma resposta de IA em andamento.
+- Preferências: um settings.json ilegível não zera mais tudo em silêncio (tenta a cópia de segurança e a do OneDrive antes do padrão).
+- Claude Code: em perfis com espaço no caminho, a barra duplicava os próprios ganchos no settings.json do Claude a cada 10 minutos.
+- Chat: Enter duas vezes não duplica a pergunta; um erro do Claude não é mais salvo como resposta; respostas por API não são cortadas em serviços como Azure e OpenRouter; a rolagem não puxa para o fim quando você rolou para cima.
+- Barra: Alt+F4 não deixa mais a barra na tela com os painéis mortos; janelas antigas são liberadas da memória a cada troca de monitor.
+- Executor: excluir ou sobrescrever em pasta de rede ou unidade removível é recusado (não há Lixeira ali); "encerrar processo" recusa as partes do Qira e a própria barra.
+- IAs no Codex: o encaminhador é conferido a cada minuto e religado se cair; a continuação pela API tenta de novo depois de uma falha passageira de rede.
+- "Atualizar cotas agora" mostra que está consultando; o intervalo e a forma de mostrar as cotas ficam disponíveis mesmo com o Codex e o Claude desligados.
+- Chaves de API mascaradas no registro (log) da barra.
+
 ## [1.6.1] - 2026-11-11 · compilação 20261111033512
 
 ### Corrigido

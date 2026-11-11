@@ -65,7 +65,7 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
         _usageState.Foreground = PanelKit.Res("AccentTextFillColorPrimaryBrush");
         _hub.CpuSampled += OnSampled;
         Render();
-        // Lista de aplicativos opcional (Configurações › Hardware e rede › Painéis de detalhes).
+        // Lista de aplicativos opcional (Configurações › Hardware › Painéis de detalhes).
         _appsSection.Visibility = _apps.Visibility = AppsOn ? Visibility.Visible : Visibility.Collapsed;
         if (AppsOn) _ = RefreshAppsAsync();
     }

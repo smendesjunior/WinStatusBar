@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 namespace WinStatusBar.Core.Ai.Codex;
 
 /// <summary>
-/// O que a barra (Configurações › Modelos) e o componente das IAs no Codex (WinStatusBar.CodexIAs.exe, na pasta
+/// O que a barra (Configurações › Codex e modelos) e o componente das IAs no Codex (WinStatusBar.CodexIAs.exe, na pasta
 /// Automation da barra) compartilham: o estado da ligação com o Codex, o relatório da última verificação de modelos e os
 /// modos lidos dos sites (Gemini, Copilot). Tudo em %LOCALAPPDATA%\WinStatusBar\codex-ias.
 /// </summary>
@@ -85,7 +85,7 @@ public static class CodexIntegration
     /// <summary>
     /// Chamado pelo instalador (decisão de 09/11/2026): a ligação automática com o Codex só acontece onde a barra já estava
     /// instalada. Numa instalação nova, grava a ligação como desligada (a barra pula a ligação automática quando o estado
-    /// existe); a pessoa liga em Configurações › Modelos. Nunca troca uma escolha já gravada. True = gravou.
+    /// existe); a pessoa liga em Configurações › Codex e modelos. Nunca troca uma escolha já gravada. True = gravou.
     /// </summary>
     public static bool PrepareForInstall(string stateFile, bool hadInstallBefore)
     {

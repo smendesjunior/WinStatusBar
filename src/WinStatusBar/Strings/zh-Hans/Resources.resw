@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <root>
   <data name="AiTasks.Content" xml:space="preserve">
-    <value>人工智能和任务</value>
+    <value>配额与任务</value>
   </data>
   <data name="AiTasks_Label" xml:space="preserve">
     <value>AI 和任务</value>
   </data>
   <data name="Appearance.Content" xml:space="preserve">
-    <value>外观</value>
+    <value>栏与外观</value>
   </data>
   <data name="Appearance_Label" xml:space="preserve">
     <value>外观</value>
@@ -76,7 +76,7 @@
     <value>常规</value>
   </data>
   <data name="HardwareNetwork.Content" xml:space="preserve">
-    <value>硬件和网络</value>
+    <value>硬件</value>
   </data>
   <data name="HardwareNetwork_Label" xml:space="preserve">
     <value>硬件和网络</value>
@@ -2017,7 +2017,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>自动打开</value>
   </data>
   <data name="U08e6a3c623a0c0.Text" xml:space="preserve">
-    <value>在栏上显示什么</value>
+    <value>栏中的任务</value>
   </data>
   <data name="U09172986791745.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>内存详细信息</value>
@@ -2038,7 +2038,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>隐藏个人信息</value>
   </data>
   <data name="U0dbf2f1afcf406.Content" xml:space="preserve">
-    <value>立即查询（非必要）</value>
+    <value>立即刷新配额</value>
   </data>
   <data name="U107100b612903a.OffContent" xml:space="preserve">
     <value>残疾人</value>
@@ -2092,7 +2092,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>颜色强度</value>
   </data>
   <data name="U25d02bd3a8821f.Text" xml:space="preserve">
-    <value>欢迎通知</value>
+    <value>WinStatusBar 通知</value>
   </data>
   <data name="U25f00d44876c14.Content" xml:space="preserve">
     <value>留在应用程序后面</value>
@@ -2101,7 +2101,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>每30分钟一班</value>
   </data>
   <data name="U2856a2a1bd1079.Text" xml:space="preserve">
-    <value>屏幕和全屏</value>
+    <value>屏幕</value>
   </data>
   <data name="U28cf0e50194b46.Text" xml:space="preserve">
     <value>选择该栏是否应继续显示在应用程序前面。</value>
@@ -2125,7 +2125,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>100%是原始尺寸。举起杠铃也会增加杠铃的高度。</value>
   </data>
   <data name="U43b6498e7ff8cf.Text" xml:space="preserve">
-    <value>所有 AI 的配额更新</value>
+    <value>刷新配额</value>
   </data>
   <data name="U449ca61e6be36b.Text" xml:space="preserve">
     <value>显卡（GPU）</value>
@@ -2161,13 +2161,13 @@ Claude 5h {4} · 7d {5}</value>
     <value>任务标题和活动</value>
   </data>
   <data name="U4ed7cffcb4e851.Header" xml:space="preserve">
-    <value>高级更新与收藏</value>
+    <value>高级</value>
   </data>
   <data name="U525e279837de6b.Text" xml:space="preserve">
     <value>Codex</value>
   </data>
   <data name="U54acf7e2a8fe3a.Header" xml:space="preserve">
-    <value>高级人工智能调整</value>
+    <value>高级</value>
   </data>
   <data name="U5570183e13afe3.Content" xml:space="preserve">
     <value>每5分钟一班</value>
@@ -2194,10 +2194,10 @@ Claude 5h {4} · 7d {5}</value>
     <value>当前任务</value>
   </data>
   <data name="U607df6c8b0c086.Text" xml:space="preserve">
-    <value>允许首次打开时发出警告。不生成温度或配额警报。</value>
+    <value>在时钟旁显示通知（欢迎、已恢复首选项等）。不包括温度或配额提醒。</value>
   </data>
   <data name="U63a58a1d072bc9.Text" xml:space="preserve">
-    <value>人工智能和任务</value>
+    <value>配额与任务</value>
   </data>
   <data name="U63c819177ce186.Text" xml:space="preserve">
     <value>自动保存更改</value>
@@ -2254,7 +2254,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>CPU详细信息</value>
   </data>
   <data name="U73b61824dd6e28.Text" xml:space="preserve">
-    <value>其他本地服务器</value>
+    <value>其他本地 AI 程序</value>
   </data>
   <data name="U7584ac0ba1ad38.Text" xml:space="preserve">
     <value>任务栏显示任务</value>
@@ -2350,7 +2350,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>选择要跟踪的内容以及屏幕上可以显示的内容。</value>
   </data>
   <data name="U9e75bccf2e37b8.Text" xml:space="preserve">
-    <value>配额百分比</value>
+    <value>配额显示方式</value>
   </data>
   <data name="U9ec3e25e442733.PlaceholderText" xml:space="preserve">
     <value>搜索</value>
@@ -2380,7 +2380,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>温度</value>
   </data>
   <data name="Ua543c3b292c8b1.Content" xml:space="preserve">
-    <value>配置会话活动</value>
+    <value>开启</value>
   </data>
   <data name="Ua9f86281525d7f.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>网络详情</value>
@@ -2389,7 +2389,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>每15分钟一班</value>
   </data>
   <data name="Uacafb033d2b3d8.Text" xml:space="preserve">
-    <value>酒吧内的信息和订单</value>
+    <value>栏中的项目</value>
   </data>
   <data name="Uad393c371cdc79.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>设置</value>
@@ -2404,7 +2404,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>所有 AI 共用一个设置。实时模式下，Codex 或 Claude 的每次回复都会立即更新百分比；Gemini、Copilot 和 Qira 从各自的账户页面读取，最短每 5 分钟一次。单击栏上的配额可查看每个周期的详细信息。</value>
   </data>
   <data name="Ub042851963ec95.Text" xml:space="preserve">
-    <value>硬件和网络</value>
+    <value>硬件</value>
   </data>
   <data name="Ub07a6cab8519b0.PlaceholderText" xml:space="preserve">
     <value>例如：我的服务器、vllm</value>
@@ -2509,7 +2509,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>测量 GPU 活动</value>
   </data>
   <data name="Ue5aa0c441429ef.Text" xml:space="preserve">
-    <value>会话活动（可选）</value>
+    <value>显示 Claude Code 正在做什么</value>
   </data>
   <data name="Ue6bb94dec98823.Text" xml:space="preserve">
     <value>隐藏会话栏和列表中的项目标题、描述和名称。</value>
@@ -2518,7 +2518,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>自动添加活动以太网和 Wi-Fi。该列表仅显示物理连接； Windows 内置过滤器被隐藏。</value>
   </data>
   <data name="Ued4f4a4ccdfc67.Text" xml:space="preserve">
-    <value>酒吧外观</value>
+    <value>栏与外观</value>
   </data>
   <data name="Uedd7f4c4b55de2.Content" xml:space="preserve">
     <value>当然</value>
@@ -2542,10 +2542,10 @@ Claude 5h {4} · 7d {5}</value>
     <value>仅在主显示器上</value>
   </data>
   <data name="Uf647676ad71fe5.Content" xml:space="preserve">
-    <value>删除 WinStatusBar 集成</value>
+    <value>关闭</value>
   </data>
   <data name="Uf6eb2babbdaa20.Text" xml:space="preserve">
-    <value>百分比代表什么？</value>
+    <value>GPU 百分比显示</value>
   </data>
   <data name="Uf8c260312a37be.Content" xml:space="preserve">
     <value>已使用了多少</value>
@@ -4262,5 +4262,269 @@ Claude 5h {4} · 7d {5}</value>
   </data>
   <data name="S6B5B2234D9758921" xml:space="preserve">
     <value>Codex 已被账户阻止：{0}。</value>
+  </data>
+  <data name="SEA37E60C410294F0" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 中配置 API</value>
+  </data>
+  <data name="SEEA11B64DDD29C44" xml:space="preserve">
+    <value>找不到 {0} 服务的地址。请在 设置 › AI 与账户 中检查地址和模型。</value>
+  </data>
+  <data name="S0C90E46F2E3D5B49" xml:space="preserve">
+    <value>请重新使用 Google 账户登录，或在 设置 › AI 与账户 › Gemini 中检查密钥。</value>
+  </data>
+  <data name="S3A9F403450581E45" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 › Microsoft Copilot 中重新登录。</value>
+  </data>
+  <data name="S12D0BAFD261DA8BE" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 中检查或更换密钥。</value>
+  </data>
+  <data name="S2721EDE98E09BB48" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 › Gemini 中安装 Gemini CLI，或使用 Google 账户。</value>
+  </data>
+  <data name="S342E711CAB9E0DD5" xml:space="preserve">
+    <value>此电脑上没有 OpenAI API 密钥。请在 设置 › AI 与账户 › 通过密钥使用其他 AI（自有 API）中添加，地址为 https://api.openai.com/v1，然后重试。</value>
+  </data>
+  <data name="S59E3F77724C73D8C" xml:space="preserve">
+    <value>OpenAI API 拒绝了您的密钥（已过期、已撤销或属于其他项目）。请在 设置 › AI 与账户 中更换密钥。</value>
+  </data>
+  <data name="S9A2CF3046C534445" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 中添加 OpenAI API 密钥（自有 API，地址 https://api.openai.com/v1）</value>
+  </data>
+  <data name="SC3077F2A4C7606D2" xml:space="preserve">
+    <value>Google 拒绝了此账户在 Gemini CLI 中的登录：此客户端不再接受免费的“个人版 Gemini Code Assist”。请使用 Gemini · API 密钥（Google AI Studio 的免费密钥）。如使用 Gemini Code Assist Standard/Enterprise，请在 设置 › AI 与账户 › Gemini 中填写 Google Cloud 项目。</value>
+  </data>
+  <data name="S433B4188B6F72A2D" xml:space="preserve">
+    <value>Google 拒绝了 Gemini 密钥。请在 设置 › AI 与账户 › Gemini 中检查或更换密钥。</value>
+  </data>
+  <data name="SF3F99DB8EF3EE006" xml:space="preserve">
+    <value>Gemini 未认证。请使用 Google 账户登录，或在 设置 › AI 与账户 › Gemini 中保存密钥。</value>
+  </data>
+  <data name="S4878F5C4770C021A" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 › Gemini › API 密钥 中保存 Google AI Studio 密钥</value>
+  </data>
+  <data name="SA31B489FD4198733" xml:space="preserve">
+    <value>请在 设置 › AI 与账户 › Gemini › 登录 中使用 Google 账户登录</value>
+  </data>
+  <data name="ChatBar.Content" xml:space="preserve">
+    <value>栏内聊天</value>
+  </data>
+  <data name="SettingsNoticesTitle.Text" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="SettingsTrackTitle.Text" xml:space="preserve">
+    <value>跟踪内容</value>
+  </data>
+  <data name="SettingsChatApps.Text" xml:space="preserve">
+    <value>ChatGPT 和 Claude 中的对话</value>
+  </data>
+  <data name="SettingsChatAppsHelp.Text" xml:space="preserve">
+    <value>通过 Windows 辅助功能读取应用窗口，显示聊天对话何时正在生成回复。</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsBarQuotasTitle.Text" xml:space="preserve">
+    <value>栏中的配额</value>
+  </data>
+  <data name="S035BC75A272FCD1B" xml:space="preserve">
+    <value>修复 AI 问题</value>
+  </data>
+  <data name="S23491BE411DD70C2" xml:space="preserve">
+    <value>关于与支持</value>
+  </data>
+  <data name="S04795BC6A3B5D466" xml:space="preserve">
+    <value>更新、报告问题的帮助以及 WinStatusBar 的相关信息。</value>
+  </data>
+  <data name="S5BB77A5B46F12CBC" xml:space="preserve">
+    <value>支持</value>
+  </data>
+  <data name="S6BDC2C4EF7C07556" xml:space="preserve">
+    <value>报告问题</value>
+  </data>
+  <data name="S97A0FA0947AD8F6A" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="SF594FC80E8E710DD" xml:space="preserve">
+    <value>你的 AI</value>
+  </data>
+  <data name="SEA697D91609BBF37" xml:space="preserve">
+    <value>OpenAI API 用量与费用</value>
+  </data>
+  <data name="S69E2216C195EE324" xml:space="preserve">
+    <value>Google Cloud 项目</value>
+  </data>
+  <data name="SF6BE8B7CFB4BB0DB" xml:space="preserve">
+    <value>在栏内聊天中的对话</value>
+  </data>
+  <data name="S3AB830793A49343D" xml:space="preserve">
+    <value>将这些对话纳入任务列表和“自动”选择。各服务的首选项在下方。</value>
+  </data>
+  <data name="SFE6122550A79E799" xml:space="preserve">
+    <value>这些选择在“在栏内聊天中的对话”开启时生效。自定义 API 也会被跟踪。栏外进行的对话不会被观察。</value>
+  </data>
+  <data name="SF4567608F82B667F" xml:space="preserve">
+    <value>通过密钥使用其他 AI（自有 API）</value>
+  </data>
+  <data name="S70CA519E60EE2441" xml:space="preserve">
+    <value>模型在内存中保留时间</value>
+  </data>
+  <data name="S23C2801E2E6CCB6A" xml:space="preserve">
+    <value>拖动以更改代理菜单和栏中配额模块的顺序。为需要在代理旁显示配额的 AI 打开开关；模块大小会自动调整。</value>
+  </data>
+  <data name="S765B4597BEB1174A" xml:space="preserve">
+    <value>栏中显示配额</value>
+  </data>
+  <data name="SA1E7FDCDB5562B75" xml:space="preserve">
+    <value>已安装的连接器和插件</value>
+  </data>
+  <data name="SB4E5F648258666DB" xml:space="preserve">
+    <value>拖动手柄为按钮排序，并用开关选择哪些显示在栏的右侧。</value>
+  </data>
+  <data name="S2EE1AADEECF37135" xml:space="preserve">
+    <value>首选项备份</value>
+  </data>
+  <data name="S8906390987AD81D7" xml:space="preserve">
+    <value>栏内聊天</value>
+  </data>
+  <data name="SE5CD6D0940BC0654" xml:space="preserve">
+    <value>立即打开聊天</value>
+  </data>
+  <data name="S460B3A7DA007B7AF" xml:space="preserve">
+    <value>聊天</value>
+  </data>
+  <data name="SAF78D419DF23BD37" xml:space="preserve">
+    <value>在栏中显示聊天</value>
+  </data>
+  <data name="SDBE35D035ABBC32E" xml:space="preserve">
+    <value>每个新对话的初始设置</value>
+  </data>
+  <data name="SCC15909EF3FBBA73" xml:space="preserve">
+    <value>打开聊天时会带上正在使用的窗口：所选文本、打开的文档或表格（即使未保存），以及浏览器中的页面地址和文本。所有内容都以可移除的标签显示；聊天中的“上下文”按钮可在每个对话中开启或关闭。</value>
+  </data>
+  <data name="SE998327FD0A8C94D" xml:space="preserve">
+    <value>权限</value>
+  </data>
+  <data name="S68CD20DF18CEEABF" xml:space="preserve">
+    <value>允许广泛访问电脑和网络</value>
+  </data>
+  <data name="S4166382CDC0FCA23" xml:space="preserve">
+    <value>允许聊天按你的要求在电脑上操作：应用、窗口、文件和文件夹（本地和网络）、命令、脚本以及可访问的设备。在编辑铅笔开启时适用于所有 AI。</value>
+  </data>
+  <data name="SCDD9F41E510DC6F0" xml:space="preserve">
+    <value>任务中使用的内容可能会发送给所选的 AI。你的 Windows 账户和网络权限仍然有效，管理员访问需要你的授权（UAC）。关闭可阻止新的操作；使用“停止”可中断当前任务。</value>
+  </data>
+  <data name="SD002A9494D60BD5C" xml:space="preserve">
+    <value>官方应用中的语音</value>
+  </data>
+  <data name="SF055EE4DD06249DE" xml:space="preserve">
+    <value>例如：Ctrl+Shift+F9</value>
+  </data>
+  <data name="SBF9A042052DB0CE1" xml:space="preserve">
+    <value>ChatGPT 语音快捷键</value>
+  </data>
+  <data name="S7CDBB310A8C9A611" xml:space="preserve">
+    <value>Claude 语音快捷键</value>
+  </data>
+  <data name="S07A7979915D348CD" xml:space="preserve">
+    <value>如果 Claude 应用提供语音快捷键。</value>
+  </data>
+  <data name="S5B455ADE420B4FA3" xml:space="preserve">
+    <value>移除密钥</value>
+  </data>
+  <data name="SAD0A50C6E1CFF5E8" xml:space="preserve">
+    <value>API 类型</value>
+  </data>
+  <data name="S307EF1B2C4507787" xml:space="preserve">
+    <value>服务地址（URL）</value>
+  </data>
+  <data name="S02FDDBCB04B87577" xml:space="preserve">
+    <value>恢复之前的自有 API</value>
+  </data>
+  <data name="S2BB2D8436A5C0668" xml:space="preserve">
+    <value>隐私</value>
+  </data>
+  <data name="SBCE11B90DCD7AD84" xml:space="preserve">
+    <value>Codex 与模型</value>
+  </data>
+  <data name="SD6767DE0E4AB9B6A" xml:space="preserve">
+    <value>更新栏和 Codex 的模型列表，并将此电脑上配置的 AI 接入 Codex 的模型选择器。不会自动检查：仅在你点击时进行。</value>
+  </data>
+  <data name="S8FCCD1A93D6A750B" xml:space="preserve">
+    <value>模型</value>
+  </data>
+  <data name="SD6123C361A25FC86" xml:space="preserve">
+    <value>在 Codex 中使用栏内的 AI</value>
+  </data>
+  <data name="SF1F3A104C4B83A95" xml:space="preserve">
+    <value>连接状态</value>
+  </data>
+  <data name="S9259E7CC5C58AF0A" xml:space="preserve">
+    <value>修复问题</value>
+  </data>
+  <data name="SED68BC702F83193E" xml:space="preserve">
+    <value>AI 与账户</value>
+  </data>
+  <data name="SCF36A59C3CAC11DB" xml:space="preserve">
+    <value>登录你的 AI、保存 API 密钥，并查看每个 AI 的连接器和插件。</value>
+  </data>
+  <data name="S38310B5AE8C7990D" xml:space="preserve">
+    <value>网络与电池</value>
+  </data>
+  <data name="S7BB6CC8DBF12E22E" xml:space="preserve">
+    <value>所跟踪的连接、网络和电池面板，以及 Windows 电源首选项。</value>
+  </data>
+  <data name="S8D67645E0D643BD0" xml:space="preserve">
+    <value>网络面板中的 Wi-Fi、蓝牙和热点</value>
+  </data>
+  <data name="SEE4E463CEDE359EB" xml:space="preserve">
+    <value>立即连接</value>
+  </data>
+  <data name="SA83BD9B2606C5385" xml:space="preserve">
+    <value>在按钮菜单中选择网络和设备。连接和配对由 Windows 完成。</value>
+  </data>
+  <data name="S5F2A113BB86D676E" xml:space="preserve">
+    <value>在电池面板中显示电源控件</value>
+  </data>
+  <data name="SF7C2A9DDE2B40997" xml:space="preserve">
+    <value>在电池面板中显示电源模式、节电阈值和亮度降低。</value>
+  </data>
+  <data name="S7B7B4460C6BC6C52" xml:space="preserve">
+    <value>Windows 电源</value>
+  </data>
+  <data name="S81DE90252084238C" xml:space="preserve">
+    <value>OpenAI 管理员密钥（可选）</value>
+  </data>
+  <data name="S188AB058C59866BE" xml:space="preserve">
+    <value>从文件安装驱动程序…</value>
+  </data>
+  <data name="S99E372DB84BD3EBA" xml:space="preserve">
+    <value>在 Windows 更新中查找…</value>
+  </data>
+  <data name="S278403B23831363C" xml:space="preserve">
+    <value>传感器驱动程序</value>
+  </data>
+  <data name="SFD732A2B0A676780" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="SA1F09A31AD36EF78" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="S46811B3B88CE187B" xml:space="preserve">
+    <value>已安装版本</value>
+  </data>
+  <data name="S28FB55B1954A410C" xml:space="preserve">
+    <value>新版本</value>
+  </data>
+  <data name="SD7270FFA4424201A" xml:space="preserve">
+    <value>更新内容</value>
+  </data>
+  <data name="S7AE9D418353B399F" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="S7997752AE4490F6B" xml:space="preserve">
+    <value>正在查询配额…</value>
   </data>
 </root>

@@ -2,14 +2,16 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using WinStatusBar.Clip;
 using WinStatusBar.Core.Settings;
+using Localization = WinStatusBar.Services.Localization;
 
 namespace WinStatusBar.Views;
 
 /// <summary>
-/// Configurações dos recursos novos, no mesmo padrão visual das demais páginas (cartões com linhas "título + ajuda | controle"):
-/// • Área de transferência: uso, atalhos, o que guardar, privacidade e limites do histórico.
-/// • Aparência › Efeitos e Botões de atalho.
-/// • Hardware e rede › Painéis de detalhes.
+/// Configurações montadas em código, no mesmo padrão visual das páginas do XAML (cartões com linhas "título + ajuda | controle"):
+/// • Área de transferência: uso, privacidade, o que guardar e limites do histórico.
+/// • Barra e aparência › Botões de atalho e Efeitos.
+/// • Hardware › Painéis de detalhes.
+/// • Chat da barra (a página inteira) e o editor da API própria, mostrado em "IAs e contas".
 /// Cada alteração é salva e aplicada na hora.
 /// </summary>
 public sealed partial class SettingsWindow
@@ -24,6 +26,11 @@ public sealed partial class SettingsWindow
         BuildClipboardPage();
         BuildSensorSetup();
 
+        // Barra e aparência: os botões de atalho ficam logo abaixo dos itens da barra (antes eram uma página à parte).
+        ShortcutsHost.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Botões de atalho")));
+        ShortcutsHost.Children.Add(Help(Localization.T("Arraste a alça para ordenar os botões e use os interruptores para escolher quais aparecem à direita da barra.")));
+        ShortcutsHost.Children.Add(BuildShortcutSettings());
+
         AppearancePage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Efeitos")));
         AppearancePage.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Brilho no agente em atividade"), global::WinStatusBar.Services.Localization.T("Um brilho arco-íris circula pelo contorno do módulo do agente e da barra de pergunta enquanto eles trabalham: linha fina na borda e halo suave por fora. Respeita a opção de animações do Windows."),
@@ -31,31 +38,36 @@ public sealed partial class SettingsWindow
             Toggle(global::WinStatusBar.Services.Localization.T("Linha de separação no fundo adaptativo"), global::WinStatusBar.Services.Localization.T("Linha de 1 pixel, bem sutil, entre a barra e a janela maximizada. Some na área de trabalho e com janelas menores."),
                 s => s.AdaptiveDivider, (s, v) => s.AdaptiveDivider = v)));
 
-        AppearancePage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Botões de atalho")));
-        AppearancePage.Children.Add(BuildShortcutSettings());
-
-        GpuPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Painéis de detalhes")));
-        GpuPage.Children.Add(Group(
+        // Hardware: os painéis de detalhes abrem a página (são o que mais se usa); drivers e frequências ficam em "Avançado".
+        DetailPanelsHost.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Painéis de detalhes")));
+        DetailPanelsHost.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Abrir painel ao clicar"), global::WinStatusBar.Services.Localization.T("Clique em CPU, RAM, GPU ou rede para ver gráficos e detalhes. Desligado, a barra mostra só a dica ao passar o mouse."),
                 s => s.DetailPanels, (s, v) => s.DetailPanels = v),
             Toggle(global::WinStatusBar.Services.Localization.T("Aplicativos no painel da CPU"), "Lista os aplicativos abertos, agrupados como no Gerenciador de Tarefas.", s => s.CpuPanelApps, (s, v) => s.CpuPanelApps = v),
             Toggle(global::WinStatusBar.Services.Localization.T("Permitir finalizar tarefas"), global::WinStatusBar.Services.Localization.T("Mostra o botão \"Finalizar tarefa\". O app recebe primeiro o pedido de fechar; o encerramento forçado só é oferecido se ele não responder."),
                 s => s.AllowEndTask, (s, v) => s.AllowEndTask = v)));
 
-        SystemPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Sincronização")));
-        SystemPage.Children.Add(Group(
+        SystemExtras.Children.Add(GroupTitle(Localization.T("Cópia das preferências")));
+        SystemExtras.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Guardar preferências no OneDrive"), global::WinStatusBar.Services.Localization.T("Copia as configurações para o seu OneDrive pessoal (WinStatusBar\\configuracoes.json). Numa instalação limpa com a mesma conta, tudo volta sozinho. A chave da API não vai junto."),
                 s => s.SyncSettings, (s, v) => s.SyncSettings = v)));
         BuildOrganizedPages();
         BuildCommandSettings();
-        CommandPage.Children.Add(GroupTitle("Acompanhamento da tarefa"));
-        CommandPage.Children.Add(Group(
+        BuildCustomApiEditor();
+        // Cotas e tarefas › Tarefa na barra: progresso estimado e resumo, no mesmo cartão do título e da tarefa em destaque.
+        foreach (var row in new[]
+        {
             Toggle("Estimar progresso quando não houver plano", "Mostra ~% no círculo usando etapas observadas, como leitura, edição e testes. É uma aproximação de baixa confiança; não avança pelo tempo. Um plano explícito sempre tem prioridade.", s => s.EstimateProgressWithoutPlan, (s, v) => s.EstimateProgressWithoutPlan = v),
             Toggle("Resumo automático do andamento", "Gera uma síntese da tarefa selecionada em chamadas separadas à IA. Usa a autenticação e as cotas existentes; não altera a conversa original.",
                 s => s.TaskBriefingEnabled, (s,v) => s.TaskBriefingEnabled = v),
             Choice("Intervalo mínimo entre resumos", "Só gera outro resumo se houver mudanças. Intervalos maiores reduzem chamadas à IA.",
                 [("15 segundos",15), ("30 segundos",30), ("1 minuto",60), ("2 minutos",120), ("5 minutos",300)],
-                s => s.TaskBriefingIntervalSeconds, (s,v) => s.TaskBriefingIntervalSeconds = v)));
+                s => s.TaskBriefingIntervalSeconds, (s,v) => s.TaskBriefingIntervalSeconds = v),
+        })
+        {
+            TaskFollowHost.Children.Add(Divider());
+            TaskFollowHost.Children.Add(row);
+        }
         FinishOrganizedPages();
         BuildAdditionalAiAccounts();
         _extrasLoading = false;
@@ -118,37 +130,44 @@ public sealed partial class SettingsWindow
         return Row(global::WinStatusBar.Services.Localization.T("Atalho para abrir"), global::WinStatusBar.Services.Localization.T("Abre a barra de comando com o cursor pronto para digitar, de qualquer lugar. Padrão: Alt+Espaço (no lugar do menu da janela do Windows)."), panel);
     }
 
-    /// <summary>IA › Barra de comando e API própria (a chave vai para o Cofre de Credenciais do Windows).</summary>
+    /// <summary>
+    /// Chat da barra: o chat e o atalho, como cada conversa nova começa, as permissões (todas num grupo só: edição de
+    /// arquivos, acesso ao PC e conectores), o histórico e a voz dos aplicativos oficiais.
+    /// </summary>
     private void BuildCommandSettings()
     {
         var header = new StackPanel { Spacing = 4 };
-        header.Children.Add(new TextBlock { Text = global::WinStatusBar.Services.Localization.T("Chat e contexto"), Style = (Style)Root.Resources["PageTitle"] });
+        header.Children.Add(new TextBlock { Text = Localization.T("Chat da barra"), Style = (Style)Root.Resources["PageTitle"] });
         header.Children.Add(Help(global::WinStatusBar.Services.Localization.T("A caixa no centro da barra: pergunte ao Claude, Codex, Gemini, Copilot, Lenovo Qira, IA local ou à sua API, com histórico sincronizado no OneDrive.")));
         CommandPage.Children.Add(header);
-        var previewChat = new Button { Content = "Abrir chat compacto", HorizontalAlignment = HorizontalAlignment.Left };
+        var previewChat = new Button { Content = Localization.T("Abrir o chat agora"), HorizontalAlignment = HorizontalAlignment.Left };
         previewChat.Click += (_, _) => (_app.Bars.FirstOrDefault(b => b.ContainsCursor()) ?? _app.Bars.FirstOrDefault())?.FocusCommandBar();
         CommandPage.Children.Add(previewChat);
-        CommandPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Uso")));
+
+        CommandPage.Children.Add(GroupTitle(Localization.T("Chat")));
         CommandPage.Children.Add(Group(
-            Toggle(global::WinStatusBar.Services.Localization.T("Barra de comando da IA"), global::WinStatusBar.Services.Localization.T("Caixa no centro da barra. Ao clicar, escolha Claude Code, Codex, IA local ou a sua API, além do modelo e do esforço. Enter envia e a resposta aparece no balão."),
+            Toggle(Localization.T("Mostrar o chat na barra"), global::WinStatusBar.Services.Localization.T("Caixa no centro da barra. Ao clicar, escolha Claude Code, Codex, IA local ou a sua API, além do modelo e do esforço. Enter envia e a resposta aparece no balão."),
                 s => s.CommandBar, (s, v) => s.CommandBar = v),
-            HotkeyRow(),
+            HotkeyRow()));
+
+        CommandPage.Children.Add(GroupTitle(Localization.T("Cada conversa nova começa com")));
+        CommandPage.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Pesquisa na web ligada por padrão"), global::WinStatusBar.Services.Localization.T("Cada conversa nova começa com o 🌐 ativo (Claude Code e Codex). Dá para desligar na própria conversa."),
                 s => s.CommandWebDefault, (s, v) => s.CommandWebDefault = v),
-            Toggle("Permitir edição de arquivos por padrão", "Novas conversas começam com edição habilitada para Claude Code e Codex. Você pode mudar no botão de edição do chat.",
-                s => s.CommandAllowEditsDefault, (s, v) => s.CommandAllowEditsDefault = v),
-            Toggle("Usar o contexto da tela por padrão", "Ao abrir o chat, leva junto a janela que estava aberta: o texto selecionado, o documento do Word ou a planilha do Excel abertos (inclusive o que ainda não foi salvo) e, no navegador, o endereço e o texto da página inteira. Sem isso, anexa o arquivo salvo ou uma imagem da janela. Tudo aparece em etiquetas removíveis, e o botão Contexto do chat liga ou desliga em cada conversa.",
+            Toggle("Usar o contexto da tela por padrão", Localization.T("Ao abrir o chat, leva junto a janela em uso: o texto selecionado, o documento ou a planilha abertos (mesmo sem salvar) e, no navegador, o endereço e o texto da página. Tudo aparece em etiquetas removíveis; o botão Contexto do chat liga ou desliga em cada conversa."),
                 s => s.CommandDetectActiveFile, (s, v) => s.CommandDetectActiveFile = v),
             Toggle("Respostas organizadas", "Pede à IA, na primeira mensagem de cada conversa, título quando a resposta é longa, passos numerados, termos-chave em negrito e uma nota final quando houver ressalva. Desligado, a IA responde no formato dela.",
                 s => s.CommandFormatHint, (s, v) => s.CommandFormatHint = v)));
 
-        CommandPage.Children.Add(GroupTitle("Voz ao vivo nos aplicativos oficiais"));
-        CommandPage.Children.Add(Help("O botão de ondas abre ChatGPT ou Claude. Para iniciar voz pelo atalho, informe abaixo a mesma combinação configurada no aplicativo oficial (Ctrl, Alt, Shift e tecla). Sem atalho, o aplicativo é aberto e você inicia a voz nele. Não é o ditado do Windows."));
-        var chatGptVoice = new TextBox { Text = S.CommandChatGptVoiceHotkey, PlaceholderText = "Atalho de voz do ChatGPT · ex.: Ctrl+Shift+F9" };
-        chatGptVoice.TextChanged += (_, _) => Commit(s => s.CommandChatGptVoiceHotkey = chatGptVoice.Text.Trim());
-        var claudeVoice = new TextBox { Text = S.CommandClaudeVoiceHotkey, PlaceholderText = "Atalho de voz do Claude · se disponível no aplicativo" };
-        claudeVoice.TextChanged += (_, _) => Commit(s => s.CommandClaudeVoiceHotkey = claudeVoice.Text.Trim());
-        CommandPage.Children.Add(Group(chatGptVoice, claudeVoice));
+        CommandPage.Children.Add(GroupTitle(Localization.T("Permissões")));
+        CommandPage.Children.Add(Group(
+            Toggle("Permitir edição de arquivos por padrão", "Novas conversas começam com edição habilitada para Claude Code e Codex. Você pode mudar no botão de edição do chat.",
+                s => s.CommandAllowEditsDefault, (s, v) => s.CommandAllowEditsDefault = v),
+            Toggle(Localization.T("Permitir acesso amplo ao PC e à rede"), Localization.T("Deixa o chat agir no PC a seu pedido: aplicativos, janelas, arquivos e pastas (locais e de rede), comandos, scripts e dispositivos acessíveis. Vale para todas as IAs, com o lápis de edição ligado."),
+                s => s.ContextActionsEnabled, (s, v) => s.ContextActionsEnabled = v),
+            Help(Localization.T("O conteúdo usado na tarefa pode ser enviado à IA escolhida. As permissões da sua conta do Windows e da rede continuam valendo, e o acesso de administrador pede sua autorização (UAC). Desligue para impedir novas ações; use Parar para interromper a tarefa atual.")),
+            ConnectorsAccessRow()));
+        CommandPage.Children.Add(AllowedConnectorsGroup());
 
         CommandPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Histórico")));
         CommandPage.Children.Add(Group(
@@ -158,7 +177,23 @@ public sealed partial class SettingsWindow
             Toggle(global::WinStatusBar.Services.Localization.T("Registrar no histórico do app Claude"), global::WinStatusBar.Services.Localization.T("Ao terminar, a conversa do Claude Code é importada pelo app Claude e aparece no histórico dele."),
                 s => s.CommandClaudeHistory, (s, v) => s.CommandClaudeHistory = v)));
 
-        // ---- APIs próprias (várias): seletor + Adicionar/Remover; os campos abaixo editam a API escolhida.
+        CommandPage.Children.Add(GroupTitle(Localization.T("Voz nos aplicativos oficiais")));
+        CommandPage.Children.Add(Help("O botão de ondas abre ChatGPT ou Claude. Para iniciar voz pelo atalho, informe abaixo a mesma combinação configurada no aplicativo oficial (Ctrl, Alt, Shift e tecla). Sem atalho, o aplicativo é aberto e você inicia a voz nele. Não é o ditado do Windows."));
+        var chatGptVoice = new TextBox { Text = S.CommandChatGptVoiceHotkey, PlaceholderText = Localization.T("ex.: Ctrl+Shift+F9") };
+        chatGptVoice.TextChanged += (_, _) => Commit(s => s.CommandChatGptVoiceHotkey = chatGptVoice.Text.Trim());
+        var claudeVoice = new TextBox { Text = S.CommandClaudeVoiceHotkey, PlaceholderText = Localization.T("ex.: Ctrl+Shift+F9") };
+        claudeVoice.TextChanged += (_, _) => Commit(s => s.CommandClaudeVoiceHotkey = claudeVoice.Text.Trim());
+        CommandPage.Children.Add(Group(
+            Row(Localization.T("Atalho de voz do ChatGPT"), null, chatGptVoice),
+            Row(Localization.T("Atalho de voz do Claude"), Localization.T("Se o aplicativo do Claude oferecer um atalho de voz."), claudeVoice)));
+    }
+
+    /// <summary>
+    /// APIs próprias (várias): seletor + Adicionar/Remover; os campos editam a API escolhida, e a chave vai para o Cofre de
+    /// Credenciais do Windows. O cartão é mostrado em "IAs e contas".
+    /// </summary>
+    private void BuildCustomApiEditor()
+    {
         WinStatusBar.Services.AdditionalAiAccounts.MigrateCustom(S);
         var profiles = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, PlaceholderText = "Nenhuma API cadastrada" };
         var addApi = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Adicionar" });
@@ -231,7 +266,7 @@ public sealed partial class SettingsWindow
         profilePanel.Children.Add(profileButtons);
 
         var save = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Salvar chave" });
-        var remove = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Desconectar" });
+        var remove = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = Localization.T("Remover chave") });
         var verify = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Verificar e listar modelos" });
         var modelChoices = new ComboBox { PlaceholderText = "Modelos retornados pela API", DisplayMemberPath = "Label", MinWidth = 240, Visibility = Visibility.Collapsed };
         save.Click += (_, _) =>
@@ -276,10 +311,26 @@ public sealed partial class SettingsWindow
         _apiSettingsPage.Children.Add(Group(
             Row("API", "Cada API cadastrada aparece no seletor do chat com o próprio nome e guarda a própria chave. Os campos abaixo editam a API escolhida.", profilePanel),
             Text(global::WinStatusBar.Services.Localization.T("Nome"), global::WinStatusBar.Services.Localization.T("Como a API aparece no balão de seleção."), "OpenRouter, Groq, Azure…", s => s.ApiName, (s, v) => { s.ApiName = v; WinStatusBar.Services.AdditionalAiAccounts.SaveCustom(s); }),
-            Row(global::WinStatusBar.Services.Localization.T("Formato"), global::WinStatusBar.Services.Localization.T("OpenAI cobre a maioria dos serviços (OpenAI, OpenRouter, Groq, Mistral, LM Studio…)."), kind),
-            Text(global::WinStatusBar.Services.Localization.T("Endereço base"), global::WinStatusBar.Services.Localization.T("Ex.: https://api.openai.com/v1 · https://openrouter.ai/api/v1 · https://api.anthropic.com"), "https://…/v1", s => s.ApiBaseUrl, (s, v) => { s.ApiBaseUrl = v; WinStatusBar.Services.AdditionalAiAccounts.SaveCustom(s); }),
+            Row(Localization.T("Tipo de API"), global::WinStatusBar.Services.Localization.T("OpenAI cobre a maioria dos serviços (OpenAI, OpenRouter, Groq, Mistral, LM Studio…)."), kind),
+            Text(Localization.T("Endereço do serviço (URL)"), global::WinStatusBar.Services.Localization.T("Ex.: https://api.openai.com/v1 · https://openrouter.ai/api/v1 · https://api.anthropic.com"), "https://…/v1", s => s.ApiBaseUrl, (s, v) => { s.ApiBaseUrl = v; WinStatusBar.Services.AdditionalAiAccounts.SaveCustom(s); }),
             keyBlock,
             Text(global::WinStatusBar.Services.Localization.T("Modelo padrão"), global::WinStatusBar.Services.Localization.T("Opcional. Em branco, o balão usa o primeiro modelo da lista do serviço."), "gpt-…", s => s.ApiDefaultModel, (s, v) => { s.ApiDefaultModel = v; WinStatusBar.Services.AdditionalAiAccounts.SaveCustom(s); })));
+
+        // Voltar à API própria anterior: um link discreto no fim do cartão (antes era um botão solto num cartão sem título).
+        var restore = new HyperlinkButton { Content = Localization.T("Voltar à API própria anterior"), Padding = new Thickness(0) };
+        var restored = Help("");
+        restored.Visibility = Visibility.Collapsed;
+        restore.Click += (_, _) =>
+        {
+            bool ok = false;
+            Commit(s => ok = WinStatusBar.Services.AdditionalAiAccounts.RestoreCustom(s));
+            restored.Text = ok ? "API própria anterior selecionada. Sua chave original foi preservada." : "Nenhuma configuração anterior guardada neste PC.";
+            restored.Visibility = Visibility.Visible;
+            if (ok) { LoadExtraValues(); LoadProfiles(); }
+        };
+        var restorePanel = new StackPanel { Spacing = 4, Margin = new Thickness(16, 0, 16, 0) };
+        restorePanel.Children.Add(restore); restorePanel.Children.Add(restored);
+        _apiSettingsPage.Children.Add(restorePanel);
     }
 
     private void BuildClipboardPage()
@@ -289,16 +340,22 @@ public sealed partial class SettingsWindow
         header.Children.Add(Help(global::WinStatusBar.Services.Localization.T("Histórico ilimitado e persistente, emojis e atalhos do Windows, integrados à barra. Itens fixados nunca são apagados pelos limites.")));
         ClipPage.Children.Add(header);
 
+        ClipPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Uso")));
         ClipPage.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Histórico e emojis"), global::WinStatusBar.Services.Localization.T("Desligado, nada é capturado e Win+V / Win+. voltam a abrir os painéis do Windows. O histórico salvo é mantido."),
                 s => s.ClipboardEnabled, (s, v) => s.ClipboardEnabled = v),
+            Toggle(global::WinStatusBar.Services.Localization.T("Colar ao escolher um item"), global::WinStatusBar.Services.Localization.T("Cola direto no aplicativo que estava em uso. Desligado, o item só vai para a área de transferência (cole com Ctrl+V)."),
+                s => s.ClipboardAutoPaste, (s, v) => s.ClipboardAutoPaste = v),
             Toggle(global::WinStatusBar.Services.Localization.T("Win+V abre este histórico"), global::WinStatusBar.Services.Localization.T("No lugar do histórico nativo do Windows. O painel abre junto ao cursor de texto ou ao mouse."),
                 s => s.ClipboardWinV, (s, v) => s.ClipboardWinV = v),
             Toggle("Win+. e Win+; abrem os emojis", global::WinStatusBar.Services.Localization.T("No lugar do painel de emojis do Windows, com nomes em português e tons de pele."),
-                s => s.ClipboardEmojiKeys, (s, v) => s.ClipboardEmojiKeys = v),
-            Toggle(global::WinStatusBar.Services.Localization.T("Colar ao escolher um item"), global::WinStatusBar.Services.Localization.T("Cola direto no aplicativo que estava em uso. Desligado, o item só vai para a área de transferência (cole com Ctrl+V)."),
-                s => s.ClipboardAutoPaste, (s, v) => s.ClipboardAutoPaste = v),
-            Toggle(global::WinStatusBar.Services.Localization.T("Pausar captura"), global::WinStatusBar.Services.Localization.T("Enquanto pausado, nada do que você copiar entra no histórico."), s => s.ClipboardPaused, (s, v) => s.ClipboardPaused = v)));
+                s => s.ClipboardEmojiKeys, (s, v) => s.ClipboardEmojiKeys = v)));
+
+        ClipPage.Children.Add(GroupTitle(Localization.T("Privacidade")));
+        ClipPage.Children.Add(Group(
+            Toggle(global::WinStatusBar.Services.Localization.T("Pausar captura"), global::WinStatusBar.Services.Localization.T("Enquanto pausado, nada do que você copiar entra no histórico."), s => s.ClipboardPaused, (s, v) => s.ClipboardPaused = v),
+            Text(global::WinStatusBar.Services.Localization.T("Aplicativos ignorados"), global::WinStatusBar.Services.Localization.T("Nomes dos processos, separados por vírgula. Nada copiado neles entra no histórico. Conteúdo marcado como sensível pelo próprio app já é ignorado sempre."),
+                "ex.: KeePass, Bitwarden", s => s.ClipboardIgnoredApps, (s, v) => s.ClipboardIgnoredApps = v)));
 
         ClipPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("O que guardar")));
         ClipPage.Children.Add(Group(
@@ -307,9 +364,7 @@ public sealed partial class SettingsWindow
                 [(global::WinStatusBar.Services.Localization.T("Sem limite"), 0), ("5 MB", 5), ("10 MB", 10), ("20 MB", 20), ("50 MB", 50)], s => s.ClipboardMaxImageMb, (s, v) => s.ClipboardMaxImageMb = v),
             Toggle(global::WinStatusBar.Services.Localization.T("Arquivos e pastas"), global::WinStatusBar.Services.Localization.T("Itens copiados no Explorador de Arquivos (o histórico guarda o caminho)."), s => s.ClipboardCaptureFiles, (s, v) => s.ClipboardCaptureFiles = v),
             Choice(global::WinStatusBar.Services.Localization.T("Cópia de segurança dos arquivos"), global::WinStatusBar.Services.Localization.T("Guarda uma cópia para você colar mesmo se o original for movido ou apagado."),
-                [(global::WinStatusBar.Services.Localization.T("Desligada"), 0), (global::WinStatusBar.Services.Localization.T("Até 10 MB"), 10), (global::WinStatusBar.Services.Localization.T("Até 25 MB"), 25), (global::WinStatusBar.Services.Localization.T("Até 100 MB"), 100), (global::WinStatusBar.Services.Localization.T("Até 500 MB"), 500)], s => s.ClipboardBackupLimitMb, (s, v) => s.ClipboardBackupLimitMb = v),
-            Text(global::WinStatusBar.Services.Localization.T("Aplicativos ignorados"), global::WinStatusBar.Services.Localization.T("Nomes dos processos, separados por vírgula. Nada copiado neles entra no histórico. Conteúdo marcado como sensível pelo próprio app já é ignorado sempre."),
-                "ex.: KeePass, Bitwarden", s => s.ClipboardIgnoredApps, (s, v) => s.ClipboardIgnoredApps = v)));
+                [(global::WinStatusBar.Services.Localization.T("Desligada"), 0), (global::WinStatusBar.Services.Localization.T("Até 10 MB"), 10), (global::WinStatusBar.Services.Localization.T("Até 25 MB"), 25), (global::WinStatusBar.Services.Localization.T("Até 100 MB"), 100), (global::WinStatusBar.Services.Localization.T("Até 500 MB"), 500)], s => s.ClipboardBackupLimitMb, (s, v) => s.ClipboardBackupLimitMb = v)));
 
         ClipPage.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Limites do histórico")));
         _clipStats = Help(string.Empty);

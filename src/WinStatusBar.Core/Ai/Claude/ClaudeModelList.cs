@@ -7,7 +7,7 @@ namespace WinStatusBar.Core.Ai.Claude;
 /// <summary>
 /// Modelos do Claude lidos do próprio Claude Code (pedido "initialize" do modo stream-json, que não chama nenhum
 /// modelo), com os níveis de esforço de cada um e se há conta conectada. Sem lista fixa no código: um modelo novo
-/// aparece quando a pessoa clica em "Verificar e atualizar" (Configurações › Modelos). A lista fica guardada e é a mesma
+/// aparece quando a pessoa clica em "Verificar e atualizar" (Configurações › Codex e modelos). A lista fica guardada e é a mesma
 /// para a barra e para as IAs no Codex.
 /// </summary>
 public static class ClaudeModelList

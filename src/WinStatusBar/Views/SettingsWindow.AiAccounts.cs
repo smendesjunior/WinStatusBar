@@ -11,25 +11,28 @@ public sealed partial class SettingsWindow
 
     private void BuildAdditionalAiAccounts()
     {
-        var accounts = new StackPanel { Spacing = 12 };
-        AiPage.Children.Insert(Math.Min(3, AiPage.Children.Count), accounts);
-        var monitoring = (StackPanel)((Border)AiPage.Children[2]).Child;
-        monitoring.Children.Add(new Border { Height = 1, Background = ThemeBrushes.Get("DividerStrokeColorDefaultBrush") });
-        monitoring.Children.Add(Toggle("Lenovo Qira", "Acompanha as conversas do Qira e o chat dele na barra (modo Híbrido).", s => s.QiraEnabled, (s, v) => s.QiraEnabled = v));
-        monitoring.Children.Add(Toggle("Conversas por API nesta barra", "Inclui as conversas feitas aqui na lista de tarefas e na escolha Automático. As preferências por serviço ficam abaixo.", s => s.ApiActivityEnabled, (s, v) => s.ApiActivityEnabled = v));
-        var providers = new StackPanel { Spacing = 6 };
+        // ---- Cotas e tarefas › O que acompanhar: o Qira entra depois da IA local; as conversas do chat da barra fecham o
+        // grupo, com as escolhas por serviço recuadas logo abaixo.
+        QiraTrackingHost.Children.Add(Divider());
+        QiraTrackingHost.Children.Add(Toggle("Lenovo Qira", "Acompanha as conversas do Qira e o chat dele na barra (modo Híbrido).", s => s.QiraEnabled, (s, v) => s.QiraEnabled = v));
+        ApiTrackingHost.Children.Add(Divider());
+        ApiTrackingHost.Children.Add(Toggle(Localization.T("Conversas feitas no chat da barra"), Localization.T("Inclui essas conversas na lista de tarefas e na escolha Automático. As preferências por serviço ficam abaixo."), s => s.ApiActivityEnabled, (s, v) => s.ApiActivityEnabled = v));
+        var providers = new StackPanel { Margin = new Thickness(24, 0, 0, 0) };
         foreach (var provider in AdditionalAiAccounts.Providers)
             providers.Children.Add(Toggle(provider.Name, "Acompanha respostas, erros e cancelamentos quando você usa esta IA no chat da barra.",
                 s => !s.DisabledApiActivityProviders.Contains(provider.Id), (s, on) => { s.DisabledApiActivityProviders.Remove(provider.Id); if (!on) s.DisabledApiActivityProviders.Add(provider.Id); }));
-        providers.Children.Add(Pad(Help("Essas escolhas valem enquanto Conversas por API nesta barra estiver ativado. APIs personalizadas também são acompanhadas. Conversas feitas fora da barra não são observadas.")));
-        // Lista direta (sem menu recolhido), como as demais opções da seção.
-        foreach (var child in providers.Children.ToList()) { providers.Children.Remove(child); monitoring.Children.Add(child); }
+        providers.Children.Add(Pad(Help(Localization.T("Essas escolhas valem enquanto \"Conversas feitas no chat da barra\" estiver ativado. APIs personalizadas também são acompanhadas. Conversas feitas fora da barra não são observadas."))));
+        ApiTrackingHost.Children.Add(providers);
 
-        BuildAiOrder(accounts);
+        // ---- Cotas e tarefas › Cotas na barra.
+        BuildAiOrder(AiOrderHost);
+
+        // ---- IAs e contas: um cartão por IA, a API própria e os conectores de cada uma.
+        var accounts = _organizedPages["accounts"];
         BuildCliConnections(accounts);
+        AddCopilotCard(accounts);
         foreach (var provider in AdditionalAiAccounts.Providers.Where(p => p.Endpoint is not null && p.Id != "gemini"))
             AddApiOnlyCard(accounts, provider);
-        AddCopilotCard(accounts);
 
         var local = NewAccountCard("IA local", "ollama-estatico.svg", null, "");
         local.Identity(null, null, "Modelos no seu PC");
@@ -45,17 +48,16 @@ public sealed partial class SettingsWindow
             qira.Identity(QiraAppBridge.IsInstalled ? "Aplicativo Lenovo instalado" : "Não instalado neste PC", "Créditos da nuvem: " + QiraBridge.QuotaText(qq), "");
         qira.Action.Visibility = Visibility.Collapsed;
         accounts.Children.Add(qira.Root);
-        BuildConnectors(accounts);
 
-        var restore = new Button { Content = "Voltar à API própria anterior" };
-        var restored = Help("");
-        restore.Click += (_, _) => { bool ok = false; Commit(s => ok = AdditionalAiAccounts.RestoreCustom(s)); restored.Text = ok ? "API própria anterior selecionada. Sua chave original foi preservada." : "Nenhuma configuração anterior guardada neste PC."; };
-        var restorePanel = new StackPanel { Spacing = 6, Margin = new Thickness(16, 12, 16, 12) }; restorePanel.Children.Add(restore); restorePanel.Children.Add(restored);
-        accounts.Children.Add(Group(restorePanel));
-        accounts.Children.Add(GroupTitle("Outro serviço (API própria)"));
+        _customApiSection = GroupTitle(Localization.T("Outra IA por chave (API própria)"));
+        accounts.Children.Add(_customApiSection);
         accounts.Children.Add(Help("Qualquer serviço compatível com OpenAI ou Anthropic (OpenRouter, Groq, Mistral, LM Studio…). Aparece no seletor do chat com o nome escolhido."));
         accounts.Children.Add(_apiSettingsPage);
+        BuildConnectors(accounts);
     }
+
+    /// <summary>Título do grupo da API própria, em "IAs e contas".</summary>
+    private FrameworkElement? _customApiSection;
 
     /// <summary>
     /// IA local (Ollama): modelos carregados (como "ollama ps"), liberar agora (como "ollama stop") e por quanto tempo o
@@ -96,7 +98,7 @@ public sealed partial class SettingsWindow
         foreach (var v in values) keep.Items.Add(new ComboBoxItem { Content = Label(v), Tag = v });
         keep.SelectedIndex = values.IndexOf(S.LocalModelKeepAlive);
         keep.SelectionChanged += (_, _) => { if (keep.SelectedItem is ComboBoxItem { Tag: string v } && v != S.LocalModelKeepAlive) Commit(s => s.LocalModelKeepAlive = v); };
-        local.Rows.Children.Add(AccountRow("", "Manter carregado", keep,
+        local.Rows.Children.Add(AccountRow("", Localization.T("Manter o modelo na memória por"), keep,
             Help("Enviado ao Ollama em cada pedido (keep_alive). A contagem começa quando a resposta termina e recomeça a cada uso.")));
         Closed += (_, _) => http.Dispose();
         Refresh(); _accountRefreshers.Add(Refresh);
@@ -140,7 +142,8 @@ public sealed partial class SettingsWindow
         configure.Click += async (_, _) => await Configure();
         remove.Click += async (_, _) => await Remove();
         use.Click += (_, _) => { Commit(s => AdditionalAiAccounts.Activate(s, provider)); card.SetNote(provider.Name + " selecionado para novas conversas."); };
-        card.Action.Click += async (_, _) => { if (ApiKeyStore.Get(provider.Resource) is null) await Configure(); else await Remove(); };
+        // Só chave: "Configurar chave…" e "Remover chave" na linha bastam (o "Entrar"/"Sair" do alto fazia o mesmo).
+        card.Action.Visibility = Visibility.Collapsed;
         Refresh(); _accountRefreshers.Add(Refresh);
         accounts.Children.Add(card.Root);
     }

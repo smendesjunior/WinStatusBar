@@ -36,7 +36,7 @@ internal static class MicrosoftCreditsSession
     private static DispatcherQueueTimer? _timer;
 
     private static TimeSpan _interval = TimeSpan.FromMinutes(5);
-    /// <summary>Intervalo da atualização das cotas (Configurações › IA › Cotas das IAs), no mínimo 5 min.</summary>
+    /// <summary>Intervalo da atualização das cotas (Configurações › Cotas e tarefas), no mínimo 5 min.</summary>
     public static void SetInterval(TimeSpan interval) { _interval = interval; if (_timer is not null) _timer.Interval = interval; }
 
     /// <summary>Atualiza a cada 5 min enquanto houver sessão (chamado uma vez pela aplicação).</summary>

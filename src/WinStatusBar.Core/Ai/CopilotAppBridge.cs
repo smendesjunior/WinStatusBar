@@ -16,7 +16,7 @@ public static class CopilotAppBridge
 
     /// <summary>
     /// "Modo escolhido no site" e os modos do seletor do Copilot (ex.: "Think Deeper", submenu "GPT"), lidos na última
-    /// verificação de Configurações › Modelos (não há lista fixa no código).
+    /// verificação de Configurações › Codex e modelos (não há lista fixa no código).
     /// </summary>
     public static AgentPrompt.Catalog Catalog()
     {

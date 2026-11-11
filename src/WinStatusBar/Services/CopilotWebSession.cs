@@ -57,7 +57,7 @@ internal static class CopilotWebSession
     {
         _ui = ui;
         CopilotAppBridge.Runner = RunAsync;
-        CopilotAppBridge.Available = () => SignedIn ? null : "Entre no Copilot em Configurações › IA › Microsoft Copilot (uma vez).";
+        CopilotAppBridge.Available = () => SignedIn ? null : "Entre no Copilot em Configurações › IAs e contas › Microsoft Copilot (uma vez).";
     }
 
     private static Task<T> OnUi<T>(Func<Task<T>> work)
@@ -132,7 +132,7 @@ internal static class CopilotWebSession
     public static void ShowSignIn() => _ = OnUi(async () => { var web = await EnsureAsync(true); web.CoreWebView2.Navigate(Login); return true; });
 
     /// <summary>
-    /// Refazer as ligações (Configurações › Modelos): fecha a página escondida, e a próxima pergunta abre uma nova, com o
+    /// Refazer as ligações (Configurações › Codex e modelos): fecha a página escondida, e a próxima pergunta abre uma nova, com o
     /// mesmo login. Não mexe enquanto ela responde nem com a janela de login aberta.
     /// </summary>
     public static Task<bool> ResetAsync() => CloseAsync(TimeSpan.FromSeconds(30));
@@ -314,7 +314,7 @@ internal static class CopilotWebSession
             if (!ready)
             {
                 await DumpAsync(web, "carregamento");
-                if (signInSeen) { Save(new(false, null, null)); return new("", null, "O Copilot pede login. Entre em Configurações › IA › Microsoft Copilot."); }
+                if (signInSeen) { Save(new(false, null, null)); return new("", null, "O Copilot pede login. Entre em Configurações › IAs e contas › Microsoft Copilot."); }
                 return new("", null, "A página do Copilot não carregou o campo de conversa. Tente de novo em instantes.");
             }
             if (!_account.SignedIn) Save(new(true, _account.Name, _account.Email));

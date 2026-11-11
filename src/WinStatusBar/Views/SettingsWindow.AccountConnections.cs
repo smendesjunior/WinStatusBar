@@ -202,7 +202,7 @@ public sealed partial class SettingsWindow
 
     private void BuildCliConnections(StackPanel accounts)
     {
-        accounts.Children.Add(GroupTitle("Contas das IAs"));
+        accounts.Children.Add(GroupTitle(Localization.T("Suas IAs")));
         accounts.Children.Add(Help("Conta, plano e chave de cada IA, lidos neste PC. \"Sair\" e \"Entrar\" usam os comandos oficiais de cada serviço; o estado é atualizado ao voltar a esta janela."));
         AddClaudeOrCodexCard(accounts, "claude", "Claude Code", "", "https://claude.ai/settings/account", "Conta Anthropic", "ANTHROPIC_API_KEY");
         AddClaudeOrCodexCard(accounts, "codex", "Codex", "chatgpt-estatico.svg", "https://chatgpt.com/#settings/Account", "Conta OpenAI", "OPENAI_API_KEY");
@@ -223,7 +223,7 @@ public sealed partial class SettingsWindow
         if (id == "codex")
         {
             // Saldo, gráficos e faturamento da API OpenAI (antes na página "API e faturamento").
-            card.Rows.Children.Add(NestedExpander("", "API OpenAI · saldo, gráficos e faturamento", _openAiBillingPanel));
+            card.Rows.Children.Add(NestedExpander("", Localization.T("Uso e gastos da API OpenAI"), _openAiBillingPanel));
         }
         bool signedIn = false;
         void Refresh()
@@ -247,8 +247,8 @@ public sealed partial class SettingsWindow
             bool key = found.Count > 0;
             setKey(key, key ? "Configurada" : "Não configurada");
             keyHelp.Text = key ? "Em uso: " + string.Join("; ", found) + "."
-                : id == "codex" ? "Nenhuma chave nem login de faturamento. Configure em \"API OpenAI · saldo, gráficos e faturamento\" abaixo, ou defina OPENAI_API_KEY."
-                : "Nenhuma chave. Defina ANTHROPIC_API_KEY ou configure a Anthropic em \"Outro serviço (API própria)\", no fim desta página.";
+                : id == "codex" ? "Nenhuma chave nem login de faturamento. Configure em \"Uso e gastos da API OpenAI\" abaixo, ou defina OPENAI_API_KEY."
+                : "Nenhuma chave. Defina ANTHROPIC_API_KEY ou configure a Anthropic em \"Outra IA por chave (API própria)\", mais abaixo nesta página.";
             card.SetNote(signedIn ? "" : "Nenhuma sessão encontrada neste PC. Clique em Entrar para fazer login pelo CLI oficial.");
         }
         card.Action.Click += async (_, _) =>
@@ -275,9 +275,9 @@ public sealed partial class SettingsWindow
         // Conta Google: conversa + cotas do plano.
         var (googleBadge, setGoogle) = Badge();
         var googleHelp = Help("");
-        var googleIn = SmallButton("Entrar no Google…", () => { GoogleUsageSession.ShowSignIn(); card.SetNote("Entre na conta Google na janela aberta e feche-a ao terminar."); });
+        // Um botão de login só: "Entrar"/"Sair" no alto do cartão (a linha tinha um segundo, "Entrar no Google…", igual).
         var googleRefresh = SmallButton("Atualizar cotas", () => GoogleUsageSession.Refresh());
-        card.Rows.Children.Add(AccountRow("\uE77B", "Conta Google · conversa e cotas do plano", googleBadge, googleHelp, googleIn, googleRefresh));
+        card.Rows.Children.Add(AccountRow("\uE77B", "Conta Google · conversa e cotas do plano", googleBadge, googleHelp, googleRefresh));
 
         // Chave de API.
         var (keyBadge, setKey) = Badge();
@@ -303,6 +303,7 @@ public sealed partial class SettingsWindow
         var advanced = new StackPanel { Spacing = 8 };
         advanced.Children.Add(cliState);
         advanced.Children.Add(Help("O login do Gemini CLI só é aceito pelo Google com Gemini Code Assist Standard ou Enterprise. Nesse caso, informe o projeto do Google Cloud ligado à assinatura; a conversa pela conta Google acima continua sendo o padrão."));
+        advanced.Children.Add(new TextBlock { Text = Localization.T("Projeto do Google Cloud"), FontSize = 14 });
         advanced.Children.Add(project);
         advanced.Children.Add(cliManage);
         card.Rows.Children.Add(NestedExpander("", "Avançado · login do Gemini CLI", advanced));

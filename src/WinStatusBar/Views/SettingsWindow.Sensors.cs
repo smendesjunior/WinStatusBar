@@ -10,8 +10,8 @@ public sealed partial class SettingsWindow
     private TextBlock? _driverSetupStatus;
     private void BuildSensorSetup()
     {
-        var manual = new Button { Content = "Adicionar driver…" };
-        var automatic = new Button { Content = "Implementar automaticamente…" };
+        var manual = new Button { Content = Localization.T("Instalar driver de um arquivo…") };
+        var automatic = new Button { Content = Localization.T("Procurar no Windows Update…") };
         var check = new Button { Content = "Verificar sensores" };
         var report = new Button { Content = "Último resultado" };
         _driverSetupStatus = Help("Configuração exclusiva deste computador. Os drivers não são enviados aos outros PCs.");
@@ -22,9 +22,9 @@ public sealed partial class SettingsWindow
         var second = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         second.Children.Add(check); second.Children.Add(report);
         actions.Children.Add(first); actions.Children.Add(second); actions.Children.Add(_driverSetupStatus);
-        GpuPage.Children.Add(GroupTitle("Componentes de sensores deste PC"));
-        GpuPage.Children.Add(Help("Alguns sensores dependem do driver do fabricante; outros não são expostos pelo hardware. Selecione um pacote .inf original ou procure componentes compatíveis pelo Windows Update. A instalação solicita autorização do Windows e não reinicia o computador automaticamente."));
-        GpuPage.Children.Add(Group(actions));
+        SensorDriversHost.Children.Add(GroupTitle(Localization.T("Drivers de sensores")));
+        SensorDriversHost.Children.Add(Help("Alguns sensores dependem do driver do fabricante; outros não são expostos pelo hardware. Selecione um pacote .inf original ou procure componentes compatíveis pelo Windows Update. A instalação solicita autorização do Windows e não reinicia o computador automaticamente."));
+        SensorDriversHost.Children.Add(Group(actions));
         async Task ShowResult(string title, string message) => await new ContentDialog { XamlRoot = GpuPage.XamlRoot, RequestedTheme = GpuPage.ActualTheme, Title = title, Content = new ScrollViewer { MaxHeight = 380, Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true } }, CloseButtonText = "Fechar" }.ShowAsync();
         string Readings()
         {

@@ -152,7 +152,7 @@ internal static class Program
             try
             {
                 if (WinStatusBar.Core.Ai.Codex.CodexIntegration.PrepareForInstall(WinStatusBar.Core.Ai.Codex.CodexIntegration.StateFile, hadInstallBefore))
-                    Log.AppendLine("IAs no Codex: instalação nova, ligação automática desativada (ligue em Configurações › Modelos).");
+                    Log.AppendLine("IAs no Codex: instalação nova, ligação automática desativada (ligue em Configurações › Codex e modelos).");
             }
             catch (Exception ex) { Log.AppendLine("IAs no Codex: estado da ligação não gravado (" + ex.Message + ")"); }
         }

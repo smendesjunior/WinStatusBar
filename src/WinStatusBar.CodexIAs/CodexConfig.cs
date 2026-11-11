@@ -8,7 +8,7 @@ using State = WinStatusBar.Core.Ai.Codex.CodexIntegration.State;
 namespace CodexIAs;
 
 /// <summary>
-/// Ligação com o Codex (config.toml), feita só quando a pessoa pede (Configurações › Modelos na barra), com cópia de
+/// Ligação com o Codex (config.toml), feita só quando a pessoa pede (Configurações › Codex e modelos na barra), com cópia de
 /// segurança e como desfazer:
 /// - openai_base_url passa a ser o encaminhador (127.0.0.1:11435), que entrega à OpenAI (ou ao endereço que já estava
 ///   configurado, como o do Ollama) tudo o que não é das IAs da barra;

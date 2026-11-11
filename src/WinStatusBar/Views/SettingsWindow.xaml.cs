@@ -57,9 +57,7 @@ public sealed partial class SettingsWindow : Window
         if (File.Exists(png)) TitleIcon.Source = new BitmapImage(new Uri(png));
         Root.RequestedTheme = App.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
         UpdateCaptionTheme();
-        var languageGroup = new StackPanel { Spacing = 6, Margin = new Thickness(0, 0, 0, 12) };
-        languageGroup.Children.Add(new TextBlock { Text = Localization.T("Idioma do aplicativo"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        var languageBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        var languageBox = new ComboBox { Style = (Style)Root.Resources["SettingChoice"] };
         string[] codes = ["", "pt-BR", "en-US", "es", "ja-JP", "zh-Hans", "fr-FR"];
         string[] names = [Localization.T("Automático (idioma do Windows)"), global::WinStatusBar.Services.Localization.T("Português (Brasil)"), "English", "Español", "日本語", "简体中文", global::WinStatusBar.Services.Localization.T("Français")];
         for (int i = 0; i < codes.Length; i++) languageBox.Items.Add(new ComboBoxItem { Content = names[i], Tag = codes[i] });
@@ -70,9 +68,9 @@ public sealed partial class SettingsWindow : Window
                 _app.Settings.Save();
             }
         };
-        languageGroup.Children.Add(languageBox);
-        languageGroup.Children.Add(new TextBlock { Text = Localization.T("Reinicie o aplicativo para aplicar o idioma selecionado."), FontSize = 12, TextWrapping = TextWrapping.Wrap });
-        SystemPage.Children.Insert(1, languageGroup);
+        // Uma linha como as outras, no grupo "Idioma" (antes era um bloco solto acima de tudo na página Geral).
+        SystemExtras.Children.Add(GroupTitle(Localization.T("Idioma")));
+        SystemExtras.Children.Add(Group(Row(Localization.T("Idioma do aplicativo"), Localization.T("Reinicie o aplicativo para aplicar o idioma selecionado."), languageBox)));
         LoadValues();
         _loading = true;
         BuildExtraSettings();
@@ -109,7 +107,27 @@ public sealed partial class SettingsWindow : Window
         AppWindow.Hide();
     }
 
-    public void ShowAndFocus(bool diagnostics)
+    /// <summary>Itens do menu e do rodapé ("Sobre e suporte").</summary>
+    private IEnumerable<NavigationViewItem> NavItems() =>
+        Nav.MenuItems.OfType<NavigationViewItem>().Concat(Nav.FooterMenuItems.OfType<NavigationViewItem>());
+
+    /// <summary>
+    /// Abre uma página pelo nome. Os nomes das páginas antigas continuam valendo e levam ao grupo que as recebeu:
+    /// "diagnostics" e "updates" a Sobre e suporte, "shortcuts" a Barra e aparência, "battery" a Rede e bateria.
+    /// </summary>
+    public void ShowPage(string tag)
+    {
+        string page = SettingsNavigation.Resolve(tag);
+        if (NavItems().FirstOrDefault(i => (string)i.Tag == page) is not { } item) return;
+        if (!ReferenceEquals(Nav.SelectedItem, item)) Nav.SelectedItem = item;
+        else if (page == SettingsNavigation.Footer) RefreshDiagnostics();
+        FrameworkElement? section = tag switch { "diagnostics" => DiagnosticsPage, "shortcuts" => ShortcutsHost, "battery" => _batterySection, _ => null };
+        // Depois da troca de página (que volta a rolagem ao topo), leva o grupo pedido para a vista.
+        if (section is not null)
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => section.StartBringIntoView(new BringIntoViewOptions { VerticalAlignmentRatio = 0, AnimationDesired = false }));
+    }
+
+    public void ShowAndFocus(bool diagnostics, string? page = null)
     {
         // Reaberta depois de escondida (HideForReuse): volta a acompanhar a CPU, o estado ao vivo e o tema atual.
         _app.Hub.CpuSampled -= RefreshHardwareChoices;
@@ -124,7 +142,8 @@ public sealed partial class SettingsWindow : Window
         Activate();
         if (AppWindow.Presenter is OverlappedPresenter p && p.State == OverlappedPresenterState.Minimized) p.Restore();
         SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
-        if (diagnostics) Nav.SelectedItem = Nav.MenuItems.OfType<NavigationViewItem>().First(i => (string)i.Tag == "diagnostics");
+        if (diagnostics) ShowPage("diagnostics");
+        else if (page is not null) ShowPage(page);
     }
 
     private AppSettings S => _app.Settings.Current;
@@ -167,7 +186,6 @@ public sealed partial class SettingsWindow : Window
         ShowTaskSwitch.IsOn = s.ShowTask;
         PrivacySwitch.IsOn = s.PrivacyMode;
         SelectInterval(CodexIntervalBox, s.CodexQuotaIntervalMin);
-        SelectInterval(ClaudeIntervalBox, s.ClaudeQuotaIntervalMin);
         PinnedBox.Items.Clear();
         PinnedBox.Items.Add(new ComboBoxItem { Content = global::WinStatusBar.Services.Localization.T("Automático (prioridade e atividade recente)"), Tag = "auto" });
         PinnedBox.Items.Add(new ComboBoxItem { Content = global::WinStatusBar.Services.Localization.T("Codex"), Tag = "codex" });
@@ -252,22 +270,6 @@ public sealed partial class SettingsWindow : Window
         Select(box, tag);
     }
 
-    private static string IntervalText(int minutes) => minutes <= 0
-        ? global::WinStatusBar.Services.Localization.T("Tempo real: atualiza a cada resposta e consulta a conta periodicamente (Codex 1 min, Claude 3 min — o serviço do Claude bloqueia consultas por minuto)")
-        : $"Consulta a conta a cada {minutes} min; eventos locais atualizam entre as consultas";
-
-    private string QuotaStatus(QuotaSnapshot? q, string? error, int minutes)
-    {
-        var now = DateTimeOffset.Now;
-        bool remaining = S.QuotaMode == QuotaDisplay.Remaining;
-        bool valid = q is not null && (q.Primary is { } p && !p.IsExpired(now) || q.Secondary is { } w && !w.IsExpired(now));
-        string data = valid
-            ? $"{(remaining ? "Disponível" : "Usado")}: 5h {QuotaService.Text(q!.Primary, remaining, now)} · 7d {QuotaService.Text(q.Secondary, remaining, now)} — atualizado às {q.ObservedAt.ToLocalTime():HH:mm:ss}."
-            : error ?? global::WinStatusBar.Services.Localization.T("Aguardando o primeiro dado…");
-        if (valid && error is not null) data += " " + error;
-        return $"{data}\n{IntervalText(minutes)}.";
-    }
-
     /// <summary>
     /// Uma linha de atualização para todas as IAs: a escolha vale para Codex e Claude (tempo real = a cada resposta) e,
     /// no mínimo a cada 5 min, para Gemini, Copilot e Qira; abaixo, o último valor lido de cada uma.
@@ -300,7 +302,8 @@ public sealed partial class SettingsWindow : Window
     private async void OnRefreshClaudeUsage(object sender, RoutedEventArgs e)
     {
         RefreshClaudeButton.IsEnabled = false;
-        ClaudeQuotaText.Text = "Consultando as cotas…";
+        // Na linha visível (antes ia para a linha escondida do intervalo do Claude, e o clique parecia não fazer nada).
+        CodexQuotaText.Text = Localization.T("Consultando as cotas…");
         try { await _app.Hub.RefreshNowAsync(); }
         catch (Exception ex) { App.Log(global::WinStatusBar.Services.Localization.T("Consulta Claude: ") + ex.GetType().Name); }
         finally { UpdateClaudeQuotaText(); }
@@ -311,10 +314,9 @@ public sealed partial class SettingsWindow : Window
         TintSlider.IsEnabled = Tag(BackdropBox) is not ("Solid" or "Adaptive");
         ShowTaskSwitch.IsEnabled = !PrivacySwitch.IsOn;
         LocalProcessesBox.IsEnabled = LocalSwitch.IsOn;
-        CodexIntervalBox.IsEnabled = CodexSwitch.IsOn;
-        ClaudeIntervalBox.IsEnabled = ClaudeSwitch.IsOn;
+        // O intervalo e a forma de mostrar valem para todas as IAs (Gemini, Copilot e Qira também têm cotas): ficam sempre
+        // disponíveis. "Atualizar cotas agora" consulta só o Codex e o Claude.
         RefreshClaudeButton.IsEnabled = ClaudeSwitch.IsOn || CodexSwitch.IsOn;
-        QuotaModeBox.IsEnabled = CodexSwitch.IsOn || ClaudeSwitch.IsOn;
         GpuUtilSwitch.IsEnabled = !LocalSwitch.IsOn && Tag(GpuPercentBox) != "Utilization";
         ScaleValueText.Text = $"{ScaleSlider.Value:0}%";
         TintValueText.Text = TintSlider.Value == 0 ? global::WinStatusBar.Services.Localization.T("Padrão do Windows") : $"{TintSlider.Value:0}%";
@@ -540,10 +542,11 @@ public sealed partial class SettingsWindow : Window
         CommandPage.Visibility = tag == "command" ? Visibility.Visible : Visibility.Collapsed;
         ClipPage.Visibility = tag == "clip" ? Visibility.Visible : Visibility.Collapsed;
         if (tag == "clip") UpdateClipStats();
-        DiagnosticsPage.Visibility = tag == "diagnostics" ? Visibility.Visible : Visibility.Collapsed;
-        if (tag == "diagnostics") RefreshDiagnostics();
+        // O diagnóstico é um grupo de "Sobre e suporte": o relatório é refeito ao entrar na página.
+        if (tag == SettingsNavigation.Footer) RefreshDiagnostics();
         if (tag == "gpu") { _persistentSensorEnabled = SensorPermissionTask.IsEnabled(); UpdateSensorStatus(); }
         if (tag == "ai") UpdateClaudeQuotaText();
+        if (tag == "connections") _refreshPower?.Invoke();
         PageScroll.ChangeView(null, 0, null, true);
     }
 
@@ -604,8 +607,6 @@ public sealed partial class SettingsWindow : Window
         dp.SetText(DiagnosticsText.Text);
         Clipboard.SetContent(dp);
     }
-
-    private void OnOpenData(object sender, RoutedEventArgs e) => WindowsLauncherService.OpenFolder(SettingsService.DataDir);
 
     private void RefreshDiagnostics() => DiagnosticsText.Text = BuildDiagnostics(_app);
 

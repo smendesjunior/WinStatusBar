@@ -327,7 +327,7 @@ public static class AgentPrompt
     private static async Task<Catalog> ApiCatalogAsync(ApiConfig? api, CancellationToken ct)
     {
         if (api is null || string.IsNullOrWhiteSpace(api.BaseUrl) || string.IsNullOrEmpty(api.Key))
-            return new([], null, null, LocalizedText.T("Configure a API em Configurações › IA"));
+            return new([], null, null, LocalizedText.T("Configure a API em Configurações › IAs e contas"));
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(8));
         using var req = new HttpRequestMessage(HttpMethod.Get, ApiUrl(api, "models"));
@@ -754,7 +754,7 @@ public static class AgentPrompt
     private static async Task<Result> RunApiAsync(ApiConfig? api, string prompt, string? model, string? effort, Options o, Action<string> onText, CancellationToken ct)
     {
         if (api is null || string.IsNullOrWhiteSpace(api.BaseUrl) || string.IsNullOrEmpty(api.Key))
-            return new(string.Empty, null, LocalizedText.T("Configure a API em Configurações › IA"));
+            return new(string.Empty, null, LocalizedText.T("Configure a API em Configurações › IAs e contas"));
         if (string.IsNullOrEmpty(model)) return new(string.Empty, null, LocalizedText.T("Escolha um modelo da API"));
         // Pedido de imagem numa API com endpoint de imagens (OpenAI, xAI): gera e mostra no chat.
         if (api.Kind != "anthropic" && !o.Ephemeral && ApiImageGeneration.ImageModel(api.BaseUrl) is { } imageModel && ApiImageGeneration.IsImageRequest(prompt))

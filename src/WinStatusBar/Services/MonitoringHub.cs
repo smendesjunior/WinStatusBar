@@ -131,7 +131,7 @@ public sealed class MonitoringHub : IDisposable
         Local.ExtraProcessNames = s.LocalServerProcesses;
         Network.ManualInterface = s.NetworkInterface;
         Codex.QuotaInterval = AppSettings.QuotaPoll(s.CodexQuotaIntervalMin);
-        // Uma escolha só para todas as IAs (Configurações › IA › Cotas das IAs).
+        // Uma escolha só para todas as IAs (Configurações › Cotas e tarefas).
         var web = AppSettings.WebQuotaInterval(s.CodexQuotaIntervalMin);
         GoogleUsageSession.SetInterval(web); MicrosoftCreditsSession.SetInterval(web);
         // Claude: "tempo real" consulta a conta a cada 3 min (o serviço bloqueia consultas por minuto); eventos atualizam entre elas.
@@ -495,7 +495,7 @@ public sealed class MonitoringHub : IDisposable
             : "Copilot: créditos de IA ainda não lidos (account.microsoft.com, com o login do Copilot da barra)";
         vm.GeminiQuotaTooltip = gFresh
             ? $"Gemini · plano {g!.Plan ?? "—"} — {(gRemaining ? "restante" : "usado")}\nUso atual: {vm.GeminiCurrent} (renova {g.CurrentReset ?? "—"})\nSemanal: {vm.GeminiWeekly} (renova {g.WeeklyReset ?? "—"})\nLido às {g.Updated.LocalDateTime:HH:mm} em gemini.google.com/usage"
-            : "Gemini: entre na conta Google em Configurações › IA › Gemini para ver as cotas";
+            : "Gemini: entre na conta Google em Configurações › IAs e contas › Gemini para ver as cotas";
         App.Current.UpdateTrayTooltip(global::WinStatusBar.Services.Localization.F("WinStatusBar\n{0}: {1}\nCodex 5h {2} · 7d {3}\nClaude 5h {4} · 7d {5}", new object?[] {vm.AgentName,vm.AgentState,vm.Codex5h,vm.Codex7d,vm.Claude5h,vm.Claude7d}));
     }
 

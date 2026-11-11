@@ -41,7 +41,7 @@ internal sealed class CodexApiResumeService : IApiResumeHost
     /// <summary>Versão da Loja: fechar ou atualizar a barra encerraria a continuação no meio, então o botão fica desligado.</summary>
     public bool IsStoreBuild => PackageContext.IsPackaged;
     public bool CodexBlocked => _hub.Codex.Quota?.IsBlocked(Now) == true;
-    /// <summary>Opção Continuar pela API (Configurações › Modelos). Desligada, continuações já iniciadas seguem até o fim.</summary>
+    /// <summary>Opção Continuar pela API (Configurações › Codex e modelos). Desligada, continuações já iniciadas seguem até o fim.</summary>
     public bool Enabled => _settings.Current.CodexApiResumeEnabled;
     /// <summary>A busca do menu; até ela terminar, a que a barra fez quando a conta bloqueou.</summary>
     public QuotaStopScan? LastScan => _lastScan ?? _hub.Codex.LastStopScan;

@@ -488,7 +488,7 @@ public sealed partial class BarWindow : Window
         settings.Click += (_, _) => App.Current.ShowSettings();
         var diag = new MenuFlyoutItem { Text = global::WinStatusBar.Services.Localization.T("Diagnóstico"), Icon = new FontIcon { Glyph = "" } };
         diag.Click += (_, _) => App.Current.ShowSettings(diagnostics: true);
-        // Confere e conserta sozinho o que as IAs da barra e do Codex precisam (Configurações › Modelos).
+        // Confere e conserta sozinho o que as IAs da barra e do Codex precisam (Configurações › Codex e modelos).
         var fix = new MenuFlyoutItem { Text = global::WinStatusBar.Services.Localization.T("Corrigir problemas das IAs"), Icon = new FontIcon { Glyph = "\uE90F" } };
         fix.Click += (_, _) => App.Current.ShowSettings(repair: true);
         var exit = new MenuFlyoutItem { Text = global::WinStatusBar.Services.Localization.T("Fechar WinStatusBar"), Icon = new FontIcon { Glyph = "" } };
@@ -561,7 +561,7 @@ public sealed partial class BarWindow : Window
     private void OnAgentConfigureClick(object sender, RoutedEventArgs e)
     {
         if (Root.Resources["SessionsFlyout"] is Flyout flyout) flyout.Hide();
-        App.Current.ShowSettings();
+        App.Current.ShowSettings(page: "accounts");
     }
 
     private void OnAgentOptionClick(object sender, ItemClickEventArgs e)
@@ -745,7 +745,7 @@ public sealed partial class BarWindow : Window
                     if (g.WeeklyPercent is { } wk) host.Children.Add(Row("Limite semanal", wk, g.WeeklyReset is { } r2 ? "Renova " + r2 : ""));
                     host.Children.Add(Views.Panels.PanelKit.Caption($"Conta Google: {g.Email ?? "conectada"} · lido às {g.Updated.LocalDateTime:HH:mm} em gemini.google.com/usage. Atualiza a cada 5 min.", 12));
                 }
-                else host.Children.Add(Views.Panels.PanelKit.Caption("Entre na conta Google em Configurações › IA › Gemini para ver as cotas do plano.", 12));
+                else host.Children.Add(Views.Panels.PanelKit.Caption("Entre na conta Google em Configurações › IAs e contas › Gemini para ver as cotas do plano.", 12));
                 // Chave de API (Google AI Studio): pedidos do dia por modelo, com os limites por minuto.
                 if (ApiKeyStore.Get(AdditionalAiAccounts.Gemini.Resource) is not null)
                 {
@@ -798,7 +798,7 @@ public sealed partial class BarWindow : Window
                     host.Children.Add(Row("Créditos de IA", 100.0 * (c.Total - c.Remaining) / c.Total, $"{c.Remaining} de {c.Total} créditos restantes · recarregados no início de cada mês"));
                     host.Children.Add(Views.Panels.PanelKit.Caption($"Lido às {c.Updated.LocalDateTime:HH:mm} em account.microsoft.com, com o login do Copilot da barra. Atualiza a cada 5 min.", 12));
                 }
-                else host.Children.Add(Views.Panels.PanelKit.Caption("Créditos ainda não lidos. Entre no Copilot em Configurações › IA › Microsoft Copilot.", 12));
+                else host.Children.Add(Views.Panels.PanelKit.Caption("Créditos ainda não lidos. Entre no Copilot em Configurações › IAs e contas › Microsoft Copilot.", 12));
             }
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
             var refresh = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Atualizar agora", FontSize = 12 });

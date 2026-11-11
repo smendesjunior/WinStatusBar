@@ -38,7 +38,7 @@ public sealed partial class SettingsWindow
               <TextBlock Text="{Binding Name}" FontSize="14" />
               <TextBlock Text="{Binding Detail}" FontSize="12" Opacity="0.7" />
             </StackPanel>
-            <ToggleSwitch Grid.Column="3" IsOn="{Binding QuotaOn, Mode=TwoWay}" IsEnabled="{Binding QuotaEnabled}" OnContent="Cota na barra" OffContent="Sem cota na barra" MinWidth="0" />
+            <ToggleSwitch Grid.Column="3" IsOn="{Binding QuotaOn, Mode=TwoWay}" IsEnabled="{Binding QuotaEnabled}" OnContent="{on}" OffContent="{off}" MinWidth="0" />
           </Grid>
         </DataTemplate>
         """;
@@ -77,15 +77,23 @@ public sealed partial class SettingsWindow
             };
             items.Add(item);
         }
+        // Legendas padrão nos interruptores ("Ativado"/"Desativado"), com o cabeçalho "Cota na barra" acima da coluna.
+        string template = AiOrderTemplate
+            .Replace("{on}", System.Security.SecurityElement.Escape(Localization.T("Ativado")))
+            .Replace("{off}", System.Security.SecurityElement.Escape(Localization.T("Desativado")));
         var list = new ListView
         {
             ItemsSource = items, SelectionMode = ListViewSelectionMode.None, CanReorderItems = true, CanDragItems = true, AllowDrop = true,
-            ItemTemplate = (DataTemplate)XamlReader.Load(AiOrderTemplate), Padding = new Thickness(8, 4, 8, 4),
+            ItemTemplate = (DataTemplate)XamlReader.Load(template), Padding = new Thickness(8, 0, 8, 4),
         };
         list.DragItemsCompleted += (_, _) => Commit(s => s.AiOrder = items.Select(i => i.Key).Concat(AppSettings.DefaultAiOrder).Distinct().ToList());
-        host.Children.Add(GroupTitle("Ordem das IAs e cotas na barra"));
-        host.Children.Add(Help("Arraste para mudar a ordem no menu de agentes e nos módulos de cota da barra. Ligue \"Cota na barra\" nas IAs cujas cotas devem aparecer ao lado do agente; o tamanho dos módulos se ajusta sozinho."));
-        host.Children.Add(new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = list });
+        // O título do grupo ("Cotas na barra") vem do XAML.
+        host.Children.Add(Help(Localization.T("Arraste para mudar a ordem no menu de agentes e nos módulos de cota da barra. Ligue o interruptor nas IAs cujas cotas devem aparecer ao lado do agente; o tamanho dos módulos se ajusta sozinho.")));
+        var column = new TextBlock { Text = Localization.T("Cota na barra"), Style = (Style)Root.Resources["SettingHelp"], HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(16, 10, 20, 0) };
+        var card = new StackPanel();
+        card.Children.Add(column);
+        card.Children.Add(list);
+        host.Children.Add(new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = card });
     }
 
     private static async Task SetClaudeIconAsync(AiOrderItem item)

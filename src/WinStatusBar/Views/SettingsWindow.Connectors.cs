@@ -14,14 +14,45 @@ namespace WinStatusBar.Views;
 /// </summary>
 public sealed partial class SettingsWindow
 {
+    /// <summary>Chat da barra › Permissões: conectores e plugins sem pedido de autorização.</summary>
+    private Grid ConnectorsAccessRow() =>
+        Toggle("Acesso total a plugins e conectores", "Todas as IAs usam seus plugins e conectores no chat da barra sem pedir autorização (Claude, Codex e Qira). Comandos no PC e edição de arquivos continuam dependendo do modo Editar.",
+            s => s.ConnectorsFullAccess, (s, on) => s.ConnectorsFullAccess = on);
+
+    /// <summary>Chat da barra › Permissões: conectores do Claude marcados como "Sempre permitir" no chat, com "Remover".</summary>
+    private Border AllowedConnectorsGroup()
+    {
+        var allowed = new StackPanel { Spacing = 6, Margin = new Thickness(16, 12, 16, 12) };
+        void RenderAllowed()
+        {
+            allowed.Children.Clear();
+            allowed.Children.Add(new TextBlock { Text = "Conectores do Claude sempre permitidos", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            if (S.AllowedConnectors.Count == 0) { allowed.Children.Add(Help("Nenhum. Marque \"Sempre permitir\" no pedido de autorização do chat.")); return; }
+            foreach (var rule in S.AllowedConnectors.ToList())
+            {
+                var line = new Grid { ColumnSpacing = 8 };
+                line.ColumnDefinitions.Add(new ColumnDefinition());
+                line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                line.Children.Add(new TextBlock { Text = ConnectorPermissions.DisplayName(rule), VerticalAlignment = VerticalAlignment.Center });
+                var remove = SmallButton("Remover", () => { Commit(s => s.AllowedConnectors.Remove(rule)); RenderAllowed(); });
+                Grid.SetColumn(remove, 1);
+                line.Children.Add(remove);
+                allowed.Children.Add(line);
+            }
+        }
+        RenderAllowed();
+        // As regras são acrescentadas pelo chat ("Sempre permitir"): a lista é relida quando a página aparece.
+        CommandPage.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => { if (CommandPage.Visibility == Visibility.Visible) RenderAllowed(); });
+        return Group(allowed);
+    }
+
+    /// <summary>IAs e contas › Conectores e plugins instalados: o que cada IA tem neste PC, lido sob demanda.</summary>
     private void BuildConnectors(StackPanel accounts)
     {
-        accounts.Children.Add(GroupTitle("Conectores e plugins"));
+        accounts.Children.Add(GroupTitle(WinStatusBar.Services.Localization.T("Conectores e plugins instalados")));
         accounts.Children.Add(Help("Cada IA usa no chat da barra os conectores e plugins que você ativou no app dela. Claude: conectores da conta claude.ai e plugins; na primeira vez que um conector for usado, a barra pede autorização. Codex: plugins, também com @ na caixa de mensagem. Qira: conectores ativados no Qira, usados por ele automaticamente. Copilot e Gemini (conta Google): recursos da conta, dentro da página oficial."));
 
         var rows = new List<FrameworkElement>();
-        rows.Add(Toggle("Acesso total a plugins e conectores", "Todas as IAs usam seus plugins e conectores no chat da barra sem pedir autorização (Claude, Codex e Qira). Comandos no PC e edição de arquivos continuam dependendo do modo Editar.",
-            s => s.ConnectorsFullAccess, (s, on) => s.ConnectorsFullAccess = on));
         rows.Add(ConnectorRow("Claude Code", "Conectores da conta claude.ai, plugins e servidores MCP",
             ct => RunListAsync(AgentPrompt.FindClaudeExecutable(), ["mcp", "list"], ct, l => !l.StartsWith("Checking", StringComparison.OrdinalIgnoreCase))));
         rows.Add(ConnectorRow("Codex", "Plugins instalados no Codex", async ct =>
@@ -42,28 +73,6 @@ public sealed partial class SettingsWindow
         qira.Children.Add(Help("Os conectores ativados no Qira (Configurações › Personalização › Conectores) e as permissões de cada ferramenta valem também no chat da barra; o Qira decide quando usá-los."));
         rows.Add(qira);
         accounts.Children.Add(Group(rows.ToArray()));
-
-        // Conectores do Claude sempre liberados.
-        var allowed = new StackPanel { Spacing = 6, Margin = new Thickness(16, 12, 16, 12) };
-        void RenderAllowed()
-        {
-            allowed.Children.Clear();
-            allowed.Children.Add(new TextBlock { Text = "Conectores do Claude sempre permitidos", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-            if (S.AllowedConnectors.Count == 0) { allowed.Children.Add(Help("Nenhum. Marque \"Sempre permitir\" no pedido de autorização do chat.")); return; }
-            foreach (var rule in S.AllowedConnectors.ToList())
-            {
-                var line = new Grid { ColumnSpacing = 8 };
-                line.ColumnDefinitions.Add(new ColumnDefinition());
-                line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                line.Children.Add(new TextBlock { Text = ConnectorPermissions.DisplayName(rule), VerticalAlignment = VerticalAlignment.Center });
-                var remove = SmallButton("Remover", () => { Commit(s => s.AllowedConnectors.Remove(rule)); RenderAllowed(); });
-                Grid.SetColumn(remove, 1);
-                line.Children.Add(remove);
-                allowed.Children.Add(line);
-            }
-        }
-        RenderAllowed();
-        accounts.Children.Add(Group(allowed));
     }
 
     /// <summary>Linha com título, descrição e "Verificar", que mostra a lista lida do comando oficial da IA.</summary>

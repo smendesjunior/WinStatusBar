@@ -55,7 +55,7 @@ internal sealed record WebSite(
         SendButton: "[...document.querySelectorAll('button')].find(b => !b.disabled && b.getAttribute('aria-disabled') !== 'true' && b.offsetParent !== null && /^(enviar|enviar mensagem|send|send message|submit)$/i.test((b.getAttribute('aria-label') || b.title || '').trim()))",
         Stop: "(() => { const b = [...document.querySelectorAll('button')].find(b => /(parar|stop)/i.test(b.getAttribute('aria-label') || '')); if (b) b.click(); return 'null'; })()",
         ModePicker: LabeledPicker, ModeItems: GenericItems,
-        LoginHint: "Entre no Copilot pela barra (Configurações › IA › Microsoft Copilot) ou rode \"CodexIAs.exe --entrar copilot\". O login vale para os dois.");
+        LoginHint: "Entre no Copilot pela barra (Configurações › IAs e contas › Microsoft Copilot) ou rode \"CodexIAs.exe --entrar copilot\". O login vale para os dois.");
 
     public static WebSite Gemini { get; } = new(
         "gemini", "Gemini", "Gemini", -5,
@@ -93,7 +93,7 @@ internal sealed record WebSite(
         SendButton: "[...document.querySelectorAll('button')].find(b => !b.disabled && b.getAttribute('aria-disabled') !== 'true' && b.offsetParent !== null && /^(enviar|enviar mensagem|send|send message|submit)$/i.test((b.getAttribute('aria-label') || b.title || '').trim()))",
         Stop: "(() => { const b = [...document.querySelectorAll('button')].find(b => /(parar|stop)/i.test(b.getAttribute('aria-label') || '')); if (b) b.click(); return 'null'; })()",
         ModePicker: LabeledPicker, ModeItems: GenericItems,
-        LoginHint: "Entre na conta Google pela barra (Configurações › IA › Gemini › Conta Google) ou rode \"CodexIAs.exe --entrar gemini\". O login vale para os dois.");
+        LoginHint: "Entre na conta Google pela barra (Configurações › IAs e contas › Gemini › Conta Google) ou rode \"CodexIAs.exe --entrar gemini\". O login vale para os dois.");
 
     public string Picker => ModePicker.Replace("__INPUT__", FindInput.Trim());
 }

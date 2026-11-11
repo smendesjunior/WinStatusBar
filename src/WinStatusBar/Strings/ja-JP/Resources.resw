@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <root>
   <data name="AiTasks.Content" xml:space="preserve">
-    <value>AIとタスク</value>
+    <value>クォータとタスク</value>
   </data>
   <data name="AiTasks_Label" xml:space="preserve">
     <value>AI とタスク</value>
   </data>
   <data name="Appearance.Content" xml:space="preserve">
-    <value>外観</value>
+    <value>バーと外観</value>
   </data>
   <data name="Appearance_Label" xml:space="preserve">
     <value>外観</value>
@@ -76,7 +76,7 @@
     <value>全般</value>
   </data>
   <data name="HardwareNetwork.Content" xml:space="preserve">
-    <value>ハードウェアとネットワーク</value>
+    <value>ハードウェア</value>
   </data>
   <data name="HardwareNetwork_Label" xml:space="preserve">
     <value>ハードウェアとネットワーク</value>
@@ -2017,7 +2017,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>自動的に開きます</value>
   </data>
   <data name="U08e6a3c623a0c0.Text" xml:space="preserve">
-    <value>バーで何を見せるか</value>
+    <value>バーのタスク</value>
   </data>
   <data name="U09172986791745.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>メモリの詳細</value>
@@ -2038,7 +2038,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>個人情報を隠す</value>
   </data>
   <data name="U0dbf2f1afcf406.Content" xml:space="preserve">
-    <value>今すぐ照会 (必須ではありません)</value>
+    <value>今すぐクォータを更新</value>
   </data>
   <data name="U107100b612903a.OffContent" xml:space="preserve">
     <value>無効</value>
@@ -2092,7 +2092,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>色の濃さ</value>
   </data>
   <data name="U25d02bd3a8821f.Text" xml:space="preserve">
-    <value>ようこそ通知</value>
+    <value>WinStatusBar の通知</value>
   </data>
   <data name="U25f00d44876c14.Content" xml:space="preserve">
     <value>アプリから離れないでください</value>
@@ -2101,7 +2101,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>30分ごと</value>
   </data>
   <data name="U2856a2a1bd1079.Text" xml:space="preserve">
-    <value>スクリーンとフルスクリーン</value>
+    <value>画面</value>
   </data>
   <data name="U28cf0e50194b46.Text" xml:space="preserve">
     <value>バーをアプリケーションの前に継続するかどうかを選択します。</value>
@@ -2125,7 +2125,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>100% は元のサイズです。上げるとバーの高さも上がります。</value>
   </data>
   <data name="U43b6498e7ff8cf.Text" xml:space="preserve">
-    <value>すべての AI のクォータ更新</value>
+    <value>クォータの更新</value>
   </data>
   <data name="U449ca61e6be36b.Text" xml:space="preserve">
     <value>ビデオカード(GPU)</value>
@@ -2161,13 +2161,13 @@ Claude 5h {4} · 7d {5}</value>
     <value>タスクのタイトルとアクティビティ</value>
   </data>
   <data name="U4ed7cffcb4e851.Header" xml:space="preserve">
-    <value>高度なアップデートと収集</value>
+    <value>詳細設定</value>
   </data>
   <data name="U525e279837de6b.Text" xml:space="preserve">
     <value>Codex</value>
   </data>
   <data name="U54acf7e2a8fe3a.Header" xml:space="preserve">
-    <value>高度な AI 調整</value>
+    <value>詳細設定</value>
   </data>
   <data name="U5570183e13afe3.Content" xml:space="preserve">
     <value>5分ごと</value>
@@ -2194,10 +2194,10 @@ Claude 5h {4} · 7d {5}</value>
     <value>現在のタスク</value>
   </data>
   <data name="U607df6c8b0c086.Text" xml:space="preserve">
-    <value>Allows warning of the first opening. Does not generate temperature or quota alerts.</value>
+    <value>時計の近くに通知を表示します（ようこそ、設定の復元など）。温度やクォータのアラートは含みません。</value>
   </data>
   <data name="U63a58a1d072bc9.Text" xml:space="preserve">
-    <value>AIとタスク</value>
+    <value>クォータとタスク</value>
   </data>
   <data name="U63c819177ce186.Text" xml:space="preserve">
     <value>変更は自動的に保存されました</value>
@@ -2254,7 +2254,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>CPUの詳細</value>
   </data>
   <data name="U73b61824dd6e28.Text" xml:space="preserve">
-    <value>その他のローカルサーバー</value>
+    <value>その他のローカル AI プログラム</value>
   </data>
   <data name="U7584ac0ba1ad38.Text" xml:space="preserve">
     <value>Task displayed in the bar</value>
@@ -2350,7 +2350,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>追跡する対象と画面に表示できる内容を選択します。</value>
   </data>
   <data name="U9e75bccf2e37b8.Text" xml:space="preserve">
-    <value>割り当ての割合</value>
+    <value>クォータの表示方法</value>
   </data>
   <data name="U9ec3e25e442733.PlaceholderText" xml:space="preserve">
     <value>検索</value>
@@ -2380,7 +2380,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>気温</value>
   </data>
   <data name="Ua543c3b292c8b1.Content" xml:space="preserve">
-    <value>セッションアクティビティを構成する</value>
+    <value>オンにする</value>
   </data>
   <data name="Ua9f86281525d7f.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>ネットワークの詳細</value>
@@ -2389,7 +2389,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>15分ごと</value>
   </data>
   <data name="Uacafb033d2b3d8.Text" xml:space="preserve">
-    <value>バーでの情報と注文</value>
+    <value>バーの項目</value>
   </data>
   <data name="Uad393c371cdc79.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>設定</value>
@@ -2404,7 +2404,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>すべての AI に共通の設定です。リアルタイムでは、Codex または Claude の応答ごとにパーセンテージがすぐに更新されます。Gemini、Copilot、Qira は各アカウントのページから最短 5 分ごとに読み取ります。バーのクォータをクリックすると、各期間の詳細を表示できます。</value>
   </data>
   <data name="Ub042851963ec95.Text" xml:space="preserve">
-    <value>ハードウェアとネットワーク</value>
+    <value>ハードウェア</value>
   </data>
   <data name="Ub07a6cab8519b0.PlaceholderText" xml:space="preserve">
     <value>例: my-server、vllm</value>
@@ -2509,7 +2509,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>GPUアクティビティを測定する</value>
   </data>
   <data name="Ue5aa0c441429ef.Text" xml:space="preserve">
-    <value>セッションアクティビティ (オプション)</value>
+    <value>Claude Code の作業内容を表示</value>
   </data>
   <data name="Ue6bb94dec98823.Text" xml:space="preserve">
     <value>セッション バーとリストでプロジェクトのタイトル、説明、名前を非表示にします。</value>
@@ -2518,7 +2518,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>アクティブなイーサネットと Wi-Fi を自動的に追加します。このリストには物理接続のみが表示されます。 Windows の組み込みフィルターは非表示になります。</value>
   </data>
   <data name="Ued4f4a4ccdfc67.Text" xml:space="preserve">
-    <value>バーの外観</value>
+    <value>バーと外観</value>
   </data>
   <data name="Uedd7f4c4b55de2.Content" xml:space="preserve">
     <value>もちろん</value>
@@ -2542,10 +2542,10 @@ Claude 5h {4} · 7d {5}</value>
     <value>メインモニターのみ</value>
   </data>
   <data name="Uf647676ad71fe5.Content" xml:space="preserve">
-    <value>Remove WinStatusBar integration</value>
+    <value>オフにする</value>
   </data>
   <data name="Uf6eb2babbdaa20.Text" xml:space="preserve">
-    <value>パーセンテージは何を表しますか?</value>
+    <value>GPU のパーセントが示す内容</value>
   </data>
   <data name="Uf8c260312a37be.Content" xml:space="preserve">
     <value>どれくらい使用されましたか</value>
@@ -4262,5 +4262,269 @@ Claude 5h {4} · 7d {5}</value>
   </data>
   <data name="S6B5B2234D9758921" xml:space="preserve">
     <value>Codex はアカウントによってブロックされています: {0}。</value>
+  </data>
+  <data name="SEA37E60C410294F0" xml:space="preserve">
+    <value>設定 › AI とアカウント で API を設定してください</value>
+  </data>
+  <data name="SEEA11B64DDD29C44" xml:space="preserve">
+    <value>{0} のサービスのアドレスが見つかりませんでした。設定 › AI とアカウント でアドレスとモデルを確認してください。</value>
+  </data>
+  <data name="S0C90E46F2E3D5B49" xml:space="preserve">
+    <value>Google アカウントでもう一度サインインするか、設定 › AI とアカウント › Gemini でキーを確認してください。</value>
+  </data>
+  <data name="S3A9F403450581E45" xml:space="preserve">
+    <value>設定 › AI とアカウント › Microsoft Copilot でもう一度サインインしてください。</value>
+  </data>
+  <data name="S12D0BAFD261DA8BE" xml:space="preserve">
+    <value>設定 › AI とアカウント でキーを確認または変更してください。</value>
+  </data>
+  <data name="S2721EDE98E09BB48" xml:space="preserve">
+    <value>設定 › AI とアカウント › Gemini で Gemini CLI をインストールするか、Google アカウントを使ってください。</value>
+  </data>
+  <data name="S342E711CAB9E0DD5" xml:space="preserve">
+    <value>この PC には OpenAI の API キーがありません。設定 › AI とアカウント › キーで使う別の AI（独自 API）で、アドレス https://api.openai.com/v1 として登録し、もう一度お試しください。</value>
+  </data>
+  <data name="S59E3F77724C73D8C" xml:space="preserve">
+    <value>OpenAI API がキーを拒否しました（期限切れ、取り消し済み、または別のプロジェクトのキー）。設定 › AI とアカウント でキーを変更してください。</value>
+  </data>
+  <data name="S9A2CF3046C534445" xml:space="preserve">
+    <value>設定 › AI とアカウント で OpenAI の API キーを登録してください（独自 API、アドレス https://api.openai.com/v1）</value>
+  </data>
+  <data name="SC3077F2A4C7606D2" xml:space="preserve">
+    <value>Google が Gemini CLI でのこのアカウントのサインインを拒否しました。無料の「個人向け Gemini Code Assist」は、このクライアントでは利用できなくなりました。Gemini · API キー (Google AI Studio の無料キー) を使ってください。Gemini Code Assist Standard/Enterprise の場合は、設定 › AI とアカウント › Gemini で Google Cloud プロジェクトを入力してください。</value>
+  </data>
+  <data name="S433B4188B6F72A2D" xml:space="preserve">
+    <value>Google が Gemini のキーを拒否しました。設定 › AI とアカウント › Gemini でキーを確認または変更してください。</value>
+  </data>
+  <data name="SF3F99DB8EF3EE006" xml:space="preserve">
+    <value>Gemini が認証されていません。Google アカウントでサインインするか、設定 › AI とアカウント › Gemini でキーを保存してください。</value>
+  </data>
+  <data name="S4878F5C4770C021A" xml:space="preserve">
+    <value>設定 › AI とアカウント › Gemini › API キー で Google AI Studio のキーを保存してください</value>
+  </data>
+  <data name="SA31B489FD4198733" xml:space="preserve">
+    <value>設定 › AI とアカウント › Gemini › サインイン で Google アカウントにサインインしてください</value>
+  </data>
+  <data name="ChatBar.Content" xml:space="preserve">
+    <value>バーのチャット</value>
+  </data>
+  <data name="SettingsNoticesTitle.Text" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="SettingsTrackTitle.Text" xml:space="preserve">
+    <value>追跡する対象</value>
+  </data>
+  <data name="SettingsChatApps.Text" xml:space="preserve">
+    <value>ChatGPT と Claude の会話</value>
+  </data>
+  <data name="SettingsChatAppsHelp.Text" xml:space="preserve">
+    <value>Windows のアクセシビリティでアプリのウィンドウを読み取り、チャットが応答を生成中であることを表示します。</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OnContent" xml:space="preserve">
+    <value>オン</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OffContent" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="SettingsBarQuotasTitle.Text" xml:space="preserve">
+    <value>バーのクォータ</value>
+  </data>
+  <data name="S035BC75A272FCD1B" xml:space="preserve">
+    <value>AI の問題を修正</value>
+  </data>
+  <data name="S23491BE411DD70C2" xml:space="preserve">
+    <value>情報とサポート</value>
+  </data>
+  <data name="S04795BC6A3B5D466" xml:space="preserve">
+    <value>更新、問題の報告に役立つ情報、WinStatusBar について。</value>
+  </data>
+  <data name="S5BB77A5B46F12CBC" xml:space="preserve">
+    <value>サポート</value>
+  </data>
+  <data name="S6BDC2C4EF7C07556" xml:space="preserve">
+    <value>問題を報告</value>
+  </data>
+  <data name="S97A0FA0947AD8F6A" xml:space="preserve">
+    <value>情報</value>
+  </data>
+  <data name="SF594FC80E8E710DD" xml:space="preserve">
+    <value>あなたの AI</value>
+  </data>
+  <data name="SEA697D91609BBF37" xml:space="preserve">
+    <value>OpenAI API の使用量と費用</value>
+  </data>
+  <data name="S69E2216C195EE324" xml:space="preserve">
+    <value>Google Cloud プロジェクト</value>
+  </data>
+  <data name="SF6BE8B7CFB4BB0DB" xml:space="preserve">
+    <value>バーのチャットでの会話</value>
+  </data>
+  <data name="S3AB830793A49343D" xml:space="preserve">
+    <value>これらの会話をタスク一覧と「自動」の選択に含めます。サービスごとの設定は下にあります。</value>
+  </data>
+  <data name="SFE6122550A79E799" xml:space="preserve">
+    <value>これらの選択は「バーのチャットでの会話」がオンの間だけ有効です。カスタム API も追跡されます。バー以外での会話は監視されません。</value>
+  </data>
+  <data name="SF4567608F82B667F" xml:space="preserve">
+    <value>キーで使う別の AI（独自 API）</value>
+  </data>
+  <data name="S70CA519E60EE2441" xml:space="preserve">
+    <value>モデルをメモリに保持する時間</value>
+  </data>
+  <data name="S23C2801E2E6CCB6A" xml:space="preserve">
+    <value>ドラッグして、エージェント メニューとバーのクォータ モジュールの順序を変更します。エージェントの横にクォータを表示したい AI のスイッチをオンにしてください。モジュールの大きさは自動で調整されます。</value>
+  </data>
+  <data name="S765B4597BEB1174A" xml:space="preserve">
+    <value>バーにクォータ</value>
+  </data>
+  <data name="SA1E7FDCDB5562B75" xml:space="preserve">
+    <value>インストール済みのコネクタとプラグイン</value>
+  </data>
+  <data name="SB4E5F648258666DB" xml:space="preserve">
+    <value>ハンドルをドラッグしてボタンを並べ替え、スイッチでバーの右側に表示するものを選びます。</value>
+  </data>
+  <data name="S2EE1AADEECF37135" xml:space="preserve">
+    <value>設定のバックアップ</value>
+  </data>
+  <data name="S8906390987AD81D7" xml:space="preserve">
+    <value>バーのチャット</value>
+  </data>
+  <data name="SE5CD6D0940BC0654" xml:space="preserve">
+    <value>今すぐチャットを開く</value>
+  </data>
+  <data name="S460B3A7DA007B7AF" xml:space="preserve">
+    <value>チャット</value>
+  </data>
+  <data name="SAF78D419DF23BD37" xml:space="preserve">
+    <value>バーにチャットを表示</value>
+  </data>
+  <data name="SDBE35D035ABBC32E" xml:space="preserve">
+    <value>新しい会話の初期設定</value>
+  </data>
+  <data name="SCC15909EF3FBBA73" xml:space="preserve">
+    <value>チャットを開くと、使用中のウィンドウも一緒に渡します。選択したテキスト、開いている文書やスプレッドシート（未保存でも）、ブラウザーではページのアドレスとテキストです。すべて削除できるタグとして表示され、チャットの「コンテキスト」ボタンで会話ごとにオン・オフできます。</value>
+  </data>
+  <data name="SE998327FD0A8C94D" xml:space="preserve">
+    <value>アクセス許可</value>
+  </data>
+  <data name="S68CD20DF18CEEABF" xml:space="preserve">
+    <value>PC とネットワークへの広範なアクセスを許可</value>
+  </data>
+  <data name="S4166382CDC0FCA23" xml:space="preserve">
+    <value>依頼に応じてチャットが PC を操作できるようにします。アプリ、ウィンドウ、ファイルとフォルダー（ローカルとネットワーク）、コマンド、スクリプト、接続できるデバイスが対象です。編集の鉛筆がオンのとき、すべての AI に適用されます。</value>
+  </data>
+  <data name="SCDD9F41E510DC6F0" xml:space="preserve">
+    <value>タスクで使われる内容は、選択した AI に送信されることがあります。Windows アカウントとネットワークのアクセス許可は引き続き適用され、管理者アクセスには承認（UAC）が必要です。新しい操作を止めるにはオフにし、現在のタスクを中断するには「停止」を使います。</value>
+  </data>
+  <data name="SD002A9494D60BD5C" xml:space="preserve">
+    <value>公式アプリの音声</value>
+  </data>
+  <data name="SF055EE4DD06249DE" xml:space="preserve">
+    <value>例: Ctrl+Shift+F9</value>
+  </data>
+  <data name="SBF9A042052DB0CE1" xml:space="preserve">
+    <value>ChatGPT の音声ショートカット</value>
+  </data>
+  <data name="S7CDBB310A8C9A611" xml:space="preserve">
+    <value>Claude の音声ショートカット</value>
+  </data>
+  <data name="S07A7979915D348CD" xml:space="preserve">
+    <value>Claude アプリに音声ショートカットがある場合。</value>
+  </data>
+  <data name="S5B455ADE420B4FA3" xml:space="preserve">
+    <value>キーを削除</value>
+  </data>
+  <data name="SAD0A50C6E1CFF5E8" xml:space="preserve">
+    <value>API の種類</value>
+  </data>
+  <data name="S307EF1B2C4507787" xml:space="preserve">
+    <value>サービスのアドレス（URL）</value>
+  </data>
+  <data name="S02FDDBCB04B87577" xml:space="preserve">
+    <value>以前の独自 API に戻す</value>
+  </data>
+  <data name="S2BB2D8436A5C0668" xml:space="preserve">
+    <value>プライバシー</value>
+  </data>
+  <data name="SBCE11B90DCD7AD84" xml:space="preserve">
+    <value>Codex とモデル</value>
+  </data>
+  <data name="SD6767DE0E4AB9B6A" xml:space="preserve">
+    <value>バーと Codex のモデル一覧を更新し、この PC で設定した AI を Codex のモデル選択に接続します。自動では確認されず、クリックしたときだけ実行されます。</value>
+  </data>
+  <data name="S8FCCD1A93D6A750B" xml:space="preserve">
+    <value>モデル</value>
+  </data>
+  <data name="SD6123C361A25FC86" xml:space="preserve">
+    <value>Codex 内でバーの AI を使う</value>
+  </data>
+  <data name="SF1F3A104C4B83A95" xml:space="preserve">
+    <value>接続の状態</value>
+  </data>
+  <data name="S9259E7CC5C58AF0A" xml:space="preserve">
+    <value>問題を修正</value>
+  </data>
+  <data name="SED68BC702F83193E" xml:space="preserve">
+    <value>AI とアカウント</value>
+  </data>
+  <data name="SCF36A59C3CAC11DB" xml:space="preserve">
+    <value>AI にサインインし、API キーを保存し、それぞれのコネクタとプラグインを確認します。</value>
+  </data>
+  <data name="S38310B5AE8C7990D" xml:space="preserve">
+    <value>ネットワークとバッテリー</value>
+  </data>
+  <data name="S7BB6CC8DBF12E22E" xml:space="preserve">
+    <value>追跡する接続、ネットワークとバッテリーのパネル、Windows の電源設定。</value>
+  </data>
+  <data name="S8D67645E0D643BD0" xml:space="preserve">
+    <value>ネットワーク パネルに Wi-Fi、Bluetooth、ホットスポットを表示</value>
+  </data>
+  <data name="SEE4E463CEDE359EB" xml:space="preserve">
+    <value>今すぐ接続</value>
+  </data>
+  <data name="SA83BD9B2606C5385" xml:space="preserve">
+    <value>ボタンのメニューからネットワークやデバイスを選びます。接続とペアリングは Windows が行います。</value>
+  </data>
+  <data name="S5F2A113BB86D676E" xml:space="preserve">
+    <value>バッテリー パネルに電源コントロールを表示</value>
+  </data>
+  <data name="SF7C2A9DDE2B40997" xml:space="preserve">
+    <value>バッテリー パネルに電源モード、節約機能のしきい値、明るさの低減を表示します。</value>
+  </data>
+  <data name="S7B7B4460C6BC6C52" xml:space="preserve">
+    <value>Windows の電源</value>
+  </data>
+  <data name="S81DE90252084238C" xml:space="preserve">
+    <value>OpenAI の管理者キー（任意）</value>
+  </data>
+  <data name="S188AB058C59866BE" xml:space="preserve">
+    <value>ファイルからドライバーをインストール…</value>
+  </data>
+  <data name="S99E372DB84BD3EBA" xml:space="preserve">
+    <value>Windows Update で検索…</value>
+  </data>
+  <data name="S278403B23831363C" xml:space="preserve">
+    <value>センサー ドライバー</value>
+  </data>
+  <data name="SFD732A2B0A676780" xml:space="preserve">
+    <value>更新を確認</value>
+  </data>
+  <data name="SA1F09A31AD36EF78" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="S46811B3B88CE187B" xml:space="preserve">
+    <value>インストール済みのバージョン</value>
+  </data>
+  <data name="S28FB55B1954A410C" xml:space="preserve">
+    <value>新しいバージョン</value>
+  </data>
+  <data name="SD7270FFA4424201A" xml:space="preserve">
+    <value>変更内容</value>
+  </data>
+  <data name="S7AE9D418353B399F" xml:space="preserve">
+    <value>言語</value>
+  </data>
+  <data name="S7997752AE4490F6B" xml:space="preserve">
+    <value>クォータを確認中…</value>
   </data>
 </root>

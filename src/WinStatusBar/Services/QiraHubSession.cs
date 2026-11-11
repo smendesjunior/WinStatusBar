@@ -162,7 +162,7 @@ internal static class QiraHubSession
 
     // ------------------------------------------------------------------ Corrigir problemas
     /// <summary>
-    /// Corrigir problemas (menu "…" da barra e Configurações › Modelos): serviço de modelos do Qira, ponte local 9339 e
+    /// Corrigir problemas (menu "…" da barra e Configurações › Codex e modelos): serviço de modelos do Qira, ponte local 9339 e
     /// núcleo travado (reinício completo, como "Sair e abrir de novo"). Espera a vez: nunca mexe no Qira enquanto ele
     /// responde, na barra ou nas IAs do Codex.
     /// </summary>

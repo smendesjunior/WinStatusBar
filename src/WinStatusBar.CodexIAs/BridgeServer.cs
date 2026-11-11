@@ -189,7 +189,7 @@ public static partial class BridgeServer
 
         string name = target?.Model.DisplayName ?? slug;
         Answer result;
-        if (target is null) result = new("", "Modelo indisponível neste PC: " + slug + ". Na WinStatusBar, abra Configurações › Modelos e clique em Verificar e atualizar.");
+        if (target is null) result = new("", "Modelo indisponível neste PC: " + slug + ". Na WinStatusBar, abra Configurações › Codex e modelos e clique em Verificar e atualizar.");
         else if (conversation.Prompt.Length == 0) result = new("", "Nenhuma mensagem para enviar.");
         else
         {

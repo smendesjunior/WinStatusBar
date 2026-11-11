@@ -473,14 +473,14 @@ public partial class App : Application
         _apiUsageTimer.Start();
     }
 
-    public void ShowSettings(bool diagnostics = false, bool repair = false)
+    public void ShowSettings(bool diagnostics = false, bool repair = false, string? page = null)
     {
         if (_settingsWindow is null)
         {
             _settingsWindow = new SettingsWindow(this);
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         }
-        _settingsWindow.ShowAndFocus(diagnostics);
+        _settingsWindow.ShowAndFocus(diagnostics, page);
         if (repair) _settingsWindow.StartRepair(); // menu "…" › Corrigir problemas das IAs
     }
 

@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <root>
   <data name="AiTasks.Content" xml:space="preserve">
-    <value>IA e tarefas</value>
+    <value>Cotas e tarefas</value>
   </data>
   <data name="AiTasks_Label" xml:space="preserve">
     <value>IA e tarefas</value>
   </data>
   <data name="Appearance.Content" xml:space="preserve">
-    <value>Aparência</value>
+    <value>Barra e aparência</value>
   </data>
   <data name="Appearance_Label" xml:space="preserve">
     <value>Aparência</value>
@@ -76,7 +76,7 @@
     <value>Geral</value>
   </data>
   <data name="HardwareNetwork.Content" xml:space="preserve">
-    <value>Hardware e rede</value>
+    <value>Hardware</value>
   </data>
   <data name="HardwareNetwork_Label" xml:space="preserve">
     <value>Hardware e rede</value>
@@ -2017,7 +2017,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Abrir automaticamente</value>
   </data>
   <data name="U08e6a3c623a0c0.Text" xml:space="preserve">
-    <value>O que mostrar na barra</value>
+    <value>Tarefa na barra</value>
   </data>
   <data name="U09172986791745.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Detalhes da memória</value>
@@ -2038,7 +2038,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Ocultar informações pessoais</value>
   </data>
   <data name="U0dbf2f1afcf406.Content" xml:space="preserve">
-    <value>Consultar agora (não é necessário)</value>
+    <value>Atualizar cotas agora</value>
   </data>
   <data name="U107100b612903a.OffContent" xml:space="preserve">
     <value>Desativado</value>
@@ -2092,7 +2092,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Intensidade da cor</value>
   </data>
   <data name="U25d02bd3a8821f.Text" xml:space="preserve">
-    <value>Aviso de boas-vindas</value>
+    <value>Avisos do WinStatusBar</value>
   </data>
   <data name="U25f00d44876c14.Content" xml:space="preserve">
     <value>Ficar atrás do aplicativo</value>
@@ -2101,7 +2101,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>A cada 30 minutos</value>
   </data>
   <data name="U2856a2a1bd1079.Text" xml:space="preserve">
-    <value>Telas e tela cheia</value>
+    <value>Telas</value>
   </data>
   <data name="U28cf0e50194b46.Text" xml:space="preserve">
     <value>Escolha se a barra deve continuar à frente do aplicativo.</value>
@@ -2125,7 +2125,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>100% é o tamanho original. Aumentar também aumenta a altura da barra.</value>
   </data>
   <data name="U43b6498e7ff8cf.Text" xml:space="preserve">
-    <value>Atualização das cotas de todas as IAs</value>
+    <value>Atualizar as cotas</value>
   </data>
   <data name="U449ca61e6be36b.Text" xml:space="preserve">
     <value>Placa de vídeo (GPU)</value>
@@ -2161,13 +2161,13 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Título e atividade da tarefa</value>
   </data>
   <data name="U4ed7cffcb4e851.Header" xml:space="preserve">
-    <value>Atualização e coleta avançada</value>
+    <value>Avançado</value>
   </data>
   <data name="U525e279837de6b.Text" xml:space="preserve">
     <value>Codex</value>
   </data>
   <data name="U54acf7e2a8fe3a.Header" xml:space="preserve">
-    <value>Ajustes avançados de IA</value>
+    <value>Avançado</value>
   </data>
   <data name="U5570183e13afe3.Content" xml:space="preserve">
     <value>A cada 5 minutos</value>
@@ -2194,10 +2194,10 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Tarefa atual</value>
   </data>
   <data name="U607df6c8b0c086.Text" xml:space="preserve">
-    <value>Permite o aviso da primeira abertura. Não gera alertas de temperatura ou de cotas.</value>
+    <value>Mostra avisos perto do relógio (boas-vindas, preferências restauradas e outros). Não inclui alertas de temperatura ou de cotas.</value>
   </data>
   <data name="U63a58a1d072bc9.Text" xml:space="preserve">
-    <value>IA e tarefas</value>
+    <value>Cotas e tarefas</value>
   </data>
   <data name="U63c819177ce186.Text" xml:space="preserve">
     <value>Alterações salvas automaticamente</value>
@@ -2254,7 +2254,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Detalhes da CPU</value>
   </data>
   <data name="U73b61824dd6e28.Text" xml:space="preserve">
-    <value>Outros servidores locais</value>
+    <value>Outros programas de IA local</value>
   </data>
   <data name="U7584ac0ba1ad38.Text" xml:space="preserve">
     <value>Tarefa exibida na barra</value>
@@ -2350,7 +2350,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Escolha o que acompanhar e o que pode aparecer na sua tela.</value>
   </data>
   <data name="U9e75bccf2e37b8.Text" xml:space="preserve">
-    <value>Percentual das cotas</value>
+    <value>Mostrar as cotas como</value>
   </data>
   <data name="U9ec3e25e442733.PlaceholderText" xml:space="preserve">
     <value>Pesquisar</value>
@@ -2380,7 +2380,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Temperaturas</value>
   </data>
   <data name="Ua543c3b292c8b1.Content" xml:space="preserve">
-    <value>Configurar atividade das sessões</value>
+    <value>Ligar</value>
   </data>
   <data name="Ua9f86281525d7f.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Detalhes da rede</value>
@@ -2389,7 +2389,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>A cada 15 minutos</value>
   </data>
   <data name="Uacafb033d2b3d8.Text" xml:space="preserve">
-    <value>Informações e ordem na barra</value>
+    <value>Itens da barra</value>
   </data>
   <data name="Uad393c371cdc79.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Configurações</value>
@@ -2404,7 +2404,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Uma escolha para todas as IAs. Em tempo real, cada resposta do Codex ou do Claude atualiza os percentuais na hora; Gemini, Copilot e Qira são lidos nas páginas das próprias contas, no mínimo a cada 5 minutos. Clique nas cotas da barra para ver os detalhes de cada período.</value>
   </data>
   <data name="Ub042851963ec95.Text" xml:space="preserve">
-    <value>Hardware e rede</value>
+    <value>Hardware</value>
   </data>
   <data name="Ub07a6cab8519b0.PlaceholderText" xml:space="preserve">
     <value>ex.: meu-servidor, vllm</value>
@@ -2509,7 +2509,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Medir atividade da GPU</value>
   </data>
   <data name="Ue5aa0c441429ef.Text" xml:space="preserve">
-    <value>Atividade das sessões (opcional)</value>
+    <value>Mostrar o que o Claude Code está fazendo</value>
   </data>
   <data name="Ue6bb94dec98823.Text" xml:space="preserve">
     <value>Oculta títulos, descrições e nomes de projetos na barra e na lista de sessões.</value>
@@ -2518,7 +2518,7 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Automático soma Ethernet e Wi-Fi ativos. A lista mostra apenas conexões físicas; filtros internos do Windows ficam ocultos.</value>
   </data>
   <data name="Ued4f4a4ccdfc67.Text" xml:space="preserve">
-    <value>Aparência da barra</value>
+    <value>Barra e aparência</value>
   </data>
   <data name="Uedd7f4c4b55de2.Content" xml:space="preserve">
     <value>Claro</value>
@@ -2542,10 +2542,10 @@ Fonte: {0} · {1:HH:mm}</value>
     <value>Somente no monitor principal</value>
   </data>
   <data name="Uf647676ad71fe5.Content" xml:space="preserve">
-    <value>Remover integração do WinStatusBar</value>
+    <value>Desligar</value>
   </data>
   <data name="Uf6eb2babbdaa20.Text" xml:space="preserve">
-    <value>O que o percentual representa</value>
+    <value>O percentual da GPU mostra</value>
   </data>
   <data name="Uf8c260312a37be.Content" xml:space="preserve">
     <value>Quanto já foi usado</value>
@@ -4262,5 +4262,269 @@ Fonte: {0} · {1:HH:mm}</value>
   </data>
   <data name="S6B5B2234D9758921" xml:space="preserve">
     <value>O Codex está bloqueado pela conta: {0}.</value>
+  </data>
+  <data name="SEA37E60C410294F0" xml:space="preserve">
+    <value>Configure a API em Configurações › IAs e contas</value>
+  </data>
+  <data name="SEEA11B64DDD29C44" xml:space="preserve">
+    <value>O endereço do serviço {0} não foi encontrado. Confira o endereço e o modelo em Configurações › IAs e contas.</value>
+  </data>
+  <data name="S0C90E46F2E3D5B49" xml:space="preserve">
+    <value>Entre de novo com a conta Google ou confira a chave em Configurações › IAs e contas › Gemini.</value>
+  </data>
+  <data name="S3A9F403450581E45" xml:space="preserve">
+    <value>Entre de novo em Configurações › IAs e contas › Microsoft Copilot.</value>
+  </data>
+  <data name="S12D0BAFD261DA8BE" xml:space="preserve">
+    <value>Confira ou troque a chave em Configurações › IAs e contas.</value>
+  </data>
+  <data name="S2721EDE98E09BB48" xml:space="preserve">
+    <value>Instale o Gemini CLI em Configurações › IAs e contas › Gemini, ou use a conta Google.</value>
+  </data>
+  <data name="S342E711CAB9E0DD5" xml:space="preserve">
+    <value>Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IAs e contas › Outra IA por chave (API própria), endereço https://api.openai.com/v1, e tente de novo.</value>
+  </data>
+  <data name="S59E3F77724C73D8C" xml:space="preserve">
+    <value>A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IAs e contas.</value>
+  </data>
+  <data name="S9A2CF3046C534445" xml:space="preserve">
+    <value>Cadastre a chave da API da OpenAI em Configurações › IAs e contas (API própria, endereço https://api.openai.com/v1)</value>
+  </data>
+  <data name="SC3077F2A4C7606D2" xml:space="preserve">
+    <value>O Google recusou o login desta conta no Gemini CLI: o nível gratuito "Gemini Code Assist para pessoas físicas" não é mais aceito neste cliente. Use Gemini · chave de API (chave gratuita no Google AI Studio). Com Gemini Code Assist Standard/Enterprise, informe o projeto do Google Cloud em Configurações › IAs e contas › Gemini.</value>
+  </data>
+  <data name="S433B4188B6F72A2D" xml:space="preserve">
+    <value>A chave do Gemini foi recusada pelo Google. Confira ou troque a chave em Configurações › IAs e contas › Gemini.</value>
+  </data>
+  <data name="SF3F99DB8EF3EE006" xml:space="preserve">
+    <value>Gemini sem autenticação. Entre com a conta Google ou salve uma chave em Configurações › IAs e contas › Gemini.</value>
+  </data>
+  <data name="S4878F5C4770C021A" xml:space="preserve">
+    <value>Salve uma chave do Google AI Studio em Configurações › IAs e contas › Gemini › Chave de API</value>
+  </data>
+  <data name="SA31B489FD4198733" xml:space="preserve">
+    <value>Entre com a conta Google em Configurações › IAs e contas › Gemini › Entrar</value>
+  </data>
+  <data name="ChatBar.Content" xml:space="preserve">
+    <value>Chat da barra</value>
+  </data>
+  <data name="SettingsNoticesTitle.Text" xml:space="preserve">
+    <value>Avisos</value>
+  </data>
+  <data name="SettingsTrackTitle.Text" xml:space="preserve">
+    <value>O que acompanhar</value>
+  </data>
+  <data name="SettingsChatApps.Text" xml:space="preserve">
+    <value>Conversas no ChatGPT e no Claude</value>
+  </data>
+  <data name="SettingsChatAppsHelp.Text" xml:space="preserve">
+    <value>Mostra quando uma conversa de chat está gerando resposta, lendo a janela dos aplicativos pela acessibilidade do Windows.</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OnContent" xml:space="preserve">
+    <value>Ativado</value>
+  </data>
+  <data name="SettingsChatAppsSwitch.OffContent" xml:space="preserve">
+    <value>Desativado</value>
+  </data>
+  <data name="SettingsBarQuotasTitle.Text" xml:space="preserve">
+    <value>Cotas na barra</value>
+  </data>
+  <data name="S035BC75A272FCD1B" xml:space="preserve">
+    <value>Corrigir problemas das IAs</value>
+  </data>
+  <data name="S23491BE411DD70C2" xml:space="preserve">
+    <value>Sobre e suporte</value>
+  </data>
+  <data name="S04795BC6A3B5D466" xml:space="preserve">
+    <value>Atualizações, ajuda para relatar um problema e informações sobre o WinStatusBar.</value>
+  </data>
+  <data name="S5BB77A5B46F12CBC" xml:space="preserve">
+    <value>Suporte</value>
+  </data>
+  <data name="S6BDC2C4EF7C07556" xml:space="preserve">
+    <value>Relatar um problema</value>
+  </data>
+  <data name="S97A0FA0947AD8F6A" xml:space="preserve">
+    <value>Sobre</value>
+  </data>
+  <data name="SF594FC80E8E710DD" xml:space="preserve">
+    <value>Suas IAs</value>
+  </data>
+  <data name="SEA697D91609BBF37" xml:space="preserve">
+    <value>Uso e gastos da API OpenAI</value>
+  </data>
+  <data name="S69E2216C195EE324" xml:space="preserve">
+    <value>Projeto do Google Cloud</value>
+  </data>
+  <data name="SF6BE8B7CFB4BB0DB" xml:space="preserve">
+    <value>Conversas feitas no chat da barra</value>
+  </data>
+  <data name="S3AB830793A49343D" xml:space="preserve">
+    <value>Inclui essas conversas na lista de tarefas e na escolha Automático. As preferências por serviço ficam abaixo.</value>
+  </data>
+  <data name="SFE6122550A79E799" xml:space="preserve">
+    <value>Essas escolhas valem enquanto "Conversas feitas no chat da barra" estiver ativado. APIs personalizadas também são acompanhadas. Conversas feitas fora da barra não são observadas.</value>
+  </data>
+  <data name="SF4567608F82B667F" xml:space="preserve">
+    <value>Outra IA por chave (API própria)</value>
+  </data>
+  <data name="S70CA519E60EE2441" xml:space="preserve">
+    <value>Manter o modelo na memória por</value>
+  </data>
+  <data name="S23C2801E2E6CCB6A" xml:space="preserve">
+    <value>Arraste para mudar a ordem no menu de agentes e nos módulos de cota da barra. Ligue o interruptor nas IAs cujas cotas devem aparecer ao lado do agente; o tamanho dos módulos se ajusta sozinho.</value>
+  </data>
+  <data name="S765B4597BEB1174A" xml:space="preserve">
+    <value>Cota na barra</value>
+  </data>
+  <data name="SA1E7FDCDB5562B75" xml:space="preserve">
+    <value>Conectores e plugins instalados</value>
+  </data>
+  <data name="SB4E5F648258666DB" xml:space="preserve">
+    <value>Arraste a alça para ordenar os botões e use os interruptores para escolher quais aparecem à direita da barra.</value>
+  </data>
+  <data name="S2EE1AADEECF37135" xml:space="preserve">
+    <value>Cópia das preferências</value>
+  </data>
+  <data name="S8906390987AD81D7" xml:space="preserve">
+    <value>Chat da barra</value>
+  </data>
+  <data name="SE5CD6D0940BC0654" xml:space="preserve">
+    <value>Abrir o chat agora</value>
+  </data>
+  <data name="S460B3A7DA007B7AF" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="SAF78D419DF23BD37" xml:space="preserve">
+    <value>Mostrar o chat na barra</value>
+  </data>
+  <data name="SDBE35D035ABBC32E" xml:space="preserve">
+    <value>Cada conversa nova começa com</value>
+  </data>
+  <data name="SCC15909EF3FBBA73" xml:space="preserve">
+    <value>Ao abrir o chat, leva junto a janela em uso: o texto selecionado, o documento ou a planilha abertos (mesmo sem salvar) e, no navegador, o endereço e o texto da página. Tudo aparece em etiquetas removíveis; o botão Contexto do chat liga ou desliga em cada conversa.</value>
+  </data>
+  <data name="SE998327FD0A8C94D" xml:space="preserve">
+    <value>Permissões</value>
+  </data>
+  <data name="S68CD20DF18CEEABF" xml:space="preserve">
+    <value>Permitir acesso amplo ao PC e à rede</value>
+  </data>
+  <data name="S4166382CDC0FCA23" xml:space="preserve">
+    <value>Deixa o chat agir no PC a seu pedido: aplicativos, janelas, arquivos e pastas (locais e de rede), comandos, scripts e dispositivos acessíveis. Vale para todas as IAs, com o lápis de edição ligado.</value>
+  </data>
+  <data name="SCDD9F41E510DC6F0" xml:space="preserve">
+    <value>O conteúdo usado na tarefa pode ser enviado à IA escolhida. As permissões da sua conta do Windows e da rede continuam valendo, e o acesso de administrador pede sua autorização (UAC). Desligue para impedir novas ações; use Parar para interromper a tarefa atual.</value>
+  </data>
+  <data name="SD002A9494D60BD5C" xml:space="preserve">
+    <value>Voz nos aplicativos oficiais</value>
+  </data>
+  <data name="SF055EE4DD06249DE" xml:space="preserve">
+    <value>ex.: Ctrl+Shift+F9</value>
+  </data>
+  <data name="SBF9A042052DB0CE1" xml:space="preserve">
+    <value>Atalho de voz do ChatGPT</value>
+  </data>
+  <data name="S7CDBB310A8C9A611" xml:space="preserve">
+    <value>Atalho de voz do Claude</value>
+  </data>
+  <data name="S07A7979915D348CD" xml:space="preserve">
+    <value>Se o aplicativo do Claude oferecer um atalho de voz.</value>
+  </data>
+  <data name="S5B455ADE420B4FA3" xml:space="preserve">
+    <value>Remover chave</value>
+  </data>
+  <data name="SAD0A50C6E1CFF5E8" xml:space="preserve">
+    <value>Tipo de API</value>
+  </data>
+  <data name="S307EF1B2C4507787" xml:space="preserve">
+    <value>Endereço do serviço (URL)</value>
+  </data>
+  <data name="S02FDDBCB04B87577" xml:space="preserve">
+    <value>Voltar à API própria anterior</value>
+  </data>
+  <data name="S2BB2D8436A5C0668" xml:space="preserve">
+    <value>Privacidade</value>
+  </data>
+  <data name="SBCE11B90DCD7AD84" xml:space="preserve">
+    <value>Codex e modelos</value>
+  </data>
+  <data name="SD6767DE0E4AB9B6A" xml:space="preserve">
+    <value>Atualize as listas de modelos da barra e do Codex e ligue as IAs configuradas neste PC no seletor de modelos do Codex. Nada é verificado sozinho: só quando você clica.</value>
+  </data>
+  <data name="S8FCCD1A93D6A750B" xml:space="preserve">
+    <value>Modelos</value>
+  </data>
+  <data name="SD6123C361A25FC86" xml:space="preserve">
+    <value>IAs da barra dentro do Codex</value>
+  </data>
+  <data name="SF1F3A104C4B83A95" xml:space="preserve">
+    <value>Estado da ligação</value>
+  </data>
+  <data name="S9259E7CC5C58AF0A" xml:space="preserve">
+    <value>Corrigir problemas</value>
+  </data>
+  <data name="SED68BC702F83193E" xml:space="preserve">
+    <value>IAs e contas</value>
+  </data>
+  <data name="SCF36A59C3CAC11DB" xml:space="preserve">
+    <value>Entre nas suas IAs, guarde as chaves de API e veja os conectores e plugins de cada uma.</value>
+  </data>
+  <data name="S38310B5AE8C7990D" xml:space="preserve">
+    <value>Rede e bateria</value>
+  </data>
+  <data name="S7BB6CC8DBF12E22E" xml:space="preserve">
+    <value>A conexão acompanhada, os painéis de rede e de bateria e as preferências de energia do Windows.</value>
+  </data>
+  <data name="S8D67645E0D643BD0" xml:space="preserve">
+    <value>Wi-Fi, Bluetooth e hotspot no painel de rede</value>
+  </data>
+  <data name="SEE4E463CEDE359EB" xml:space="preserve">
+    <value>Conectar agora</value>
+  </data>
+  <data name="SA83BD9B2606C5385" xml:space="preserve">
+    <value>Escolha redes e dispositivos nos menus dos botões. O Windows realiza a conexão e o pareamento.</value>
+  </data>
+  <data name="S5F2A113BB86D676E" xml:space="preserve">
+    <value>Mostrar controles de energia no painel da bateria</value>
+  </data>
+  <data name="SF7C2A9DDE2B40997" xml:space="preserve">
+    <value>Mostra modo de energia, limite da economia e redução de brilho no painel da bateria.</value>
+  </data>
+  <data name="S7B7B4460C6BC6C52" xml:space="preserve">
+    <value>Energia do Windows</value>
+  </data>
+  <data name="S81DE90252084238C" xml:space="preserve">
+    <value>Chave de administrador da OpenAI (opcional)</value>
+  </data>
+  <data name="S188AB058C59866BE" xml:space="preserve">
+    <value>Instalar driver de um arquivo…</value>
+  </data>
+  <data name="S99E372DB84BD3EBA" xml:space="preserve">
+    <value>Procurar no Windows Update…</value>
+  </data>
+  <data name="S278403B23831363C" xml:space="preserve">
+    <value>Drivers de sensores</value>
+  </data>
+  <data name="SFD732A2B0A676780" xml:space="preserve">
+    <value>Verificar atualizações</value>
+  </data>
+  <data name="SA1F09A31AD36EF78" xml:space="preserve">
+    <value>Atualizações</value>
+  </data>
+  <data name="S46811B3B88CE187B" xml:space="preserve">
+    <value>Versão instalada</value>
+  </data>
+  <data name="S28FB55B1954A410C" xml:space="preserve">
+    <value>Novas versões</value>
+  </data>
+  <data name="SD7270FFA4424201A" xml:space="preserve">
+    <value>O que mudou</value>
+  </data>
+  <data name="S7AE9D418353B399F" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="S7997752AE4490F6B" xml:space="preserve">
+    <value>Consultando as cotas…</value>
   </data>
 </root>

@@ -6,7 +6,7 @@ namespace WinStatusBar.Tests;
 
 /// <summary>
 /// Ligação automática das IAs no Codex só onde a barra já estava instalada (atualização). Numa instalação nova, o
-/// instalador grava a ligação como desligada: a pessoa liga em Configurações › Modelos (decisão de 09/11/2026).
+/// instalador grava a ligação como desligada: a pessoa liga em Configurações › Codex e modelos (decisão de 09/11/2026).
 /// </summary>
 public class CodexFreshInstallTests
 {

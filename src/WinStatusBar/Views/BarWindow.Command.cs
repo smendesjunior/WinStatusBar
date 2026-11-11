@@ -387,7 +387,7 @@ public sealed partial class BarWindow
     private int _catalogGeneration;
     private async Task<AgentPrompt.Catalog> CatalogFor(T t, bool reload = false)
     {
-        // Configurações › Modelos verificou de novo: as listas guardadas são relidas.
+        // Configurações › Codex e modelos verificou de novo: as listas guardadas são relidas.
         if (_catalogGeneration != CodexIasComponent.Generation) { _catalogs.Clear(); _catalogGeneration = CodexIasComponent.Generation; }
         if (t == T.Gemini) AdditionalAiAccounts.PrepareGemini(_settings.Current);
         if (t == T.Api)
@@ -822,7 +822,7 @@ public sealed partial class BarWindow
             if (!geminiCli && !geminiKey)
             {
                 var setup = new MenuFlyoutItem { Text = "Gemini · " + L.T("configurar…"), Icon = LogoIcon(geminiLogo, "") };
-                setup.Click += (_, _) => App.Current.ShowSettings();
+                setup.Click += (_, _) => App.Current.ShowSettings(page: "accounts");
                 menu.Items.Add(setup);
             }
             // Só IAs configuradas: Copilot com login feito na barra; IA local com servidor ativo (ou já escolhida).
@@ -887,7 +887,7 @@ public sealed partial class BarWindow
             var history = new ToggleMenuFlyoutItem { Text = L.T("Registrar no histórico do app Claude"), IsChecked = _settings.Current.CommandClaudeHistory, IsEnabled = !IsChatDestination && CurrentTarget() == T.Claude, Icon = new FontIcon { Glyph = "" } };
             history.Click += (_, _) => { _settings.Current.CommandClaudeHistory = history.IsChecked; SaveSettingsQuietly(); };
             var settings = new MenuFlyoutItem { Text = L.T("Configurações da IA…"), Icon = new FontIcon { Glyph = "" } };
-            settings.Click += (_, _) => App.Current.ShowSettings();
+            settings.Click += (_, _) => App.Current.ShowSettings(page: "command");
             menu.Items.Add(edits); menu.Items.Add(history);
             menu.Items.Add(new MenuFlyoutSeparator());
             menu.Items.Add(settings);

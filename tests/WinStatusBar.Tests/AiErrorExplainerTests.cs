@@ -27,7 +27,7 @@ public class AiErrorExplainerTests
     }
 
     [Theory]
-    [InlineData(T.Api, "HTTP 401: Incorrect API key provided: sk-abc.", "login recusado", "Configurações › IA")]
+    [InlineData(T.Api, "HTTP 401: Incorrect API key provided: sk-abc.", "login recusado", "Configurações › IAs e contas")]
     [InlineData(T.Claude, "Invalid API key · Please run /login", "login recusado", "/login")]
     [InlineData(T.Codex, """{"message":"unexpected status 401 Unauthorized: Missing bearer","codexErrorInfo":"unauthorized"}""", "login recusado", "codex login")]
     [InlineData(T.Api, "HTTP 429: Rate limit reached for gpt-5 in organization", "muitos pedidos", "Aguarde um minuto")]

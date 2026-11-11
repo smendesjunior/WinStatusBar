@@ -13,8 +13,8 @@ public class ApiResumeErrorsTests
         ApiResumeErrors.For(p, "gpt-5.6-sol", "low", @"Z:\", CodexQuotaBlockTests.Returns, At);
 
     [Theory]
-    [InlineData(ApiResumeProblem.NoKey, "sem chave da API", "Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IA e tarefas › Outro serviço (API própria), endereço https://api.openai.com/v1, e tente de novo.")]
-    [InlineData(ApiResumeProblem.KeyRejected, "chave recusada", "A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IA e tarefas.")]
+    [InlineData(ApiResumeProblem.NoKey, "sem chave da API", "Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IAs e contas › Outra IA por chave (API própria), endereço https://api.openai.com/v1, e tente de novo.")]
+    [InlineData(ApiResumeProblem.KeyRejected, "chave recusada", "A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IAs e contas.")]
     [InlineData(ApiResumeProblem.ModelNotInApi, "modelo fora da API", "A API da OpenAI não oferece o modelo gpt-5.6-sol para a sua chave. A barra não troca de modelo: a conversa continua parada até a cota do Codex voltar (qui 12/11 às 23:01).")]
     [InlineData(ApiResumeProblem.EffortNotAccepted, "nível não aceito", "O modelo gpt-5.6-sol não aceita o nível low. A barra não baixa o nível: a conversa continua parada até a cota do Codex voltar (qui 12/11 às 23:01).")]
     [InlineData(ApiResumeProblem.MissingTurnData, "sem dados do turno", "O registro não diz com que modelo, nível ou acesso o turno parou; a barra não adivinha. Continue pelo app quando a cota voltar.")]

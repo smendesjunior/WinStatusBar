@@ -202,7 +202,7 @@ public class ApiResumeSourceTests
     {
         string view = Src("Views", "CodexApiResumeView.cs");
         Assert.Contains("ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)", view);
-        // Opção desligada (Configurações › Modelos): some, menos com continuações em andamento.
+        // Opção desligada (Configurações › Codex e modelos): some, menos com continuações em andamento.
         Assert.Contains("if (!svc.Enabled && !svc.Supervisor.HasUnfinished) return null;", view);
         // Rodapé do menu da cota, na largura das duas colunas (e não mais no meio da coluna do Codex).
         Assert.DoesNotContain("CodexApiResumeView.Section(", Src("Views", "QuotaDetailsView.cs"));

@@ -87,7 +87,7 @@ internal static class GoogleUsageSession
     public static void BeginLive() { if (++_live == 1 && _timer is not null) { _timer.Interval = TimeSpan.FromSeconds(2); Refresh(); } }
     public static void EndLive() { if (_live > 0 && --_live == 0 && _timer is not null) { _timer.Interval = _interval; CloseIfIdle(); } }
     private static TimeSpan _interval = TimeSpan.FromMinutes(5);
-    /// <summary>Intervalo da atualização das cotas (Configurações › IA › Cotas das IAs), no mínimo 5 min.</summary>
+    /// <summary>Intervalo da atualização das cotas (Configurações › Cotas e tarefas), no mínimo 5 min.</summary>
     public static void SetInterval(TimeSpan interval) { _interval = interval; if (_live == 0 && _timer is not null) _timer.Interval = interval; }
     private static WebView2? _web;
     private static bool _interactive, _busy;
@@ -266,7 +266,7 @@ internal static class GoogleUsageSession
         {
             _apiUrl++; // tenta o outro endereço da página de limites na próxima leitura
             ApiError = web.CoreWebView2.Source.Contains("accounts.google.com", StringComparison.OrdinalIgnoreCase)
-                ? "O AI Studio pediu login (entre na conta Google em Configurações › IA › Gemini)." : "Página de limites do AI Studio sem a tabela esperada.";
+                ? "O AI Studio pediu login (entre na conta Google em Configurações › IAs e contas › Gemini)." : "Página de limites do AI Studio sem a tabela esperada.";
             App.Log("Cotas da API do Gemini: " + ApiError);
             Changed?.Invoke();
             return;

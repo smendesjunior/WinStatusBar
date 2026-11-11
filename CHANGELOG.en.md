@@ -7,6 +7,34 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.7.0] - 2026-11-11 · build BUILD
+
+### Changed
+- Settings reorganized: 13 pages became 10. General, Bar and appearance, AIs and accounts, Quotas and tasks, Bar chat, Codex and models, Hardware, Network and battery, Clipboard and, in the footer, About and support.
+- AIs and accounts (new page): sign-in, keys and connectors of each AI moved out of the middle of "AI and tasks" into one place, together with the own API ("Another AI by key").
+- Bar and appearance: the shortcut buttons sit right below the bar items, and the color intensity sits next to the backdrop.
+- Bar chat: every permission in one group (file edits, PC access and connectors); the voice shortcuts got titles.
+- Quotas and tasks: what to track, quotas on the bar and the task on the bar in three groups; the Claude Code integration and the other local AI programs moved to "Advanced".
+- Hardware: the detail panels open the page; reading frequency and sensor drivers are under "Advanced".
+- About and support brings Updates, Diagnostics and About together. "What changed" is collapsed and only built when opened.
+- Clearer names: "WinStatusBar notices", "Show quotas as", "Refresh quotas now", "API type", "Service address (URL)", "Remove key", "Install a driver from a file…", among others.
+- Bar shortcuts open the right page: "Gemini · set up…" and "Set up" in the agent menu lead to AIs and accounts; "AI settings…" leads to Bar chat.
+- Page, group and new option titles translated in the six languages.
+
+### Removed
+- Duplicate options: the battery switch (it lives in "Bar items"), the second data-folder button, the second Gemini sign-in button and the DeepSeek and Grok "Sign in/Sign out", which did the same as "Set up key…" and "Remove key". No saved preference changed.
+
+### Fixed
+- Updates: if replacing the files failed, the bar closed and reopened every minute. Now there are 3 attempts per build and then a 6-hour wait; the bar reopens even if a final step fails, and the update waits for an AI answer in progress.
+- Preferences: an unreadable settings.json no longer silently resets everything (the backup and the OneDrive copy are tried before the defaults).
+- Claude Code: on profiles with a space in the path, the bar duplicated its own hooks in Claude's settings.json every 10 minutes.
+- Chat: pressing Enter twice no longer duplicates the question; a Claude error is no longer saved as the answer; API answers are no longer cut short on services such as Azure and OpenRouter; the view no longer jumps to the end after you scroll up.
+- Bar: Alt+F4 no longer leaves the bar on screen with dead panels; old windows are released from memory on every monitor change.
+- Executor: deleting or overwriting on a network folder or removable drive is refused (there is no Recycle Bin there); "end process" refuses the Qira parts and the bar itself.
+- AIs in Codex: the gateway is checked every minute and restarted if it stops; Continue via the API retries after a transient network failure.
+- "Refresh quotas now" shows that it is checking; the interval and the way quotas are shown stay available even with Codex and Claude turned off.
+- API keys masked in the bar's log.
+
 ## [1.6.1] - 2026-11-11 · build 20261111033512
 
 ### Fixed

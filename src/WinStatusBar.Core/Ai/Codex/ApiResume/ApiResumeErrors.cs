@@ -28,9 +28,9 @@ public static class ApiResumeErrors
         (string label, string message) = p switch
         {
             ApiResumeProblem.NoKey => (LocalizedText.T("sem chave da API"),
-                LocalizedText.T("Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IA e tarefas › Outro serviço (API própria), endereço https://api.openai.com/v1, e tente de novo.")),
+                LocalizedText.T("Não há chave da API da OpenAI neste PC. Cadastre em Configurações › IAs e contas › Outra IA por chave (API própria), endereço https://api.openai.com/v1, e tente de novo.")),
             ApiResumeProblem.KeyRejected => (LocalizedText.T("chave recusada"),
-                LocalizedText.T("A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IA e tarefas.")),
+                LocalizedText.T("A API da OpenAI recusou a sua chave (expirada, revogada ou de outro projeto). Troque a chave em Configurações › IAs e contas.")),
             ApiResumeProblem.ModelNotInApi => (LocalizedText.T("modelo fora da API"),
                 LocalizedText.F("A API da OpenAI não oferece o modelo {0} para a sua chave. A barra não troca de modelo: a conversa continua parada até a cota do Codex voltar ({1}).", m, when)),
             ApiResumeProblem.EffortNotAccepted => (LocalizedText.T("nível não aceito"),

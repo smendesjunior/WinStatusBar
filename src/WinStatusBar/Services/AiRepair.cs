@@ -13,7 +13,7 @@ using WinStatusBar.Core.Integration;
 namespace WinStatusBar.Services;
 
 /// <summary>
-/// Corrigir problemas das IAs (menu "…" da barra e Configurações › Modelos). Confere, em sequência, tudo de que as IAs da
+/// Corrigir problemas das IAs (menu "…" da barra e Configurações › Codex e modelos). Confere, em sequência, tudo de que as IAs da
 /// barra e do Codex dependem e conserta sozinho o que dá:
 /// - integrações da barra (atividade do Claude Code e do Codex) e a ligação do Claude Code com a barra;
 /// - encaminhador do Codex (porta 11435): parado, travado, porta tomada pelo encaminhador antigo, config.toml alterado por
@@ -288,7 +288,7 @@ internal static class AiRepair
         string? baseUrl = TomlValue(top, "openai_base_url"), catalog = TomlValue(top, "model_catalog_json");
         bool pointsToGateway = baseUrl is not null && Regex.IsMatch(baseUrl, @"^https?://(127\.0\.0\.1|localhost):11435(/|$)", RegexOptions.IgnoreCase);
         if (!state.Ligado && !pointsToGateway)
-            return ([new(area, Outcome.Skipped, "As IAs da barra estão desligadas no Codex (ligue em Configurações › Modelos, se quiser).")], false);
+            return ([new(area, Outcome.Skipped, "As IAs da barra estão desligadas no Codex (ligue em Configurações › Codex e modelos, se quiser).")], false);
 
         var problems = new List<string>();
         if (!state.Ligado) problems.Add("o Codex apontava para o encaminhador com a ligação desligada (ex.: configuração restaurada)");

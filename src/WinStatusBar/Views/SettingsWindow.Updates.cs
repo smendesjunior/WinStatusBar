@@ -5,18 +5,20 @@ using WinStatusBar.Core.Integration;
 using WinStatusBar.Services;
 namespace WinStatusBar.Views;
 
-/// <summary>Aba "Atualizações": versão instalada, verificação manual (mesma rotina da automática) e o que mudou em cada versão.</summary>
+/// <summary>
+/// Sobre e suporte › Atualizações: versão instalada, verificação manual (mesma rotina da automática) e o que mudou em
+/// cada versão, num grupo recolhido que só é montado quando aberto.
+/// </summary>
 public sealed partial class SettingsWindow
 {
-    private void BuildUpdatesPage()
+    private void BuildUpdatesSection(StackPanel page)
     {
-        var page = AddPage("updates", "Atualizações", "Versão instalada, novas versões e o que mudou em cada uma.", "");
         var assembly = typeof(SettingsWindow).Assembly;
         string version = assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "1.0.0";
         string? build = assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "NetworkUpdateBuild")?.Value;
 
         var status = Help("");
-        var check = ActionButton("Verificar atualizações", () => _ = AppUpdater.CheckNowAsync(manual: true));
+        var check = ActionButton(Localization.T("Verificar atualizações"), () => _ = AppUpdater.CheckNowAsync(manual: true));
         check.HorizontalAlignment = HorizontalAlignment.Stretch;
         void Show(UpdateProgress? progress)
         {
@@ -34,17 +36,27 @@ public sealed partial class SettingsWindow
         string help = AppUpdater.SourceKind == UpdateSourceKind.Local
             ? "Procura novas versões sozinha a cada 15 minutos, pela pasta local Instalador, e se atualiza sem pedir administrador."
             : "Procura novas versões sozinha a cada 15 minutos, pelo GitHub, e se atualiza sem pedir administrador.";
+        page.Children.Add(GroupTitle(Localization.T("Atualizações")));
         page.Children.Add(Group(
-            Row("Versão instalada", null, new TextBlock { Text = build is { Length: 14 } ? $"{version} · compilação {build}" : $"{version} · compilação local", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center }),
-            Row("Novas versões", help, panel)));
+            Row(Localization.T("Versão instalada"), null, new TextBlock { Text = build is { Length: 14 } ? $"{version} · compilação {build}" : $"{version} · compilação local", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center }),
+            Row(Localization.T("Novas versões"), help, panel)));
 
-        // O que mudou: CHANGELOG.md que acompanha o app (mais recente primeiro, como no arquivo).
-        page.Children.Add(GroupTitle("O que mudou"));
-        string file = Path.Combine(AppContext.BaseDirectory, "CHANGELOG.md");
-        IReadOnlyList<ChangelogVersion> versions = [];
-        try { if (File.Exists(file)) versions = ChangelogParser.Parse(File.ReadAllText(file)); } catch { }
-        if (versions.Count == 0) { page.Children.Add(Help("O histórico de mudanças não está disponível nesta compilação.")); return; }
-        foreach (var entry in versions) page.Children.Add(Group(ChangelogCard(entry, entry.Version == version)));
+        // O que mudou: CHANGELOG.md que acompanha o app (mais recente primeiro, como no arquivo). Recolhido, e os cartões
+        // só são criados na primeira abertura: a lista inteira de versões pesava na memória da janela.
+        var list = new StackPanel { Spacing = 12 };
+        var changes = new Expander { Header = Localization.T("O que mudou"), Content = list, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        bool built = false;
+        changes.Expanding += (_, _) =>
+        {
+            if (built) return;
+            built = true;
+            string file = Path.Combine(AppContext.BaseDirectory, "CHANGELOG.md");
+            IReadOnlyList<ChangelogVersion> versions = [];
+            try { if (File.Exists(file)) versions = ChangelogParser.Parse(File.ReadAllText(file)); } catch { }
+            if (versions.Count == 0) { list.Children.Add(Help("O histórico de mudanças não está disponível nesta compilação.")); return; }
+            foreach (var entry in versions) list.Children.Add(Group(ChangelogCard(entry, entry.Version == version)));
+        };
+        page.Children.Add(changes);
     }
 
     private FrameworkElement ChangelogCard(ChangelogVersion entry, bool installed)
