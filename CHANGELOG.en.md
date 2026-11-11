@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.7.0] - 2026-11-11 · build BUILD
+## [1.7.0] - 2026-11-11 · build 20261111140800
 
 ### Changed
 - Settings reorganized: 13 pages became 10. General, Bar and appearance, AIs and accounts, Quotas and tasks, Bar chat, Codex and models, Hardware, Network and battery, Clipboard and, in the footer, About and support.

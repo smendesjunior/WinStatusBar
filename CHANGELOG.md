@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.7.0] - 2026-11-11 · compilação BUILD
+## [1.7.0] - 2026-11-11 · compilação 20261111140800
 
 ### Alterado
 - Configurações reorganizadas: 13 páginas viraram 10. Geral, Barra e aparência, IAs e contas, Cotas e tarefas, Chat da barra, Codex e modelos, Hardware, Rede e bateria, Área de transferência e, no rodapé, Sobre e suporte.
