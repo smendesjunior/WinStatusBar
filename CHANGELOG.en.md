@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.6.1] - 2026-11-11 · build BUILD
+## [1.6.1] - 2026-11-11 · build 20261111033512
 
 ### Fixed
 - Codex quota menu: the account block notice moved to the footer, next to the stopped conversations, in a card set apart from the quotas, and now takes two lines (reason; when it comes back and where that came from).

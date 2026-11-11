@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.6.1] - 2026-11-11 · compilação BUILD
+## [1.6.1] - 2026-11-11 · compilação 20261111033512
 
 ### Corrigido
 - Menu da cota do Codex: o aviso de bloqueio da conta foi para o rodapé, junto das conversas paradas, num cartão separado das cotas, e ficou com duas linhas (motivo; quando volta e de onde veio a informação).
