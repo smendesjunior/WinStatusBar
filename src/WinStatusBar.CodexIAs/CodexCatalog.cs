@@ -38,6 +38,15 @@ public static class CodexCatalog
         ["xhigh"] = "Muito alto", ["max"] = "Máximo", ["ultra"] = "Ultra",
     };
 
+    /// <summary>
+    /// Janela de contexto declarada ao Codex para as IAs da barra. Elas nunca recebem a conversa inteira: o encaminhador
+    /// manda só o pacote de passagem (ConversationReader.WithTranscript, de 8 mil a 40 mil caracteres). Com 128 mil, trocar
+    /// para uma delas no meio de uma conversa longa fazia o Codex compactar antes de enviar ("model_downshift"), primeiro
+    /// com o modelo anterior (que podia estar sem cota) e depois com o novo, e o turno falhava. Com uma janela grande, a
+    /// conversa segue inteira no Codex e o encaminhador continua decidindo o que vai para a IA.
+    /// </summary>
+    internal const int ContextWindow = 10_000_000;
+
     /// <summary>Entrada do catálogo no mesmo formato das demais (base: a entrada que a ponte da barra usava).</summary>
     public static JsonObject Entry(AiModel m)
     {
@@ -52,7 +61,7 @@ public static class CodexCatalog
             ["auto_compact_token_limit"] = null,
             ["availability_nux"] = null,
             ["base_instructions"] = "Responda ao pedido da pessoa em texto, no idioma dela.",
-            ["context_window"] = 128000,
+            ["context_window"] = ContextWindow,
             ["default_reasoning_level"] = defaultEffort,
             ["default_reasoning_summary"] = "auto",
             ["default_service_tier"] = null,
@@ -65,7 +74,7 @@ public static class CodexCatalog
             ["include_plugin_usage_instructions"] = false,
             ["include_skills_usage_instructions"] = false,
             ["input_modalities"] = new JsonArray("text"),
-            ["max_context_window"] = 128000,
+            ["max_context_window"] = ContextWindow,
             ["model_messages"] = null,
             ["priority"] = m.Priority,
             ["service_tiers"] = new JsonArray(),

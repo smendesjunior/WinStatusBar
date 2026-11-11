@@ -54,6 +54,16 @@ internal sealed partial class ApiProvider : IProvider
         return list;
     }
 
+    /// <summary>
+    /// Nome no seletor do Codex: o modelo primeiro e a origem depois ("Gemini 3 Flash Preview · Google API"). O seletor
+    /// corta o fim dos nomes longos; com "Google Gemini (API) — …" na frente, o nome do modelo sumia.
+    /// </summary>
+    internal string MenuName(string modelLabel) => $"{modelLabel} · {Origin}";
+
+    /// <summary>Origem curta: "Google API" para o Gemini; nos demais, o nome do serviço com "API" (sem repetir).</summary>
+    internal string Origin => _service.Id == "gemini" ? "Google API"
+        : _service.Name.Contains("API", StringComparison.OrdinalIgnoreCase) ? _service.Name : _service.Name + " API";
+
     private static bool IsOpenAi(string baseUrl)
         => Uri.TryCreate(baseUrl.Trim(), UriKind.Absolute, out var u) && u.Host.Equals("api.openai.com", StringComparison.OrdinalIgnoreCase);
 
@@ -71,7 +81,7 @@ internal sealed partial class ApiProvider : IProvider
         }
         string prefix = CodexCatalog.Prefix + "api-" + Slug.From(_service.Id) + "-";
         return new(catalog.Models.Where(m => IsChatModel(m.Id, m.Label))
-            .Select(m => new AiModel(prefix + Slug.From(m.Id), Name, m.Id, $"{_service.Name} — {m.Label}",
+            .Select(m => new AiModel(prefix + Slug.From(m.Id), Name, m.Id, MenuName(m.Label),
                 $"{_service.Name} pela sua chave da API (cobrança da própria API), pela WinStatusBar. Só texto.",
                 m.Efforts, m.DefaultEffort, -2))
             .DistinctBy(m => m.Slug).DistinctBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase).ToList());

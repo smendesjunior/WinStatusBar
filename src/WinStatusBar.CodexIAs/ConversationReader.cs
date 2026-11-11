@@ -13,7 +13,7 @@ namespace CodexIAs;
 public static partial class ConversationReader
 {
     /// <summary>Papéis do histórico além de "user" e "assistant".</summary>
-    public const string Action = "acao", Result = "resultado", Notice = "aviso";
+    public const string Action = "acao", Result = "resultado", Notice = "aviso", Summary = "resumo";
 
     [GeneratedRegex(@"<cwd>(.*?)</cwd>", RegexOptions.Singleline)] private static partial Regex CwdTag();
     [GeneratedRegex(@"^\s*<([A-Za-z_][\w-]*)[^>]*>.*</\1>\s*$", RegexOptions.Singleline)] private static partial Regex WrappedTag();
@@ -44,6 +44,10 @@ public static partial class ConversationReader
                         AddAction(items, "Comando: " + cmd); break;
                     case "function_call_output" or "custom_tool_call_output" or "local_shell_call_output":
                         items.Add((Result, OutputText(item["output"]))); break;
+                    case "compaction" or "compaction_summary":
+                        // Resumo de uma compactação feita pelo encaminhador (CompactionV2); os cifrados pela OpenAI não dão para ler.
+                        if (CompactionV2.SummaryOf(item) is { Length: > 0 } summary) items.Add((Summary, summary));
+                        break;
                 }
             }
         string? key = payload["prompt_cache_key"]?.GetValue<string>();
@@ -169,7 +173,7 @@ public static partial class ConversationReader
 
     private static string Label(string role) => role switch
     {
-        "assistant" => "Assistente", Action => "Ação executada", Result => "Resultado", Notice => "Aviso", _ => "Usuário",
+        "assistant" => "Assistente", Action => "Ação executada", Result => "Resultado", Notice => "Aviso", Summary => "Resumo da conversa anterior", _ => "Usuário",
     };
 
     /// <summary>

@@ -7,6 +7,15 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.10.1] - 2026-11-11 · build 20261111191845
+
+### Fixed
+- Codex: switching to a bar AI (Gemini, Copilot, Gemini via API…) in the middle of a long conversation, for example after the previous model ran out of quota, produced a series of "usage limit reached" and "optimization interrupted" errors, whatever model was chosen. Bar AIs now declare a large context window to Codex (the gateway already decides what each AI receives), so Codex no longer compacts the conversation on the switch.
+- Codex: if Codex still asks a bar AI to compact, the gateway answers in the new format Codex expects, with a summary of the conversation; the summary is read on the following requests and becomes a plain message if the conversation goes back to OpenAI.
+
+### Changed
+- Codex model picker: API-key models show the model name first and the source after it ("Gemini 3 Flash Preview · Google API"), so the name is no longer cut off.
+
 ## [1.10.0] - 2026-11-11 · build 20261111163307
 
 ### Added

@@ -222,6 +222,12 @@ internal sealed class Gateway : IDisposable
                 await BridgeServer.JsonAsync(stream, compact);
                 return;
             }
+            if (CompactionV2.Requested(payload))
+            {
+                try { await CompactionV2.RespondAsync(stream, model, payload); }
+                catch (Exception ex) when (BridgeServer.BadShape(ex)) { await BridgeServer.PlainAsync(stream, 400, BridgeServer.BadShapeMessage); }
+                return;
+            }
             await BridgeServer.RespondAsync(stream, socket, model, _registry.Resolve(model), payload, _stop.Token);
             return;
         }
@@ -238,6 +244,7 @@ internal sealed class Gateway : IDisposable
             if (rest is not ("/responses" or "/responses/compact")) { await BridgeServer.PlainAsync(stream, 400, "Endpoint unavailable for OpenAI API alias"); return; }
             if (OpenAiKey.Get() is not { } key) { await BridgeServer.PlainAsync(stream, 401, "Chave da API OpenAI não cadastrada neste PC. Cadastre a chave e tente de novo."); return; }
             JsonObject api;
+            CompactionV2.Unwrap(payload);
             try { api = OpenAiKey.Rewrite(payload); }
             catch (Exception ex) when (BridgeServer.BadShape(ex)) { await BridgeServer.PlainAsync(stream, 400, BridgeServer.BadShapeMessage); return; }
             // API pública: nunca a autorização da conta do ChatGPT nem os cabeçalhos internos do Codex.
@@ -255,6 +262,15 @@ internal sealed class Gateway : IDisposable
             url = openAi + (rest ?? request.Path) + request.Query;
         }
         string where = state.Upstream is { } up && up.Contains("127.0.0.1:11434", StringComparison.Ordinal) ? "o Ollama" : "a OpenAI";
+        // Conversa compactada antes por uma IA da barra: o resumo vira mensagem comum (a OpenAI recusaria o item marcado).
+        // Só nesse caso o pedido é regravado, sem compressão; os demais seguem byte a byte como chegaram.
+        if (payload is not null && CompactionV2.Unwrap(payload))
+        {
+            var headers = request.Headers.Where(h => !h.Key.Equals("Content-Encoding", StringComparison.OrdinalIgnoreCase)
+                                                     && !h.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)).ToList();
+            await ForwardAsync(request.Method, url, headers, Encoding.UTF8.GetBytes(payload.ToJsonString()), stream, socket, where);
+            return;
+        }
         await ForwardAsync(request.Method, url, request.Headers, request.Body, stream, socket, where);
     }
 

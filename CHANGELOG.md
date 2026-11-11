@@ -7,6 +7,15 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.10.1] - 2026-11-11 · compilação 20261111191845
+
+### Corrigido
+- Codex: trocar para uma IA da barra (Gemini, Copilot, Gemini pela API…) no meio de uma conversa longa, por exemplo depois que a cota do modelo anterior acabou, gerava uma série de erros "Você atingiu seu limite de uso" e "Otimização interrompida", qualquer que fosse o modelo escolhido. As IAs da barra passam a declarar ao Codex uma janela de contexto grande (o encaminhador já decide o que vai para cada IA), e o Codex deixa de compactar a conversa na troca.
+- Codex: se o Codex ainda pedir uma compactação a uma IA da barra, o encaminhador responde no formato novo que ele espera, com um resumo da conversa; esse resumo é lido nos pedidos seguintes e vira mensagem comum se a conversa voltar para a OpenAI.
+
+### Alterado
+- Seletor de modelos do Codex: os modelos pela chave da API mostram o nome do modelo primeiro e a origem depois ("Gemini 3 Flash Preview · Google API"), para o nome não ser cortado.
+
 ## [1.10.0] - 2026-11-11 · compilação 20261111163307
 
 ### Adicionado
