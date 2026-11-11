@@ -840,35 +840,58 @@ public sealed partial class BarWindow : Window
         // Conteúdo montado na abertura (dados atuais) e atualizado enquanto o menu estiver aberto.
         var timer = DispatcherQueue.CreateTimer();
         timer.Interval = TimeSpan.FromSeconds(5);
-        ContentControl? quota = null;
-        timer.Tick += (_, _) => { if (quota is not null && !QuotaDetailsView.ResetPending) quota.Content = QuotaDetailsView.Build(_hub, _settings.Current, kind, Root.RequestedTheme); };
+        ContentControl? quota = null, resume = null;
+        double resumeWidth = 0;
+        const double columnSpacing = 20;
+        // Rodapé (só no Codex): conversas paradas pela cota e Continuar pela API, na largura das duas colunas quando a
+        // coluna da OpenAI API está ao lado.
+        UIElement? Resume() => kind == Core.Ai.AgentKind.Codex
+            ? CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing) : null;
+        timer.Tick += (_, _) =>
+        {
+            if (QuotaDetailsView.ResetPending) return;
+            if (quota is not null) quota.Content = QuotaDetailsView.Build(_hub, _settings.Current, kind, Root.RequestedTheme);
+            if (resume is not null) resume.Content = Resume();
+        };
         flyout.Opening += (_, _) =>
         {
             quota = new ContentControl { Content = QuotaDetailsView.Build(_hub, _settings.Current, kind, Root.RequestedTheme) };
+            resumeWidth = 0;
             var monitor = CurrentMonitor();
             double width = monitor is null ? 900 : (monitor.Work.Right - monitor.Work.Left) * 96.0 / monitor.Dpi;
+            UIElement body;
             if (kind == Core.Ai.AgentKind.Codex && _settings.Current.ApiUsageVisible)
             {
                 var api = ApiUsageView.Build();
                 if (width >= 850)
                 {
-                    var columns = new Grid { ColumnSpacing = 20, RequestedTheme = Root.RequestedTheme };
+                    var columns = new Grid { ColumnSpacing = columnSpacing, RequestedTheme = Root.RequestedTheme };
                     columns.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     columns.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     quota.VerticalAlignment = VerticalAlignment.Top;
                     columns.Children.Add(quota); Grid.SetColumn(api, 1); columns.Children.Add(api);
-                    flyout.Content = columns;
+                    resumeWidth = QuotaDetailsView.ContentWidth + columnSpacing + api.Width;
+                    body = columns;
                 }
                 else
                 {
                     // Compact screens switch sections instead of shrinking text or clipping content.
                     var sections = new Pivot { Width = 400, RequestedTheme = Root.RequestedTheme };
-                    sections.Items.Add(new PivotItem { Header = "Codex", Content = quota });
+                    resume = new ContentControl { Content = Resume() };
+                    var codexPage = new StackPanel { Spacing = 12 };
+                    codexPage.Children.Add(quota); codexPage.Children.Add(resume);
+                    sections.Items.Add(new PivotItem { Header = "Codex", Content = codexPage });
                     sections.Items.Add(new PivotItem { Header = "OpenAI API", Content = api });
                     flyout.Content = sections;
+                    timer.Start();
+                    return;
                 }
             }
-            else flyout.Content = quota;
+            else body = quota;
+            resume = new ContentControl { Content = Resume(), RequestedTheme = Root.RequestedTheme };
+            var page = new StackPanel { Spacing = 12, RequestedTheme = Root.RequestedTheme };
+            page.Children.Add(body); page.Children.Add(resume);
+            flyout.Content = page;
             timer.Start();
         };
         flyout.Closed += (_, _) => timer.Stop();

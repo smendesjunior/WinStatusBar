@@ -38,6 +38,17 @@ internal static class OpenAiKey
         string alias = payload["model"]!.GetValue<string>();
         var result = new JsonObject();
         foreach (var (k, v) in payload) if (Allowed.Contains(k)) result[k] = v?.DeepClone();
+        // Conversa que começou num modelo da conta do ChatGPT: o raciocínio dela vem cifrado pela conta (a API pública não
+        // consegue ler e recusa) e os itens trazem campos internos do Codex. Fica o resto: falas, comandos e resultados.
+        if (result["input"] is JsonArray input)
+        {
+            for (int i = input.Count - 1; i >= 0; i--)
+            {
+                if (input[i] is not JsonObject item) continue;
+                if (item["type"]?.GetValue<string>() == "reasoning" && item["encrypted_content"] is not null) { input.RemoveAt(i); continue; }
+                item.Remove("internal_chat_message_metadata_passthrough");
+            }
+        }
         if (Fixed.TryGetValue(alias, out var fixedModel))
         {
             result["model"] = fixedModel.Model;

@@ -16,6 +16,9 @@ public sealed class ClaudeProvider : IProvider
     public string Name => "claude";
     public string Label => "Claude";
 
+    /// <summary>Tamanho do pacote de passagem para o Claude (cabe com folga na janela de contexto dele).</summary>
+    internal const int TranscriptChars = 60000;
+
     /// <summary>O mesmo Claude Code que a barra usa.</summary>
     public static string? FindExecutable() => WinStatusBar.Core.Ai.AgentPrompt.FindClaudeExecutable();
 
@@ -95,7 +98,7 @@ public sealed class ClaudeProvider : IProvider
         string workDir = conversation.Cwd is { } wd && Directory.Exists(wd) ? wd : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         bool commands = BarSettings.ClaudeCommands;
         var args = Arguments(model, effort, commands);
-        string prompt = ConversationReader.WithTranscript(conversation.Prompt, conversation.History);
+        string prompt = ConversationReader.WithTranscript(conversation, TranscriptChars, workDir);
 
         var output = new ClaudeOutput(commands, onText, onStatus);
         Process? proc = null;

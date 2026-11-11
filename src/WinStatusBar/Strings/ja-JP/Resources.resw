@@ -4251,4 +4251,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S4F37FF91F7921755" xml:space="preserve">
     <value>オフ（既定）の場合、Codex の Claude モデルはテキストで回答するだけです。オンにすると、Claude Code は会話のフォルダーでファイルの編集やコマンド（Bash と PowerShell）の実行、検索や Web の参照を、各ステップで許可を求めずに行います。長いステップ（20〜40 分）でも回答は途切れません。Codex で停止しても、コマンドは最大 1 分間続くことがあります。信頼できるフォルダーでのみ使ってください。Codex のクォータ切れは解決しません。クォータがブロックされている間、Codex アプリは何も送信しません。</value>
   </data>
+  <data name="S585CB330E4DA7675" xml:space="preserve">
+    <value>オフ（既定）では、Claude は会話のフォルダーを読み、実行するコマンドや書き込むファイルを 1 つずつ Codex に依頼します。Codex は会話の権限で実行し、各手順を表示します。オンでは、Claude Code が会話のフォルダーで自らファイルを編集し、コマンド（Bash と PowerShell）を実行し、検索や Web の参照を行います。手順ごとの許可は求めません。長い手順（20〜40 分）でも応答は切れません。Codex で停止しても、コマンドは最大 1 分間続くことがあります。信頼できるフォルダーでのみ使ってください。</value>
+  </data>
+  <data name="S061B6A3D1C710ECF" xml:space="preserve">
+    <value>Codex のクォータがなくなったとき</value>
+  </data>
+  <data name="SADE974D0011B87DD" xml:space="preserve">
+    <value>オン（既定）では、Codex のクォータ メニューにクォータで止まった会話と「API で続行」ボタンが表示され、OpenAI キーを使って Codex アプリの外で各会話を再開できます。オフにすると、このセクションと進行状況の表示は消えます。実行中の続行は終わるまで続きます。</value>
+  </data>
 </root>

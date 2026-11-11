@@ -4251,4 +4251,13 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S4F37FF91F7921755" xml:space="preserve">
     <value>Desactivado (predeterminado), los modelos Claude en Codex solo responden con texto. Activado, Claude Code edita archivos y ejecuta comandos (Bash y PowerShell), busca y consulta la web en la carpeta de la conversación, sin pedir autorización en cada paso. Las etapas largas (20 a 40 min) no interrumpen la respuesta. Al detener en Codex, los comandos pueden seguir hasta 1 minuto. Úselo solo en carpetas de confianza. No resuelve la cuota de Codex agotada: con la cuota bloqueada, la app de Codex no envía nada.</value>
   </data>
+  <data name="S585CB330E4DA7675" xml:space="preserve">
+    <value>Desactivado (predeterminado), Claude lee la carpeta de la conversación y le pide a Codex cada comando o archivo que hay que escribir; Codex lo ejecuta con los permisos de la conversación y muestra cada paso. Activado, Claude Code edita archivos y ejecuta comandos (Bash y PowerShell), busca y consulta la web en la carpeta de la conversación por su cuenta, sin pedir permiso en cada paso. Los pasos largos (20 a 40 min) no cortan la respuesta. Al detener en Codex, los comandos pueden seguir hasta 1 minuto. Úsalo solo en carpetas de confianza.</value>
+  </data>
+  <data name="S061B6A3D1C710ECF" xml:space="preserve">
+    <value>Cuando se agote la cuota de Codex</value>
+  </data>
+  <data name="SADE974D0011B87DD" xml:space="preserve">
+    <value>Activado (predeterminado), el menú de cuota de Codex muestra las conversaciones detenidas por la cuota y el botón Continuar por la API, que retoma cada una con tu clave de OpenAI, fuera de la app de Codex. Desactivado, la sección y el seguimiento desaparecen; las continuaciones en curso siguen hasta terminar.</value>
+  </data>
 </root>

@@ -83,9 +83,7 @@ public static class QuotaDetailsView
             accountBlocked = q?.Access?.Blocks == true;
             root.Children.Add(BlockBanner(blockBanner, theme));
         }
-
-        // Conversas paradas pela cota e continuações pela API (só com bloqueio ou com continuações).
-        if (isCodex && CodexApiResumeView.Section(App.Current.ApiResume, theme) is { } apiSection) root.Children.Add(apiSection);
+        // As conversas paradas pela cota e o Continuar pela API ficam no rodapé do menu (BarWindow.CreateQuotaFlyout).
 
         if (q?.Primary is null && q?.Secondary is null)
         {
@@ -139,9 +137,11 @@ public static class QuotaDetailsView
                 reset.Click += async (_, _) =>
                 {
                     if (_resetPending || credit.Id is not { } id) return;
-                    var xamlRoot = root.XamlRoot;
-                    var dialog = new ContentDialog { XamlRoot = xamlRoot, RequestedTheme = root.ActualTheme, Title = "Usar este reset do Codex?", Content = credit.Title + "\n" + credit.Description + "\n\nSerá consumido somente este crédito. Não adiciona saldo de API.", PrimaryButtonText = "Usar este reset", CloseButtonText = "Cancelar", DefaultButton = ContentDialogButton.Close };
-                    if (await dialog.ShowAsync() != ContentDialogResult.Primary || _resetPending) return;
+                    // Confirmação no próprio cartão (uma janela de diálogo da barra ficaria invisível e travaria os cliques).
+                    bool yes = await InlinePrompt.AskAsync(reset, "Usar este reset do Codex?",
+                        (string.IsNullOrWhiteSpace(credit.Description) ? "" : credit.Description + "\n\n") + "Será consumido somente este crédito. Não adiciona saldo de API.",
+                        "Usar este reset", maxWidth: ContentWidth);
+                    if (!yes || _resetPending) return;
                     _resetPending = true; reset.IsEnabled = false;
                     if (!ResetAttempts.TryGetValue(id, out var attempt)) ResetAttempts[id] = attempt = Guid.NewGuid().ToString();
                     try
@@ -152,8 +152,7 @@ public static class QuotaDetailsView
                         var result = await new Core.Ai.Codex.CodexAppServerClient().QueryAsync(executable, TimeSpan.FromSeconds(45), CancellationToken.None, attempt, id);
                         _resetMessage = resetStatus.Text = result.Error ?? "Reset aplicado. Cotas atualizadas.";
                         if (result.Error is null || result.ResetDefinitive) ResetAttempts.Remove(id);
-                        await hub.Codex.RefreshQuotaNowAsync();
-                        await new ContentDialog { XamlRoot = xamlRoot, RequestedTheme = root.ActualTheme, Title = result.Error is null ? "Reset aplicado" : "Resultado da solicitação", Content = resetStatus.Text, CloseButtonText = "Fechar" }.ShowAsync();
+                        await hub.Codex.RefreshQuotaNowAsync(); // o resultado fica na linha de estado do menu (_resetMessage)
                     }
                     catch (Exception ex) { _resetMessage = resetStatus.Text = "Não foi possível concluir: " + ex.Message; }
                     finally { _resetPending = false; }

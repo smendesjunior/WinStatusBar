@@ -210,10 +210,11 @@ internal sealed class OpenAiDashboardView : Grid
         ToolTipService.SetToolTip(logout, "Sair do painel de faturamento");
         logout.Click += async (_, _) =>
         {
-            var confirm = new ContentDialog { XamlRoot = root.XamlRoot, Title = "Sair da conta de faturamento?",
-                Content = "Remove a sessão do painel OpenAI desta barra e os dados de faturamento em cache. As chaves de API de conversa, a chave administrativa e o login do Codex são conexões separadas.",
-                PrimaryButtonText = "Sair deste painel", CloseButtonText = "Cancelar", DefaultButton = ContentDialogButton.Close };
-            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+            // Confirmação no lugar da linha de botões (uma janela de diálogo do menu ficaria invisível e travaria os cliques).
+            if (logout.Parent is not FrameworkElement row) return;
+            if (!await InlinePrompt.AskAsync(row, "Sair da conta de faturamento?",
+                    "Remove a sessão do painel OpenAI desta barra e os dados de faturamento em cache. As chaves de API de conversa, a chave administrativa e o login do Codex são conexões separadas.",
+                    "Sair deste painel")) return;
             logout.IsEnabled = false;
             try
             {

@@ -58,10 +58,10 @@ public class CodexIAsConversationTests
     }
 
     [Fact]
-    public void Compactacao_guarda_so_as_ultimas_falas()
+    public void Compactacao_guarda_resumo_e_as_ultimas_falas()
     {
         var output = BridgeServer.Compact(Payload())["output"]!.AsArray();
-        Assert.Equal(5, output.Count);
+        Assert.Equal(4, output.Count); // resumo com o trabalho feito + as 3 falas (as mensagens injetadas ficam de fora)
     }
 }
 

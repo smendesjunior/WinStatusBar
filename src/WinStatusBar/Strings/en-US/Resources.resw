@@ -4251,4 +4251,13 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S4F37FF91F7921755" xml:space="preserve">
     <value>Off (default), the Claude models in Codex only answer in text. On, Claude Code edits files and runs commands (Bash and PowerShell), searches and looks things up on the web in the conversation folder, without asking for permission at each step. Long steps (20 to 40 min) do not drop the answer. When you stop in Codex, commands may keep running for up to 1 minute. Use it only in folders you trust. It does not solve a used-up Codex quota: while the quota is blocked, the Codex app sends nothing.</value>
   </data>
+  <data name="S585CB330E4DA7675" xml:space="preserve">
+    <value>Off (default), Claude reads the conversation folder and asks Codex for each command or file to write; Codex runs it with the conversation's permissions and shows each step. On, Claude Code edits files and runs commands (Bash and PowerShell), searches and looks things up on the web in the conversation folder on its own, without asking for permission at each step. Long steps (20 to 40 min) do not drop the answer. When you stop in Codex, commands may keep running for up to 1 minute. Use it only in folders you trust.</value>
+  </data>
+  <data name="S061B6A3D1C710ECF" xml:space="preserve">
+    <value>When the Codex quota runs out</value>
+  </data>
+  <data name="SADE974D0011B87DD" xml:space="preserve">
+    <value>On (default), the Codex quota menu shows the conversations stopped by the quota and the Continue via the API button, which resumes each one with your OpenAI key, outside the Codex app. Off, the section and its tracking disappear; continuations already running go on until they finish.</value>
+  </data>
 </root>

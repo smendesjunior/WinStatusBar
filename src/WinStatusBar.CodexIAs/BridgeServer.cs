@@ -31,15 +31,41 @@ public static partial class BridgeServer
         await stream.WriteAsync(data);
     }
 
-    /// <summary>Compactação pedida pelo Codex: guarda só as últimas falas (o histórico vai inteiro em cada pedido).</summary>
+    /// <summary>
+    /// Compactação pedida pelo Codex com um modelo da barra escolhido: um resumo com o pacote de passagem (falas, ações e
+    /// resultados, inclusive de outros modelos) e as últimas falas originais. Antes só ficavam as 6 últimas falas, e o
+    /// trabalho feito até ali sumia da conversa.
+    /// </summary>
     internal static JsonObject Compact(JsonNode payload)
     {
+        var c = ConversationReader.Read(payload);
+        var all = c.History.ToList();
+        if (c.Prompt.Length > 0) all.Add((c.PromptIsResult ? ConversationReader.Result : "user", c.Prompt));
         var output = new JsonArray();
+        string summary = ConversationReader.Transcript(all, CompactChars);
+        if (summary.Length > 0)
+            output.Add(new JsonObject
+            {
+                ["type"] = "message", ["role"] = "user",
+                ["content"] = new JsonArray(new JsonObject { ["type"] = "input_text", ["text"] = "[Resumo da conversa até aqui, feito pela WinStatusBar ao compactar]\n" + summary }),
+            });
         if (payload["input"] is JsonArray input)
-            foreach (var item in input.Where(i => i?["type"]?.GetValue<string>() == "message" && i["role"]?.GetValue<string>() is "user" or "assistant").TakeLast(6))
+            foreach (var item in input.Where(i => i?["type"]?.GetValue<string>() == "message" && i["role"]?.GetValue<string>() is "user" or "assistant"
+                         && !ConversationReader.IsInjectedContext(TextOf(i))).TakeLast(4))
                 output.Add(item!.DeepClone());
         return new JsonObject { ["output"] = output };
     }
+
+    /// <summary>Tamanho do resumo da compactação (caracteres).</summary>
+    internal const int CompactChars = 40000;
+
+    private static string TextOf(JsonNode item)
+        => item["content"] is JsonArray parts ? string.Join("\n", parts.Select(p => p?["text"]?.GetValue<string>() ?? "")).Trim()
+            : item["content"] is JsonValue v && v.TryGetValue<string>(out var s) ? s.Trim() : "";
+
+    /// <summary>A IA pode pedir ações ao Codex (só texto): Qira e o Claude com comandos agem por conta própria.</summary>
+    internal static bool UsesActions((IProvider Provider, AiModel Model)? target, bool commands)
+        => target is { } t && t.Provider is not Providers.QiraProvider && !(t.Provider is Providers.ClaudeProvider && commands);
 
     [GeneratedRegex(@"^\s*\*[^*\n]+\*\s*$")] private static partial Regex StatusLine();
     /// <summary>Linha de estado em itálico ("*Preparando…*"): não é resposta.</summary>
@@ -100,6 +126,8 @@ public static partial class BridgeServer
         bool commands, CancellationTokenSource run, BridgeConnection connection)
     {
         var conversation = ConversationReader.Read(payload);
+        bool actions = conversation.Actions && UsesActions(target, commands);
+        if (!actions) conversation = conversation with { Actions = false };
         string responseId = "resp_cdx_" + Guid.NewGuid().ToString("N");
         bool streaming = payload["stream"]?.GetValue<bool>() ?? false;
         var updates = Channel.CreateUnbounded<string>(new() { SingleReader = true });
@@ -138,7 +166,7 @@ public static partial class BridgeServer
                 { await Event(new() { ["type"] = "response.in_progress", ["response"] = Response("in_progress") }); continue; }
                 if (!await wait) return;
                 string latest = response.Sent;
-                while (reader.TryRead(out var text)) if (!IsStatusLine(text)) latest = text;
+                while (reader.TryRead(out var text)) if (!IsStatusLine(text)) latest = actions ? ActionProtocol.Visible(text) : text;
                 await response.TextAsync(latest);
             }
         });
@@ -178,7 +206,22 @@ public static partial class BridgeServer
         string final = result.Error is { Length: > 0 } error
             ? (string.IsNullOrWhiteSpace(answer) ? "" : answer.TrimEnd() + "\n\n") + "⚠ " + name + ": " + error
             : answer;
-        var items = await response.FinishAsync(final);
+        JsonArray items;
+        if (actions && result.Error is null && ActionProtocol.Parse(answer) is { } step)
+        {
+            if (ActionProtocol.StepsSinceUser(conversation) + 1 > ActionProtocol.MaxSteps)
+            {
+                Log.Write($"Ações: limite de {ActionProtocol.MaxSteps} por mensagem atingido; a ação pedida não foi executada");
+                items = await response.FinishAsync((step.Text.Length > 0 ? step.Text + "\n\n" : "")
+                    + $"⚠ {name}: limite de {ActionProtocol.MaxSteps} ações seguidas atingido. Mande \"continue\" para seguir.");
+            }
+            else
+            {
+                Log.Write($"Ação pedida por {name}: {step.Action.Kind}");
+                items = await response.FinishWithCallAsync(step.Text, ActionProtocol.CallItem(step.Action, conversation.Cwd));
+            }
+        }
+        else items = await response.FinishAsync(final); // sem ação válida, o texto volta inteiro (o corte era só durante a chegada)
         int input = Math.Max(1, (conversation.Prompt.Length + conversation.History.Sum(h => h.Content.Length)) / 4), output = Math.Max(1, final.Length / 4);
         var done = Response("completed", items);
         done["usage"] = new JsonObject

@@ -7,6 +7,21 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.6.0] - 2026-11-11 · build BUILD
+
+### Added
+- Bar AIs in Codex: Gemini and Copilot through the account, API-key models, local models and Claude without the commands option now work on files. They ask for each command or file to write, and Codex itself runs it, with the conversation's permissions and showing every step.
+- Switching AIs mid-conversation in Codex: the model that takes over gets the original request, the earlier commands and results (from any model), a notice that the previous answer was interrupted and the project rules (AGENTS.md).
+- Settings › Models: an option to turn Continue via the API on or off.
+
+### Changed
+- Codex quota menu: the conversations stopped by the quota and Continue via the API moved to the footer, across both columns (summary and button on the left, progress on the right).
+
+### Fixed
+- Compacting a Codex conversation with a bar AI no longer wipes the work done: a summary with the messages, commands and results is kept instead of only the last 6 messages.
+- "OpenAI — my API" in a conversation that started on an account model: the reasoning encrypted by the account, which the API rejects, is left out.
+- "Use this reset", "Configure" and "Sign out…" (quota menu) and "Rename" (recent folders) opened an invisible dialog that blocked clicks; the question now shows inside the menu itself.
+
 ## [1.5.1] - 2026-11-10 · build 20261111011834
 
 ### Fixed

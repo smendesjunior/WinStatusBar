@@ -14,16 +14,34 @@ internal static class CodexApiResumeView
 {
     private const double Width = QuotaDetailsView.ContentWidth;
 
-    public static UIElement? Section(CodexApiResumeService svc, ElementTheme theme)
+    /// <summary>
+    /// Seção do rodapé do menu da cota. <paramref name="columnsWidth"/> &gt; 0 (menu com a coluna da OpenAI API ao lado): a seção
+    /// ocupa a largura das duas colunas, com o resumo e o botão à esquerda e os cartões das continuações à direita.
+    /// </summary>
+    public static UIElement? Section(CodexApiResumeService svc, ElementTheme theme, double columnsWidth = 0, double columnSpacing = 20)
     {
+        if (!svc.Enabled && !svc.Supervisor.HasUnfinished) return null;
         if (!ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)) return null;
         svc.SectionShown();
-        var panel = new StackPanel { Spacing = 8, Width = Width };
-        panel.Children.Add(new Border
+        bool wide = columnsWidth > Width;
+        var root =new StackPanel { Spacing = 8, Width = wide ? columnsWidth : Width };
+        root.Children.Add(new Border
         {
             Height = 1, Margin = new Thickness(0, 2, 0, 2),
             Background = ThemeBrushes.ForTheme("DividerStrokeColorDefaultBrush", theme),
         });
+        var left = wide ? new StackPanel { Spacing = 8, Width = Width } : root;
+        var jobs = wide ? new StackPanel { Spacing = 12, Width = Width } : root;
+        if (wide)
+        {
+            var columns = new Grid { ColumnSpacing = columnSpacing };
+            columns.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            columns.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            columns.Children.Add(left);
+            Grid.SetColumn(jobs, 1); columns.Children.Add(jobs);
+            root.Children.Add(columns);
+        }
+        var panel = left;
         panel.Children.Add(Text(ApiResumeText.SectionTitle, bold: true));
         var stops = svc.LastScan?.Stops;
         panel.Children.Add(Text(stops is null ? Localization.T("Procurando conversas paradas pela cota…") : ApiResumeText.Summary(stops)));
@@ -53,8 +71,8 @@ internal static class CodexApiResumeView
             if (svc.IsStoreBuild) choose.Children.Add(Caption(ApiResumeText.StoreHint));
             panel.Children.Add(choose);
         }
-        foreach (var job in svc.VisibleJobs) panel.Children.Add(JobCard(job, svc));
-        return panel;
+        foreach (var job in svc.VisibleJobs) jobs.Children.Add(JobCard(job, svc));
+        return root;
     }
 
     public static FrameworkElement JobCard(ApiResumeJob job, CodexApiResumeService svc)

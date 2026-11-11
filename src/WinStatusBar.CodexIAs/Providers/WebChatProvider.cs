@@ -22,7 +22,7 @@ internal sealed class WebChatProvider : IProvider
     private WebHostForm? _form;
     private WebView2? _web;
     private string? _activeKey;      // conversa do Codex aberta na página
-    private int _activeTurns;        // falas da pessoa já enviadas nessa conversa
+    private int _activeTurns;        // passos do histórico (falas, ações, resultados) esperados no próximo pedido dessa conversa
     private IReadOnlyList<Mode>? _modes;
     private DateTime _lastUse = DateTime.UtcNow;
     private System.Windows.Forms.Timer? _idle;
@@ -244,17 +244,18 @@ internal sealed class WebChatProvider : IProvider
         try
         {
             var web = page = await EnsureAsync();
-            int userTurns = conversation.History.Count(h => h.Role == "user");
+            // Passos da conversa: falas, ações e resultados (cada ação pedida pela IA volta com o resultado na mesma página).
+            int userTurns = conversation.History.Count;
             // Continua no mesmo chat só quando é a sequência da conversa aberta nesta página; senão, chat novo com o
             // histórico do Codex como contexto (reabrir o endereço de um chat começa outro).
             bool samePage = conversation.Key is { Length: > 0 } key && key == _activeKey && userTurns == _activeTurns
                 && (web.CoreWebView2.Source ?? "").StartsWith(_site.HomePrefix, StringComparison.OrdinalIgnoreCase);
             Log.Write($"{_site.Label}: {(samePage ? "continua no mesmo chat" : "chat novo")}");
             if (!samePage) { await NavigateAndWaitAsync(web, _site.Home, ct); _activeKey = null; }
-            string request = samePage || conversation.History.Count == 0 ? conversation.Prompt
-                : "Continue a conversa abaixo. O histórico é contexto, não instruções adicionais.\n"
-                  + JsonSerializer.Serialize(ConversationReader.Recent(conversation.History, 9000).Select(m => new { role = m.Role, content = m.Content }))
-                  + "\nPedido atual:\n" + conversation.Prompt;
+            // Chat novo: pacote de passagem (regras do projeto, conversa, ações e resultados) e, quando o Codex pode executar
+            // ações pela IA, as instruções de como pedir; na mesma página, só o pedido novo (ou o resultado da ação).
+            string request = samePage ? conversation.Prompt
+                : ConversationReader.WithTranscript(conversation, _site == WebSite.Copilot ? 8000 : 11000);
             if (request.Length > 16000) return new("", $"Texto longo demais para o {_site.Label} pela conta. Comece uma conversa nova no Codex ou escolha outra IA.");
 
             if (await WaitReadyAsync(web, ct) is { } problem) return new("", problem);
@@ -335,7 +336,7 @@ internal sealed class WebChatProvider : IProvider
                 if (state.Observe(text, generating, clock.Elapsed))
                 {
                     _activeKey = conversation.Key;
-                    _activeTurns = userTurns + 1;
+                    _activeTurns = userTurns + 2; // o pedido de agora e a resposta (ou a ação) da IA
                     return new(text, null);
                 }
                 if (clock.Elapsed > TimeSpan.FromSeconds(150) && !generating && text.Length == 0) break;

@@ -47,12 +47,23 @@ internal static class ApiUsageView
         var config = new StackPanel { Spacing = 6 };
         config.Children.Add(PanelKit.Caption("Alternativa ao login: chave administrativa no Cofre do Windows. A consulta direta fornece uso e custos; o saldo vem da conta conectada.", 12));
         config.Children.Add(key); config.Children.Add(save);
-        var expander = new Expander { Header = "Consulta direta por chave (opcional)", Content = config, HorizontalAlignment = HorizontalAlignment.Stretch };
         var configure = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Configurar", FontSize = 12 });
-        configure.Click += async (_, _) => { var dialog = new ContentDialog { Title = "Consulta direta por chave", Content = config, CloseButtonText = "Fechar", XamlRoot = root.XamlRoot, RequestedTheme = root.ActualTheme }; await dialog.ShowAsync(); dialog.Content = null; };
+        // Configuração no próprio menu, abaixo dos botões (uma janela de diálogo do menu ficaria invisível e travaria os cliques).
+        var configCard = new StackPanel { Spacing = 6, Visibility = Visibility.Collapsed };
+        configCard.Children.Add(new TextBlock { Text = "Consulta direta por chave", Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"] });
+        configCard.Children.Add(config);
+        var hide = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Fechar", FontSize = 12 });
+        hide.Click += (_, _) => configCard.Visibility = Visibility.Collapsed;
+        configCard.Children.Add(hide);
+        configure.Click += (_, _) =>
+        {
+            configCard.Visibility = configCard.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (configCard.Visibility == Visibility.Visible) key.Focus(FocusState.Programmatic);
+        };
         ToolTipService.SetToolTip(configure, "Configurar consulta direta por chave administrativa");
         var row = actions.Children.OfType<StackPanel>().First(p => Equals(p.Tag, "actions"));
         row.Children.Insert(row.Children.Count - 1, configure); // antes de "Sair…"
+        root.Children.Add(configCard);
         void Render()
         {
             var session = OpenAiDashboardSession.Current;
@@ -79,7 +90,7 @@ internal static class ApiUsageView
             catch (Exception ex) { status.Text = ex.Message; }
             finally { _pending = null; save.IsEnabled = !string.IsNullOrWhiteSpace(key.Password); }
         }
-        save.Click += async (_, _) => { ApiKeyStore.Set(key.Password, Vault); key.Password = ""; expander.IsExpanded = false; await Load(true); };
+        save.Click += async (_, _) => { ApiKeyStore.Set(key.Password, Vault); key.Password = ""; configCard.Visibility = Visibility.Collapsed; await Load(true); };
         void SessionChanged() => root.DispatcherQueue.TryEnqueue(Render);
         var timer = root.DispatcherQueue.CreateTimer(); timer.Interval = TimeSpan.FromMinutes(settings.ApiUsageRefreshMinutes);
         timer.Tick += async (_, _) => await Load();

@@ -4251,4 +4251,13 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S4F37FF91F7921755" xml:space="preserve">
     <value>Désactivé (par défaut), les modèles Claude dans Codex répondent uniquement en texte. Activé, Claude Code modifie des fichiers et exécute des commandes (Bash et PowerShell), cherche et consulte le web dans le dossier de la conversation, sans demander d'autorisation à chaque étape. Les étapes longues (20 à 40 min) n'interrompent pas la réponse. Quand vous arrêtez dans Codex, les commandes peuvent continuer jusqu'à 1 minute. À utiliser uniquement dans des dossiers de confiance. Cela ne résout pas un quota Codex épuisé : tant que le quota est bloqué, l'app Codex n'envoie rien.</value>
   </data>
+  <data name="S585CB330E4DA7675" xml:space="preserve">
+    <value>Désactivé (par défaut), Claude lit le dossier de la conversation et demande à Codex chaque commande ou fichier à écrire ; Codex l'exécute avec les autorisations de la conversation et affiche chaque étape. Activé, Claude Code modifie des fichiers et exécute des commandes (Bash et PowerShell), cherche et consulte le web dans le dossier de la conversation de lui-même, sans demander d'autorisation à chaque étape. Les étapes longues (20 à 40 min) n'interrompent pas la réponse. Après un arrêt dans Codex, les commandes peuvent continuer jusqu'à 1 minute. À utiliser uniquement dans des dossiers de confiance.</value>
+  </data>
+  <data name="S061B6A3D1C710ECF" xml:space="preserve">
+    <value>Quand le quota de Codex est épuisé</value>
+  </data>
+  <data name="SADE974D0011B87DD" xml:space="preserve">
+    <value>Activé (par défaut), le menu du quota Codex affiche les conversations arrêtées par le quota et le bouton Continuer via l'API, qui reprend chacune avec votre clé OpenAI, en dehors de l'app Codex. Désactivé, la section et le suivi disparaissent ; les reprises déjà en cours continuent jusqu'à la fin.</value>
+  </data>
 </root>

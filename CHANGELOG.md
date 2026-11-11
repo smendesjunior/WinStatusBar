@@ -7,6 +7,21 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.6.0] - 2026-11-11 · compilação BUILD
+
+### Adicionado
+- IAs da barra no Codex: Gemini e Copilot pela conta, APIs com chave, modelos locais e o Claude sem a opção de comandos agora trabalham nos arquivos. Eles pedem cada comando ou arquivo a gravar, e o próprio Codex executa, com as permissões da conversa e mostrando cada passo.
+- Trocar de IA no meio de uma conversa do Codex: quem assume recebe o pedido original, os comandos e resultados de antes (de qualquer modelo), o aviso de que a resposta anterior foi interrompida e as regras do projeto (AGENTS.md).
+- Configurações › Modelos: opção para ligar ou desligar o Continuar pela API.
+
+### Alterado
+- Menu da cota do Codex: as conversas paradas pela cota e o Continuar pela API foram para o rodapé, na largura das duas colunas (resumo e botão à esquerda, andamento à direita).
+
+### Corrigido
+- Compactar uma conversa do Codex com uma IA da barra não apaga mais o trabalho feito: fica um resumo com as falas, os comandos e os resultados, em vez de só as 6 últimas falas.
+- "OpenAI — minha API" numa conversa que começou num modelo da conta: o raciocínio cifrado pela conta, que a API não aceita, fica de fora.
+- "Usar este reset", "Configurar" e "Sair…" (menu da cota) e "Renomear" (pastas recentes) abriam uma janela invisível que travava os cliques; agora a pergunta aparece dentro do próprio menu.
+
 ## [1.5.1] - 2026-11-10 · compilação 20261111011834
 
 ### Corrigido

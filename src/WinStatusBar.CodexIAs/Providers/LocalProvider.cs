@@ -30,7 +30,7 @@ internal sealed class LocalProvider : IProvider
     {
         // A leitura da lista também escolhe o servidor local (Ollama ou outro compatível com a OpenAI).
         if (!_catalogRead) { await AgentPrompt.CatalogAsync(AgentPrompt.Target.Local, null, ct); _catalogRead = true; }
-        var result = await AgentPrompt.RunAsync(AgentPrompt.Target.Local, ConversationReader.WithTranscript(conversation.Prompt, conversation.History),
+        var result = await AgentPrompt.RunAsync(AgentPrompt.Target.Local, ConversationReader.WithTranscript(conversation, 12000),
             model.Id, effort, null, AgentPrompt.Options.None, onText, ct);
         return new(result.Text, result.Error);
     }

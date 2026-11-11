@@ -92,7 +92,7 @@ internal sealed partial class ApiProvider : IProvider
     public async Task<Answer> RunAsync(AiModel model, string? effort, Conversation conversation, Action<string> onText, CancellationToken ct)
     {
         if (Config() is not { } config) return new("", $"A chave da API do {_service.Name} não está mais na barra. Cadastre de novo em Configurações › IA.");
-        var result = await AgentPrompt.RunAsync(AgentPrompt.Target.Api, ConversationReader.WithTranscript(conversation.Prompt, conversation.History),
+        var result = await AgentPrompt.RunAsync(AgentPrompt.Target.Api, ConversationReader.WithTranscript(conversation, 40000),
             model.Id, effort, config, AgentPrompt.Options.None, onText, ct);
         return new(result.Text, result.Error);
     }

@@ -274,7 +274,7 @@ public class CodexIAsClaudeCommandsBridgeTests : IDisposable
 
 public class CodexIAsClaudeCommandsSourceTests
 {
-    internal const string Help = "Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.";
+    internal const string Help = "Desligado (padrão), o Claude lê a pasta da conversa e pede ao Codex cada comando ou arquivo a gravar; o Codex executa com as permissões da conversa e mostra cada passo. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa por conta própria, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia.";
     private static readonly string[] Texts = ["Claude no seletor do Codex", "Deixar o Claude executar comandos e editar arquivos", Help];
 
     [Fact]

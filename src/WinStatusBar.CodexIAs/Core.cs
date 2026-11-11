@@ -9,8 +9,13 @@ public sealed record AiModel(string Slug, string Provider, string Id, string Dis
 /// <summary>Resposta de uma IA. Error preenchido quando falhou (vira texto da resposta no Codex).</summary>
 public sealed record Answer(string Text, string? Error);
 
-/// <summary>Pedido atual, histórico (falas da pessoa e respostas), pasta da conversa e chave da conversa no Codex.</summary>
-public sealed record Conversation(string Prompt, IReadOnlyList<(string Role, string Content)> History, string? Cwd, string? Key);
+/// <summary>
+/// Pedido atual, histórico (falas, ações executadas e resultados, avisos), pasta e chave da conversa no Codex, regras do
+/// projeto (AGENTS.md), se o Codex pode executar ações pela IA (<see cref="Actions"/>) e se o pedido atual é o resultado de
+/// uma ação (e não uma fala da pessoa).
+/// </summary>
+public sealed record Conversation(string Prompt, IReadOnlyList<(string Role, string Content)> History, string? Cwd, string? Key,
+    string? Rules = null, bool Actions = false, bool PromptIsResult = false);
 
 /// <summary>
 /// Leitura de uma IA na verificação: as opções dela, ou o motivo de ficar fora do Codex. <see cref="Failed"/> = falha

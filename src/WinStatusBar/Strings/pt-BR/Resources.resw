@@ -4251,4 +4251,13 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S4F37FF91F7921755" xml:space="preserve">
     <value>Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada.</value>
   </data>
+  <data name="S585CB330E4DA7675" xml:space="preserve">
+    <value>Desligado (padrão), o Claude lê a pasta da conversa e pede ao Codex cada comando ou arquivo a gravar; o Codex executa com as permissões da conversa e mostra cada passo. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa por conta própria, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia.</value>
+  </data>
+  <data name="S061B6A3D1C710ECF" xml:space="preserve">
+    <value>Quando a cota do Codex acabar</value>
+  </data>
+  <data name="SADE974D0011B87DD" xml:space="preserve">
+    <value>Ligado (padrão), o menu da cota do Codex mostra as conversas paradas pela cota e o botão Continuar pela API, que retoma cada uma pela sua chave da OpenAI, fora do app do Codex. Desligado, a seção e o acompanhamento somem; continuações em andamento seguem até terminar.</value>
+  </data>
 </root>

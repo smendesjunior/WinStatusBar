@@ -42,6 +42,16 @@ internal sealed class ResponseStream(Func<JsonObject, Task> emit)
         return new JsonArray(item);
     }
 
+    /// <summary>Fecha a mensagem e acrescenta uma chamada de ferramenta (índice 1) para o Codex executar.</summary>
+    public async Task<JsonArray> FinishWithCallAsync(string final, JsonObject call)
+    {
+        var items = await FinishAsync(final);
+        await emit(new JsonObject { ["type"] = "response.output_item.added", ["output_index"] = 1, ["item"] = call.DeepClone() });
+        await emit(new JsonObject { ["type"] = "response.output_item.done", ["output_index"] = 1, ["item"] = call.DeepClone() });
+        items.Add(call.DeepClone());
+        return items;
+    }
+
     private JsonObject Delta(string delta) => new()
     {
         ["type"] = "response.output_text.delta", ["item_id"] = _messageId, ["output_index"] = 0, ["content_index"] = 0, ["delta"] = delta,

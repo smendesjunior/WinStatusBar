@@ -110,7 +110,7 @@ public sealed partial class SettingsWindow
         var about = new TextBlock
         {
             Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap,
-            Text = "Ligado, o seletor de modelos do Codex passa a ter as IAs configuradas aqui (com login, chave da API ou modelo local), pelo encaminhador local da barra (porta 11435; só texto), e os modelos novos do Ollama entram nele na verificação. Os modelos da OpenAI continuam iguais, pela sua conta. Desligar devolve o config.toml do Codex de antes.",
+            Text = "Ligado, o seletor de modelos do Codex passa a ter as IAs configuradas aqui (com login, chave da API ou modelo local), pelo encaminhador local da barra (porta 11435; as IAs que só conversam pedem ao Codex os comandos e arquivos, e ele executa com as permissões da conversa), e os modelos novos do Ollama entram nele na verificação. Os modelos da OpenAI continuam iguais, pela sua conta. Desligar devolve o config.toml do Codex de antes.",
         };
         var card = new StackPanel { Spacing = 10, Padding = new Thickness(16, 14, 16, 16) };
         card.Children.Add(head); card.Children.Add(codexStatus); card.Children.Add(actionsScroll); card.Children.Add(codexFeedback); card.Children.Add(about);
@@ -119,8 +119,15 @@ public sealed partial class SettingsWindow
         // ------------------------------------------------------------ Claude no seletor do Codex
         page.Children.Add(GroupTitle(Localization.T("Claude no seletor do Codex")));
         page.Children.Add(Group(Toggle(Localization.T("Deixar o Claude executar comandos e editar arquivos"),
-            Localization.T("Desligado (padrão), os modelos Claude no Codex só respondem em texto. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia. Não resolve a cota do Codex esgotada: com a cota bloqueada, o app do Codex não envia nada."),
+            Localization.T("Desligado (padrão), o Claude lê a pasta da conversa e pede ao Codex cada comando ou arquivo a gravar; o Codex executa com as permissões da conversa e mostra cada passo. Ligado, o Claude Code edita arquivos e executa comandos (Bash e PowerShell), procura e consulta a web na pasta da conversa por conta própria, sem pedir autorização a cada passo. Etapas longas (20 a 40 min) não derrubam a resposta. Ao parar no Codex, os comandos ainda podem continuar por até 1 minuto. Use só em pastas em que você confia."),
             s => s.CodexClaudeCommands, (s, v) => s.CodexClaudeCommands = v)));
+
+        // ------------------------------------------------------------ quando a cota do Codex acaba
+        page.Children.Add(GroupTitle(Localization.T("Quando a cota do Codex acabar")));
+        page.Children.Add(Group(
+            Toggle(Localization.T("Continuar pela API"),
+                Localization.T("Ligado (padrão), o menu da cota do Codex mostra as conversas paradas pela cota e o botão Continuar pela API, que retoma cada uma pela sua chave da OpenAI, fora do app do Codex. Desligado, a seção e o acompanhamento somem; continuações em andamento seguem até terminar."),
+                s => s.CodexApiResumeEnabled, (s, v) => s.CodexApiResumeEnabled = v)));
 
         // ------------------------------------------------------------ corrigir problemas
         var repairAll = BigButton("Corrigir problemas", accent: false);

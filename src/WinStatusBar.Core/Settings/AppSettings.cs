@@ -171,6 +171,8 @@ public sealed class AppSettings
     public int CodexQuotaIntervalMin { get; set; } = 0;
     /// <summary>Continuar pela API: false = uma de cada vez (fila, padrão); true = todas ao mesmo tempo. Sem limite de gasto.</summary>
     public bool CodexApiParallel { get; set; } = false;
+    /// <summary>Continuar pela API ligado (padrão): a seção no menu da cota, o acompanhamento no painel de tarefas e o serviço.</summary>
+    public bool CodexApiResumeEnabled { get; set; } = true;
     /// <summary>Minutos entre consultas da conta Claude; 0 = tempo real (statusLine + consulta a cada minuto, respeitando Retry-After).</summary>
     public int ClaudeQuotaIntervalMin { get; set; } = 0;
     /// <summary>O usuário removeu a integração com o Claude Code: não reinstalar automaticamente.</summary>

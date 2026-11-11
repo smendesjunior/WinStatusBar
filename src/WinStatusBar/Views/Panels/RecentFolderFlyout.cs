@@ -190,8 +190,8 @@ internal static class RecentFolderFlyout
             var name = new TextBox { Text = item.Name };
             // Seleciona só o nome, sem a extensão (como o F2 do Explorador).
             name.Loaded += (_, _) => { name.Focus(FocusState.Programmatic); name.Select(0, item.IsDirectory ? item.Name.Length : Path.GetFileNameWithoutExtension(item.Name).Length); };
-            var dialog = new ContentDialog { XamlRoot = root, Title = "Renomear", Content = name, PrimaryButtonText = "Salvar", CloseButtonText = "Cancelar", DefaultButton = ContentDialogButton.Primary };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary || name.Text == item.Name) return;
+            // No lugar da pesquisa, dentro da própria janela (um diálogo dela ficaria invisível e travaria os cliques).
+            if (!await InlinePrompt.AskAsync(search, "Renomear", item.Name, "Salvar", input: name, maxWidth: double.PositiveInfinity) || name.Text == item.Name) return;
             if (string.IsNullOrWhiteSpace(name.Text) || name.Text is "." or ".." || name.Text.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) throw new IOException("Nome de arquivo inválido.");
             await FolderShellOperations.RenameAsync(item.Path, Path.Combine(Path.GetDirectoryName(item.Path)!, name.Text));
             await LoadAsync();

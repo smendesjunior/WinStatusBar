@@ -200,10 +200,26 @@ public class ApiResumeSourceTests
     [Fact]
     public void SectionOnlyWithBlockOrJobs()
     {
-        Assert.Contains("ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)", Src("Views", "CodexApiResumeView.cs"));
-        string quota = Src("Views", "QuotaDetailsView.cs");
-        int section = quota.IndexOf("CodexApiResumeView.Section(", StringComparison.Ordinal);
-        Assert.True(section >= 0 && section < quota.IndexOf("if (q?.Primary is null", StringComparison.Ordinal));
+        string view = Src("Views", "CodexApiResumeView.cs");
+        Assert.Contains("ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)", view);
+        // Opção desligada (Configurações › Modelos): some, menos com continuações em andamento.
+        Assert.Contains("if (!svc.Enabled && !svc.Supervisor.HasUnfinished) return null;", view);
+        // Rodapé do menu da cota, na largura das duas colunas (e não mais no meio da coluna do Codex).
+        Assert.DoesNotContain("CodexApiResumeView.Section(", Src("Views", "QuotaDetailsView.cs"));
+        string bar = Src("Views", "BarWindow.xaml.cs");
+        Assert.Contains("CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing)", bar);
+        Assert.Contains("resumeWidth = QuotaDetailsView.ContentWidth + columnSpacing + api.Width;", bar);
+    }
+
+    [Fact]
+    public void NoDialogWindowsFromTheBarMenus()
+    {
+        // A barra e os menus dela ficam numa janela da altura da faixa: um ContentDialog dela fica invisível e trava os cliques.
+        foreach (var file in new[] { "QuotaDetailsView.cs", "OpenAiDashboardView.cs", "ApiUsageView.cs", Path.Combine("Panels", "RecentFolderFlyout.cs"), "CodexApiResumeView.cs", "ContinueViaApiPanel.cs" })
+            Assert.DoesNotContain("ContentDialog", Src("Views", file));
+        Assert.Contains("InlinePrompt.AskAsync(reset, \"Usar este reset do Codex?\"", Src("Views", "QuotaDetailsView.cs"));
+        Assert.Contains("InlinePrompt.AskAsync(row, \"Sair da conta de faturamento?\"", Src("Views", "OpenAiDashboardView.cs"));
+        Assert.Contains("InlinePrompt.AskAsync(search, \"Renomear\"", Src("Views", Path.Combine("Panels", "RecentFolderFlyout.cs")));
     }
 
     [Fact]
