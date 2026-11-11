@@ -16,6 +16,7 @@ A compilação (data e hora UTC) é o que o atualizador compara. A versão é pa
 ### Corrigido
 - Com o Codex bloqueado pela conta, a cota mostra o motivo e quando volta, e a conversa parada não vira mais "Estado desconhecido".
 - Fechar o componente das IAs no Codex encerra também o Claude Code e os comandos dele.
+- A linha fina na base da barra não pisca mais sobre o Claude, o ChatGPT e o Edge maximizados: aparece sempre que há uma janela maximizada embaixo.
 
 ## [1.4.8] - 2026-11-10 · compilação 20261110135241
 

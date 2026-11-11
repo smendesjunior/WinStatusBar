@@ -16,6 +16,7 @@ The build number (UTC date and time) is what the updater compares; the version i
 ### Fixed
 - When the Codex account is blocked, the quota shows the reason and when it returns, and the stopped conversation no longer turns into "Unknown state".
 - Closing the Codex AI component also ends Claude Code and its commands.
+- The thin line at the bottom of the bar no longer flickers over maximized Claude, ChatGPT and Edge windows: it shows whenever a maximized window is below the bar.
 
 ## [1.4.8] - 2026-11-10 · build 20261110135241
 
