@@ -87,10 +87,17 @@ static byte[]? RunChained(string command, string input)
         psi.Arguments = "/d /s /c \"" + command + "\"";
         using var p = Process.Start(psi)!;
         _ = p.StandardError.ReadToEndAsync();
-        p.StandardInput.Write(input);
-        p.StandardInput.Close();
+        // A saída começa a ser lida antes de a entrada ser escrita, e a escrita vai em segundo plano: uma statusLine
+        // que nunca lê o stdin (ou que escreve muito antes de ler) enchia o pipe e prendia o coletor para sempre,
+        // sem chegar ao limite de 4 s logo abaixo.
         var ms = new MemoryStream();
         var copy = p.StandardOutput.BaseStream.CopyToAsync(ms);
+        var stdin = p.StandardInput;
+        _ = Task.Run(() =>
+        {
+            try { stdin.Write(input); } catch { }
+            try { stdin.Close(); } catch { }
+        });
         if (!p.WaitForExit(4000)) { try { p.Kill(true); } catch { } return null; }
         copy.Wait(1000);
         return p.ExitCode == 0 ? ms.ToArray() : null;

@@ -323,6 +323,132 @@ public class ClaudeSettingsMergerTests
         Assert.True(JsonNode.DeepEquals(new JsonObject { ["theme"] = "dark" }, o));
     }
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int GetShortPathNameW(string longPath, System.Text.StringBuilder shortPath, int size);
+
+    /// <summary>Pasta temporária COM ESPAÇO no nome e um coletor de mentira dentro (o caso do perfil "Nome Sobrenome").</summary>
+    private static string CollectorInFolderWithSpace(out string dir)
+    {
+        dir = Path.Combine(Path.GetTempPath(), "wsb merger " + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        string collector = Path.Combine(dir, ClaudeSettingsMerger.Marker);
+        File.WriteAllText(collector, string.Empty);
+        return collector;
+    }
+
+    [Fact]
+    public void Install_PathWithSpace_KeepsMarkerAndIsIdempotent()
+    {
+        // Vale com nomes 8.3 ligados (pasta curta + nome longo do arquivo) ou desligados (caminho entre aspas).
+        string collector = CollectorInFolderWithSpace(out string dir);
+        try
+        {
+            var o = (JsonObject)JsonNode.Parse(Existing)!;
+            string before = o.ToJsonString();
+            ClaudeSettingsMerger.Install(o, collector);
+            string first = o.ToJsonString();
+            string hook = o["hooks"]!["PreToolUse"]![0]!["hooks"]![0]!["command"]!.GetValue<string>();
+            Assert.Contains(ClaudeSettingsMerger.Marker, hook);
+            Assert.Contains(ClaudeSettingsMerger.Marker, o["statusLine"]!["command"]!.GetValue<string>());
+            Assert.True(ClaudeSettingsMerger.IsInstalled(o));
+            Assert.False(ClaudeSettingsMerger.HasBrokenOriginal(o));
+
+            ClaudeSettingsMerger.Install(o, collector);
+            Assert.Equal(first, o.ToJsonString());
+            Assert.Equal(2, o["hooks"]!["Stop"]!.AsArray().Count); // o do usuário + um só do WinStatusBar
+            Assert.Single(o["hooks"]!["PreToolUse"]!.AsArray());
+
+            ClaudeSettingsMerger.Uninstall(o);
+            Assert.True(JsonNode.DeepEquals(JsonNode.Parse(before), o));
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    /// <summary>Estado deixado pelo defeito: a cada conferência, 14 grupos a mais e a própria statusLine guardada como "original".</summary>
+    private static JsonObject Damaged(string command, int cycles)
+    {
+        var o = (JsonObject)JsonNode.Parse(Existing)!;
+        var status = (JsonObject)o["statusLine"]!.DeepClone();
+        var hooks = (JsonObject)o["hooks"]!;
+        for (int cycle = 0; cycle < cycles; cycle++)
+        {
+            foreach (var ev in ClaudeSettingsMerger.HookEvents)
+            {
+                if (hooks[ev] is not JsonArray arr) { arr = new JsonArray(); hooks[ev] = arr; }
+                arr.Add(new JsonObject { ["hooks"] = new JsonArray(new JsonObject { ["type"] = "command", ["command"] = command, ["async"] = true, ["timeout"] = 10 }) });
+            }
+            string b64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(status.ToJsonString()));
+            status = new JsonObject { ["type"] = "command", ["command"] = $"{command} statusline --orig {b64}", ["padding"] = 0 };
+        }
+        o["statusLine"] = status;
+        return o;
+    }
+
+    [Fact]
+    public void Uninstall_UnwrapsNestedOwnStatusLines()
+    {
+        var o = Damaged("C:/x/WinStatusBar.Collector.exe", cycles: 4);
+        Assert.Equal(5, o["hooks"]!["Stop"]!.AsArray().Count);
+        Assert.True(ClaudeSettingsMerger.HasBrokenOriginal(o)); // o reparo automático da barra reinstala
+        ClaudeSettingsMerger.Uninstall(o);
+        Assert.True(JsonNode.DeepEquals(JsonNode.Parse(Existing), o));
+    }
+
+    [Fact]
+    public void LegacyShortPathCommands_AreRecognisedAndHealed()
+    {
+        string collector = CollectorInFolderWithSpace(out string dir);
+        try
+        {
+            var sb = new System.Text.StringBuilder(1024);
+            int n = GetShortPathNameW(collector, sb, sb.Capacity);
+            string legacy = sb.ToString().Replace('\\', '/');
+            // Sem nomes 8.3 neste volume, as versões antigas nunca gravaram o comando sem o marcador: nada a curar.
+            if (n <= 0 || n >= sb.Capacity || legacy.Contains(' ') || legacy.Contains(ClaudeSettingsMerger.Marker, StringComparison.OrdinalIgnoreCase)) return;
+
+            // Como as versões antigas gravavam: o caminho inteiro em 8.3 (…/WINSTA~1.EXE), sem o marcador.
+            var o = Damaged(legacy, cycles: 3);
+            Assert.DoesNotContain(ClaudeSettingsMerger.Marker, o.ToJsonString(), StringComparison.OrdinalIgnoreCase);
+            Assert.True(ClaudeSettingsMerger.IsInstalled(o));
+            Assert.True(ClaudeSettingsMerger.HasBrokenOriginal(o));
+            ClaudeSettingsMerger.Uninstall(o);
+            Assert.True(JsonNode.DeepEquals(JsonNode.Parse(Existing), o)); // a statusLine verdadeira e só o hook do usuário
+
+            // Reinstalar por cima do arquivo danificado dá o mesmo que instalar num arquivo limpo.
+            var healed = Damaged(legacy, cycles: 3);
+            ClaudeSettingsMerger.Install(healed, collector);
+            var clean = (JsonObject)JsonNode.Parse(Existing)!;
+            ClaudeSettingsMerger.Install(clean, collector);
+            Assert.True(JsonNode.DeepEquals(clean, healed));
+            Assert.Contains(ClaudeSettingsMerger.Marker, healed["statusLine"]!["command"]!.GetValue<string>());
+            Assert.False(ClaudeSettingsMerger.HasBrokenOriginal(healed));
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public void PruneBackups_KeepsNewestFiveAndOnlyTouchesOwnBackups()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "wsb-merger-bak-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            string file = Path.Combine(dir, "settings.json");
+            File.WriteAllText(file, "{}");
+            for (int i = 1; i <= 8; i++) File.WriteAllText(file + $".winstatusbar-backup-2026110{i}-120000", i.ToString());
+            string[] others = ["settings.json.bak", "settings.local.json", "settings.json.backup-20260101-000000", "other.json.winstatusbar-backup-20260101-000000"];
+            foreach (string other in others) File.WriteAllText(Path.Combine(dir, other), "x");
+
+            ClaudeIntegrationInstaller.PruneBackups(file, keep: 5);
+
+            var left = Directory.GetFiles(dir, "settings.json.winstatusbar-backup-*").Select(Path.GetFileName).OrderBy(x => x).ToArray();
+            Assert.Equal(Enumerable.Range(4, 5).Select(i => $"settings.json.winstatusbar-backup-2026110{i}-120000"), left);
+            Assert.True(File.Exists(file));
+            foreach (string other in others) Assert.True(File.Exists(Path.Combine(dir, other)), other);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
     [Fact]
     public void PipeMessage_RoundTrip()
     {

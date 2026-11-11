@@ -76,10 +76,37 @@ public class Store
         string tmp = path + ".tmp";
         using (var fs = File.Create(tmp)) ser.WriteObject(fs, it);
         File.Move(tmp, path, true);
+        ForgetMedia(it); // o item mudou (ex.: as copias de seguranca acabaram de ser gravadas): mede de novo
+    }
+
+    // Tamanho em disco da midia de cada item (imagem + copias de arquivos), por Id. Com limite de espaco ligado,
+    // cada nova copia media todos os arquivos de todos os itens na thread de UI; agora mede so o que mudou.
+    readonly Dictionary<string, long> mediaBytes = new();
+
+    /// <summary>Bytes em disco da imagem e das copias de arquivos do item (sem o texto). Guardado ate o item ser salvo ou apagado.</summary>
+    public long MediaBytes(ClipItem it)
+    {
+        if (it == null) return 0;
+        if (it.Id != null) lock (mediaBytes) if (mediaBytes.TryGetValue(it.Id, out long cached)) return cached;
+        long n = 0;
+        try
+        {
+            if (ImagePath(it) is { } img && File.Exists(img)) n += new FileInfo(img).Length;
+            if (it.Backups != null) n += it.Backups.Where(b => b != null && File.Exists(b)).Sum(b => new FileInfo(b).Length);
+        }
+        catch { return n; } // falha de leitura: nao guarda um valor parcial
+        if (it.Id != null) lock (mediaBytes) mediaBytes[it.Id] = n;
+        return n;
+    }
+
+    void ForgetMedia(ClipItem it)
+    {
+        if (it?.Id != null) lock (mediaBytes) mediaBytes.Remove(it.Id);
     }
 
     public void Delete(ClipItem it)
     {
+        ForgetMedia(it);
         Items.Remove(it);
         TryDel(Path.Combine(ItemsDir, it.Id + ".json"));
         if (it.ImageFile != null) TryDel(Path.Combine(ImagesDir, it.ImageFile));

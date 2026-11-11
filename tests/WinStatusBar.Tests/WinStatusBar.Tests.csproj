@@ -26,6 +26,8 @@
     <Compile Include="../../src/WinStatusBar/Services/FolderShellOperations.cs" Link="FolderShellOperations.cs" />
     <Compile Include="../../src/WinStatusBar/Services/ConversationStore.cs" Link="ConversationStore.cs" />
     <Compile Include="../../src/WinStatusBar/Services/ContextAttachmentPolicy.cs" Link="ContextAttachmentPolicy.cs" />
+    <Compile Include="../../src/WinStatusBar/Services/ContextCache.cs" Link="ContextCache.cs" />
+    <Compile Include="../../src/WinStatusBar/Clip/ClipStorageLimit.cs" Link="ClipStorageLimit.cs" />
     <Compile Include="../../src/WinStatusBar/Services/AdaptiveLogic.cs" Link="AdaptiveLogic.cs" />
     <Compile Include="../../src/WinStatusBar/Services/AppUpdater.cs" Link="AppUpdater.cs" />
     <Compile Include="../../src/WinStatusBar/Services/ExitWatchdog.cs" Link="ExitWatchdog.cs" />

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace WinStatusBar.Core.Settings;
@@ -252,6 +253,9 @@ public sealed class AppSettings
         if (CommandModels.TryGetValue("qira", out var qiraModel) && qiraModel != "hybrid") CommandModels.Remove("qira");
         ApiKind = ApiKind == "anthropic" ? "anthropic" : "openai";
         ApiBaseUrl ??= string.Empty; ApiName ??= string.Empty; ApiDefaultModel ??= string.Empty;
+        ApiCredentialResource ??= "WinStatusBar.CommandApi"; ApiCredentialEndpoint ??= string.Empty;
+        AllowedConnectors ??= new();
+        CommandChatGptVoiceHotkey ??= string.Empty; CommandClaudeVoiceHotkey ??= string.Empty;
         CustomApis = (CustomApis ?? new()).Where(a => a is not null && !string.IsNullOrWhiteSpace(a.Resource)).GroupBy(a => a.Resource).Select(g => g.First()).ToList();
     }
 }
@@ -262,7 +266,12 @@ public partial class AppSettingsContext : JsonSerializerContext;
 
 public sealed class SettingsService
 {
-    public static string DataDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinStatusBar");
+    /// <summary>Só para testes: pasta de dados no lugar de %LOCALAPPDATA%\WinStatusBar (os testes nunca tocam o perfil real).</summary>
+    internal static string? DataDirOverride { get; set; }
+    /// <summary>Só para testes: cópia do OneDrive no lugar da real (pode devolver null = sem OneDrive pessoal).</summary>
+    internal static Func<string?>? CloudSettingsPathOverride { get; set; }
+
+    public static string DataDir => DataDirOverride ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinStatusBar");
     public static string SettingsPath => Path.Combine(DataDir, "settings.json");
     public static string CacheDir => Path.Combine(DataDir, "cache");
     public static string LogPath => Path.Combine(DataDir, "winstatusbar.log");
@@ -272,7 +281,8 @@ public sealed class SettingsService
 
     /// <summary>Cópia das preferências no OneDrive pessoal (nunca no da empresa); null sem OneDrive pessoal.</summary>
     public static string? CloudSettingsPath =>
-        OneDrivePaths.Personal is { } od ? Path.Combine(od, "WinStatusBar", "configuracoes.json") : null;
+        CloudSettingsPathOverride is { } custom ? custom()
+        : OneDrivePaths.Personal is { } od ? Path.Combine(od, "WinStatusBar", "configuracoes.json") : null;
 
     /// <summary>Preferências restauradas do OneDrive nesta abertura (instalação limpa).</summary>
     public bool RestoredFromCloud { get; private set; }
@@ -285,18 +295,166 @@ public sealed class SettingsService
     private DateTime? _pendingUntil;
     public static readonly TimeSpan RestoreWait = TimeSpan.FromMinutes(30);
 
+    /// <summary>
+    /// O que aconteceu na última leitura quando o settings.json existia mas não pôde ser lido (para o log do app);
+    /// null numa leitura normal.
+    /// </summary>
+    public static string? LoadNote { get; private set; }
+
+    /// <summary>Uma gravação por vez: Save é chamado da thread de UI e do pool de threads, com o mesmo arquivo temporário.</summary>
+    private static readonly Lock SaveGate = new();
+    /// <summary>O settings.json em disco é confiável (lido sem erro ou gravado por este processo): pode virar o .bak.</summary>
+    private bool _diskGood;
+    /// <summary>O arquivo estava ilegível e não havia cópia: os padrões em uso não podem apagar a cópia do OneDrive sem guardá-la.</summary>
+    private bool _recoveredWithDefaults;
+    /// <summary>A cópia do OneDrive existe mas não pôde ser lida (baixando, incompleta ou danificada).</summary>
+    private bool _cloudUnreadable;
+
     public AppSettings Load()
+    {
+        LoadNote = null;
+        string path = SettingsPath;
+        if (!File.Exists(path))
+        {
+            try
+            {
+                if (TryRestoreFromCloud()) return Current;
+                _pendingUntil = DateTime.UtcNow + RestoreWait; // aguarda o backup aparecer (TryLateRestore)
+            }
+            catch { Current = new AppSettings(); }
+            Current.Normalize();
+            return Current;
+        }
+
+        string? text = null;
+        AppSettings? loaded = null;
+        string reason = "conteúdo vazio";
+        try
+        {
+            text = ReadAllTextWithRetry(path);
+            loaded = JsonSerializer.Deserialize(text, AppSettingsContext.Default.AppSettings);
+        }
+        catch (Exception ex) { reason = ex.GetType().Name; }
+        if (loaded is null) return Recover(path, text, reason);
+        Current = loaded;
+        _diskGood = true;
+        Current.Normalize();
+        return Current;
+    }
+
+    /// <summary>Outro processo pode estar com o arquivo aberto por um instante (antivírus, sincronização): tenta mais uma vez.</summary>
+    private static string ReadAllTextWithRetry(string path)
+    {
+        try { return File.ReadAllText(path); }
+        catch (IOException) { Thread.Sleep(150); return File.ReadAllText(path); }
+    }
+
+    /// <summary>
+    /// O settings.json existe mas não pôde ser lido (truncado, em uso, valor desconhecido). Antes, isso zerava todas as
+    /// preferências em silêncio e a gravação seguinte levava os padrões para o disco e para o OneDrive. Agora: guarda
+    /// uma cópia do arquivo ruim e tenta, nesta ordem, aproveitar o próprio arquivo (sem a opção inválida), o
+    /// settings.json.bak, a cópia do OneDrive e, só então, os padrões — sem gravar no OneDrive durante a espera.
+    /// </summary>
+    private AppSettings Recover(string path, string? text, string reason)
+    {
+        _diskGood = false; // o arquivo ruim não pode virar o .bak
+        string note = $"settings.json ilegível ({reason})";
+        try
+        {
+            string kept = Path.Combine(DataDir, $"settings.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            File.Copy(path, kept, overwrite: true);
+            note += "; cópia guardada em " + Path.GetFileName(kept);
+            PruneCorruptCopies();
+        }
+        catch { note += "; não foi possível guardar uma cópia dele"; }
+
+        if (text is not null && Salvage(text, out string dropped) is { } salvaged)
+        {
+            Current = salvaged;
+            Current.Normalize();
+            try { Save(salvaged); } catch { }
+            LoadNote = note + "; preferências mantidas, menos: " + dropped;
+            return Current;
+        }
+
+        try
+        {
+            if (JsonSerializer.Deserialize(ReadAllTextWithRetry(path + ".bak"), AppSettingsContext.Default.AppSettings) is { } bak)
+            {
+                Current = bak;
+                Current.Normalize();
+                try { Save(bak); } catch { }
+                LoadNote = note + "; preferências restauradas de settings.json.bak";
+                return Current;
+            }
+        }
+        catch { }
+
+        try
+        {
+            if (TryRestoreFromCloud()) { LoadNote = note + "; preferências restauradas da cópia do OneDrive"; return Current; }
+        }
+        catch { }
+
+        Current = new AppSettings();
+        Current.Normalize();
+        _recoveredWithDefaults = true;
+        _pendingUntil = DateTime.UtcNow + RestoreWait; // a cópia do OneDrive pode estar baixando: TryLateRestore
+        LoadNote = note + "; sem cópia utilizável: padrões aplicados, aguardando a cópia do OneDrive (nada é gravado nela até lá)";
+        return Current;
+    }
+
+    /// <summary>
+    /// JSON bem formado em que uma opção tem valor que esta versão não entende (ex.: nome de enum desconhecido):
+    /// lê sem essa opção, que volta ao padrão, em vez de perder todas as outras.
+    /// </summary>
+    private static AppSettings? Salvage(string text, out string dropped)
+    {
+        dropped = string.Empty;
+        try
+        {
+            if (JsonNode.Parse(text) is not JsonObject obj) return null;
+            var names = new List<string>();
+            for (int i = 0; i < 64; i++)
+            {
+                try
+                {
+                    var settings = obj.Deserialize(AppSettingsContext.Default.AppSettings);
+                    dropped = string.Join(", ", names);
+                    return settings;
+                }
+                catch (JsonException ex)
+                {
+                    if (TopLevelProperty(ex.Path) is not { } name || !obj.Remove(name)) return null;
+                    names.Add(name);
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>"$.Backdrop" → "Backdrop"; "$.CustomApis[0].Kind" → "CustomApis"; outro formato → null.</summary>
+    private static string? TopLevelProperty(string? jsonPath)
+    {
+        if (jsonPath is null || !jsonPath.StartsWith("$.", StringComparison.Ordinal)) return null;
+        int end = jsonPath.IndexOfAny(['.', '['], 2);
+        string name = end < 0 ? jsonPath[2..] : jsonPath[2..end];
+        return name.Length > 0 ? name : null;
+    }
+
+    /// <summary>Fica só com as 5 cópias mais novas de arquivos ilegíveis (settings.corrupt-*.json).</summary>
+    private static void PruneCorruptCopies()
     {
         try
         {
-            if (File.Exists(SettingsPath))
-                Current = JsonSerializer.Deserialize(File.ReadAllText(SettingsPath), AppSettingsContext.Default.AppSettings) ?? new AppSettings();
-            else if (TryRestoreFromCloud()) return Current;
-            else _pendingUntil = DateTime.UtcNow + RestoreWait; // aguarda o backup aparecer (TryLateRestore)
+            foreach (string old in Directory.EnumerateFiles(DataDir, "settings.corrupt-*.json", SearchOption.TopDirectoryOnly)
+                         .OrderByDescending(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase).Skip(5).ToList())
+            {
+                try { File.Delete(old); } catch { }
+            }
         }
-        catch { Current = new AppSettings(); }
-        Current.Normalize();
-        return Current;
+        catch { }
     }
 
     /// <summary>
@@ -310,10 +468,15 @@ public sealed class SettingsService
         if (!PendingRestore)
         {
             _pendingUntil = null;
-            try { Save(); } catch { } // primeira cópia no OneDrive, agora que não há backup a preservar
+            // Primeira cópia no OneDrive. Se lá existe um arquivo que não pôde ser lido, ou se os padrões em uso vieram
+            // de um settings.json ilegível, SaveCloudCopy guarda antes uma cópia com data do que está lá.
+            try { Save(); } catch { }
         }
         return false;
     }
+
+    /// <summary>Só para testes: encerra a espera de restauração como se o prazo tivesse passado.</summary>
+    internal void ExpireRestoreWait() { if (_pendingUntil is not null) _pendingUntil = DateTime.UtcNow.AddSeconds(-1); }
 
     private bool TryRestoreFromCloud()
     {
@@ -321,13 +484,18 @@ public sealed class SettingsService
         // Em outro PC/conta, o OneDrive é o da pessoa: sem cópia, começa com os padrões.
         if (CloudSettingsPath is not { } cloud || !File.Exists(cloud)) return false;
         AppSettings? restored;
-        try { restored = JsonSerializer.Deserialize(File.ReadAllText(cloud), AppSettingsContext.Default.AppSettings); }
-        catch { return false; } // arquivo ainda baixando/incompleto: tenta de novo depois
+        try
+        {
+            restored = JsonSerializer.Deserialize(File.ReadAllText(cloud), AppSettingsContext.Default.AppSettings);
+            _cloudUnreadable = restored is null;
+        }
+        catch { _cloudUnreadable = true; return false; } // arquivo ainda baixando/incompleto: tenta de novo depois
         if (restored is not { SyncSettings: true }) return false;
         restored.NetworkInterface = null; // placa de rede e GPU são deste hardware: voltam ao automático
         restored.GpuAdapter = null;
         RestoredFromCloud = true;
         _pendingUntil = null;
+        _recoveredWithDefaults = false; // o que vai para o OneDrive agora é a própria cópia de lá
         Save(restored);
         return true;
     }
@@ -336,24 +504,62 @@ public sealed class SettingsService
 
     public void Save(AppSettings settings)
     {
-        settings.Normalize();
-        Directory.CreateDirectory(DataDir);
-        string tmp = SettingsPath + ".tmp";
-        string json = JsonSerializer.Serialize(settings, AppSettingsContext.Default.AppSettings);
-        File.WriteAllText(tmp, json);
-        File.Move(tmp, SettingsPath, overwrite: true);
-        Current = settings;
-        if (settings.SyncSettings && !PendingRestore) SaveCloudCopy(json);
+        lock (SaveGate)
+        {
+            settings.Normalize();
+            Directory.CreateDirectory(DataDir);
+            string path = SettingsPath;
+            string tmp = path + ".tmp";
+            string json = JsonSerializer.Serialize(settings, AppSettingsContext.Default.AppSettings);
+            // Mesmo conteúdo de File.WriteAllText (UTF-8 sem BOM), mas descarregado no disco antes da troca:
+            // uma queda de energia não deixa um settings.json vazio ou pela metade.
+            using (var stream = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                byte[] bytes = new System.Text.UTF8Encoding(false).GetBytes(json);
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(flushToDisk: true);
+            }
+            // Cópia (nunca renomear: outros processos leem o settings.json) da última versão boa, para Load se recuperar.
+            if (_diskGood)
+            {
+                try { if (File.Exists(path)) File.Copy(path, path + ".bak", overwrite: true); } catch { }
+            }
+            MoveWithRetry(tmp, path);
+            _diskGood = true;
+            Current = settings;
+            if (settings.SyncSettings && !PendingRestore) SaveCloudCopy(json);
+        }
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Troca atômica; se o destino estiver aberto por outro processo por um instante, tenta mais duas vezes.</summary>
+    private static void MoveWithRetry(string tmp, string path)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try { File.Move(tmp, path, overwrite: true); return; }
+            catch (Exception ex) when (attempt < 3 && ex is IOException or UnauthorizedAccessException) { Thread.Sleep(50); }
+        }
+    }
+
     /// <summary>Cópia no OneDrive (sem segredos: a chave da API fica no Cofre de Credenciais do Windows).</summary>
-    private static void SaveCloudCopy(string json)
+    private void SaveCloudCopy(string json)
     {
         try
         {
             if (CloudSettingsPath is not { } cloud) return;
             Directory.CreateDirectory(Path.GetDirectoryName(cloud)!);
+            // O que está no OneDrive pode ser a única cópia boa das preferências (settings.json local ilegível e padrões
+            // em uso) ou um arquivo que não deu para ler: nunca gravar por cima sem antes guardar uma cópia com data.
+            // Se a cópia falhar, a exceção sai daqui e o arquivo do OneDrive fica como está.
+            if ((_recoveredWithDefaults || _cloudUnreadable) && File.Exists(cloud))
+            {
+                string kept = Path.Combine(Path.GetDirectoryName(cloud)!,
+                    $"{Path.GetFileNameWithoutExtension(cloud)}.copia-{DateTime.Now:yyyyMMdd-HHmmss}{Path.GetExtension(cloud)}");
+                File.Copy(cloud, kept, overwrite: true);
+            }
+            _recoveredWithDefaults = false;
+            _cloudUnreadable = false;
             string tmp = cloud + ".tmp";
             File.WriteAllText(tmp, json);
             File.Move(tmp, cloud, overwrite: true);

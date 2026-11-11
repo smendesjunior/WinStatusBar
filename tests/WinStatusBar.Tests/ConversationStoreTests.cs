@@ -68,4 +68,37 @@ public class ConversationStoreTests
             if (Directory.Exists(dir)) Directory.Delete(dir, true);
         }
     }
+
+    [Fact]
+    public void ServiceFolderFileIsFoundWithoutLosingOrderingOrTheMoveWhenTheTargetChanges()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "WinStatusBar.Tests", Guid.NewGuid().ToString());
+        ConversationStore.CustomFolder = dir;
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            // No lugar esperado (pasta do serviço): o salvamento atrasado continua sem poder passar por cima.
+            ConversationStore.Save(new() { Id = "c", Title = "latest", Target = "gemini", Updated = now });
+            ConversationStore.Save(new() { Id = "c", Title = "old", Target = "gemini", Updated = now.AddMinutes(-1) });
+            Assert.Equal("latest", Assert.Single(ConversationStore.List()).Title);
+
+            // A conversa trocou de IA: o arquivo não está no lugar esperado, a busca o encontra e ele é movido.
+            ConversationStore.Save(new() { Id = "c", Title = "moved", Target = "codex", Updated = now.AddMinutes(1) });
+            Assert.True(File.Exists(Path.Combine(dir, "Codex", "c.json")));
+            Assert.False(File.Exists(Path.Combine(dir, "Gemini", "c.json")));
+            Assert.Equal("moved", Assert.Single(ConversationStore.List()).Title);
+
+            // Arquivo antigo na raiz e salvamento novo: fica só o da pasta do serviço.
+            File.WriteAllText(Path.Combine(dir, "d.json"), System.Text.Json.JsonSerializer.Serialize(new SavedConversation { Id = "d", Title = "root", Target = "local", Updated = now }));
+            ConversationStore.Save(new() { Id = "d", Title = "newer", Target = "local", Updated = now.AddMinutes(1) });
+            Assert.False(File.Exists(Path.Combine(dir, "d.json")));
+            Assert.True(File.Exists(Path.Combine(dir, "IA local", "d.json")));
+            Assert.Equal(2, ConversationStore.List().Count);
+        }
+        finally
+        {
+            ConversationStore.CustomFolder = null;
+            if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        }
+    }
 }
