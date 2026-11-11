@@ -4119,8 +4119,8 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S79FBA5F45333A611" xml:space="preserve">
     <value>US$ {0}（今後数分で数セント変わることがあります）</value>
   </data>
-  <data name="SA82ABA14D8A122AD" xml:space="preserve">
-    <value>US$ 不明（OpenAI ダッシュボードが報告しませんでした）</value>
+  <data name="S599AB138A589B515" xml:space="preserve">
+    <value>US$：OpenAI のダッシュボードはまだ費用を表示していません（終了後 3 時間までバーが再確認します）</value>
   </data>
   <data name="S78C79480BDD6D7C5" xml:space="preserve">
     <value>キュー: {1} 件中 {0}</value>

@@ -4119,8 +4119,8 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S79FBA5F45333A611" xml:space="preserve">
     <value>US$ {0} (puede cambiar unos centavos en los próximos minutos)</value>
   </data>
-  <data name="SA82ABA14D8A122AD" xml:space="preserve">
-    <value>US$ n/d (el panel de OpenAI no lo informó)</value>
+  <data name="S599AB138A589B515" xml:space="preserve">
+    <value>US$: el panel de OpenAI aún no informó el costo (la barra vuelve a comprobarlo hasta 3 h después del final)</value>
   </data>
   <data name="S78C79480BDD6D7C5" xml:space="preserve">
     <value>Cola: {0} de {1}</value>

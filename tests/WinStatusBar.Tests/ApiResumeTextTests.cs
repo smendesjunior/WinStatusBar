@@ -60,7 +60,7 @@ public class ApiResumeTextTests
             ApiResumeText.Spend(0.21m, T1031, T1031.AddMinutes(11)));
         Assert.Equal("Gasto: aguardando o painel da OpenAI (desde 10:31)", ApiResumeText.Spend(null, T1031, null));
         Assert.Equal("US$ 0,62 (pode mudar alguns centavos nos próximos minutos)", ApiResumeText.FinalSpend(0.62m));
-        Assert.Equal("US$ n/d (o painel da OpenAI não informou)", ApiResumeText.FinalSpend(null));
+        Assert.Equal("US$: o painel da OpenAI ainda não informou o custo (a barra confere de novo até 3 h depois do fim)", ApiResumeText.FinalSpend(null));
         Assert.Equal("Fila: 1 de 2", ApiResumeText.Queue(1, 2));
         Assert.Equal("gpt-5.6-sol · baixo (o mesmo do turno que parou)", ApiResumeText.ConfirmModel("gpt-5.6-sol", "low"));
         Assert.Equal("Chave: arquivo protegido do Windows (openai-key.dpapi)", ApiResumeText.KeySource(OpenAiApiKey.FileSourceName));

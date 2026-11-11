@@ -42,16 +42,23 @@ public static class DashboardMetrics
 
     /// <summary>Gasto desde <paramref name="start"/>: a queda do saldo (quando não houve recarga); senão a diferença da soma
     /// dos custos diários a partir do dia (UTC) do início, nunca negativa; sem painel, null. Nunca estima preço.</summary>
+    /// <summary>
+    /// Gasto desde o início: a queda do saldo; com o saldo parado (o painel o atualiza com atraso) ou recarregado, a diferença
+    /// do custo por dia. Requisições novas ainda com custo 0 querem dizer que o painel não informou o custo: null, não US$ 0.
+    /// </summary>
     public static decimal? SpendSince(DashboardSnapshot? baseline, DashboardSnapshot? current, DateTimeOffset start)
     {
         if (baseline is null || current is null) return null;
-        if (baseline.Balance is { } before && current.Balance is { } now && now <= before) return before - now;
+        if (baseline.Balance is { } before && current.Balance is { } now && now < before) return before - now;
         if (baseline.Days.Count > 0 && current.Days.Count > 0)
         {
             var from = start.UtcDateTime.Date;
-            decimal Sum(DashboardSnapshot s) => s.Days.Where(d => d.Date.UtcDateTime.Date >= from).Sum(d => d.Cost);
-            return Math.Max(0m, Sum(current) - Sum(baseline));
+            decimal Cost(DashboardSnapshot s) => s.Days.Where(d => d.Date.UtcDateTime.Date >= from).Sum(d => d.Cost);
+            long Requests(DashboardSnapshot s) => s.Days.Where(d => d.Date.UtcDateTime.Date >= from).Sum(d => d.Requests);
+            decimal cost = Math.Max(0m, Cost(current) - Cost(baseline));
+            return cost == 0m && Requests(current) > Requests(baseline) ? null : cost;
         }
+        if (baseline.Balance is { } b && current.Balance is { } c && c == b) return 0m;
         return null;
     }
 }

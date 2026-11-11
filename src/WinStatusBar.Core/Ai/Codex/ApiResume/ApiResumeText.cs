@@ -71,7 +71,7 @@ public static class ApiResumeText
 
     public static string FinalSpend(decimal? spend) => spend is { } s
         ? LocalizedText.F("US$ {0} (pode mudar alguns centavos nos próximos minutos)", Money(s))
-        : LocalizedText.T("US$ n/d (o painel da OpenAI não informou)");
+        : LocalizedText.T("US$: o painel da OpenAI ainda não informou o custo (a barra confere de novo até 3 h depois do fim)");
 
     public static string Queue(int position, int total) => LocalizedText.F("Fila: {0} de {1}", position, total);
 

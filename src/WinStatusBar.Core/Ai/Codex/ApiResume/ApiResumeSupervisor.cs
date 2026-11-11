@@ -16,6 +16,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
 {
     private const string Prefix = "Continuar pela API: ";
     private static readonly TimeSpan SpendEvery = TimeSpan.FromMinutes(3);
+    private static readonly TimeSpan[] RefreshAfterEnd = [TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(60), TimeSpan.FromMinutes(180)];
     private static readonly TimeSpan SecondInterrupt = TimeSpan.FromSeconds(15), OfferForce = TimeSpan.FromSeconds(30);
 
     public event Action? Changed;
@@ -488,7 +489,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
             job.Tokens = host.ExecTurnTokens(job.ThreadId, started) ?? job.Tokens;
             if (now - (job.SpendAt ?? started) >= SpendEvery)
             {
-                job.Spend = DashboardMetrics.SpendSince(job.Baseline, host.Dashboard, started) ?? job.Spend;
+                job.Spend = SpendOf(job, started);
                 job.SpendAt = now;
             }
         }
@@ -603,7 +604,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         if (job.StartedAt is { } s)
         {
             job.Tokens = finalUsage ?? host.ExecTurnTokens(job.ThreadId, s) ?? job.Tokens;
-            job.Spend = DashboardMetrics.SpendSince(job.Baseline, host.Dashboard, s) ?? job.Spend;
+            job.Spend = SpendOf(job, s);
             job.SpendAt = now;
         }
         _waits.Remove(job.Id);
@@ -623,17 +624,21 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
     private static string? LastLine(string text) =>
         text.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0);
 
-    /// <summary>Atualiza o painel 5 e 15 minutos depois do fim (o gasto aparece com atraso).</summary>
+    /// <summary>Atualiza o painel 5, 15, 60 e 180 minutos depois do fim: o custo aparece com atraso (às vezes de horas).</summary>
     private void RefreshStep(ApiResumeJob job, DateTimeOffset now)
     {
         if (job.EndedAt is not { } ended || job.StartedAt is null) return;
-        if (job.RefreshesDone == 0 && now >= ended.AddMinutes(5) || job.RefreshesDone == 1 && now >= ended.AddMinutes(15))
+        if (job.RefreshesDone < RefreshAfterEnd.Length && now >= ended + RefreshAfterEnd[job.RefreshesDone])
         {
             job.RefreshesDone++;
             host.RequestDashboardRefresh();
         }
-        if (job.RefreshesDone > 0 && DashboardMetrics.SpendSince(job.Baseline, host.Dashboard, job.StartedAt.Value) is { } spend) job.Spend = spend;
+        if (job.RefreshesDone > 0) job.Spend = SpendOf(job, job.StartedAt.Value);
     }
+
+    /// <summary>Com o painel lido, vale o que ele diz, inclusive "custo ainda não informado" (null); sem painel, fica o último valor.</summary>
+    private decimal? SpendOf(ApiResumeJob job, DateTimeOffset started) =>
+        host.Dashboard is null ? job.Spend : DashboardMetrics.SpendSince(job.Baseline, host.Dashboard, started);
 
     private void Save()
     {

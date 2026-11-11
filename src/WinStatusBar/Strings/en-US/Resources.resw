@@ -4119,8 +4119,8 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S79FBA5F45333A611" xml:space="preserve">
     <value>US$ {0} (may change by a few cents in the next minutes)</value>
   </data>
-  <data name="SA82ABA14D8A122AD" xml:space="preserve">
-    <value>US$ n/a (the OpenAI dashboard did not report it)</value>
+  <data name="S599AB138A589B515" xml:space="preserve">
+    <value>US$: the OpenAI dashboard has not reported the cost yet (the bar checks again for up to 3 h after the end)</value>
   </data>
   <data name="S78C79480BDD6D7C5" xml:space="preserve">
     <value>Queue: {0} of {1}</value>

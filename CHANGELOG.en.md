@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.5.1] - 2026-11-10 · build BUILD
+
+### Fixed
+- Codex › Continue via the API: the final spend no longer shows US$ 0.00 when the OpenAI dashboard has not reported the cost yet. The dashboard shows the requests before the cost and does not update the balance right away; the card now says the cost has not been reported yet, uses the day's cost when the balance has not moved and checks again 5, 15, 60 and 180 minutes after the end.
+
 ## [1.5.0] - 2026-11-10 · build 20261111005816
 
 ### Added

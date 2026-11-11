@@ -381,6 +381,27 @@ public class ApiResumeSupervisorTests
         Assert.Equal(0.21m, t.Job().Spend);
     }
 
+    /// <summary>Rodada de 10/11/2026: ao vivo o gasto era 0; no fim o painel já tinha as requisições, mas ainda sem custo.
+    /// O cartão não pode ficar em US$ 0,00: fica "não informado" até o painel trazer o custo.</summary>
+    [Fact]
+    public async Task FinalSpendStaysUnknownUntilTheDashboardHasTheCost()
+    {
+        using var t = new Supervisor();
+        t.Host.Dashboard = new DashboardSnapshot([new ApiUsageDay(new DateTimeOffset(t.Host.Now.UtcDateTime.Date, TimeSpan.Zero), 0, 0, 0m, 17)], 71.87m, null, t.Host.Now);
+        t.Sup.Enqueue([Stop()], false);
+        await t.Tick();
+        await t.Tick(TimeSpan.FromMinutes(3));
+        Assert.Equal(0m, t.Job().Spend);
+        t.Host.Dashboard = new DashboardSnapshot([new ApiUsageDay(new DateTimeOffset(t.Host.Now.UtcDateTime.Date, TimeSpan.Zero), 0, 0, 0m, 20)], 71.87m, null, t.Host.Now);
+        t.Launcher.Emit("""{"type":"turn.completed","usage":{"input_tokens":1,"cached_input_tokens":0,"output_tokens":1}}""");
+        t.Launcher.Exit();
+        await t.Tick(S1);
+        Assert.Null(t.Job().Spend);
+        t.Host.Dashboard = new DashboardSnapshot([new ApiUsageDay(new DateTimeOffset(t.Host.Now.UtcDateTime.Date, TimeSpan.Zero), 0, 0, 0.40m, 20)], 71.87m, null, t.Host.Now);
+        await t.Tick(TimeSpan.FromMinutes(60));
+        Assert.Equal(0.40m, t.Job().Spend);
+    }
+
     [Fact]
     public async Task EventsAndTokensFollowTheRun()
     {
@@ -483,7 +504,7 @@ public class ApiResumeSupervisorTests
     }
 
     [Fact]
-    public async Task DashboardRefreshedAtFiveAndFifteenMinutes()
+    public async Task DashboardRefreshedAtFiveFifteenSixtyAndHundredEightyMinutes()
     {
         using var t = await Running();
         t.Launcher.Emit("""{"type":"turn.completed","usage":{"input_tokens":1,"cached_input_tokens":0,"output_tokens":1}}""");
@@ -495,7 +516,11 @@ public class ApiResumeSupervisorTests
         await At(TimeSpan.FromMinutes(5)); Assert.Equal(1, t.Host.Refreshes);
         await At(TimeSpan.FromMinutes(14)); Assert.Equal(1, t.Host.Refreshes);
         await At(TimeSpan.FromMinutes(15)); Assert.Equal(2, t.Host.Refreshes);
-        await At(TimeSpan.FromMinutes(60)); Assert.Equal(2, t.Host.Refreshes);
+        await At(TimeSpan.FromMinutes(59)); Assert.Equal(2, t.Host.Refreshes);
+        await At(TimeSpan.FromMinutes(60)); Assert.Equal(3, t.Host.Refreshes);
+        await At(TimeSpan.FromMinutes(179)); Assert.Equal(3, t.Host.Refreshes);
+        await At(TimeSpan.FromMinutes(180)); Assert.Equal(4, t.Host.Refreshes);
+        await At(TimeSpan.FromMinutes(600)); Assert.Equal(4, t.Host.Refreshes);
     }
 
     [Fact]
