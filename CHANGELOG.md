@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.8.0] - 2026-11-11 · compilação BUILD
+## [1.8.0] - 2026-11-11 · compilação 20261111152910
 
 ### Adicionado
 - Memória das IAs sob demanda: escolher uma IA no chat não abre mais nada. A página oculta do Gemini e do Copilot e o Lenovo Qira só abrem quando você envia a pergunta, fecham pouco depois da resposta e, ao trocar de IA, os da anterior fecham na hora (o modelo da IA local também é liberado na troca).

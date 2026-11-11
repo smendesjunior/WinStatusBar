@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.8.0] - 2026-11-11 · build BUILD
+## [1.8.0] - 2026-11-11 · build 20261111152910
 
 ### Added
 - On-demand AI memory: picking an AI in the chat no longer opens anything. The hidden Gemini and Copilot page and Lenovo Qira open only when you send a question, close shortly after the answer and, when you switch AIs, the previous one's resources close right away (the local AI model is also unloaded on a switch).
