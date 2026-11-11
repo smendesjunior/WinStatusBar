@@ -18,6 +18,7 @@ tools/readme/raw/
 tools/readme/*.txt
 tools/github/nomes-internos.txt
 .superpowers/
+.claude/
 
 # Entregas e material local (não vão para o repositório público)
 Instalador/

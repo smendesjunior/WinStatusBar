@@ -130,66 +130,105 @@ internal static class Program
         // Instalação nova (nenhuma barra antes neste usuário): a ligação com o Codex não é feita sozinha (decisão de 09/11/2026).
         bool hadInstallBefore = File.Exists(AppExe);
         step?.Invoke("Copiando os arquivos…");
-        try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); StopRunningApp(); }); _filesReplaced = true; }
+        // Só reabre a barra numa falha se ela chegou a ser fechada: com o pacote inválido a barra continua aberta, e uma
+        // segunda instância faria a que está aberta mostrar a janela de Configurações no meio de uma atualização silenciosa.
+        bool stopped = false;
+        try { InstallationFiles.Replace(payload, InstallDir, () => { step?.Invoke("Fechando a barra…"); stopped = true; StopRunningApp(); }); _filesReplaced = true; }
         catch
         {
             // A failed update must not leave the previous, preserved installation closed.
-            if (File.Exists(AppExe))
-                try { Process.Start(new ProcessStartInfo(AppExe) { UseShellExecute = true, WorkingDirectory = InstallDir }); } catch { }
+            if (stopped && File.Exists(AppExe))
+                try { StartApp(); } catch { }
             throw;
         }
-        File.Copy(Environment.ProcessPath!, Path.Combine(InstallDir, "Uninstall.exe"), true);
-        Log.AppendLine($"Arquivos: {InstallDir}");
+
+        // A ligação com o Codex fica gravada como desligada (instalação nova) antes de qualquer abertura da barra,
+        // inclusive a de emergência abaixo.
+        bool codexPrepared = false;
+        void PrepareCodex()
+        {
+            if (codexPrepared) return;
+            codexPrepared = true;
+            try
+            {
+                if (WinStatusBar.Core.Ai.Codex.CodexIntegration.PrepareForInstall(WinStatusBar.Core.Ai.Codex.CodexIntegration.StateFile, hadInstallBefore))
+                    Log.AppendLine("IAs no Codex: instalação nova, ligação automática desativada (ligue em Configurações › Modelos).");
+            }
+            catch (Exception ex) { Log.AppendLine("IAs no Codex: estado da ligação não gravado (" + ex.Message + ")"); }
+        }
+
+        bool started = false;
         try
         {
-            if (WinStatusBar.Core.Ai.Codex.CodexIntegration.PrepareForInstall(WinStatusBar.Core.Ai.Codex.CodexIntegration.StateFile, hadInstallBefore))
-                Log.AppendLine("IAs no Codex: instalação nova, ligação automática desativada (ligue em Configurações › Modelos).");
+            File.Copy(Environment.ProcessPath!, Path.Combine(InstallDir, "Uninstall.exe"), true);
+            Log.AppendLine($"Arquivos: {InstallDir}");
+            PrepareCodex();
+
+            step?.Invoke("Criando o atalho no menu Iniciar…");
+            CreateShortcut(ShortcutPath, AppExe, InstallDir, "Barra de status e monitoramento do Windows 11");
+            Log.AppendLine("Atalho no menu Iniciar criado.");
+
+            step?.Invoke("Registrando em Aplicativos instalados…");
+            using (var key = Registry.CurrentUser.CreateSubKey(UninstallKey))
+            {
+                key.SetValue("DisplayName", AppName);
+                key.SetValue("DisplayVersion", typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
+                // Editor e página do projeto: o winget relaciona a instalação ao pacote WinStatusBar.WinStatusBar por estes dados.
+                key.SetValue("Publisher", "Sidney Junior");
+                key.SetValue("URLInfoAbout", "https://github.com/smendesjunior/WinStatusBar");
+                key.SetValue("DisplayIcon", AppExe + ",0");
+                key.SetValue("InstallLocation", InstallDir);
+                key.SetValue("UninstallString", $"\"{Path.Combine(InstallDir, "Uninstall.exe")}\" /uninstall");
+                key.SetValue("QuietUninstallString", $"\"{Path.Combine(InstallDir, "Uninstall.exe")}\" /uninstall /quiet");
+                key.SetValue("NoModify", 1, RegistryValueKind.DWord);
+                key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
+                key.SetValue("EstimatedSize", (int)(DirSize(InstallDir) / 1024), RegistryValueKind.DWord);
+                key.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd"));
+            }
+            Log.AppendLine("Registrado em Aplicativos instalados.");
+
+            // Toda instalação/atualização migra para a tarefa de logon (sem o atraso do Run; sem administrador).
+            if (ReadStartWithWindows()) { StartupService.Set(true, AppExe); Log.AppendLine("Inicialização automática ativada (" + StartupService.LastMethod + ")."); }
+
+            // Antes de abrir a barra: ela também grava as configurações do Claude ao iniciar.
+            step?.Invoke("Ligando ao Claude Code…");
+            try
+            {
+                if (!updateOnly && (Directory.Exists(ClaudeIntegrationInstaller.ClaudeConfigDir()) || File.Exists(ClaudeIntegrationInstaller.SettingsFile)))
+                    Log.AppendLine("Claude Code: " + ClaudeIntegrationInstaller.Install(CollectorExe));
+                else Log.AppendLine("Claude Code não encontrado: integração não instalada.");
+            }
+            catch (Exception ex) { Log.AppendLine("Claude Code: integração não aplicada (" + ex.Message + ")"); }
+
+            // No assistente (launch falso), a barra abre ao clicar em Concluir (se a caixa estiver marcada).
+            if (launch)
+            {
+                StartApp();
+                started = true;
+                Log.AppendLine("WinStatusBar iniciado.");
+            }
         }
-        catch (Exception ex) { Log.AppendLine("IAs no Codex: estado da ligação não gravado (" + ex.Message + ")"); }
-
-        step?.Invoke("Criando o atalho no menu Iniciar…");
-        CreateShortcut(ShortcutPath, AppExe, InstallDir, "Barra de status e monitoramento do Windows 11");
-        Log.AppendLine("Atalho no menu Iniciar criado.");
-
-        step?.Invoke("Registrando em Aplicativos instalados…");
-        using (var key = Registry.CurrentUser.CreateSubKey(UninstallKey))
+        catch
         {
-            key.SetValue("DisplayName", AppName);
-            key.SetValue("DisplayVersion", typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
-            // Editor e página do projeto: o winget relaciona a instalação ao pacote WinStatusBar.WinStatusBar por estes dados.
-            key.SetValue("Publisher", "Sidney Junior");
-            key.SetValue("URLInfoAbout", "https://github.com/smendesjunior/WinStatusBar");
-            key.SetValue("DisplayIcon", AppExe + ",0");
-            key.SetValue("InstallLocation", InstallDir);
-            key.SetValue("UninstallString", $"\"{Path.Combine(InstallDir, "Uninstall.exe")}\" /uninstall");
-            key.SetValue("QuietUninstallString", $"\"{Path.Combine(InstallDir, "Uninstall.exe")}\" /uninstall /quiet");
-            key.SetValue("NoModify", 1, RegistryValueKind.DWord);
-            key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
-            key.SetValue("EstimatedSize", (int)(DirSize(InstallDir) / 1024), RegistryValueKind.DWord);
-            key.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd"));
+            // Os arquivos já foram trocados e a barra está fechada: uma falha nas etapas finais (desinstalador, atalho,
+            // registro, inicialização automática) não pode deixar a atualização silenciosa sem a barra. O erro segue (código 2).
+            if (launch && !started && File.Exists(AppExe))
+            {
+                PrepareCodex();
+                try { StartApp(); Log.AppendLine("WinStatusBar iniciado, apesar da falha nas etapas finais da instalação."); } catch { }
+            }
+            throw;
         }
-        Log.AppendLine("Registrado em Aplicativos instalados.");
 
-        // Toda instalação/atualização migra para a tarefa de logon (sem o atraso do Run; sem administrador).
-        if (ReadStartWithWindows()) { StartupService.Set(true, AppExe); Log.AppendLine("Inicialização automática ativada (" + StartupService.LastMethod + ")."); }
         // Dependências em toda instalação e atualização (decisão de 07/11/2026: os PCs da rede recebem pelo fluxo
         // automático). Só o WebView2 oficial da Microsoft, por usuário, sem administrador; presente = só consulta ao registro.
+        // Depois de abrir a barra: sem o componente, o download e a instalação dele podem levar vários minutos.
         step?.Invoke("Conferindo o Microsoft Edge WebView2…");
         EnsureWebView2();
-
-        step?.Invoke("Ligando ao Claude Code…");
-        try
-        {
-            if (!updateOnly && (Directory.Exists(ClaudeIntegrationInstaller.ClaudeConfigDir()) || File.Exists(ClaudeIntegrationInstaller.SettingsFile)))
-                Log.AppendLine("Claude Code: " + ClaudeIntegrationInstaller.Install(CollectorExe));
-            else Log.AppendLine("Claude Code não encontrado: integração não instalada.");
-        }
-        catch (Exception ex) { Log.AppendLine("Claude Code: integração não aplicada (" + ex.Message + ")"); }
-
-        if (!launch) return; // no assistente, a barra abre ao clicar em Concluir (se a caixa estiver marcada)
-        Process.Start(new ProcessStartInfo(AppExe) { UseShellExecute = true, WorkingDirectory = InstallDir });
-        Log.AppendLine("WinStatusBar iniciado.");
     }
+
+    private static void StartApp() =>
+        Process.Start(new ProcessStartInfo(AppExe) { UseShellExecute = true, WorkingDirectory = InstallDir })?.Dispose();
 
     // ------------------------------------------------------------------ dependências
     private const string WebView2Client = @"Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}";
@@ -239,6 +278,18 @@ internal static class Program
 
     private static void Uninstall(bool keepData)
     {
+        // Primeiro, antes de mudar qualquer coisa: a autorização permanente de sensores só sai com administrador (UAC).
+        // Se a pessoa recusar, a desinstalação para aqui com tudo como estava (barra aberta, Codex ligado).
+        if (SensorPermissionTask.IsEnabled())
+        {
+            var permission = new ProcessStartInfo(Path.Combine(InstallDir, "Sensors", SensorPermissionTask.ExecutableName))
+                { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden };
+            permission.ArgumentList.Add("--disable");
+            using var process = Process.Start(permission);
+            process?.WaitForExit();
+            if (process is null || process.ExitCode != 0 || SensorPermissionTask.IsEnabled())
+                throw new InvalidOperationException("Não foi possível remover a autorização permanente de sensores. A desinstalação foi interrompida.");
+        }
         // IAs da barra no Codex ligadas: o Codex volta à configuração de antes (senão ficaria apontando para o
         // encaminhador, que sai junto com a barra).
         string codexIas = Path.Combine(InstallDir, "Automation", WinStatusBar.Core.Ai.Codex.CodexIntegration.ExeName);
@@ -253,16 +304,6 @@ internal static class Program
             catch (Exception ex) { Log.AppendLine("Codex: " + ex.Message); }
         }
         StopRunningApp();
-        if (SensorPermissionTask.IsEnabled())
-        {
-            var permission = new ProcessStartInfo(Path.Combine(InstallDir, "Sensors", SensorPermissionTask.ExecutableName))
-                { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden };
-            permission.ArgumentList.Add("--disable");
-            using var process = Process.Start(permission);
-            process?.WaitForExit();
-            if (process is null || process.ExitCode != 0 || SensorPermissionTask.IsEnabled())
-                throw new InvalidOperationException("Não foi possível remover a autorização permanente de sensores. A desinstalação foi interrompida.");
-        }
         Log.AppendLine("Barra encerrada (registro da AppBar removido).");
         try { Log.AppendLine("Claude Code: " + ClaudeIntegrationInstaller.Uninstall()); }
         catch (Exception ex) { Log.AppendLine("Claude Code: " + ex.Message); }
@@ -286,12 +327,41 @@ internal static class Program
         string sid = WindowsIdentity.GetCurrent().User?.Value ?? Environment.UserName;
         if (EventWaitHandle.TryOpenExisting("WinStatusBar.Exit." + sid, out var ev)) { ev.Set(); ev.Dispose(); }
         var deadline = DateTime.UtcNow.AddSeconds(8);
-        while (DateTime.UtcNow < deadline && Process.GetProcessesByName("WinStatusBar").Length > 0) Thread.Sleep(200);
-        foreach (var p in Process.GetProcessesByName("WinStatusBar"))
+        while (DateTime.UtcNow < deadline && InstalledAppRunning()) Thread.Sleep(200);
+        foreach (var p in InstalledAppProcesses())
         {
             try { p.Kill(); p.WaitForExit(3000); Log.AppendLine("Processo encerrado à força."); } catch { }
+            finally { p.Dispose(); }
         }
         StopCodexComponent();
+    }
+
+    private static bool InstalledAppRunning()
+    {
+        var running = InstalledAppProcesses();
+        foreach (var p in running) p.Dispose();
+        return running.Count > 0;
+    }
+
+    /// <summary>
+    /// Processos da barra instalada: nesta sessão e com o executável dentro da pasta de instalação. Um WinStatusBar.exe
+    /// de outra pasta (compilação de desenvolvimento) ou de outra sessão não é esperado nem encerrado; executável que
+    /// não pode ser lido não é tratado como nosso. Quem chama libera os processos devolvidos.
+    /// </summary>
+    private static List<Process> InstalledAppProcesses()
+    {
+        var own = new List<Process>();
+        int session;
+        using (var self = Process.GetCurrentProcess()) session = self.SessionId;
+        string prefix = InstallDir.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        foreach (var p in Process.GetProcessesByName(AppName))
+        {
+            bool ours = false;
+            try { ours = p.SessionId == session && p.MainModule?.FileName?.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) == true; }
+            catch { }
+            if (ours) own.Add(p); else p.Dispose();
+        }
+        return own;
     }
 
     /// <summary>

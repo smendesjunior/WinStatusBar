@@ -7,6 +7,10 @@ namespace WinStatusBar.Core.Integration;
 /// <remarks>Versões 1.3.x leem o mesmo arquivo só com Build, Sha256 e Size; Version e Url são campos novos.</remarks>
 public sealed record UpdateManifest(string? Version, string Build, string Sha256, long Size, string? Url);
 
+/// <summary>Tentativas de instalar uma compilação, gravadas em <c>Updates\install-attempts.json</c>: o instalador fecha a
+/// barra antes de trocar os arquivos, então a contagem em memória se perde quando a troca falha e é desfeita.</summary>
+public sealed record InstallAttempts(string Build, int Count, DateTimeOffset Last);
+
 /// <summary>Regras da atualização automática: onde procurar, o que aceitar e como conferir o download.</summary>
 public static class UpdateRules
 {
@@ -51,6 +55,95 @@ public static class UpdateRules
     /// <summary>Espera da consulta automática: 15 min; depois de 3 falhas seguidas da mesma versão, 6 h (evita baixar
     /// ~270 MB a cada 15 min quando a instalação falha sempre do mesmo jeito). O botão "Verificar atualizações" não espera.</summary>
     public static TimeSpan RetryDelay(int consecutiveFailures) => consecutiveFailures >= 3 ? TimeSpan.FromHours(6) : CheckInterval;
+
+    // ---------------------------------------------------------------- tentativas de instalação (gravadas em disco)
+    public const string InstallAttemptsFileName = "install-attempts.json";
+    public const int MaxInstallAttempts = 3;
+    public static readonly TimeSpan InstallRetryInterval = TimeSpan.FromHours(6);
+
+    /// <summary>Instalação automática permitida: outra compilação, menos de 3 tentativas ou 6 h desde a última. Sem isto,
+    /// uma troca de arquivos que falha sempre reabriria a barra e repetiria a instalação a cada minuto. O botão
+    /// "Verificar atualizações" não passa por aqui.</summary>
+    public static bool MayInstall(InstallAttempts? attempts, string build, DateTimeOffset now) =>
+        attempts is null || attempts.Build != build || attempts.Count < MaxInstallAttempts
+        || now - attempts.Last >= InstallRetryInterval
+        || now < attempts.Last; // relógio do PC voltou: não segura a atualização para sempre
+
+    /// <summary>Registro a gravar antes de abrir o instalador: mais uma tentativa da mesma compilação, ou a primeira de outra.</summary>
+    public static InstallAttempts NextInstallAttempt(InstallAttempts? attempts, string build, DateTimeOffset now) =>
+        new(build, attempts is not null && attempts.Build == build ? attempts.Count + 1 : 1, now);
+
+    /// <summary>Lê o registro de tentativas; null se o texto não for um registro válido (nesse caso a instalação segue).</summary>
+    public static InstallAttempts? ParseInstallAttempts(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(json.TrimStart('﻿'));
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return null;
+            if (Text(root, "Build") is not { Length: > 0 } build) return null;
+            if (!root.TryGetProperty("Count", out var count) || count.ValueKind != JsonValueKind.Number || !count.TryGetInt32(out int tries)) return null;
+            if (!root.TryGetProperty("Last", out var last) || last.ValueKind != JsonValueKind.String || !last.TryGetDateTimeOffset(out var when)) return null;
+            return new InstallAttempts(build, tries, when);
+        }
+        catch (Exception ex) when (ex is JsonException or FormatException or InvalidOperationException) { return null; }
+    }
+
+    public static string SerializeInstallAttempts(InstallAttempts attempts)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("Build", attempts.Build);
+            writer.WriteNumber("Count", attempts.Count);
+            writer.WriteString("Last", attempts.Last);
+            writer.WriteEndObject();
+        }
+        return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+    }
+
+    /// <summary>Registro de tentativas no disco; arquivo ausente, ilegível ou inválido conta como nenhuma tentativa.</summary>
+    public static InstallAttempts? LoadInstallAttempts(string file)
+    {
+        try { return File.Exists(file) ? ParseInstallAttempts(File.ReadAllText(file)) : null; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    public static void SaveInstallAttempts(string file, InstallAttempts attempts)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, SerializeInstallAttempts(attempts));
+    }
+
+    /// <summary>Barra em dia: apaga o instalador já usado (~270 MB) e o registro de tentativas. O que não puder ser
+    /// apagado agora (instalador ainda em execução) fica para a próxima consulta.</summary>
+    public static void ClearFinishedUpdate(string updatesDir)
+    {
+        foreach (string name in new[] { SetupFileName, InstallAttemptsFileName })
+        {
+            try
+            {
+                string file = Path.Combine(updatesDir, name);
+                if (File.Exists(file)) File.Delete(file);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
+    // ---------------------------------------------------------------- barra ocupada (resposta de IA em andamento)
+    public static readonly TimeSpan BusyRecheckDelay = TimeSpan.FromMinutes(1);
+    public static readonly TimeSpan MaxInstallDeferral = TimeSpan.FromHours(2);
+
+    /// <summary>A instalação automática espera enquanto a barra está ocupada, por no máximo 2 h desde o primeiro adiamento
+    /// (depois disso instala mesmo ocupada). O botão "Verificar atualizações" não espera.</summary>
+    public static bool ShouldDeferInstall(bool busy, DateTimeOffset? firstDeferredAt, DateTimeOffset now) =>
+        busy && (firstDeferredAt is not { } first || (now >= first && now - first < MaxInstallDeferral));
+
+    /// <summary>Espera até a próxima consulta automática: 1 min com a instalação adiada pela barra ocupada; senão, <see cref="RetryDelay"/>.</summary>
+    public static TimeSpan NextCheckDelay(bool installDeferred, int consecutiveFailures) =>
+        installDeferred ? BusyRecheckDelay : RetryDelay(consecutiveFailures);
 
     /// <summary>Instalador de uma tentativa anterior que ainda confere com o manifesto: dispensa novo download.</summary>
     public static bool CanReuse(string file, UpdateManifest m)

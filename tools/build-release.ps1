@@ -29,7 +29,8 @@ if (-not $SandboxTest) {
     $localTag = @(& git -C $root tag --list "v$version")
     $ErrorActionPreference = $old
     if ($lsCode -ne 0) { throw "Não foi possível consultar as versões publicadas no GitHub (git ls-remote): $($remoteTag -join ' ')" }
-    if ($remoteTag -or $localTag) { throw "A versão $version já foi publicada. Suba a versão em Directory.Build.props e registre-a nos dois CHANGELOGs." }
+    if ($remoteTag) { throw "A versão $version já foi publicada. Suba a versão em Directory.Build.props e registre-a nos dois CHANGELOGs." }
+    if ($localTag) { throw "A etiqueta v$version existe só neste PC: a versão $version não chegou ao GitHub (uma publicação anterior parou no meio). Apague a etiqueta com 'git tag -d v$version' e gere o instalador de novo, ou suba a versão em Directory.Build.props." }
 }
 
 # A compilação entra no CHANGELOG antes do publish (o app leva o CHANGELOG.md para Configurações › Atualizações).

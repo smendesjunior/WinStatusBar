@@ -8,6 +8,7 @@ public static class InstallationFiles
     public static void Replace(Stream payload, string installDir, Action beforeReplace)
     {
         installDir = Path.GetFullPath(installDir).TrimEnd(Path.DirectorySeparatorChar);
+        PurgeStaleStages(installDir);
         string stage = installDir + ".stage-" + Guid.NewGuid().ToString("N");
         string backup = installDir + ".previous-" + Guid.NewGuid().ToString("N");
         bool installed = false, rollbackFailed = false;
@@ -76,6 +77,24 @@ public static class InstallationFiles
         using var a=File.OpenRead(incoming);
         using var b=File.OpenRead(installed);
         return SHA256.HashData(a).AsSpan().SequenceEqual(SHA256.HashData(b));
+    }
+    /// <summary>
+    /// Pastas <c>.stage-*</c> deixadas por uma instalação interrompida (PC desligado, processo encerrado). O instalador
+    /// roda um por usuário (mutex), então nenhuma outra instalação está usando essas pastas. As <c>.previous-*</c> ficam:
+    /// guardam os arquivos antigos quando a restauração falhou.
+    /// </summary>
+    private static void PurgeStaleStages(string installDir)
+    {
+        try
+        {
+            string? parent = Path.GetDirectoryName(installDir);
+            if (parent is null || !Directory.Exists(parent)) return;
+            string prefix = Path.GetFileName(installDir) + ".stage-";
+            foreach (string dir in Directory.GetDirectories(parent, prefix + "*"))
+                if (Path.GetFileName(dir).StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) TryRemove(dir);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
     private static void TryRemove(string path)
     {

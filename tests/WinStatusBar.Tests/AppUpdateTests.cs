@@ -260,4 +260,184 @@ public class AppUpdateTests
         }
         finally { AppUpdater.CheckOverrideForTests = null; }
     }
+
+    [Fact]
+    public async Task ManualCheckJoinsTheRunningCheckToo()
+    {
+        var gate = new TaskCompletionSource<UpdateProgress>();
+        int calls = 0;
+        AppUpdater.CheckOverrideForTests = async () => { calls++; return await gate.Task; };
+        try
+        {
+            var automatic = AppUpdater.CheckNowAsync();
+            var manual = AppUpdater.CheckNowAsync(manual: true);
+            Assert.Same(automatic, manual);
+            Assert.Equal(1, calls);
+            gate.SetResult(new UpdateProgress(UpdateStage.UpToDate, "ok"));
+            await automatic;
+        }
+        finally { AppUpdater.CheckOverrideForTests = null; }
+    }
+
+    // ---------------------------------------------------------------- tentativas de instalação gravadas em disco
+    private const string Newer = "20261110000000";
+    private static readonly DateTimeOffset T0 = new(2026, 11, 11, 12, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public void MayInstallWithoutPreviousAttemptsOrForAnotherBuild()
+    {
+        Assert.True(UpdateRules.MayInstall(null, Newer, T0));
+        Assert.True(UpdateRules.MayInstall(new InstallAttempts("20261109000000", 9, T0), Newer, T0));
+    }
+
+    [Theory]
+    [InlineData(1, 0, true)]
+    [InlineData(2, 1, true)]
+    [InlineData(3, 1, false)]
+    [InlineData(3, 359, false)]
+    [InlineData(3, 360, true)]
+    [InlineData(7, 30, false)]
+    [InlineData(7, 361, true)]
+    public void AutomaticInstallStopsForSixHoursAfterThreeAttemptsOfTheSameBuild(int count, int minutesSinceLast, bool allowed) =>
+        Assert.Equal(allowed, UpdateRules.MayInstall(new InstallAttempts(Newer, count, T0), Newer, T0.AddMinutes(minutesSinceLast)));
+
+    [Fact]
+    public void ClockSetBackDoesNotBlockTheUpdateForever() =>
+        Assert.True(UpdateRules.MayInstall(new InstallAttempts(Newer, 3, T0), Newer, T0.AddDays(-2)));
+
+    [Fact]
+    public void NextInstallAttemptCountsPerBuild()
+    {
+        Assert.Equal(new InstallAttempts(Newer, 1, T0), UpdateRules.NextInstallAttempt(null, Newer, T0));
+        Assert.Equal(new InstallAttempts(Newer, 3, T0), UpdateRules.NextInstallAttempt(new InstallAttempts(Newer, 2, T0.AddHours(-1)), Newer, T0));
+        Assert.Equal(new InstallAttempts(Newer, 1, T0), UpdateRules.NextInstallAttempt(new InstallAttempts("20261109000000", 5, T0), Newer, T0));
+    }
+
+    [Fact]
+    public void RelaunchedBarStopsReinstallingABuildWhoseInstallKeepsRollingBack()
+    {
+        // O instalador fecha a barra, a troca dos arquivos falha e é desfeita, a barra reabre sem memória e consulta de
+        // novo em 1 minuto. Antes do registro em disco, isso repetia a instalação a cada minuto, para sempre.
+        string dir = TempDir();
+        string file = Path.Combine(dir, "Updates", UpdateRules.InstallAttemptsFileName);
+        try
+        {
+            int Launches(DateTimeOffset from, int restarts)
+            {
+                int launched = 0;
+                for (int i = 0; i < restarts; i++)
+                {
+                    var now = from.AddMinutes(i);
+                    var attempts = UpdateRules.LoadInstallAttempts(file); // processo novo: só o disco lembra
+                    if (!UpdateRules.MayInstall(attempts, Newer, now)) continue;
+                    UpdateRules.SaveInstallAttempts(file, UpdateRules.NextInstallAttempt(attempts, Newer, now));
+                    launched++;
+                }
+                return launched;
+            }
+            Assert.Equal(3, Launches(T0, restarts: 30));
+            Assert.Equal(1, Launches(T0.AddHours(7), restarts: 30)); // uma nova tentativa a cada 6 horas
+            Assert.Equal(4, UpdateRules.LoadInstallAttempts(file)!.Count);
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void InstallAttemptsRoundTripAndBrokenFilesCountAsNoAttempts()
+    {
+        var saved = new InstallAttempts(Newer, 2, T0.AddSeconds(0.5));
+        Assert.Equal(saved, UpdateRules.ParseInstallAttempts(UpdateRules.SerializeInstallAttempts(saved)));
+        Assert.Null(UpdateRules.ParseInstallAttempts(null));
+        Assert.Null(UpdateRules.ParseInstallAttempts(""));
+        Assert.Null(UpdateRules.ParseInstallAttempts("{oops"));
+        Assert.Null(UpdateRules.ParseInstallAttempts("[1]"));
+        Assert.Null(UpdateRules.ParseInstallAttempts("{\"Build\":\"" + Newer + "\",\"Count\":\"3\",\"Last\":\"2026-11-11T12:00:00+00:00\"}"));
+        Assert.Null(UpdateRules.ParseInstallAttempts("{\"Build\":\"" + Newer + "\",\"Count\":3,\"Last\":\"ontem\"}"));
+        Assert.Null(UpdateRules.ParseInstallAttempts("{\"Build\":\"" + Newer + "\",\"Count\":3}"));
+        Assert.Null(UpdateRules.LoadInstallAttempts(Path.Combine(Path.GetTempPath(), "nao-existe-" + Guid.NewGuid().ToString("N"), "install-attempts.json")));
+    }
+
+    [Fact]
+    public void UpToDateRemovesTheUsedInstallerAndTheAttemptsRecord()
+    {
+        string dir = TempDir();
+        try
+        {
+            string setup = Path.Combine(dir, UpdateRules.SetupFileName), attempts = Path.Combine(dir, UpdateRules.InstallAttemptsFileName), other = Path.Combine(dir, "outro.txt");
+            File.WriteAllText(setup, "instalador");
+            UpdateRules.SaveInstallAttempts(attempts, new InstallAttempts(Newer, 1, T0));
+            File.WriteAllText(other, "fica");
+            UpdateRules.ClearFinishedUpdate(dir);
+            Assert.False(File.Exists(setup));
+            Assert.False(File.Exists(attempts));
+            Assert.True(File.Exists(other));
+            UpdateRules.ClearFinishedUpdate(dir); // nada para apagar
+            UpdateRules.ClearFinishedUpdate(Path.Combine(dir, "nao-existe")); // pasta Updates ainda não criada
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void InstallerStillInUseIsLeftForTheNextCheck()
+    {
+        string dir = TempDir();
+        try
+        {
+            string setup = Path.Combine(dir, UpdateRules.SetupFileName), attempts = Path.Combine(dir, UpdateRules.InstallAttemptsFileName);
+            File.WriteAllText(setup, "instalador");
+            UpdateRules.SaveInstallAttempts(attempts, new InstallAttempts(Newer, 1, T0));
+            using (new FileStream(setup, FileMode.Open, FileAccess.Read, FileShare.Read))
+                UpdateRules.ClearFinishedUpdate(dir); // o instalador ainda confere o WebView2 depois de abrir a barra
+            Assert.True(File.Exists(setup));
+            Assert.False(File.Exists(attempts));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void UpdaterGatesAndRecordsTheAttemptBeforeStartingTheInstaller()
+    {
+        string source = RepoSource.Read("src", "WinStatusBar", "Services", "AppUpdater.cs");
+        int At(string text) => source.IndexOf(text, StringComparison.Ordinal);
+        int clear = At("UpdateRules.ClearFinishedUpdate(UpdatesDir)"), installable = At("UpdateRules.IsInstallable(");
+        int gate = At("!manual && !UpdateRules.MayInstall("), reuse = At("UpdateRules.CanReuse(");
+        int defer = At("!manual && UpdateRules.ShouldDeferInstall("), save = At("UpdateRules.SaveInstallAttempts("), launch = At("Process.Start(start)");
+        Assert.True(clear >= 0 && clear < installable, "em dia: apaga o instalador usado e o registro de tentativas");
+        Assert.True(gate > installable && gate < reuse, "o limite de tentativas vale só para a consulta automática e antes de baixar");
+        Assert.True(defer > reuse && defer < save, "a espera pela barra livre vale só para a consulta automática, com o instalador já conferido");
+        Assert.True(save < launch, "a tentativa é gravada antes de o instalador abrir (ele fecha esta barra)");
+        Assert.Equal(save, source.LastIndexOf("UpdateRules.SaveInstallAttempts(", StringComparison.Ordinal)); // a falha não conta de novo
+        Assert.Contains("Task.Run(() => RunAsync(manual))", source);
+    }
+
+    // ---------------------------------------------------------------- barra ocupada (resposta de IA em andamento)
+    [Fact]
+    public void BusyHookIsOffByDefault() => Assert.Null(AppUpdater.IsBusy);
+
+    [Fact]
+    public void InstallWaitsWhileBusyForAtMostTwoHours()
+    {
+        Assert.False(UpdateRules.ShouldDeferInstall(busy: false, null, T0));
+        Assert.False(UpdateRules.ShouldDeferInstall(busy: false, T0.AddMinutes(-5), T0));
+        Assert.True(UpdateRules.ShouldDeferInstall(busy: true, null, T0));
+        Assert.True(UpdateRules.ShouldDeferInstall(busy: true, T0.AddMinutes(-119), T0));
+        Assert.False(UpdateRules.ShouldDeferInstall(busy: true, T0.AddHours(-2), T0));
+        Assert.False(UpdateRules.ShouldDeferInstall(busy: true, T0.AddHours(-9), T0));
+        Assert.False(UpdateRules.ShouldDeferInstall(busy: true, T0.AddHours(1), T0)); // relógio voltou: não espera sem fim
+    }
+
+    [Theory]
+    [InlineData(true, 0, 1)]
+    [InlineData(true, 5, 1)]
+    [InlineData(false, 0, 15)]
+    [InlineData(false, 3, 360)]
+    public void DeferredInstallIsCheckedAgainInOneMinute(bool deferred, int failures, int minutes) =>
+        Assert.Equal(TimeSpan.FromMinutes(minutes), UpdateRules.NextCheckDelay(deferred, failures));
+
+    private static string TempDir()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "WinStatusBar.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
 }

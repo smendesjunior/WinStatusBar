@@ -24,6 +24,13 @@ internal static class AppUpdater
     // Falhas seguidas da mesma versão (para espaçar as consultas automáticas; ver UpdateRules.RetryDelay).
     private static string? _failedBuild;
     private static int _failures;
+    // Instalação automática adiada porque a barra está ocupada (IsBusy): de qual compilação, desde quando e se a
+    // última consulta terminou adiada (a próxima vem em 1 minuto, não em 15).
+    private static string? _deferredBuild;
+    private static DateTimeOffset? _deferredSince;
+    private static bool _installDeferred;
+    // Compilação cujo bloqueio por tentativas já foi registrado no log (uma linha por compilação, não a cada consulta).
+    private static string? _blockedLogged;
 
     private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     private static string UpdatesDir => Path.Combine(LocalAppData, "WinStatusBar", "Updates");
@@ -62,6 +69,10 @@ internal static class AppUpdater
     /// <summary>Só para testes: substitui a consulta real.</summary>
     internal static Func<Task<UpdateProgress>>? CheckOverrideForTests { get; set; }
 
+    /// <summary>Barra ocupada (por exemplo, resposta de IA em andamento): a instalação automática espera, por no máximo
+    /// 2 h (<see cref="UpdateRules.ShouldDeferInstall"/>). null = nunca ocupada. É chamado fora da thread da interface.</summary>
+    internal static Func<bool>? IsBusy { get; set; }
+
     public static void Start()
     {
         if (!IsEnabled) return;
@@ -72,28 +83,31 @@ internal static class AppUpdater
             {
                 // Installing só volta com o instalador concluído; normalmente ele já fechou esta barra antes.
                 if ((await CheckNowAsync()).Stage == UpdateStage.Installing) return;
-                await Task.Delay(UpdateRules.RetryDelay(_failures));
+                await Task.Delay(UpdateRules.NextCheckDelay(_installDeferred, _failures));
             }
         });
     }
 
     /// <summary>Consulta agora. Se já houver uma consulta em andamento (automática ou do botão), devolve a mesma.</summary>
-    public static Task<UpdateProgress> CheckNowAsync()
+    /// <param name="manual">Pedido da pessoa (botão "Verificar atualizações"): instala na hora, sem o limite de
+    /// tentativas da mesma compilação e sem esperar a barra ficar livre.</param>
+    public static Task<UpdateProgress> CheckNowAsync(bool manual = false)
     {
         lock (Gate)
         {
             if (_current is { IsCompleted: false }) return _current;
-            _current = CheckOverrideForTests?.Invoke() ?? Task.Run(RunAsync);
+            _current = CheckOverrideForTests?.Invoke() ?? Task.Run(() => RunAsync(manual));
             return _current;
         }
     }
 
-    private static async Task<UpdateProgress> RunAsync()
+    private static async Task<UpdateProgress> RunAsync(bool manual)
     {
         if (!IsEnabled) return Report(new(UpdateStage.Disabled, DisabledText));
         var kind = UpdateSourceKind.GitHub;
         string part = Path.Combine(UpdatesDir, UpdateRules.SetupFileName + ".part");
         UpdateManifest? manifest = null;
+        bool deferred = false;
         try
         {
             Report(new(UpdateStage.Checking, "Procurando…"));
@@ -113,11 +127,31 @@ internal static class AppUpdater
             manifest = UpdateRules.Parse(json)
                 ?? throw new InvalidDataException("O arquivo de controle da atualização está inválido. A barra tenta de novo sozinha em 15 minutos.");
             bool newer = manifest.Build is { Length: 14 } && string.CompareOrdinal(manifest.Build, CurrentBuild) > 0;
-            if (!newer) { _failures = 0; _failedBuild = null; return Report(new(UpdateStage.UpToDate, $"Você já tem a versão mais recente ({CurrentVersion})")); }
+            if (!newer)
+            {
+                _failures = 0; _failedBuild = null; _deferredBuild = null; _deferredSince = null;
+                // Nada pendente: o instalador já usado (~270 MB) e o registro de tentativas não servem mais.
+                UpdateRules.ClearFinishedUpdate(UpdatesDir);
+                return Report(new(UpdateStage.UpToDate, $"Você já tem a versão mais recente ({CurrentVersion})"));
+            }
             if (!UpdateRules.IsInstallable(manifest, CurrentBuild!, kind))
                 throw new InvalidDataException("A versão encontrada não passou na conferência de segurança e foi ignorada.");
 
             string label = manifest.Version ?? manifest.Build;
+            // Tentativas desta compilação, gravadas em disco: o instalador fecha a barra antes de trocar os arquivos e,
+            // se a troca falha e é desfeita, a barra reaberta não lembraria de nada e repetiria a instalação a cada minuto.
+            string attemptsFile = Path.Combine(UpdatesDir, UpdateRules.InstallAttemptsFileName);
+            var attempts = UpdateRules.LoadInstallAttempts(attemptsFile);
+            if (!manual && !UpdateRules.MayInstall(attempts, manifest.Build, DateTimeOffset.UtcNow))
+            {
+                var blocked = Report(new(UpdateStage.Failed, $"A instalação da versão {label} não foi concluída em {attempts!.Count} tentativas. A barra tenta de novo sozinha em até 6 horas; o botão \"Verificar atualizações\" tenta agora."));
+                if (_blockedLogged != manifest.Build)
+                {
+                    _blockedLogged = manifest.Build;
+                    App.Log($"Atualização: {blocked.Text} Detalhes em {Path.Combine(LocalAppData, "WinStatusBar", "setup.log")}.");
+                }
+                return blocked;
+            }
             Directory.CreateDirectory(UpdatesDir);
             string exe = Path.Combine(UpdatesDir, UpdateRules.SetupFileName);
             // Instalador de uma tentativa anterior que ainda confere: não baixa ~270 MB de novo.
@@ -136,8 +170,28 @@ internal static class AppUpdater
                 File.Move(part, exe, overwrite: true);
             }
 
+            // Barra ocupada (resposta de IA em andamento): a instalação automática espera, com o instalador já conferido
+            // guardado, e a próxima consulta vem em 1 minuto. O botão instala na hora.
+            var now = DateTimeOffset.UtcNow;
+            if (_deferredBuild != manifest.Build) { _deferredBuild = manifest.Build; _deferredSince = null; }
+            if (!manual && UpdateRules.ShouldDeferInstall(Busy(), _deferredSince, now))
+            {
+                if (_deferredSince is null)
+                {
+                    _deferredSince = now;
+                    App.Log($"Atualização: versão {label} pronta; a instalação espera a barra ficar livre (no máximo 2 horas).");
+                }
+                deferred = true;
+                // Sem etapa nova: Failed mantém o botão "Verificar atualizações" ligado, e ele instala na hora.
+                return Report(new(UpdateStage.Failed, $"A versão {label} já foi baixada e será instalada quando a resposta em andamento terminar. O botão \"Verificar atualizações\" instala agora."));
+            }
+            _deferredSince = null;
+
             var installing = Report(new(UpdateStage.Installing, $"Instalando a versão {label}. A barra vai fechar e abrir de novo sozinha."));
             App.Log($"Atualização: instalando {label} (compilação {manifest.Build}).");
+            // A tentativa é gravada ANTES de abrir o instalador: esta barra não sobrevive para registrar o resultado.
+            try { UpdateRules.SaveInstallAttempts(attemptsFile, UpdateRules.NextInstallAttempt(attempts, manifest.Build, now)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { App.Log("Atualização: tentativa não registrada (" + ex.Message + ")"); }
             var start = new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true };
             start.ArgumentList.Add("/quiet");
             start.ArgumentList.Add("/update");
@@ -150,6 +204,8 @@ internal static class AppUpdater
         catch (Exception ex)
         {
             try { if (File.Exists(part)) File.Delete(part); } catch { }
+            // Só a contagem em memória (intervalo das consultas): a tentativa de instalação já foi gravada em disco
+            // antes de o instalador abrir e não é contada de novo aqui.
             if (manifest is not null)
             {
                 if (_failedBuild == manifest.Build) _failures++;
@@ -159,6 +215,13 @@ internal static class AppUpdater
             App.Log($"Atualização: {failed.Text} ({ex.GetType().Name}: {ex.Message})");
             return failed;
         }
+        finally { _installDeferred = deferred; }
+    }
+
+    private static bool Busy()
+    {
+        try { return IsBusy?.Invoke() == true; }
+        catch (Exception ex) { App.Log("Atualização: não foi possível saber se a barra está ocupada (" + ex.Message + ")"); return false; }
     }
 
     private static async Task<string> GetManifestAsync()
