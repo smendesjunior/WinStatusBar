@@ -45,8 +45,18 @@ try {
     $ErrorActionPreference = $old
     if ($hasChanges) { Invoke-Native git @('commit', '-q', '-m', "Release $tag (build $Build)") 'git commit' | Out-Null }
     Invoke-Native git @('tag', '-a', $tag, '-m', "WinStatusBar $Version") 'git tag' | Out-Null
-    Invoke-Native git @('push', 'origin', 'main') 'git push (main)' | Out-Null
-    Invoke-Native git @('push', 'origin', $tag) "git push ($tag)" | Out-Null
+    try {
+        Invoke-Native git @('push', 'origin', 'main') 'git push (main)' | Out-Null
+        Invoke-Native git @('push', 'origin', $tag) "git push ($tag)" | Out-Null
+    } catch {
+        # O envio falhou: a etiqueta criada acima existe só neste PC. Sem apagá-la, o próximo build-release recusaria
+        # esta versão como "já publicada". O erro do envio segue adiante.
+        $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+        & git tag -d $tag *> $null; $tagRemoved = $LASTEXITCODE -eq 0
+        $ErrorActionPreference = $old
+        if (-not $tagRemoved) { Write-Warning "Não foi possível apagar a etiqueta local $tag; apague com: git tag -d $tag" }
+        throw
+    }
     Write-Host "Código enviado: main e $tag"
 
     # Release: rascunho → EXE → manifesto → publicada como a mais recente.
@@ -62,7 +72,8 @@ try {
         if ($seen -eq $Build) { break }
         Start-Sleep -Seconds 10
     }
-    if ($seen -ne $Build) { throw "A Release foi criada, mas o link fixo ainda não mostra a compilação $Build (mostra: $seen)." }
+    # A Release já está publicada neste ponto: a demora do link fixo é só um aviso (não deixa a publicação como pendente).
+    if ($seen -ne $Build) { Write-Warning "A Release foi publicada, mas o link fixo ainda não mostra a compilação $Build (mostra: $seen). Confira depois: $latestManifest" }
     Write-Host "Publicado no GitHub: $tag (compilação $Build) — https://github.com/$repo/releases/tag/$tag"
 } finally {
     Pop-Location

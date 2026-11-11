@@ -104,6 +104,37 @@ public class InstallationFilesTests
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
+
+    [Fact]
+    public void StagingFoldersLeftByAnInterruptedInstallArePurged()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "WinStatusBar.Tests", Guid.NewGuid().ToString());
+        string dir = Path.Combine(root, "app");
+        try
+        {
+            Directory.CreateDirectory(dir);
+            // Instalação interrompida (PC desligado no meio): a pasta de preparo ficou para trás, com ~700 MB na vida real.
+            string stale = dir + ".stage-" + Guid.NewGuid().ToString("N");
+            Directory.CreateDirectory(Path.Combine(stale, "Sensors"));
+            File.WriteAllText(Path.Combine(stale, "Sensors", "left.dll"), "left");
+            // Arquivos antigos guardados por uma restauração que falhou: ficam para recuperação.
+            string previous = dir + ".previous-" + Guid.NewGuid().ToString("N");
+            Directory.CreateDirectory(previous);
+            File.WriteAllText(Path.Combine(previous, "WinStatusBar.exe"), "old");
+            string unrelated = Path.Combine(root, "app2.stage-keep");
+            Directory.CreateDirectory(unrelated);
+            using var payload = new MemoryStream();
+            using (var zip = new ZipArchive(payload, ZipArchiveMode.Create, true))
+            using (var writer = new StreamWriter(zip.CreateEntry("WinStatusBar.exe").Open())) writer.Write("new");
+            payload.Position = 0;
+            InstallationFiles.Replace(payload, dir, () => { });
+            Assert.Equal("new", File.ReadAllText(Path.Combine(dir, "WinStatusBar.exe")));
+            Assert.False(Directory.Exists(stale));
+            Assert.Equal("old", File.ReadAllText(Path.Combine(previous, "WinStatusBar.exe")));
+            Assert.True(Directory.Exists(unrelated));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
 }
 
 

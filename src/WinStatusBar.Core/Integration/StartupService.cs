@@ -101,9 +101,15 @@ public static class StartupService
         var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "schtasks.exe")) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
         using var p = Process.Start(psi)!;
-        p.StandardOutput.ReadToEnd(); p.StandardError.ReadToEnd();
-        if (!p.WaitForExit(15000)) { try { p.Kill(); } catch { } return -1; }
-        return p.ExitCode;
+        // As duas saídas são lidas ao mesmo tempo e sem segurar esta thread: lidas uma depois da outra, antes da espera,
+        // o limite de 15 s nunca valia e o schtasks podia travar com a saída de erro cheia.
+        var output = p.StandardOutput.ReadToEndAsync();
+        var error = p.StandardError.ReadToEndAsync();
+        bool exited = p.WaitForExit(15000);
+        if (!exited) { try { p.Kill(entireProcessTree: true); } catch { } }
+        // Espera curta pelo fim das leituras (o processo já saiu ou foi encerrado), só para não deixar erro sem dono.
+        try { Task.WaitAll([output, error], 2000); } catch { }
+        return exited ? p.ExitCode : -1;
     }
 
     private static StartupTask PackagedTask()
