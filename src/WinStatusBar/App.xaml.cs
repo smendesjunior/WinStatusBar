@@ -116,6 +116,8 @@ public partial class App : Application
         Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
         Hub.Start();
         ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);
+        // A continuação pela API roda com a tela apagada e lê os tokens da conversa: com uma em aberto, o Codex segue sendo lido.
+        Hub.Codex.ReconcileWhileAway = () => ApiResume?.Supervisor.HasUnfinished == true;
         ApiResume.Start();
         StartApiUsageAutoRefresh();
         CopilotWebSession.Install(_dispatcher!);
@@ -135,6 +137,9 @@ public partial class App : Application
 
         LoadShortcutIcons();
         RebuildBars();
+        // Ponto de partida da comparação: sem ele, o primeiro aviso de tela depois de abrir (mesmo sem mudança nenhuma)
+        // fechava e recriava todas as barras, cancelando a resposta de IA em andamento.
+        _lastMonitorKey = MonitorKey(GetMonitors());
         if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_FOLDER") is string verifyFolder && Directory.Exists(verifyFolder))
         {
             var folderPreview = Views.Panels.RecentFolderFlyout.Create("Arquivos", () => verifyFolder);
@@ -181,7 +186,7 @@ public partial class App : Application
             caretCheck.Start();
         }
 #endif
-        SyncStartup();
+        QueueStartupSync(); // fora da thread da interface: a consulta ao Agendador de Tarefas atrasava a primeira pintura
         Log($"Iniciado. Monitores: {GetMonitors().Count}. Tema escuro: {IsDarkTheme}.");
         if (!cmd.Contains("--startup") && !LaunchedByStartupTask() &&!File.Exists(Path.Combine(SettingsService.DataDir, ".welcomed")))
         {
@@ -274,16 +279,36 @@ public partial class App : Application
         t.Start();
     }
 
+    private static readonly Lock StartupGate = new();
+    /// <summary>Último valor de "Iniciar com o Windows" já mandado conferir (null: ainda nenhum).</summary>
+    private bool? _startupSynced;
+
+    /// <summary>
+    /// Confere a inicialização automática fora da thread da interface (a consulta abre o schtasks.exe e espera por ele):
+    /// uma vez ao abrir e, depois, só quando a opção muda. Antes rodava na thread da interface a cada ajuste aplicado.
+    /// </summary>
+    private void QueueStartupSync()
+    {
+        bool wanted = Settings.Current.StartWithWindows;
+        if (_startupSynced == wanted) return;
+        _startupSynced = wanted;
+        _ = Task.Run(SyncStartup);
+    }
+
     private void SyncStartup()
     {
         // Apenas na instalação (fora de ambientes virtualizados) e quando o usuário altera a opção.
-        try
+        // Uma conferência por vez; cada uma lê a opção na hora, então a última a rodar deixa o estado final certo.
+        lock (StartupGate)
         {
-            bool installed = PackageContext.IsPackaged || AppContext.BaseDirectory.StartsWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"), StringComparison.OrdinalIgnoreCase);
-            if (installed && StartupService.IsEnabled() != Settings.Current.StartWithWindows)
-                StartupService.Set(Settings.Current.StartWithWindows, ExePath);
+            try
+            {
+                bool installed = PackageContext.IsPackaged || AppContext.BaseDirectory.StartsWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"), StringComparison.OrdinalIgnoreCase);
+                if (installed && StartupService.IsEnabled() != Settings.Current.StartWithWindows)
+                    StartupService.Set(Settings.Current.StartWithWindows, ExePath);
+            }
+            catch (Exception ex) { Log(global::WinStatusBar.Services.Localization.T("Inicialização automática: ") + ex.Message); }
         }
-        catch (Exception ex) { Log(global::WinStatusBar.Services.Localization.T("Inicialização automática: ") + ex.Message); }
     }
 
     public void UpdateTheme()
@@ -334,10 +359,14 @@ public partial class App : Application
     }
 
     private string _lastMonitorKey = string.Empty;
+
+    /// <summary>O que identifica o arranjo de telas: dispositivo, principal, área e escala de cada monitor.</summary>
+    private static string MonitorKey(IEnumerable<MonitorInfo> monitors) =>
+        string.Join("|", monitors.Select(m => $"{m.Device}:{m.IsPrimary}:{m.Bounds}:{m.Dpi}"));
+
     private void RebuildBarsIfMonitorsChanged()
     {
-        var mons = GetMonitors();
-        string key = string.Join("|", mons.Select(m => $"{m.Device}:{m.IsPrimary}:{m.Bounds}:{m.Dpi}"));
+        string key = MonitorKey(GetMonitors());
         if (key == _lastMonitorKey) return;
         _lastMonitorKey = key;
         // Monitor principal pode ter mudado: realoca as barras.
@@ -370,7 +399,7 @@ public partial class App : Application
         try { Clip.ClipHost.ApplySettings(Settings.Current); } catch (Exception ex) { Log(global::WinStatusBar.Services.Localization.T("Área de transferência: ") + ex.Message); }
         CommandHotkey?.Set(Settings.Current.CommandBar ? Settings.Current.CommandHotkey : null);
         Hub.ApplySettings();
-        SyncStartup();
+        QueueStartupSync();
         RebuildBars();
         foreach (var b in _bars) b.ApplyAppearance();
         Hub.ResampleGpuNow();
@@ -538,7 +567,9 @@ public partial class App : Application
                 Directory.CreateDirectory(SettingsService.DataDir);
                 var path = SettingsService.LogPath;
                 if (File.Exists(path) && new FileInfo(path).Length > 1024 * 1024) File.Move(path, path + ".old", overwrite: true);
-                File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
+                // Chaves e tokens (sk-…, ghp_…, AIza…, chaves privadas) nunca vão inteiros para o registro.
+                string line = global::WinStatusBar.Core.Clip.SecretMask.Mask(message);
+                File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {line}{Environment.NewLine}");
             }
         }
         catch { }

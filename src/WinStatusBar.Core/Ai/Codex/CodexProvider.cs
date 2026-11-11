@@ -195,7 +195,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
             _watcher.Changed += OnRolloutEvent;
             _watcher.Created += OnRolloutEvent;
             _watcher.Renamed += OnRolloutEvent;
-            _watcher.Error += (_, _) => Reconcile();
+            _watcher.Error += (_, _) => Reconcile(force: true); // avisos perdidos: confere mesmo com a tela apagada
             _watcher.EnableRaisingEvents = true;
         }
         if (Directory.Exists(Home))
@@ -209,13 +209,17 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         }
         _debounce = new Timer(_ => ProcessDirty(), null, 300, 300);
         _reconcile = new Timer(_ => Reconcile(), null, 5000, 5000);
+        Presence.Changed += OnPresenceChanged;
         _ = QuotaLoopAsync(_cts.Token);
     }
 
     public void Stop()
     {
         Enabled = false;
-        _cts?.Cancel(); _cts = null;
+        Presence.Changed -= OnPresenceChanged;
+        var cts = _cts; _cts = null;
+        cts?.Cancel(); cts?.Dispose();
+        lock (_titleReadGate) _titlesStamp = null;
         _watcher?.Dispose(); _watcher = null;
         _indexWatcher?.Dispose(); _indexWatcher = null;
         _debounce?.Dispose(); _debounce = null;
@@ -333,15 +337,40 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         Raise();
     }
 
-    private void Reconcile()
+    /// <summary>
+    /// Trabalho que segue com a tela apagada e lê as conversas daqui (Continuar pela API): enquanto devolver true,
+    /// a conferência periódica não pausa. Chamado na thread do temporizador.
+    /// </summary>
+    public Func<bool>? ReconcileWhileAway { get; set; }
+
+    /// <summary>
+    /// Tela apagada ou sessão bloqueada, nenhuma conversa em andamento e nada que dependa da leitura: a conferência
+    /// de 5 s (que percorre toda a pasta de sessões) espera. Com uma conversa em andamento ela continua, porque é ela
+    /// que lê os registros que o Codex mantém abertos; ao acender a tela, uma conferência roda na hora.
+    /// </summary>
+    private bool PausedWhileAway()
     {
-        if (!Enabled || Interlocked.Exchange(ref _reconciling, 1) != 0) return;
+        if (!Presence.Away || ReconcileWhileAway?.Invoke() == true) return false;
+        lock (_gate) return !_sessions.Values.Any(s => s.State.IsActive());
+    }
+
+    private void OnPresenceChanged(bool away)
+    {
+        // Chamado por quem informa a presença (a thread da interface): a leitura vai para outra thread.
+        if (!away && Enabled) _ = Task.Run(() => { Reconcile(); ProcessDirty(); });
+    }
+
+    private void Reconcile(bool force = false)
+    {
+        if (!Enabled || !force && PausedWhileAway() || Interlocked.Exchange(ref _reconciling, 1) != 0) return;
         try
         {
+            // Tamanho e data lidos de cada arquivo, não da listagem da pasta: com o registro ainda aberto pelo Codex,
+            // a listagem devolve o tamanho e a data antigos (conferido em 11/11/2026) e a conversa pararia de atualizar.
             foreach (var path in Directory.EnumerateFiles(Path.Combine(Home, "sessions"), "*.jsonl", SearchOption.AllDirectories))
                 if (_offsets.ContainsKey(path) || File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddHours(-12))
                     if (!_offsets.TryGetValue(path, out var offset) || new FileInfo(path).Length != offset) _dirty[path] = 0;
-            if (LoadTitles()) Raise();
+            if (LoadTitles(onlyIfChanged: true)) Raise();
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
@@ -350,6 +379,7 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
 
     private void ProcessDirty()
     {
+        if (_dirty.IsEmpty) return;
         if (!Enabled || Interlocked.Exchange(ref _processingDirty, 1) != 0) return;
         try
         {
@@ -427,16 +457,26 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
         catch (UnauthorizedAccessException) { return false; }
     }
 
-    private bool LoadTitles()
+    /// <summary>Índice de títulos (tamanho e data) na última leitura aproveitada; null: ainda nenhuma.</summary>
+    private SessionTitleIndex.Stamp? _titlesStamp;
+
+    /// <param name="onlyIfChanged">Conferência periódica: não relê nem interpreta de novo um índice igual ao já lido.</param>
+    private bool LoadTitles(bool onlyIfChanged = false)
     {
         lock (_titleReadGate)
         {
-            var map = SessionTitleIndex.Read(Path.Combine(Home, "session_index.jsonl"));
+            string path = Path.Combine(Home, "session_index.jsonl");
+            var before = SessionTitleIndex.StampOf(path);
+            if (onlyIfChanged && !SessionTitleIndex.NeedsRead(_titlesStamp, before)) return false;
+            var map = SessionTitleIndex.Read(path);
             if (map is null) return false;
+            // Só vale como "já lido" o arquivo que não mudou do começo ao fim desta leitura.
+            var read = before is not null && before == SessionTitleIndex.StampOf(path) ? before : null;
             lock (_gate)
             {
                 // A temporarily empty/partial index must not erase known user titles.
                 if (map.Count == 0 && _titles.Count > 0) return false;
+                _titlesStamp = read;
                 bool changed = map.Count != _titles.Count || map.Any(x => !_titles.TryGetValue(x.Key, out var title) || title != x.Value);
                 if (!changed) return false;
                 _titles.Clear();

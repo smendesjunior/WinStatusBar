@@ -67,7 +67,8 @@ public sealed partial class BarWindow : Window
 
         _layoutTimer = DispatcherQueue.CreateTimer();
         _layoutTimer.Interval = TimeSpan.FromSeconds(3);
-        _layoutTimer.Tick += (_, _) => UpdateOverflow();
+        // Tela apagada ou sessão bloqueada: ninguém vê a barra, não há o que medir.
+        _layoutTimer.Tick += (_, _) => { if (!Core.Presence.Away) UpdateOverflow(); };
         SetupQuotaFlyouts();
         SetupQuotaModeSwitch();
         SetupExtraIconAnimation();
@@ -82,6 +83,9 @@ public sealed partial class BarWindow : Window
         Root.Loaded += (_, _) => FollowAppThemeEverywhere(Root);
         PopupMaterial.FollowAppTheme((Flyout)Root.Resources["SessionsFlyout"]);
         Root.SizeChanged += (_, _) => UpdateLayoutSize();
+        // Fechamento vindo de fora (Alt+F4, WM_CLOSE de outro programa): recusado antes do Closed, senão os demais
+        // tratadores de Closed desmontavam painéis, chat e fundo adaptativo com a barra ainda na tela.
+        AppWindow.Closing += (_, e) => { if (!_closing) e.Cancel = true; };
         Closed += (_, e) => { if (!_closing) { e.Handled = true; } };
     }
 
@@ -148,6 +152,9 @@ public sealed partial class BarWindow : Window
         AppBar = null;
         _backdrop?.Dispose();
         _backdrop = null;
+        // O modelo da barra vive mais que a janela (uma barra por monitor, recriada a cada troca de monitor): sem isto,
+        // os x:Bind continuavam inscritos nele, atualizando e prendendo na memória cada barra já fechada.
+        try { Bindings.StopTracking(); } catch (Exception ex) { App.Log("Barra: vínculos não liberados ao fechar: " + ex.Message); }
         Close();
     }
 
@@ -314,7 +321,7 @@ public sealed partial class BarWindow : Window
         int split = s.ModuleOrder.IndexOf("task");
         bool IsLeft(string key) => split < 0 ? key != "shortcuts" : s.ModuleOrder.IndexOf(key) <= split;
         foreach (var (key, module) in _modules) ApplyNativeTextScale(module, 1);
-        foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
+        // A largura mínima dos textos (StabilizeTextWidths) fica como está: zerá-la aqui, a cada 3 s, desfazia a estabilização.
         double left = 0, right = 0;
         // Reduce empty spacing before reducing readability. All sizes remain native to the monitor DPI.
         foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (8d, 8d, 10d, 36d), (6d, 6d, 8d, 30d), (4d, 4d, 6d, 26d) })
@@ -389,8 +396,8 @@ public sealed partial class BarWindow : Window
                 _overflowed.Add(key); module.Visibility = Visibility.Collapsed;
                 right = MeasureRight();
             }
+        // O menu "…" é remontado ao abrir (OnMoreOpening) e pelo BuildColumns: não precisa ser refeito a cada medição.
         if (_overflowed.Count > 0) BuildColumns();
-        RebuildMoreMenu();
         var space = BarSpace.Allocate(ScaleHost.Width, box, left, right);
         BarLayout.ColumnDefinitions[0].Width = new GridLength(space.Left);
         BarLayout.ColumnDefinitions[2].Width = new GridLength(space.Right);
@@ -522,7 +529,9 @@ public sealed partial class BarWindow : Window
             Services.AgentMotion.SetKind(AgentIconImage, Services.AgentMotion.KindFor(id));
             Services.AgentMotion.SetActive(AgentIconImage, id.Length > 0);
         }
-        VM.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(VM.ExtraWorking)) DispatcherQueue.TryEnqueue(Apply); };
+        System.ComponentModel.PropertyChangedEventHandler onExtraWorking = (_, e) => { if (e.PropertyName == nameof(VM.ExtraWorking)) DispatcherQueue.TryEnqueue(Apply); };
+        VM.PropertyChanged += onExtraWorking;
+        Closed += (_, _) => VM.PropertyChanged -= onExtraWorking; // o modelo vive mais que a janela
         Apply();
     }
 

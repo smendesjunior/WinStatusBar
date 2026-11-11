@@ -6,6 +6,26 @@ namespace WinStatusBar.Core.Ai.Codex;
 /// <summary>Read-only index snapshot. Failed/unstable reads must not poison the provider's cache.</summary>
 public static class SessionTitleIndex
 {
+    /// <summary>Size and last write of the index file at one moment.</summary>
+    public readonly record struct Stamp(long Length, DateTime LastWriteUtc);
+
+    /// <summary>Current stamp of the index; null when it is missing or cannot be queried.</summary>
+    public static Stamp? StampOf(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            return info.Exists ? new Stamp(info.Length, info.LastWriteTimeUtc) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>
+    /// Polling rule: read again only when the file differs from the one last read successfully. Without a successful
+    /// read to compare with, or without a current stamp, the answer is always "read" (the read itself decides).
+    /// </summary>
+    public static bool NeedsRead(Stamp? lastRead, Stamp? current) => lastRead is null || current is null || lastRead != current;
+
     public static IReadOnlyDictionary<string, string>? Read(string path)
     {
         try

@@ -125,6 +125,10 @@ public sealed class AppBarService : IDisposable
         }
         switch (msg)
         {
+            case WM_CLOSE:
+                // Pedido de fechar vindo de fora (Alt+F4, outro programa): a barra só fecha pela própria barra, que
+                // remove este subclass (Dispose) antes de chamar Close(); por isso o fechamento dela não passa aqui.
+                return IntPtr.Zero;
             case WM_WINDOWPOSCHANGING:
                 {
                     // Mantém a barra na faixa "topmost" (como a taskbar), exceto atrás de apps em tela cheia.

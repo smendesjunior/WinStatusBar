@@ -122,6 +122,26 @@ public class ResourceUseTests
     }
 
     [Fact]
+    public void BarWindowsLetGoOfTheSharedViewModelWhenTheyClose()
+    {
+        // O modelo da barra é um só e vive até a barra fechar; cada janela (uma por monitor) é recriada a cada troca de
+        // monitor. Um "+=" sem "-=" no PropertyChanged dele prendia cada barra já fechada na memória (11/11/2026).
+        int subscribed = 0, released = 0;
+        foreach (string file in Directory.EnumerateFiles(Path.Combine(RepoSource.Root(), "src", "WinStatusBar", "Views"), "BarWindow*.cs"))
+        {
+            string source = File.ReadAllText(file);
+            subscribed += System.Text.RegularExpressions.Regex.Matches(source, @"VM\.PropertyChanged \+=").Count;
+            released += System.Text.RegularExpressions.Regex.Matches(source, @"VM\.PropertyChanged -=").Count;
+        }
+        Assert.True(subscribed > 0);
+        Assert.Equal(subscribed, released);
+        // Os x:Bind também se inscrevem no modelo: a barra os solta antes de fechar.
+        string close = ApiResumeSourceTests.Body(RepoSource.Read("src", "WinStatusBar", "Views", "BarWindow.xaml.cs"), "public void CloseBar()");
+        Assert.Contains("Bindings.StopTracking();", close);
+        Assert.True(close.IndexOf("Bindings.StopTracking();", StringComparison.Ordinal) < close.LastIndexOf("Close();", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void SettingsWindowIsHiddenAndReusedInsteadOfClosed()
     {
         // O WinUI 1.8 não libera uma janela fechada (microsoft-ui-xaml#9960) e deixa a barra de título dela para trás (#12210):

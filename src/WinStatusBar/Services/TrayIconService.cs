@@ -144,9 +144,14 @@ public sealed class TrayIconService : IDisposable
         szInfoTitle = string.Empty,
     };
 
+    /// <summary>Dica que o ícone mostra agora (última enviada com sucesso); null depois de qualquer envio que a troque
+    /// pela dica padrão (ícone registrado de novo, ícone recarregado), para a próxima ser enviada de novo.</summary>
+    private string? _shownTip;
+
     private void Add()
     {
         var d = Data();
+        _shownTip = null;
         _added = Shell_NotifyIconW(NIM_ADD, ref d);
         d.uVersion = NOTIFYICON_VERSION_4;
         Shell_NotifyIconW(NIM_SETVERSION, ref d);
@@ -155,8 +160,10 @@ public sealed class TrayIconService : IDisposable
     public void SetTooltip(string text)
     {
         if (!_added) return;
-        var d = Data(text.Length > 120 ? text[..120] : text);
-        Shell_NotifyIconW(NIM_MODIFY, ref d);
+        string tip = text.Length > 120 ? text[..120] : text;
+        if (tip == _shownTip) return; // a barra pede a cada atualização dos agentes; o Shell só precisa saber quando muda
+        var d = Data(tip);
+        _shownTip = Shell_NotifyIconW(NIM_MODIFY, ref d) ? tip : null;
     }
 
     public void ShowBalloon(string title, string message)
@@ -190,7 +197,7 @@ public sealed class TrayIconService : IDisposable
         if (msg == WM_SETTINGCHANGE_U || msg == WM_DISPLAYCHANGE_U)
         {
             LoadIcon();
-            if (_added) { var d = Data(); Shell_NotifyIconW(NIM_MODIFY, ref d); }
+            if (_added) { var d = Data(); _shownTip = null; Shell_NotifyIconW(NIM_MODIFY, ref d); }
         }
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
