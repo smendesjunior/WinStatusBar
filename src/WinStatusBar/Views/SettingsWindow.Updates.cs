@@ -16,7 +16,7 @@ public sealed partial class SettingsWindow
         string? build = assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "NetworkUpdateBuild")?.Value;
 
         var status = Help("");
-        var check = ActionButton("Verificar atualizações", () => _ = AppUpdater.CheckNowAsync());
+        var check = ActionButton("Verificar atualizações", () => _ = AppUpdater.CheckNowAsync(manual: true));
         check.HorizontalAlignment = HorizontalAlignment.Stretch;
         void Show(UpdateProgress? progress)
         {

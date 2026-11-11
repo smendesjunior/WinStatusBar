@@ -27,6 +27,7 @@ public partial class App : Application
     private UISettings? _ui;
     private DispatcherQueue? _dispatcher;
     private DispatcherQueueTimer? _displayDebounce;
+    private DispatcherQueueTimer? _codexIasWatch;
     private bool _exiting;
     /// <summary>Prazo da saída: passado isso, a vigia remove a AppBar e encerra o processo à força.</summary>
     private static readonly TimeSpan ExitTimeout = TimeSpan.FromSeconds(3);
@@ -100,6 +101,10 @@ public partial class App : Application
 #endif
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Settings.Load();
+        if (SettingsService.LoadNote is { } loadNote) Log("Preferências: " + loadNote);
+        // A atualização automática espera uma resposta de IA em andamento (o botão de Configurações não espera).
+        // Chamado fora da thread da interface: uma leitura que falhe conta como "não ocupada" (AppUpdater.Busy).
+        AppUpdater.IsBusy = () => _bars.ToList().Any(b => b.CommandRunning) || AiRepair.Busy || Views.ApiResumeInline.Busy;
         AppUpdater.Start();
         if (Settings.RestoredFromCloud) Log("Preferências restauradas do OneDrive (instalação limpa).");
         else if (Settings.PendingRestore) StartLateRestoreWatch();
@@ -129,6 +134,13 @@ public partial class App : Application
         CodexBridgeHost.Start(); // Claude, Gemini, Copilot e Qira no seletor de modelos do Codex
         CodexIasComponent.EnsureRunning(); // IAs configuradas no seletor do Codex (encaminhador, com a ligação ligada)
         CodexIasComponent.AutoEnableOnce(); // primeira vez com esta versão num PC com o Codex: liga sozinha
+        // O encaminhador pode cair no meio do dia; com a ligação ligada, o Codex inteiro para de responder. A cada
+        // minuto: nada acontece com a ligação desligada, o encaminhador respondendo ou um comando do componente rodando.
+        _codexIasWatch = _dispatcher!.CreateTimer();
+        _codexIasWatch.Interval = TimeSpan.FromSeconds(60);
+        // Sem pausa com a tela desligada: o Codex pode estar numa tarefa longa pelo encaminhador a noite toda.
+        _codexIasWatch.Tick += (_, _) => CodexIasComponent.EnsureRunning();
+        _codexIasWatch.Start();
         StartClaudeIntegrationWatch();
         // Área de transferência e emojis (Win+V / Win+.), antes das barras: o botão só aparece se estiver ativa.
         if (Settings.Current.ClipboardEnabled)
@@ -502,6 +514,7 @@ public partial class App : Application
         {
             _apiUsageTimer?.Stop();
             _displayDebounce?.Stop();
+            _codexIasWatch?.Stop();
             GoogleUsageSession.Stop();
             MicrosoftCreditsSession.Stop();
             ApiResume?.Shutdown(); // só laço e timers; a continuação pela API segue rodando

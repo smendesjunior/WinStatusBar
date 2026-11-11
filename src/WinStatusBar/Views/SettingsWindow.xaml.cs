@@ -280,8 +280,8 @@ public sealed partial class SettingsWindow : Window
             : $"{name}: 5h {Math.Round(100 - q.Primary.UsedPercent):0} %" + (q.Secondary is { } w ? $" · 7d {Math.Round(100 - w.UsedPercent):0} %" : "") + $" · lido às {q.ObservedAt.LocalDateTime:HH:mm}";
         var lines = new List<string>
         {
-            Line("Codex", _app.Hub.Codex.Quota, _app.Hub.Codex.LastError, CodexSwitch.IsOn),
-            Line("Claude", _app.Hub.Claude.Quota, _app.Hub.Claude.LastQuotaError, ClaudeSwitch.IsOn),
+            Line("Codex", _app.Hub.Codex.Quota, _app.Hub.Codex.LastError is { } codexError ? WinStatusBar.Core.Ai.AiErrorExplainer.QuotaError(WinStatusBar.Core.Ai.AgentPrompt.Target.Codex, codexError) : null, CodexSwitch.IsOn),
+            Line("Claude", _app.Hub.Claude.Quota, _app.Hub.Claude.LastQuotaError is { } claudeError ? WinStatusBar.Core.Ai.AiErrorExplainer.QuotaError(WinStatusBar.Core.Ai.AgentPrompt.Target.Claude, claudeError) : null, ClaudeSwitch.IsOn),
         };
         if (GoogleUsageSession.Current is { SignedIn: true } g)
             lines.Add($"Gemini: atual {(g.CurrentPercent is { } c ? $"{Math.Round(100 - c):0} %" : "—")} · semana {(g.WeeklyPercent is { } wk ? $"{Math.Round(100 - wk):0} %" : "—")} · lido às {g.Updated.LocalDateTime:HH:mm}");

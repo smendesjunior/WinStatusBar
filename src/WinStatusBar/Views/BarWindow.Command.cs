@@ -288,6 +288,8 @@ public sealed partial class BarWindow
     }
 
     private bool _running, _interrupted;
+    /// <summary>Há uma resposta de IA em andamento nesta barra: a atualização automática espera por ela.</summary>
+    internal bool CommandRunning => _running;
     /// <summary>
     /// Envio em preparo (contexto, escolha da IA, catálogo), antes de <see cref="_running"/>: um segundo Enter nesse
     /// intervalo repetia o pedido. Cada envio tem a própria senha e só devolve a dele.
