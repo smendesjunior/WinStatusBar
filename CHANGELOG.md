@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.10.0] - 2026-11-11 · compilação BUILD
+## [1.10.0] - 2026-11-11 · compilação 20261111163307
 
 ### Adicionado
 - Escolha por mim: quando não há nenhuma conta ou API disponível, a pergunta vai para a IA local (se estiver ligada) e, por fim, para o Lenovo Qira, em vez de parar num aviso.

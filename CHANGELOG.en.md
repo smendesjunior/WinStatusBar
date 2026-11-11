@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.10.0] - 2026-11-11 · build BUILD
+## [1.10.0] - 2026-11-11 · build 20261111163307
 
 ### Added
 - Choose for me: when no account or API is available, the question goes to the local AI (if turned on) and, last, to Lenovo Qira, instead of stopping at a notice.
