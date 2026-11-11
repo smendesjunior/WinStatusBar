@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.5.0] - 2026-11-10 · build BUILD
+## [1.5.0] - 2026-11-10 · build 20261111005816
 
 ### Added
 - Codex › Continue via the API (quota menu): conversations stopped for lack of quota continue through your OpenAI API key, in the same conversation and with the same model and level, with live spend and a Stop button.

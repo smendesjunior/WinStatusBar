@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.5.0] - 2026-11-10 · compilação BUILD
+## [1.5.0] - 2026-11-10 · compilação 20261111005816
 
 ### Adicionado
 - Codex › Continuar pela API (menu da cota): as conversas paradas por falta de cota continuam pela sua chave da API da OpenAI, na mesma conversa e com o mesmo modelo e nível, com gasto ao vivo e o botão Parar.
