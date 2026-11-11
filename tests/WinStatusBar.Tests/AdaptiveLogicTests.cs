@@ -11,6 +11,32 @@ public class AdaptiveLogicTests
     private static readonly Color MicaTint = Color.FromArgb(255, 0x1C, 0x1B, 0x22), Fallback = Color.FromArgb(255, 0x20, 0x20, 0x20),
                                   ElectronSolid = Color.FromArgb(255, 0x19, 0x19, 0x19), Accent = Color.FromArgb(255, 0x1F, 0x9D, 0xB3);
 
+    /// <summary>Divisória da base da barra (10/11/2026): piscava porque dependia de o Claude e o ChatGPT (que declaram Mica)
+    /// serem lidos ora como cor sólida, ora como material. Agora depende só de haver janela maximizada ou encostada embaixo.</summary>
+    [Theory]
+    [InlineData((int)AdaptiveState.Maximized)]
+    [InlineData((int)AdaptiveState.Material)]
+    [InlineData((int)AdaptiveState.Painted)]
+    [InlineData((int)AdaptiveState.Segments)]
+    public void Divider_SameOverSolidAndMaterial(int state)
+    {
+        Assert.Equal(Color.FromArgb(20, 255, 255, 255), AdaptiveLogic.Divider((AdaptiveState)state, ElectronSolid, appDark: true));
+        Assert.Equal(Color.FromArgb(20, 0, 0, 0), AdaptiveLogic.Divider((AdaptiveState)state, Color.FromArgb(255, 0xF3, 0xF3, 0xF3), appDark: true));
+    }
+
+    [Theory]
+    [InlineData((int)AdaptiveState.Desktop)]
+    [InlineData((int)AdaptiveState.Windowed)]
+    public void Divider_NoneOverTheDesktop(int state) =>
+        Assert.Null(AdaptiveLogic.Divider((AdaptiveState)state, ElectronSolid, appDark: true));
+
+    [Fact]
+    public void Divider_WithoutAColorFollowsTheWindowsTheme()
+    {
+        Assert.Equal(Color.FromArgb(20, 255, 255, 255), AdaptiveLogic.Divider(AdaptiveState.Material, null, appDark: true));
+        Assert.Equal(Color.FromArgb(20, 0, 0, 0), AdaptiveLogic.Divider(AdaptiveState.Material, null, appDark: false));
+    }
+
     [Fact]
     public void ExplorerActive_IsMaterial_AndInactive_IsTheSameMaterialInactive()
     {

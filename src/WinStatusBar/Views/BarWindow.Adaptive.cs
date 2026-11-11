@@ -253,7 +253,7 @@ public sealed partial class BarWindow
                 bool swapped = EnsureMaterialBase(sample.Material, sample.Active, theme, cover);
                 ShowOverlay(Clear(cover), afterSwap: swapped);
                 SetBarTheme(theme);
-                UpdateDivider(null);
+                UpdateDivider(AdaptiveLogic.Divider(state, cover, theme == ElementTheme.Dark));
                 break;
             }
             case AdaptiveState.Maximized when sample.Color is { } fill:
@@ -261,13 +261,13 @@ public sealed partial class BarWindow
                 if (_backdrop is null) EnsureTransparentBase(fill);
                 ShowOverlay(new SolidColorBrush(fill), afterSwap: false);
                 SetBarTheme(TitleBarColorSampler.IsLight(fill) ? ElementTheme.Light : ElementTheme.Dark);
-                UpdateDivider(fill);
+                UpdateDivider(AdaptiveLogic.Divider(state, fill, App.IsDarkTheme));
                 break;
             case AdaptiveState.Painted when sample.Stops is { Count: >= 2 } stops:
                 if (_backdrop is null) EnsureTransparentBase(sample.Color ?? stops[0].Color);
                 ShowOverlay(Gradient(stops), afterSwap: false);
                 SetBarTheme(sample.WindowDark is bool paintedDark ? (paintedDark ? ElementTheme.Dark : ElementTheme.Light) : appTheme);
-                UpdateDivider(null);
+                UpdateDivider(AdaptiveLogic.Divider(state, sample.Color ?? stops[0].Color, App.IsDarkTheme));
                 break;
             case AdaptiveState.Segments:
             {
@@ -276,7 +276,7 @@ public sealed partial class BarWindow
                 if (_backdrop is null) EnsureTransparentBase(solid);
                 ShowOverlay(new SolidColorBrush(solid), afterSwap: false);
                 SetBarTheme(appTheme);
-                UpdateDivider(solid);
+                UpdateDivider(AdaptiveLogic.Divider(state, solid, App.IsDarkTheme));
                 break;
             }
             default:
@@ -286,7 +286,7 @@ public sealed partial class BarWindow
                 ShowOverlay(Clear(previous), afterSwap: swapped);
                 var global = state is AdaptiveState.Desktop or AdaptiveState.Windowed ? ContrastTheme(sample.Luminance, appTheme) : appTheme;
                 SetBarTheme(global);
-                UpdateDivider(null);
+                UpdateDivider(AdaptiveLogic.Divider(state, null, App.IsDarkTheme));
                 // Transparente: cada parte da barra escolhe texto e ícones pelo papel de parede atrás dela.
                 ApplyRegionContrast(sample, global, appTheme);
                 return;
@@ -441,12 +441,13 @@ public sealed partial class BarWindow
     private Microsoft.UI.Xaml.Shapes.Rectangle? _divider;
 
     /// <summary>
-    /// Linha de 1 pixel físico na base da barra, só com janela maximizada de cor sólida: separa a barra da barra de título.
-    /// Bem sutil (8% de preto sobre cor clara, 8% de branco sobre cor escura), com fade; some na área de trabalho e no material.
+    /// Linha de 1 pixel físico na base da barra (cor de <see cref="AdaptiveLogic.Divider"/>), com fade. O pincel só é trocado
+    /// quando a cor da linha muda: refazê-lo a cada leitura não piscava, mas não há por quê.
     /// </summary>
-    private void UpdateDivider(Color? fill)
+    private void UpdateDivider(Color? line)
     {
-        if (!_settings.Current.AdaptiveDivider) fill = null; // desligada nas configurações
+        if (!_settings.Current.AdaptiveDivider) line = null; // desligada nas configurações
+        var fill = line;
         if (_divider is null)
         {
             if (fill is null) return;
@@ -462,10 +463,10 @@ public sealed partial class BarWindow
         _divider.Height = 1 / Math.Max(1, scale);
         if (fill is { } c)
         {
-            _divider.Fill = new SolidColorBrush(TitleBarColorSampler.IsLight(c) ? Color.FromArgb(20, 0, 0, 0) : Color.FromArgb(20, 255, 255, 255));
-            _divider.Opacity = 1;
+            if ((_divider.Fill as SolidColorBrush)?.Color != c) _divider.Fill = new SolidColorBrush(c);
+            if (_divider.Opacity != 1) _divider.Opacity = 1;
         }
-        else _divider.Opacity = 0;
+        else if (_divider.Opacity != 0) _divider.Opacity = 0;
     }
 
     /// <summary>

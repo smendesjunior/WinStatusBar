@@ -19,6 +19,20 @@ internal static class AdaptiveLogic
     /// <summary>Cor com matiz (Mica/Acrílico ativos mostram o tom do papel de parede); cinza neutro é cor sólida.</summary>
     public static bool IsTinted(Color c) => Math.Max(c.R, Math.Max(c.G, c.B)) - Math.Min(c.R, Math.Min(c.G, c.B)) >= 4;
 
+    /// <summary>
+    /// Divisória de 1 pixel na base da barra: separa a barra da barra de título de qualquer janela maximizada ou encostada
+    /// no topo (cor sólida, material ou degradê), e some sobre a área de trabalho. Depende só disso, e não de a janela ser
+    /// lida como cor sólida ou material (o Claude e o ChatGPT alternam entre as duas leituras e a linha piscava).
+    /// 8% de preto sobre cor clara e 8% de branco sobre escura; sem cor lida, o tema do Windows.
+    /// </summary>
+    public static Color? Divider(AdaptiveState state, Color? under, bool appDark)
+    {
+        if (state is AdaptiveState.Desktop or AdaptiveState.Windowed) return null;
+        var c = under ?? (appDark ? DarkFallback : LightFallback);
+        bool light = 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B > 150;
+        return light ? Color.FromArgb(20, 0, 0, 0) : Color.FromArgb(20, 255, 255, 255);
+    }
+
     public static int Distance(Color a, Color b) => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     /// <summary>Luminância relativa (0 = preto, 1 = branco), como no cálculo de contraste de acessibilidade (WCAG).</summary>
