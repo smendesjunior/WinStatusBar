@@ -10,9 +10,21 @@ namespace WinStatusBar.ExecutorExpansion;
 /// <summary>Only additional Office operations. Never creates, opens, saves, closes or quits user applications.</summary>
 public static class OfficeExpansion
 {
-    public static bool Handles(DesktopActionRequest r) => r.Action == "office" &&
-        ((r.Application == "word" && r.Op is "state" or "format" or "insert_image") ||
-         (r.Application == "excel" && r.Op is "state" or "format"));
+    /// <summary>
+    /// Same reading of "application" as the base executor (DesktopSkills.OfficeOp): missing means Word, case does not
+    /// matter. Otherwise "Word" or no application would skip this class and reach code that starts Word before checking the op.
+    /// </summary>
+    private static string? Kind(DesktopActionRequest r)
+    {
+        string app = (r.Application ?? "word").ToLowerInvariant();
+        return app.Contains("word") ? "word" : app.Contains("excel") ? "excel" : null;
+    }
+    public static bool Handles(DesktopActionRequest r) => r.Action == "office" && Kind(r) switch
+    {
+        "word" => r.Op is "state" or "format" or "insert_image",
+        "excel" => r.Op is "state" or "format",
+        _ => false,
+    };
     public static Task<DesktopActionResult> ExecuteAsync(DesktopActionRequest r, CancellationToken ct)
     {
         var completion = new TaskCompletionSource<DesktopActionResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -36,9 +48,10 @@ public static class OfficeExpansion
         object? application = null, document = null, range = null;
         try
         {
-            application = Active(r.Application == "word" ? "Word.Application" : "Excel.Application");
+            bool word = Kind(r) == "word";
+            application = Active(word ? "Word.Application" : "Excel.Application");
             dynamic app = application;
-            if (r.Application == "word")
+            if (word)
             {
                 if ((int)app.Documents.Count == 0) throw new InvalidOperationException("Nenhum documento aberto.");
                 document = app.ActiveDocument;

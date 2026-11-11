@@ -249,9 +249,16 @@ internal static class QiraHubSession
         if (running)
         {
             await Gate.WaitAsync();
-            try { _lastRestart = DateTime.UtcNow; QiraSharedTurn.MarkRestart(); await RestartQiraAsync(CancellationToken.None); }
+            IDisposable? turn = null;
+            try
+            {
+                // Como nos demais reinícios: só com a vez na mão, nunca enquanto o Qira responde nas IAs do Codex.
+                turn = await QiraSharedTurn.AcquireAsync(TimeSpan.FromSeconds(20), CancellationToken.None);
+                if (turn is null) App.Log("Qira: ponte ativada sem reiniciar agora (o Qira está respondendo no Codex); vale quando ele abrir de novo");
+                else { _lastRestart = DateTime.UtcNow; QiraSharedTurn.MarkRestart(); await RestartQiraAsync(CancellationToken.None); }
+            }
             catch (Exception ex) { return "Ponte ativada, mas o Qira não reiniciou: " + ex.Message + ". Saia do Qira pela bandeja e abra de novo."; }
-            finally { Gate.Release(); }
+            finally { turn?.Dispose(); Gate.Release(); }
         }
         return "Ponte do Qira ativada (porta 9339, só neste PC).";
     }
@@ -395,11 +402,6 @@ internal static class QiraHubSession
     }
 
     private static DateTime _lastRestart = DateTime.MinValue;
-    private static readonly string[] QiraProcesses =
-    [
-        "QuantumAI.Hub", "nextmove-bridge", "ProcessHub", "LenovoQiraCore", "mcpMgmtService", "Lenovo Qira.Launcher", "Ludp.Listener",
-        "Notification.Listener", "lenovo.pfm.pipe", "LocalAgent", "CreatorIMG.MCPServer", "CatchMeUpMcpServer", "CzCloudMcpServer", "file-search-service",
-    ];
     private static readonly string Launcher = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Lenovo", "Lenovo Qira", "Lenovo Qira.Launcher.exe");
 
     /// <summary>
@@ -411,8 +413,9 @@ internal static class QiraHubSession
     {
         if (!File.Exists(Launcher)) throw new QiraException("O Qira parou de responder e o iniciador dele não foi encontrado para reabri-lo.");
         App.Log("Qira: núcleo sem resposta; reiniciando o Qira inteiro (como Sair e abrir de novo)");
-        foreach (var name in QiraProcesses)
-            foreach (var p in Process.GetProcessesByName(name)) using (p) { try { p.Kill(); } catch { } }
+        // Lista comum (QiraSharedTurn) e só o que roda da pasta do Qira: outro programa com o mesmo nome de processo fica de fora.
+        foreach (var name in QiraSharedTurn.ProcessNames)
+            foreach (var p in Process.GetProcessesByName(name)) using (p) { try { if (QiraSharedTurn.IsQiraProcess(p)) p.Kill(); } catch { } }
         await Task.Delay(4000, ct);
         using (Process.Start(new ProcessStartInfo(Launcher, "Qira") { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(Launcher)! })) { }
         var until = DateTime.UtcNow.AddSeconds(60);

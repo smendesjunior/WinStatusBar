@@ -54,6 +54,40 @@ public class DesktopExperienceTests : IDisposable
         Assert.Equal(DesktopExperience.MaxRecipes, memory.All.Count);
     }
 
+    [Fact] public void EveryFreeTextFieldIsShortenedAndCheckedForSecrets()
+    {
+        var memory = new DesktopExperience(_file);
+        string big = new('y', 3000);
+        Assert.True(memory.Remember("Rode o script de conversão das plantas", null,
+            [new("powershell", Text: "param($a) $a", Arguments: [big, "curto"]), new("registry", Op: "write", Path: @"HKCU\Software\X", Name: "V", Value: big),
+             new("office", Application: "word", Op: "replace", Find: big, Replace: big)], []));
+        var steps = memory.All[0].Steps;
+        Assert.All(steps, s => Assert.True(s.Length < 400, s.Length.ToString()));
+        Assert.Contains("curto", steps[0]);
+        // Segredo fora de "text" (argumento, valor, find/replace): nada é guardado.
+        Assert.False(memory.Remember("Configure o acesso do serviço de mapas", null, [new("powershell", Text: "param($a) $a", Arguments: ["token=abc123"])], []));
+        Assert.False(memory.Remember("Grave a configuração do serviço de mapas", null, [new("registry", Op: "write", Path: @"HKCU\Software\X", Name: "V", Value: "senha 123")], []));
+        Assert.False(memory.Remember("Troque o trecho no contrato de mapas", null, [new("office", Application: "word", Op: "replace", Find: "a", Replace: "api key 9")], []));
+        Assert.Single(memory.All);
+    }
+
+    [Fact] public void DamagedFileEntriesAreDroppedInsteadOfBreakingTheExecutor()
+    {
+        File.WriteAllText(_file, """
+            [null,
+             {"Request":null,"App":"x","Steps":["a"],"Avoid":[],"Uses":1,"LastUsed":"2026-11-01T10:00:00"},
+             {"Request":"Sem passos","App":"x","Steps":null,"Avoid":[],"Uses":1,"LastUsed":"2026-11-01T10:00:00"},
+             {"Request":"Sem desvios","App":"x","Steps":["a"],"Avoid":null,"Uses":1,"LastUsed":"2026-11-01T10:00:00"},
+             {"Request":"Abra a nota no Bloco de Notas e salve","App":"Notepad","Steps":["{\"action\":\"open\"}"],"Avoid":[],"Uses":2,"LastUsed":"2026-11-01T10:00:00"}]
+            """);
+        var memory = new DesktopExperience(_file);
+        var only = Assert.Single(memory.All);
+        Assert.Equal("Notepad", only.App);
+        Assert.Single(memory.Recall("Abra a nota no Bloco de Notas e salve tudo", "Notepad"));
+        Assert.True(memory.Remember("Crie a pasta de entregas do mês", null, [new("file", Op: "mkdir", Path: @"C:\t\e")], []));
+        Assert.Equal(2, new DesktopExperience(_file).All.Count); // formato do arquivo igual: relido sem perda
+    }
+
     [Fact] public async Task LoopRecallsOnFirstRoundAndRecordsOnlyVerifiedPaths()
     {
         var previous = DesktopAgentLoop.Memory;

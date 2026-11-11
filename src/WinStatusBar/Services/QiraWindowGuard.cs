@@ -45,15 +45,17 @@ internal static class QiraWindowGuard
     }
 
     /// <summary>Janela que deve ficar escondida: de nível superior e pequena (a janela principal do app é grande).</summary>
-    internal static bool ShouldHide(int width, int height) => height < 360 || width < 420;
+    /// <remarks>Minimizada, a janela grande informa um retângulo minúsculo (160×28): não é "pequena"; escondê-la a tiraria da barra de tarefas.</remarks>
+    internal static bool ShouldHide(int width, int height, bool minimized) => !minimized && (height < 360 || width < 420);
 
     private static void HideIfSmall(IntPtr h)
     {
         if (DateTime.UtcNow < _pausedUntil || !IsWindowVisible(h) || GetAncestor(h, GA_ROOT) != h) return;
         if (!GetWindowRect(h, out var r)) return;
-        if (DateTime.UtcNow >= _hideAllUntil && !ShouldHide(r.Right - r.Left, r.Bottom - r.Top)) return;
+        if (DateTime.UtcNow >= _hideAllUntil && !ShouldHide(r.Right - r.Left, r.Bottom - r.Top, IsIconic(h))) return;
         ShowWindow(h, SW_HIDE);
     }
+    [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr h);
 
     private static void Run(int pid, ManualResetEventSlim ready)
     {

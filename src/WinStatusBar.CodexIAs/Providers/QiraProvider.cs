@@ -148,12 +148,6 @@ internal sealed class QiraProvider : IProvider
         return null;
     }
 
-    private static readonly string[] QiraProcesses =
-    [
-        "QuantumAI.Hub", "nextmove-bridge", "ProcessHub", "LenovoQiraCore", "mcpMgmtService", "Lenovo Qira.Launcher", "Ludp.Listener",
-        "Notification.Listener", "lenovo.pfm.pipe", "LocalAgent", "CreatorIMG.MCPServer", "CatchMeUpMcpServer", "CzCloudMcpServer", "file-search-service",
-    ];
-
     /// <summary>
     /// Reinício completo do Qira, a única recuperação que funciona quando o núcleo trava (verificado pela barra em
     /// 08/11/2026): encerra todas as partes juntas e abre de novo pelo iniciador oficial. Só roda com a vez na mão.
@@ -162,8 +156,9 @@ internal sealed class QiraProvider : IProvider
     {
         if (!File.Exists(Launcher)) throw new QiraException("O Qira parou de responder e o iniciador dele não foi encontrado para reabri-lo.");
         Log.Write("Qira: núcleo sem resposta; reiniciando o Qira inteiro (como Sair e abrir de novo)");
-        foreach (var name in QiraProcesses)
-            foreach (var p in Process.GetProcessesByName(name)) using (p) { try { p.Kill(); } catch { } }
+        // Lista comum (QiraSharedTurn) e só o que roda da pasta do Qira: outro programa com o mesmo nome de processo fica de fora.
+        foreach (var name in QiraSharedTurn.ProcessNames)
+            foreach (var p in Process.GetProcessesByName(name)) using (p) { try { if (QiraSharedTurn.IsQiraProcess(p)) p.Kill(); } catch { } }
         await Task.Delay(4000, ct);
         using (Process.Start(new ProcessStartInfo(Launcher, "Qira") { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(Launcher)! })) { }
         var until = DateTime.UtcNow.AddSeconds(60);

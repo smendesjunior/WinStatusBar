@@ -23,6 +23,13 @@ public static class StructuredCommands
             if ($global:LASTEXITCODE -ne 0) { exit $global:LASTEXITCODE }
         } catch { [Console]::Error.WriteLine($_.ToString()); exit 1 }
         """;
+    /// <summary>
+    /// The whole result text goes into the next model request. The process may print up to 1,000,000 characters per
+    /// stream; only the beginning goes back (the full output is still used below to detect "access denied").
+    /// </summary>
+    private const int MaxStdoutChars = 12000, MaxStderrChars = 4000;
+    private static string Cut(string text, int max) => text.Length <= max ? text : text[..max] + "\n…(truncado; filtre no script)";
+
     public static async Task<DesktopActionResult> ExecuteAsync(DesktopActionRequest r, CancellationToken ct)
     {
         ProcessOutput result;
@@ -43,8 +50,8 @@ public static class StructuredCommands
         string text = "Código de saída: " + result.ExitCode +
             ". Isso confirma o término do processo, não o objetivo da tarefa; confira o estado relevante." +
             (result.Truncated ? " Saída truncada no limite de tamanho." : "") +
-            (result.Stdout.Length == 0 ? "" : "\nSaída:\n" + result.Stdout) +
-            (result.Stderr.Length == 0 ? "" : "\nErros:\n" + result.Stderr);
+            (result.Stdout.Length == 0 ? "" : "\nSaída:\n" + Cut(result.Stdout, MaxStdoutChars)) +
+            (result.Stderr.Length == 0 ? "" : "\nErros:\n" + Cut(result.Stderr, MaxStderrChars));
         // Acesso negado por falta de administrador: bloqueada (não falha genérica) para a IA reenviar com elevated:true,
         // depois de conferir se houve efeito parcial. Acesso negado em rede/SMB não se resolve com UAC.
         bool denied = result.ExitCode != 0 && r.Elevated != true && DeniedPattern.IsMatch(result.Stderr + "\n" + result.Stdout)
