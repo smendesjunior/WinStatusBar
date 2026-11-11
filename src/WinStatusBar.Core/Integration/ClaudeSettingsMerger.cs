@@ -31,15 +31,47 @@ public static class ClaudeSettingsMerger
         string path = collectorPath;
         if (path.Contains(' '))
         {
-            var sb = new StringBuilder(1024);
-            if (GetShortPathNameW(path, sb, sb.Capacity) > 0 && !sb.ToString().Contains(' ')) path = sb.ToString();
+            // Só a PASTA vai para o formato curto; o nome do arquivo continua longo. Com o caminho inteiro em 8.3,
+            // "WinStatusBar.Collector.exe" virava "WINSTA~1.EXE", o comando perdia o marcador e a integração
+            // deixava de reconhecer os próprios hooks (reinstalava por cima a cada conferência).
+            string? dir = Path.GetDirectoryName(path);
+            string file = Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(dir) && file.Length > 0 && ShortPath(dir) is { } shortDir && !shortDir.Contains(' '))
+                path = Path.Combine(shortDir, file);
         }
         path = path.Replace('\\', '/');
         return path.Contains(' ') ? "\"" + path + "\"" : path;
     }
 
+    /// <summary>Caminho no formato curto 8.3, ou null se não houver (nomes curtos desligados, caminho inexistente, resposta maior que o buffer).</summary>
+    private static string? ShortPath(string path)
+    {
+        try
+        {
+            var sb = new StringBuilder(1024);
+            int n = GetShortPathNameW(path, sb, sb.Capacity);
+            return n > 0 && n < sb.Capacity ? sb.ToString() : null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Caminho longo de um caminho 8.3 existente, ou null.</summary>
+    private static string? LongPath(string path)
+    {
+        try
+        {
+            var sb = new StringBuilder(1024);
+            int n = GetLongPathNameW(path, sb, sb.Capacity);
+            return n > 0 && n < sb.Capacity ? sb.ToString() : null;
+        }
+        catch { return null; }
+    }
+
     [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
     private static extern int GetShortPathNameW(string longPath, StringBuilder shortPath, int size);
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int GetLongPathNameW(string shortPath, StringBuilder longPath, int size);
 
     public static JsonObject Install(JsonObject settings, string collectorPath)
     {
@@ -99,11 +131,29 @@ public static class ClaudeSettingsMerger
 
         if (settings["statusLine"] is JsonObject sl && IsOurs(sl))
         {
-            var restored = DecodeOriginal(sl["command"]?.GetValue<string>());
-            if (restored is not null) settings["statusLine"] = restored;
+            // Arquivos danificados por versões antigas guardam a própria statusLine como "original", em cadeia
+            // (--orig dentro de --orig): desembrulha até chegar à statusLine que não é nossa.
+            JsonObject? restored = sl;
+            for (int depth = 0; restored is not null && IsOurs(restored) && depth < 256; depth++)
+                restored = DecodeOriginal(CommandOf(restored));
+            if (restored is not null && !IsOurs(restored)) settings["statusLine"] = restored;
             else settings.Remove("statusLine");
         }
         return settings;
+    }
+
+    private static string? CommandOf(JsonNode? node) =>
+        node is JsonObject o && o["command"] is JsonValue v && v.TryGetValue<string>(out var c) ? c : null;
+
+    /// <summary>Alvo (executável) de um comando: entre aspas, no formato <c>&amp; "…"</c> do PowerShell ou até o primeiro espaço.</summary>
+    private static string CommandTarget(string command)
+    {
+        string c = command.Trim();
+        if (c.Length == 0) return string.Empty;
+        if (c[0] == '"') { int end = c.IndexOf('"', 1); return end > 1 ? c[1..end] : c.Trim('"'); }
+        if (c.StartsWith("& \"", StringComparison.Ordinal)) { int end = c.IndexOf('"', 3); return end > 3 ? c[3..end] : c[3..]; }
+        int sp = c.IndexOf(' ');
+        return sp > 0 ? c[..sp] : c;
     }
 
     /// <summary>
@@ -112,12 +162,8 @@ public static class ClaudeSettingsMerger
     /// </summary>
     public static bool CommandTargetMissing(string command)
     {
-        string c = command.Trim();
-        if (c.Length == 0) return true;
-        string target;
-        if (c[0] == '"') { int end = c.IndexOf('"', 1); target = end > 1 ? c[1..end] : c.Trim('"'); }
-        else if (c.StartsWith("& \"", StringComparison.Ordinal)) { int end = c.IndexOf('"', 3); target = end > 3 ? c[3..end] : c[3..]; }
-        else { int sp = c.IndexOf(' '); target = sp > 0 ? c[..sp] : c; }
+        if (command.Trim().Length == 0) return true;
+        string target = CommandTarget(command);
         bool absolute = target.Length > 2 && (target[1] == ':' || target.StartsWith(@"\\", StringComparison.Ordinal));
         if (!absolute) return false;
         try { return !File.Exists(Environment.ExpandEnvironmentVariables(target.Replace('/', '\\'))); }
@@ -129,6 +175,9 @@ public static class ClaudeSettingsMerger
     {
         if (settings["statusLine"] is not JsonObject sl || !IsOurs(sl)) return false;
         var orig = DecodeOriginal(sl["command"]?.GetValue<string>());
+        // O "original" é a própria statusLine do WinStatusBar (arquivo danificado por versões antigas, que não
+        // reconheciam o comando em formato 8.3): também pede reparo, e a reinstalação desfaz a cadeia.
+        if (orig is not null && IsOurs(orig)) return true;
         return orig?["command"] is JsonValue v && v.TryGetValue<string>(out var c) && CommandTargetMissing(c);
     }
 
@@ -152,8 +201,21 @@ public static class ClaudeSettingsMerger
         catch { return null; }
     }
 
-    private static bool IsOurs(JsonNode? node) =>
-        node is JsonObject o && o["command"] is JsonValue v && v.TryGetValue<string>(out var c) && c.Contains(Marker, StringComparison.OrdinalIgnoreCase);
+    private static bool IsOurs(JsonNode? node)
+    {
+        if (CommandOf(node) is not { } c) return false;
+        if (c.Contains(Marker, StringComparison.OrdinalIgnoreCase)) return true;
+        // Comandos gravados por versões antigas com o caminho inteiro em 8.3 (…/WINSTA~1.EXE) não trazem o marcador:
+        // o nome longo do arquivo diz se é o coletor. Só consulta o disco quando há "~" no alvo.
+        string target = CommandTarget(c);
+        if (!target.Contains('~')) return false;
+        try
+        {
+            return LongPath(Environment.ExpandEnvironmentVariables(target.Replace('/', '\\'))) is { } full
+                && string.Equals(Path.GetFileName(full), Marker, StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
 }
 
 /// <summary>Aplica a mescla ao arquivo real com backup e gravação atômica.</summary>
@@ -183,6 +245,28 @@ public static class ClaudeIntegrationInstaller
         catch { return false; }
     }
 
+    /// <summary>
+    /// Mantém só os <paramref name="keep"/> backups mais novos do próprio WinStatusBar
+    /// (<c>settings.json.winstatusbar-backup-AAAAMMDD-HHMMSS</c>) na pasta do arquivo. Nenhum outro arquivo é tocado.
+    /// </summary>
+    internal static void PruneBackups(string settingsFile, int keep)
+    {
+        try
+        {
+            string? dir = Path.GetDirectoryName(settingsFile);
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+            string prefix = Path.GetFileName(settingsFile) + ".winstatusbar-backup-";
+            // O carimbo AAAAMMDD-HHMMSS do nome ordena como texto: do mais novo para o mais antigo.
+            var old = Directory.EnumerateFiles(dir, prefix + "*", SearchOption.TopDirectoryOnly)
+                .Where(f => Path.GetFileName(f).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+                .Skip(Math.Max(0, keep))
+                .ToList();
+            foreach (string f in old) { try { File.Delete(f); } catch { } }
+        }
+        catch { }
+    }
+
     private static string Modify(Func<JsonObject, JsonObject> change)
     {
         string file = SettingsFile;
@@ -210,6 +294,7 @@ public static class ClaudeIntegrationInstaller
         string tmp = file + ".winstatusbar.tmp";
         File.WriteAllText(tmp, settings.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         File.Move(tmp, file, overwrite: true);
+        PruneBackups(file, keep: 5);
         return backup.Length > 0 ? global::WinStatusBar.Core.LocalizedText.F("Atualizado. Backup: {0}", new object?[] {backup}) : global::WinStatusBar.Core.LocalizedText.T("Criado.");
     }
 }

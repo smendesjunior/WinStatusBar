@@ -89,13 +89,19 @@ internal static class ConversationStore
 
     private static string PathFor(string root, SavedConversation c) => Path.Combine(root, ServiceFolder(c.Target), c.Id + ".json");
 
-    /// <summary>Arquivo existente da conversa (na pasta do serviço ou, se antigo, na raiz).</summary>
-    private static string? Find(string root, string id)
+    /// <summary>
+    /// Arquivo existente da conversa (na pasta do serviço ou, se antigo, na raiz).
+    /// <paramref name="expected"/> é onde a conversa deve estar: conferido antes da busca em todas as pastas, que
+    /// percorria o histórico inteiro (no OneDrive) a cada salvamento. A busca continua valendo quando o arquivo não
+    /// está lá (primeiro salvamento, ou conversa que trocou de IA e precisa ser movida).
+    /// </summary>
+    private static string? Find(string root, string id, string? expected = null)
     {
         try
         {
             string legacy = Path.Combine(root, id + ".json");
             if (File.Exists(legacy)) return legacy;
+            if (expected is not null && File.Exists(expected)) return expected;
             return Directory.Exists(root) ? Directory.EnumerateFiles(root, id + ".json", SearchOption.AllDirectories).FirstOrDefault() : null;
         }
         catch { return null; }
@@ -111,7 +117,7 @@ internal static class ConversationStore
             string path = PathFor(root, c);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             // Background saves can arrive out of order (reply completion and summary).
-            string? current = Find(root, c.Id);
+            string? current = Find(root, c.Id, path);
             if (current is not null)
             {
                 try

@@ -34,8 +34,26 @@ internal static class ActiveDocumentContext
         // Restaurar um app minimizado avisa "primeiro plano" ainda minimizado (descartado); MINIMIZEEND (0x17)
         // chega quando ele já voltou, e então entra como a janela em uso.
         _restoreHook = SetWinEventHook(0x17, 0x17, IntPtr.Zero, Callback, 0, 0, 2);
+        PurgeCacheIfDue();
     }
     private static IntPtr _restoreHook;
+
+    private static long _lastPurgeTicks;
+    /// <summary>
+    /// Capturas e textos antigos do contexto saem do cache: uma vez ao abrir e, depois, no máximo uma vez por dia
+    /// (de carona numa captura), sempre em segundo plano.
+    /// </summary>
+    private static void PurgeCacheIfDue()
+    {
+        long now = DateTime.UtcNow.Ticks, last = Interlocked.Read(ref _lastPurgeTicks);
+        if (last != 0 && now - last < TimeSpan.TicksPerDay) return;
+        if (Interlocked.CompareExchange(ref _lastPurgeTicks, now, last) != last) return; // outra chamada já cuidou
+        _ = Task.Run(() =>
+        {
+            var (files, folders) = ContextCache.Purge(ContextCache.Root, DateTime.UtcNow);
+            if (files + folders > 0) App.Log($"Contexto: cache limpo · {files} arquivo(s) e {folders} pasta(s) antigos removidos");
+        });
+    }
 
     /// <summary>A janela de conteúdo em uso mudou (outro app foi para a frente): o chat atualiza o contexto na hora.</summary>
     public static event Action? ForegroundChanged;
@@ -164,6 +182,7 @@ internal static class ActiveDocumentContext
     /// <param name="monitor">Área do monitor onde o chat abriu (a tela ativa); null = qualquer tela.</param>
     public static async Task<Context?> CaptureSelectionAsync(Rect? monitor = null)
     {
+        PurgeCacheIfDue();
         var hwnd = ChooseWindow(monitor);
         if (hwnd == IntPtr.Zero) return null;
         GetWindowThreadProcessId(hwnd, out uint pid);
@@ -195,6 +214,7 @@ internal static class ActiveDocumentContext
 
     public static async Task<Context> CaptureAsync(Rect? monitor = null)
     {
+        PurgeCacheIfDue();
         var hwnd = ChooseWindow(monitor);
         if (hwnd == IntPtr.Zero)
             return new(null, "Sem contexto", "Não foi possível identificar a janela do conteúdo nesta tela.");
@@ -250,10 +270,9 @@ internal static class ActiveDocumentContext
     {
         try
         {
-            string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "WinStatusBar", "cache", "context", Guid.NewGuid().ToString("N"));
+            string folder = System.IO.Path.Combine(ContextCache.Root, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(folder);
-            string name = text.Kind switch { "word" => "texto-do-documento.txt", "excel" => "dados-da-planilha.txt", "web" => "texto-da-pagina.txt", _ => "texto-da-janela.txt" };
+            string name = ContextCache.TextFileName(text.Kind);
             var sb = new StringBuilder().Append("Origem: ").Append(text.Source).Append('\n');
             if (text.Url is { Length: > 0 }) sb.Append("Endereço: ").Append(text.Url).Append('\n');
             sb.Append("Janela: ").Append(title).Append('\n').Append("Capturado em: ").Append(DateTime.Now.ToString("dd/MM/yyyy HH:mm")).Append("\n\n").Append(body);
@@ -290,7 +309,7 @@ internal static class ActiveDocumentContext
             if (dc != IntPtr.Zero) ReleaseDC(hwnd, dc);
         }
         // Área privada de cache. Somente a janela selecionada, nunca a área de trabalho inteira.
-        string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinStatusBar", "cache", "context");
+        string folder = ContextCache.Root;
         Directory.CreateDirectory(folder);
         string path = System.IO.Path.Combine(folder, Guid.NewGuid().ToString("N") + ".png");
         var file = await Windows.Storage.StorageFolder.GetFolderFromPathAsync(folder);

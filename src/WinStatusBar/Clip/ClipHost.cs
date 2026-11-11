@@ -100,13 +100,11 @@ public static class ClipHost
         }
         if (s.ClipboardMaxStorageMb > 0)
         {
-            long limit = s.ClipboardMaxStorageMb * 1048576L, used = StorageBytes(victims);
-            foreach (var i in unpinned.Where(i => !victims.Contains(i) && (i.ImageFile != null || i.Backups != null)))
-            {
-                if (used <= limit) break;
-                used -= ItemBytes(i);
+            // O limite vale para imagens e cópias de arquivos dos itens não fixados (texto e fixados não contam):
+            // a escolha fica em ClipStorageLimit; o tamanho de cada item vem do cache do Store.
+            long limit = s.ClipboardMaxStorageMb * 1048576L;
+            foreach (var i in ClipStorageLimit.SelectVictims(unpinned.Where(i => !victims.Contains(i)), i => i.Pinned, store.MediaBytes, limit))
                 victims.Add(i);
-            }
         }
         foreach (var i in victims) store.Delete(i);
         if (victims.Count > 0) { Log.Write($"Limites aplicados: {victims.Count} itens removidos."); window?.Invalidate(); }
