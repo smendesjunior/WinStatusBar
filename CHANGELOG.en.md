@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.6.1] - 2026-11-11 · build BUILD
+
+### Fixed
+- Codex quota menu: the account block notice moved to the footer, next to the stopped conversations, in a card set apart from the quotas, and now takes two lines (reason; when it comes back and where that came from).
+- Quota menu: a scroll bar showed up even with room left on screen (the menu's default height limit cut it at about 760 points); the menu now grows to the bottom of the screen and only scrolls when it does not fit.
+
 ## [1.6.0] - 2026-11-11 · build 20261111031856
 
 ### Added

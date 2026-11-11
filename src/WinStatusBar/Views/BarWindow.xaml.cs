@@ -835,6 +835,11 @@ public sealed partial class BarWindow : Window
         presenter.Setters.Add(new Setter(FlyoutPresenter.PaddingProperty, new Thickness(16, 14, 16, 14)));
         presenter.Setters.Add(new Setter(FlyoutPresenter.MinWidthProperty, 360d));
         presenter.Setters.Add(new Setter(FlyoutPresenter.MaxWidthProperty, 840d));
+        // Altura até o fim da área de trabalho deste monitor (o padrão do WinUI corta em ~760 pontos e põe barra de rolagem
+        // mesmo com espaço sobrando); só rola se o conteúdo não couber na tela.
+        var screen = CurrentMonitor();
+        double maxHeight = screen is null ? 1000 : (screen.Work.Bottom - screen.Work.Top) * 96.0 / screen.Dpi - 16;
+        presenter.Setters.Add(new Setter(FlyoutPresenter.MaxHeightProperty, Math.Max(600, maxHeight)));
         presenter.Setters.Add(new Setter(FlyoutPresenter.CornerRadiusProperty, new CornerRadius(8)));
         flyout.FlyoutPresenterStyle = presenter;
         // Conteúdo montado na abertura (dados atuais) e atualizado enquanto o menu estiver aberto.
@@ -843,10 +848,30 @@ public sealed partial class BarWindow : Window
         ContentControl? quota = null, resume = null;
         double resumeWidth = 0;
         const double columnSpacing = 20;
-        // Rodapé (só no Codex): conversas paradas pela cota e Continuar pela API, na largura das duas colunas quando a
-        // coluna da OpenAI API está ao lado.
-        UIElement? Resume() => kind == Core.Ai.AgentKind.Codex
-            ? CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing) : null;
+        // Rodapé (só no Codex): o aviso de bloqueio da conta, as conversas paradas pela cota e o Continuar pela API, num
+        // cartão próprio, separado das cotas, na largura das duas colunas quando a coluna da OpenAI API está ao lado.
+        UIElement? Resume()
+        {
+            if (kind != Core.Ai.AgentKind.Codex) return null;
+            double inner = resumeWidth > 0 ? resumeWidth : QuotaDetailsView.ContentWidth;
+            var block = QuotaDetailsView.BlockFooter(_hub, Root.RequestedTheme, inner);
+            var section = CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing, divider: false);
+            if (block is null && section is null) return null;
+            var stack = new StackPanel { Spacing = 12 };
+            if (block is not null) stack.Children.Add(block);
+            if (section is not null) stack.Children.Add(section);
+            const double pad = 14; // o fundo do cartão avança pela margem do menu; o conteúdo fica alinhado com as colunas
+            return new Border
+            {
+                Child = stack,
+                Padding = new Thickness(pad, 12, pad, 12),
+                Margin = new Thickness(-pad, 6, -pad, 0),
+                CornerRadius = new CornerRadius(8),
+                BorderThickness = new Thickness(1),
+                Background = Services.ThemeBrushes.ForTheme("CardBackgroundFillColorSecondaryBrush", Root.RequestedTheme),
+                BorderBrush = Services.ThemeBrushes.ForTheme("CardStrokeColorDefaultBrush", Root.RequestedTheme),
+            };
+        }
         timer.Tick += (_, _) =>
         {
             if (QuotaDetailsView.ResetPending) return;

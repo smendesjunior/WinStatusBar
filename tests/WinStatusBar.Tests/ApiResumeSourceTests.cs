@@ -207,7 +207,10 @@ public class ApiResumeSourceTests
         // Rodapé do menu da cota, na largura das duas colunas (e não mais no meio da coluna do Codex).
         Assert.DoesNotContain("CodexApiResumeView.Section(", Src("Views", "QuotaDetailsView.cs"));
         string bar = Src("Views", "BarWindow.xaml.cs");
-        Assert.Contains("CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing)", bar);
+        Assert.Contains("CodexApiResumeView.Section(App.Current.ApiResume, Root.RequestedTheme, resumeWidth, columnSpacing, divider: false)", bar);
+        // O aviso de bloqueio da conta vai junto, no mesmo cartão do rodapé (separado das cotas acima).
+        Assert.Contains("QuotaDetailsView.BlockFooter(_hub, Root.RequestedTheme, inner)", bar);
+        Assert.Contains("CardBackgroundFillColorSecondaryBrush", bar);
         Assert.Contains("resumeWidth = QuotaDetailsView.ContentWidth + columnSpacing + api.Width;", bar);
     }
 

@@ -4260,4 +4260,7 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SADE974D0011B87DD" xml:space="preserve">
     <value>On (default), the Codex quota menu shows the conversations stopped by the quota and the Continue via the API button, which resumes each one with your OpenAI key, outside the Codex app. Off, the section and its tracking disappear; continuations already running go on until they finish.</value>
   </data>
+  <data name="S6B5B2234D9758921" xml:space="preserve">
+    <value>Codex is blocked by the account: {0}.</value>
+  </data>
 </root>

@@ -77,12 +77,8 @@ public static class QuotaDetailsView
         root.Children.Add(header);
 
         // Bloqueio da conta (Codex): antes do "sem janelas", porque existe snapshot só com o bloqueio.
-        bool accountBlocked = false;
-        if (isCodex && Core.Ai.Codex.CodexQuotaText.Banner(q, now) is { } blockBanner)
-        {
-            accountBlocked = q?.Access?.Blocks == true;
-            root.Children.Add(BlockBanner(blockBanner, theme));
-        }
+        // O aviso em si fica no rodapé do menu, junto das conversas paradas (BlockFooter); aqui só o efeito nas janelas.
+        bool accountBlocked = isCodex && Core.Ai.Codex.CodexQuotaText.Banner(q, now) is not null && q?.Access?.Blocks == true;
         // As conversas paradas pela cota e o Continuar pela API ficam no rodapé do menu (BarWindow.CreateQuotaFlyout).
 
         if (q?.Primary is null && q?.Secondary is null)
@@ -189,16 +185,20 @@ public static class QuotaDetailsView
     };
 
     /// <summary>Aviso do bloqueio da conta do Codex: cinco linhas. O detalhe técnico fica só no registro (linha "Codex cota:").</summary>
-    private static UIElement BlockBanner(Core.Ai.Codex.CodexBlockBanner banner, ElementTheme theme)
+    /// <summary>Aviso "O Codex está bloqueado pela conta" para o rodapé do menu da cota, na largura dada; null sem bloqueio.</summary>
+    public static UIElement? BlockFooter(MonitoringHub hub, ElementTheme theme, double width)
+        => Core.Ai.Codex.CodexQuotaText.CompactBanner(hub.Codex.Quota, DateTimeOffset.Now) is { } banner ? BlockBanner(banner, theme, width) : null;
+
+    /// <summary>Duas linhas: o bloqueio com o motivo (negrito) e quando volta · de onde veio a informação.</summary>
+    private static UIElement BlockBanner((string Headline, string Detail) banner, ElementTheme theme, double width)
     {
         var panel = new StackPanel { Spacing = 2 };
-        panel.Children.Add(Text(banner.Title, "BodyStrongTextBlockStyle", wrap: true));
-        foreach (var line in new[] { banner.Reason, banner.Returns, banner.Effect, banner.Confirmed })
-            panel.Children.Add(Text(line, "BodyTextBlockStyle", wrap: true));
+        foreach (var (line, style) in new[] { (banner.Headline, "BodyStrongTextBlockStyle"), (banner.Detail, "BodyTextBlockStyle") })
+            panel.Children.Add(new TextBlock { Text = line, TextWrapping = TextWrapping.Wrap, MaxWidth = width - 24, Style = (Style)Application.Current.Resources[style] });
         return new Border
         {
-            Width = ContentWidth,
-            Padding = new Thickness(12, 10, 12, 10),
+            Width = width,
+            Padding = new Thickness(12, 8, 12, 8),
             CornerRadius = new CornerRadius(6),
             Background = WinStatusBar.Services.ThemeBrushes.ForTheme("SystemFillColorCautionBackgroundBrush", theme),
             Child = panel,

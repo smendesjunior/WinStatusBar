@@ -4260,4 +4260,7 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SADE974D0011B87DD" xml:space="preserve">
     <value>开启（默认）时，Codex 配额菜单会显示因配额停止的对话和“通过 API 继续”按钮，可使用你的 OpenAI 密钥在 Codex 应用之外逐一继续。关闭后，此部分和进度跟踪会消失；正在进行的继续会运行到结束。</value>
   </data>
+  <data name="S6B5B2234D9758921" xml:space="preserve">
+    <value>Codex 已被账户阻止：{0}。</value>
+  </data>
 </root>

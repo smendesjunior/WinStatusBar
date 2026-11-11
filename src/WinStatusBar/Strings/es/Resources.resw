@@ -4260,4 +4260,7 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SADE974D0011B87DD" xml:space="preserve">
     <value>Activado (predeterminado), el menú de cuota de Codex muestra las conversaciones detenidas por la cuota y el botón Continuar por la API, que retoma cada una con tu clave de OpenAI, fuera de la app de Codex. Desactivado, la sección y el seguimiento desaparecen; las continuaciones en curso siguen hasta terminar.</value>
   </data>
+  <data name="S6B5B2234D9758921" xml:space="preserve">
+    <value>Codex está bloqueado por la cuenta: {0}.</value>
+  </data>
 </root>

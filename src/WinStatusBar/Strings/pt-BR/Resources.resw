@@ -4260,4 +4260,7 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SADE974D0011B87DD" xml:space="preserve">
     <value>Ligado (padrão), o menu da cota do Codex mostra as conversas paradas pela cota e o botão Continuar pela API, que retoma cada uma pela sua chave da OpenAI, fora do app do Codex. Desligado, a seção e o acompanhamento somem; continuações em andamento seguem até terminar.</value>
   </data>
+  <data name="S6B5B2234D9758921" xml:space="preserve">
+    <value>O Codex está bloqueado pela conta: {0}.</value>
+  </data>
 </root>

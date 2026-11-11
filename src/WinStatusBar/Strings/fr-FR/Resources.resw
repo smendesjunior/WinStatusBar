@@ -4260,4 +4260,7 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SADE974D0011B87DD" xml:space="preserve">
     <value>Activé (par défaut), le menu du quota Codex affiche les conversations arrêtées par le quota et le bouton Continuer via l'API, qui reprend chacune avec votre clé OpenAI, en dehors de l'app Codex. Désactivé, la section et le suivi disparaissent ; les reprises déjà en cours continuent jusqu'à la fin.</value>
   </data>
+  <data name="S6B5B2234D9758921" xml:space="preserve">
+    <value>Codex est bloqué par le compte : {0}.</value>
+  </data>
 </root>

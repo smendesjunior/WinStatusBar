@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.6.1] - 2026-11-11 · compilação BUILD
+
+### Corrigido
+- Menu da cota do Codex: o aviso de bloqueio da conta foi para o rodapé, junto das conversas paradas, num cartão separado das cotas, e ficou com duas linhas (motivo; quando volta e de onde veio a informação).
+- Menu da cota: a barra de rolagem aparecia mesmo com espaço sobrando na tela (o limite de altura padrão do menu cortava em cerca de 760 pontos); agora o menu cresce até o fim da tela e só rola se não couber.
+
 ## [1.6.0] - 2026-11-11 · compilação 20261111031856
 
 ### Adicionado

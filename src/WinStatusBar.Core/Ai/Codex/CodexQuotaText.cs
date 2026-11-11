@@ -163,6 +163,17 @@ public static class CodexQuotaText
             Technical(access));
     }
 
+    /// <summary>
+    /// Aviso curto do rodapé do menu da cota, em duas linhas: o bloqueio com o motivo e, abaixo, quando volta e de onde veio
+    /// a informação. Null quando o Codex está livre.
+    /// </summary>
+    public static (string Headline, string Detail)? CompactBanner(QuotaSnapshot? quota, DateTimeOffset now)
+    {
+        if (Banner(quota, now) is not { } banner) return null;
+        string headline = LocalizedText.F("O Codex está bloqueado pela conta: {0}.", Reason(Cause(quota, now)));
+        return (headline, banner.Returns.TrimEnd('.') + " · " + banner.Confirmed);
+    }
+
     /// <summary>Linha do log quando o bloqueio começa: "Codex cota: uso bloqueado (motivo) até 12/11 23:01 · detalhe: …" (o detalhe
     /// técnico que saiu do aviso do menu). Sem tradução.</summary>
     internal static string BlockLog(QuotaSnapshot quota, DateTimeOffset now)

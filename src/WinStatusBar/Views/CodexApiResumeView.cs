@@ -18,18 +18,19 @@ internal static class CodexApiResumeView
     /// Seção do rodapé do menu da cota. <paramref name="columnsWidth"/> &gt; 0 (menu com a coluna da OpenAI API ao lado): a seção
     /// ocupa a largura das duas colunas, com o resumo e o botão à esquerda e os cartões das continuações à direita.
     /// </summary>
-    public static UIElement? Section(CodexApiResumeService svc, ElementTheme theme, double columnsWidth = 0, double columnSpacing = 20)
+    public static UIElement? Section(CodexApiResumeService svc, ElementTheme theme, double columnsWidth = 0, double columnSpacing = 20, bool divider = true)
     {
         if (!svc.Enabled && !svc.Supervisor.HasUnfinished) return null;
         if (!ApiResumeText.ShowSection(svc.CodexBlocked, svc.Supervisor.HasUnfinished)) return null;
         svc.SectionShown();
         bool wide = columnsWidth > Width;
-        var root =new StackPanel { Spacing = 8, Width = wide ? columnsWidth : Width };
-        root.Children.Add(new Border
-        {
-            Height = 1, Margin = new Thickness(0, 2, 0, 2),
-            Background = ThemeBrushes.ForTheme("DividerStrokeColorDefaultBrush", theme),
-        });
+        var root = new StackPanel { Spacing = 8, Width = wide ? columnsWidth : Width };
+        if (divider)
+            root.Children.Add(new Border
+            {
+                Height = 1, Margin = new Thickness(0, 2, 0, 2),
+                Background = ThemeBrushes.ForTheme("DividerStrokeColorDefaultBrush", theme),
+            });
         var left = wide ? new StackPanel { Spacing = 8, Width = Width } : root;
         var jobs = wide ? new StackPanel { Spacing = 12, Width = Width } : root;
         if (wide)
