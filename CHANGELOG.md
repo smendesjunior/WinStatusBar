@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.5.1] - 2026-11-10 · compilação BUILD
+## [1.5.1] - 2026-11-10 · compilação 20261111011834
 
 ### Corrigido
 - Codex › Continuar pela API: o gasto final não aparece mais como US$ 0,00 quando o painel da OpenAI ainda não informou o custo. O painel mostra as requisições antes do custo e não atualiza o saldo na hora; agora o cartão diz que o custo ainda não foi informado, usa o custo do dia quando o saldo está parado e confere de novo 5, 15, 60 e 180 minutos depois do fim.
