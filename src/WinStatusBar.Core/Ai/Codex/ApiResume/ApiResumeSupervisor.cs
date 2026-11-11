@@ -18,6 +18,8 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
     private static readonly TimeSpan SpendEvery = TimeSpan.FromMinutes(3);
     private static readonly TimeSpan[] RefreshAfterEnd = [TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(60), TimeSpan.FromMinutes(180)];
     private static readonly TimeSpan SecondInterrupt = TimeSpan.FromSeconds(15), OfferForce = TimeSpan.FromSeconds(30);
+    /// <summary>Esperas entre as novas tentativas da conferência grátis do modelo; depois da última, a continuação falha como antes.</summary>
+    private static readonly TimeSpan[] CheckBackoff = [TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5)];
 
     public event Action? Changed;
 
@@ -29,6 +31,10 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
     private readonly Dictionary<string, WaitState> _waits = new(StringComparer.Ordinal);
     /// <summary>Conflitos -32600 seguidos por continuação (a sonda diz livre, mas o Codex diz que a conversa está aberta).</summary>
     private readonly Dictionary<string, int> _conflicts = new(StringComparer.Ordinal);
+    /// <summary>Conferências do modelo sem resposta por continuação (rede fora, 429, 5xx) e quando tentar de novo. Nada foi iniciado: sem custo.</summary>
+    private readonly Dictionary<string, (int Failures, DateTimeOffset Next)> _checkRetries = new(StringComparer.Ordinal);
+    /// <summary>O jobs.json existe mas não pôde ser lido: nada é gravado por cima dele até uma leitura dar certo.</summary>
+    private bool _loadFailed;
     private IReadOnlyList<ApiResumeJob> _published = [];
     private CancellationTokenSource? _loop;
     private Task? _loopTask;
@@ -106,6 +112,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
             job.State = ApiResumeState.Removed;
             job.EndedAt = job.UpdatedAt = host.Now;
             _waits.Remove(job.Id);
+            _checkRetries.Remove(job.Id);
             Save();
         }
         return Task.CompletedTask;
@@ -116,6 +123,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         if (Find(id) is { State: ApiResumeState.Failed or ApiResumeState.Completed } job)
         {
             ResetRun(job);
+            _checkRetries.Remove(job.Id);
             job.State = ApiResumeState.Queued;
             job.EndedAt = null;
             job.Notified = false;
@@ -134,7 +142,11 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
 
     // ---------------- ciclo de vida ----------------
 
-    /// <summary>Carrega o registro, reconecta as continuações vivas e classifica as que terminaram com a barra fechada.</summary>
+    /// <summary>
+    /// Carrega o registro, reconecta as continuações vivas e classifica as que terminaram com a barra fechada.
+    /// Se o jobs.json existe mas não pôde ser lido (arquivo em uso, sem permissão), lança sem iniciar o laço e sem deixar
+    /// nada ser gravado por cima dele; quem chamou tenta de novo, e os pedidos feitos nesse meio-tempo entram na leitura seguinte.
+    /// </summary>
     public async Task StartAsync(CancellationToken ct)
     {
         await _tick.WaitAsync(ct).ConfigureAwait(false);
@@ -142,28 +154,51 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         {
             var now = host.Now;
             List<ApiResumeJob> loaded;
+            bool corrupt;
+            try { loaded = ApiResumeStore.Prune(store.Load(out corrupt, host.Log), now); }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                lock (_lock) _loadFailed = true;
+                throw;
+            }
             lock (_lock)
             {
-                loaded = ApiResumeStore.Prune(store.Load(host.Log), now);
+                // Pedidos feitos enquanto o registro não podia ser lido (só na memória) entram agora, sem repetir conversa.
+                var pending = _loadFailed
+                    ? _jobs.Where(p => loaded.All(l => l.Id != p.Id && (l.ThreadId != p.ThreadId || l.IsFinished))).ToList()
+                    : [];
+                _loadFailed = false;
                 _jobs.Clear();
                 _jobs.AddRange(loaded);
+                _jobs.AddRange(pending);
                 _waits.Clear();
+                _checkRetries.Clear();
             }
-            try { store.DeleteOrphanFolders(loaded); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            // Registro corrompido (posto de lado): as pastas são a única prova do que rodou, inclusive de uma continuação viva.
+            if (!corrupt)
+                try { store.DeleteOrphanFolders(loaded); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
             foreach (var job in loaded.Where(j => j.IsActive))
             {
-                if (job.Pid is { } pid && job.ProcessCreatedAt is { } created && launcher.IsSame(pid, created))
-                    host.Log($"{Prefix}reconectado pid={pid} (barra reiniciada)");
-                else
+                try
                 {
-                    job.EndedWhileBarClosed = true;
-                    await FinishAsync(job, now).ConfigureAwait(false);
+                    if (job.Pid is { } pid && job.ProcessCreatedAt is { } created && launcher.IsSame(pid, created))
+                        host.Log($"{Prefix}reconectado pid={pid} (barra reiniciada)");
+                    else
+                    {
+                        job.EndedWhileBarClosed = true;
+                        await FinishAsync(job, now).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // Uma continuação que não deu para conferir agora não pode deixar as outras sem o laço: ele tenta de novo.
+                    host.Log($"{Prefix}não foi possível conferir a conversa {job.ThreadId} ao abrir ({e.GetType().Name}: {ApiResumeErrors.Redact(e.Message)})");
                 }
             }
             Save();
         }
         finally { _tick.Release(); }
-        if (!ManualTicks)
+        if (!ManualTicks && _loop is null)
         {
             _loop = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var token = _loop.Token;
@@ -279,8 +314,38 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
 
     // ---------------- vez da continuação (regra 4) ----------------
 
+    /// <summary>
+    /// A conferência do modelo não teve resposta definitiva: sem resposta HTTP (rede fora, DNS, tempo esgotado) ou
+    /// 408, 429, 500, 502, 503 e 504. Um 403 sem "model" e os outros códigos são definitivos.
+    /// </summary>
+    internal static bool IsTransientCheck(string? detail)
+    {
+        string text = detail ?? "";
+        if (!text.StartsWith("HTTP ", StringComparison.Ordinal)) return true;
+        string code = text.Length >= 8 ? text[5..8] : "";
+        return code is "408" or "429" or "500" or "502" or "503" or "504";
+    }
+
+    /// <summary>Falha passageira na conferência grátis: fica na fila e tenta de novo em 10 s, 30 s, 1, 2 e 5 min. False: acabou a espera ou o erro é definitivo.</summary>
+    private bool RetryCheckLater(ApiResumeJob job, string? detail, DateTimeOffset now, DateTimeOffset? returns)
+    {
+        if (!IsTransientCheck(detail)) return false;
+        int failures = _checkRetries.TryGetValue(job.Id, out var retry) ? retry.Failures : 0;
+        if (failures >= CheckBackoff.Length) return false;
+        var wait = CheckBackoff[failures];
+        _checkRetries[job.Id] = (failures + 1, now + wait);
+        string why = AiErrorExplainer.ExplainApiResume(detail, job.Model, returns).Short;
+        job.State = ApiResumeState.Queued; // também quando vinha da espera pelo app: a trava já estava livre
+        job.Detail = why;
+        job.UpdatedAt = now;
+        host.Log($"{Prefix}conferência do modelo sem resposta ({why}); nova tentativa em {(int)wait.TotalSeconds} s conversa={job.ThreadId}");
+        Save();
+        return true;
+    }
+
     private async Task TryStartAsync(ApiResumeJob job, DateTimeOffset now, CancellationToken ct)
     {
+        if (_checkRetries.TryGetValue(job.Id, out var waiting) && now < waiting.Next) return;
         var returns = host.CodexQuota?.BlockedUntil(now);
         string? exe = DetachedProcess.RequireCodexExe(host.FindCodexExecutable());
         if (exe is null) { Block(job, ApiResumeProblem.CodexNotFound, now, returns); return; }
@@ -296,8 +361,13 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         {
             case ModelCheckResult.ModelNotFound: Block(job, ApiResumeProblem.ModelNotInApi, now, returns, technical: check.Detail); return;
             case ModelCheckResult.KeyRejected: Block(job, ApiResumeProblem.KeyRejected, now, returns, technical: check.Detail); return;
-            case ModelCheckResult.OtherError: Fail(job, AiErrorExplainer.ExplainApiResume(check.Detail, job.Model, returns), now); return;
+            case ModelCheckResult.OtherError:
+                // Nada foi iniciado nem cobrado: uma falha passageira (PC acabou de acordar, 429, 5xx) espera e confere de novo.
+                if (RetryCheckLater(job, check.Detail, now, returns)) return;
+                Fail(job, AiErrorExplainer.ExplainApiResume(check.Detail, job.Model, returns), now);
+                return;
         }
+        if (_checkRetries.Remove(job.Id)) job.Detail = null;
         if (host.Levels(job.Model) is { Efforts.Count: > 0 } levels && !levels.Efforts.Contains(job.Effort, StringComparer.Ordinal))
         { Block(job, ApiResumeProblem.EffortNotAccepted, now, returns); return; }
         if (string.IsNullOrEmpty(job.Cwd) || !host.DirectoryExists(job.Cwd)) { Block(job, ApiResumeProblem.FolderUnavailable, now, returns); return; }
@@ -378,6 +448,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         job.Error = ApiResumeErrors.For(problem, job.Model, job.Effort, job.Cwd, returns, at, technical);
         job.EndedAt = job.UpdatedAt = now;
         _waits.Remove(job.Id);
+        _checkRetries.Remove(job.Id);
         host.Log($"{Prefix}bloqueada conversa={job.ThreadId} motivo={job.Error.Short}");
         Save();
         host.Notify(new ApiResumeNotice(job.Title, ApiResumeText.Notice(job, now).Message, job.ThreadId));
@@ -389,6 +460,7 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
         job.Error = error;
         job.EndedAt = job.UpdatedAt = now;
         _waits.Remove(job.Id);
+        _checkRetries.Remove(job.Id);
         host.Log($"{Prefix}fim conversa={job.ThreadId} resultado={job.State} duração=0min00s entrada=0 cache=0 saída=0 US$=n/d");
         Save();
         host.Notify(new ApiResumeNotice(job.Title, ApiResumeText.Notice(job, now).Message, job.ThreadId));
@@ -644,8 +716,10 @@ public sealed class ApiResumeSupervisor(IApiResumeHost host, IApiResumeLauncher 
     {
         lock (_lock)
         {
-            try { store.Save(_jobs); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { host.Log($"{Prefix}não foi possível gravar jobs.json ({e.Message})"); }
+            // Registro não lido: gravar agora trocaria as continuações que estão nele só pelas da memória.
+            if (!_loadFailed)
+                try { store.Save(_jobs); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { host.Log($"{Prefix}não foi possível gravar jobs.json ({e.Message})"); }
             _published = _jobs.Select(j => j.Clone()).ToList();
         }
         Changed?.Invoke();

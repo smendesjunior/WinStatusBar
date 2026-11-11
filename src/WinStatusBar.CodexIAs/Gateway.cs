@@ -214,7 +214,14 @@ internal sealed class Gateway : IDisposable
         if (model.StartsWith(CodexCatalog.Prefix, StringComparison.Ordinal))
         {
             if (rest is not ("/responses" or "/responses/compact") || payload is null) { await BridgeServer.PlainAsync(stream, 400, "Endpoint unavailable for these models"); return; }
-            if (rest == "/responses/compact") { await BridgeServer.JsonAsync(stream, BridgeServer.Compact(payload)); return; }
+            if (rest == "/responses/compact")
+            {
+                JsonObject compact;
+                try { compact = BridgeServer.Compact(payload); }
+                catch (Exception ex) when (BridgeServer.BadShape(ex)) { await BridgeServer.PlainAsync(stream, 400, BridgeServer.BadShapeMessage); return; }
+                await BridgeServer.JsonAsync(stream, compact);
+                return;
+            }
             await BridgeServer.RespondAsync(stream, socket, model, _registry.Resolve(model), payload, _stop.Token);
             return;
         }
@@ -230,7 +237,9 @@ internal sealed class Gateway : IDisposable
         {
             if (rest is not ("/responses" or "/responses/compact")) { await BridgeServer.PlainAsync(stream, 400, "Endpoint unavailable for OpenAI API alias"); return; }
             if (OpenAiKey.Get() is not { } key) { await BridgeServer.PlainAsync(stream, 401, "Chave da API OpenAI não cadastrada neste PC. Cadastre a chave e tente de novo."); return; }
-            var api = OpenAiKey.Rewrite(payload);
+            JsonObject api;
+            try { api = OpenAiKey.Rewrite(payload); }
+            catch (Exception ex) when (BridgeServer.BadShape(ex)) { await BridgeServer.PlainAsync(stream, 400, BridgeServer.BadShapeMessage); return; }
             // API pública: nunca a autorização da conta do ChatGPT nem os cabeçalhos internos do Codex.
             await ForwardAsync("POST", "https://api.openai.com/v1" + rest, Json(api, key), Encoding.UTF8.GetBytes(api.ToJsonString()), stream, socket, "a API da OpenAI");
             return;
@@ -252,7 +261,7 @@ internal sealed class Gateway : IDisposable
     private static List<KeyValuePair<string, string>> Json(JsonObject payload, string bearer) =>
     [
         new("Authorization", "Bearer " + bearer), new("Content-Type", "application/json"),
-        new("Accept", payload["stream"]?.GetValue<bool>() == true ? "text/event-stream" : "application/json"),
+        new("Accept", payload["stream"] is JsonValue stream && stream.TryGetValue<bool>(out bool on) && on ? "text/event-stream" : "application/json"),
     ];
 
     private static (int Port, string Token)? BarBridge()

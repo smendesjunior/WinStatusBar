@@ -61,7 +61,8 @@ internal sealed class WebChatProvider : IProvider
             if (File.Exists(Paths.ModesFile))
                 foreach (var p in JsonDocument.Parse(File.ReadAllText(Paths.ModesFile)).RootElement.EnumerateObject()) all[p.Name] = p.Value.Clone();
             all[_site.Name] = modes.Select(m => new { path = m.Path, description = m.Description }).ToList();
-            File.WriteAllText(Paths.ModesFile, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+            // Gravação atômica: a barra lê este arquivo e não pode pegá-lo pela metade.
+            WinStatusBar.Core.Ai.Codex.CodexIntegration.WriteAtomic(Paths.ModesFile, JsonSerializer.Serialize(all,new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
         }
         catch (Exception ex) { Log.Write($"{_site.Label}: não gravou os modos: {ex.Message}"); }
     }

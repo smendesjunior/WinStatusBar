@@ -109,11 +109,13 @@ public sealed class ClaudeProvider : IProvider
             // No grupo que encerra tudo junto com o componente (fechado ou atualizado no meio: o claude e os comandos param).
             if (Job.Value?.Add(proc) != true && Interlocked.Exchange(ref _jobWarned, 1) == 0)
                 Log.Write("Claude: grupo de processos do Windows indisponível; os comandos do Claude não param junto com o componente");
+            // Antes de enviar o pedido: cancelar no meio do envio (o claude ainda abrindo) também encerra o processo, que
+            // senão ficaria rodando com meio pedido.
+            using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } });
             // O pedido vai pela entrada padrão: sem limite de tamanho da linha de comando.
             await proc.StandardInput.WriteAsync(prompt.AsMemory(), ct);
             proc.StandardInput.Close();
             var stderrTask = proc.StandardError.ReadToEndAsync(ct);
-            using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } });
             while (await proc.StandardOutput.ReadLineAsync(ct) is { } line) output.Line(line);
             await proc.WaitForExitAsync(ct);
             string stderr = await stderrTask;
@@ -126,7 +128,12 @@ public sealed class ClaudeProvider : IProvider
         }
         catch (OperationCanceledException) { return new(output.Streamed.Trim(), "Interrompido"); }
         catch (Exception ex) { return new(output.Streamed.Trim(), ex.Message); }
-        finally { proc?.Dispose(); }
+        finally
+        {
+            // Saída por erro ou cancelamento com o claude ainda aberto: nunca fica um processo sem dono.
+            try { if (proc is { HasExited: false }) proc.Kill(entireProcessTree: true); } catch { }
+            proc?.Dispose();
+        }
     }
 
     /// <summary>Resposta final que começa pelo que já foi mostrado (o Codex só recebe o que falta).</summary>

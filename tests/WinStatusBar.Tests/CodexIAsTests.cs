@@ -298,6 +298,43 @@ public class CodexIAsConfigTests
         Assert.Contains("openai_base_url = \"https://outro\"", removed);
     }
 
+    // Uma linha que começa com "[" dentro de uma lista ou de um texto de várias linhas não é o começo de uma tabela.
+    [Fact]
+    public void Lista_de_listas_antes_da_chave_nao_e_tabela()
+    {
+        const string toml = "notify = [\n  [\"a\", \"b\"],\n  [\"c\"]\n]\nopenai_base_url = \"https://x/v1\"\n\n[profiles.x]\nopenai_base_url = \"https://outro\"\n";
+        Assert.Equal("https://x/v1", CodexConfig.Get(toml, "openai_base_url"));
+        string changed = CodexConfig.Set(toml, "openai_base_url", "http://127.0.0.1:11435/v1");
+        Assert.Equal("notify = [\n  [\"a\", \"b\"],\n  [\"c\"]\n]\nopenai_base_url = \"http://127.0.0.1:11435/v1\"\n\n[profiles.x]\nopenai_base_url = \"https://outro\"\n", changed);
+        string removed = CodexConfig.Set(toml, "openai_base_url", null);
+        Assert.Equal("notify = [\n  [\"a\", \"b\"],\n  [\"c\"]\n]\n\n[profiles.x]\nopenai_base_url = \"https://outro\"\n", removed);
+    }
+
+    [Theory]
+    [InlineData("\"\"\"")]
+    [InlineData("'''")]
+    public void Texto_de_varias_linhas_nao_esconde_nem_imita_chaves(string quotes)
+    {
+        string toml = $"developer_instructions = {quotes}\n[IMPORTANTE] leia o AGENTS.md\nopenai_base_url = \"http://dentro-do-texto\"\n{quotes}\nopenai_base_url = \"https://x/v1\" # comentário com [colchete\n\n[profiles.x]\nopenai_base_url = \"https://outro\"\n";
+        Assert.Equal("https://x/v1", CodexConfig.Get(toml, "openai_base_url"));
+        Assert.Null(CodexConfig.Get(toml, "model_catalog_json"));
+        string changed = CodexConfig.Set(toml, "openai_base_url", "http://127.0.0.1:11435/v1");
+        Assert.Contains("openai_base_url = \"http://dentro-do-texto\"", changed); // o texto da pessoa fica igual
+        Assert.Contains($"{quotes}\nopenai_base_url = \"http://127.0.0.1:11435/v1\"\n\n[profiles.x]", changed);
+        Assert.DoesNotContain("https://x/v1", changed);
+        // Chave nova: no início, como hoje (nunca dentro do texto nem depois da primeira tabela).
+        string added = CodexConfig.Set(toml, "model_catalog_json", @"C:\m.json");
+        Assert.StartsWith("model_catalog_json = \"C:\\\\m.json\"\ndeveloper_instructions = ", added);
+    }
+
+    [Fact]
+    public void Texto_de_varias_linhas_na_mesma_linha_e_aspas_escapadas()
+    {
+        const string toml = "a = \"\"\"um [texto] curto\"\"\"\nb = \"com \\\" aspas e [colchete\"\nc = 'literal com [colchete'\nopenai_base_url = \"https://x/v1\"\n[t]\nopenai_base_url = \"https://outro\"\n";
+        Assert.Equal("https://x/v1", CodexConfig.Get(toml, "openai_base_url"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(CodexConfig.Set(toml, "openai_base_url", "http://127.0.0.1:11435/v1"), "11435"));
+    }
+
     [Fact]
     public void Reconhece_o_endereco_do_encaminhador()
     {
@@ -576,5 +613,151 @@ public class CodexIAsLocalAndApiTests
         string before = catalog.ToJsonString() + routing.ToJsonString();
         OllamaCatalog.MergeInto(catalog, routing, installed); // de novo: nada muda
         Assert.Equal(before, catalog.ToJsonString() + routing.ToJsonString());
+    }
+}
+
+/// <summary>Falhas passageiras do componente das IAs no Codex: nada fica apontando para uma porta morta nem rodando sem dono.</summary>
+public class CodexIAsRobustnessTests
+{
+    private static string Component() => RepoSource.Read("src", "WinStatusBar", "Services", "CodexIasComponent.cs");
+
+    [Fact]
+    public void Barra_inicia_o_encaminhador_pela_resposta_dele_e_nao_pelo_nome_do_processo()
+    {
+        string body = ApiResumeSourceTests.Body(Component(), "public static async Task<bool> EnsureRunningAsync()");
+        Assert.Contains("!Available", body);
+        Assert.Contains("CodexIntegration.LoadState().Ligado", body); // ligação desligada (instalação nova): nunca inicia
+        Assert.Contains("GatewayOnlineAsync()", body);
+        Assert.Contains("CommandInFlight", body);
+        Assert.DoesNotContain("GetProcessesByName", body);
+        Assert.DoesNotMatch(@"\bRunning\b", body);
+    }
+
+    [Fact]
+    public void Comando_do_componente_em_andamento_fica_marcado()
+    {
+        string body = ApiResumeSourceTests.Body(Component(), "public static async Task<CodexIntegration.CommandResult> RunAsync(string[] args, CancellationToken ct)");
+        Assert.Contains("Interlocked.Increment(ref _commands)", body);
+        Assert.Contains("Interlocked.Decrement(ref _commands)", body);
+    }
+
+    [Theory]
+    [InlineData(false, false, "RestoreAndForget")] // atualização, nunca ligado: desfaz e tenta de novo na próxima abertura
+    [InlineData(false, true, "Restore")]           // instalação nova ou desligado pela pessoa: desfaz e continua desligado
+    [InlineData(true, true, "None")]               // já estava ligado (correção): fica como estava
+    [InlineData(true, false, "None")]
+    public void Encaminhador_que_nao_sobe_desfaz_a_ligacao_nova(bool wasOn, bool hadState, string expected) =>
+        Assert.Equal(expected, CodexConfig.RollbackAfterFailedStart(wasOn, hadState).ToString());
+
+    [Fact]
+    public void Ligar_confere_o_estado_de_antes_e_desfaz_se_o_encaminhador_nao_subir()
+    {
+        string program = RepoSource.Read("src", "WinStatusBar.CodexIAs", "Program.cs");
+        string body = ApiResumeSourceTests.Body(program, "private static async Task<(bool, string)> EnableAsync()");
+        int before = body.IndexOf("File.Exists(CodexIntegration.StateFile)", StringComparison.Ordinal);
+        int enable = body.IndexOf("CodexConfig.EnableAsync(", StringComparison.Ordinal);
+        int undo = body.IndexOf("CodexConfig.UndoEnableAsync(", StringComparison.Ordinal);
+        Assert.True(before >= 0 && before < enable && enable < undo, $"{before} {enable} {undo}");
+    }
+
+    private static System.Diagnostics.ProcessStartInfo Cmd(params string[] args)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
+            { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+        foreach (var a in new[] { "/d", "/c" }.Concat(args)) psi.ArgumentList.Add(a);
+        return psi;
+    }
+
+    [Fact]
+    public async Task Programa_que_termina_devolve_a_saida()
+    {
+        string? output = await CodexModelLevels.OutputAsync(Cmd("echo", "pronto"), CancellationToken.None);
+        Assert.Equal("pronto", output!.Trim());
+    }
+
+    [Fact]
+    public async Task Programa_que_nao_termina_e_encerrado_no_fim_do_prazo()
+    {
+        int pid = 0;
+        using var limit = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            CodexModelLevels.OutputAsync(Cmd("ping", "-n", "60", "127.0.0.1"), limit.Token, id => pid = id));
+        Assert.NotEqual(0, pid);
+        bool gone = false;
+        for (int i = 0; i < 50 && !gone; i++)
+        {
+            try { using var p = System.Diagnostics.Process.GetProcessById(pid); gone = p.HasExited; }
+            catch (ArgumentException) { gone = true; }
+            if (!gone) await Task.Delay(100);
+        }
+        Assert.True(gone, "o processo continuou rodando depois do prazo");
+    }
+
+    [Theory]
+    [InlineData("src/WinStatusBar.CodexIAs/OpenAiCatalog.cs", "public static async Task<JsonArray?> BundledAsync(CancellationToken ct)")]
+    [InlineData("src/WinStatusBar.Core/Ai/Codex/CodexModelLevels.cs", "public static async Task<int> RefreshNowAsync(CancellationToken ct)")]
+    public void Lista_de_modelos_do_Codex_usa_a_leitura_que_encerra_no_prazo(string file, string signature) =>
+        Assert.Contains("OutputAsync(psi, ", ApiResumeSourceTests.Body(RepoSource.Read(file.Split('/')), signature));
+
+    [Theory]
+    [InlineData("Authorization: Bearer abc.DEF-123_xyz fim", "Authorization: Bearer ••• fim")]
+    [InlineData("chave sk-proj-AbC123_def-456 recusada", "chave sk-••• recusada")]
+    [InlineData("erro em C:\\x\\task-force-alpha e risk-assessment", "erro em C:\\x\\task-force-alpha e risk-assessment")] // "sk-" no meio de uma palavra não é chave
+    [InlineData("Pedido: Claude Opus · esforço high", "Pedido: Claude Opus · esforço high")]
+    public void Registro_do_componente_mascara_chaves(string line, string expected) => Assert.Equal(expected, CodexIAs.Log.Mask(line));
+
+    [Fact]
+    public void Arquivos_de_estado_sao_gravados_de_forma_atomica()
+    {
+        Assert.Contains("CodexIntegration.WriteAtomic(StateFile, ", RepoSource.Read("src", "WinStatusBar.CodexIAs", "OpenAiCatalog.cs"));
+        Assert.Contains("CodexIntegration.WriteAtomic(Paths.ModesFile, ", RepoSource.Read("src", "WinStatusBar.CodexIAs", "Providers", "WebChatProvider.cs"));
+    }
+
+    /// <summary>Ler o settings.json da barra sem FileShare.Delete faz a gravação das Configurações falhar no meio de um pedido.</summary>
+    [Fact]
+    public void Preferencias_da_barra_sao_lidas_sem_travar_o_arquivo()
+    {
+        foreach (var file in new[] { "OpenAiKey.cs", Path.Combine("Providers", "ApiProvider.cs") })
+        {
+            string text = RepoSource.Read("src", "WinStatusBar.CodexIAs", file);
+            Assert.Contains("BarSettings.Load()", text);
+            Assert.DoesNotContain("File.ReadAllText(SettingsService.SettingsPath)", text);
+        }
+    }
+
+    [Theory]
+    [InlineData("""{"model":"codexias-x","stream":true,"input":[{"type":5}]}""")]
+    [InlineData("""{"model":"codexias-x","stream":true,"input":[3]}""")]
+    [InlineData("""{"model":"codexias-x","input":[{"type":"message","role":7}]}""")]
+    public async Task Pedido_com_formato_inesperado_recebe_400_em_vez_de_conexao_fechada(string json)
+    {
+        CodexIAs.Log.Enabled = false;
+        using var ms = new MemoryStream();
+        using var run = new CancellationTokenSource();
+        await BridgeServer.RespondCoreAsync(ms, "codexias-x", null, JsonNode.Parse(json)!, false, run, new BridgeConnection(run, false));
+        string text = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        Assert.StartsWith("HTTP/1.1 400 ", text);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(text, "HTTP/1\\.1 "));
+        Assert.Contains("Invalid request format", text);
+    }
+
+    [Fact]
+    public async Task Stream_com_formato_inesperado_vale_resposta_sem_streaming()
+    {
+        CodexIAs.Log.Enabled = false;
+        using var ms = new MemoryStream();
+        using var run = new CancellationTokenSource();
+        await BridgeServer.RespondCoreAsync(ms, "codexias-x", null, JsonNode.Parse("""{"model":"codexias-x","stream":"sim","input":[]}""")!, false, run, new BridgeConnection(run, false));
+        Assert.StartsWith("HTTP/1.1 200 OK\r\nContent-Type: application/json", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+    }
+
+    [Fact]
+    public void Nivel_de_esforco_com_formato_inesperado_vale_o_padrao()
+    {
+        Assert.Equal("high", BridgeServer.EffortOf(JsonNode.Parse("""{"reasoning":{"effort":"high"}}""")!));
+        Assert.Null(BridgeServer.EffortOf(JsonNode.Parse("""{"reasoning":{"effort":"none"}}""")!));
+        Assert.Null(BridgeServer.EffortOf(JsonNode.Parse("""{"reasoning":"high"}""")!));
+        Assert.Null(BridgeServer.EffortOf(JsonNode.Parse("""{"reasoning":{"effort":3}}""")!));
+        Assert.Null(BridgeServer.EffortOf(JsonNode.Parse("{}")!));
     }
 }

@@ -19,6 +19,9 @@ internal sealed class FakeHost : IApiResumeHost
     public string? Key { get; set; } = FakeKey;
     public string? Config { get; set; }
     public ModelCheckResult ModelResult { get; set; } = ModelCheckResult.Ok;
+    /// <summary>Detalhe da conferência que não deu Ok (padrão: "HTTP 500: x").</summary>
+    public string? ModelDetail { get; set; }
+    public bool TailThrows { get; set; }
     public List<(string Model, bool Fresh)> ModelChecks { get; } = [];
     public CodexModelLevels.Levels? LevelsValue { get; set; }
     public Func<string, bool> Dirs { get; set; } = _ => true;
@@ -42,11 +45,11 @@ internal sealed class FakeHost : IApiResumeHost
     public Task<ModelCheck> CheckModelAsync(string model, string apiKey, bool fresh, CancellationToken ct)
     {
         ModelChecks.Add((model, fresh));
-        return Task.FromResult(new ModelCheck(ModelResult, "org", ModelResult == ModelCheckResult.Ok ? null : "HTTP 500: x", Now));
+        return Task.FromResult(new ModelCheck(ModelResult, "org", ModelResult == ModelCheckResult.Ok ? null : ModelDetail ?? "HTTP 500: x", Now));
     }
     public CodexModelLevels.Levels? Levels(string model) => LevelsValue;
     public bool DirectoryExists(string path) => Dirs(path);
-    public RolloutTail? ReadTail(string rolloutPath) => Tail;
+    public RolloutTail? ReadTail(string rolloutPath) => TailThrows ? throw new InvalidOperationException("registro ilegível") : Tail;
     public ThreadLockState ProbeLock(string threadId) { Probes++; return Lock; }
     public bool ChatGptAppRunning() => ChatGpt;
     public Task WaitChatGptExitAsync(CancellationToken ct) => ChatGptExit.Task;
@@ -258,6 +261,110 @@ public class ApiResumeSupervisorTests
         Assert.All(t.Host.ModelChecks, c => Assert.Equal("gpt-5.6-sol", c.Model));
         Assert.Empty(t.Launcher.Starts);
     }
+
+    // Conferência grátis do modelo sem resposta (PC acabou de acordar, 429, 5xx): fica na fila e tenta de novo, sem custo.
+    [Fact]
+    public async Task TransientModelCheckFailureRetriesWithBackoffThenFails()
+    {
+        using var t = new Supervisor();
+        t.Host.ModelResult = ModelCheckResult.OtherError; // "HTTP 500: x"
+        t.Sup.Enqueue([Stop()], false);
+        await t.Tick();
+        Assert.Equal(ApiResumeState.Queued, t.Job().State);
+        Assert.Single(t.Host.ModelChecks);
+        await t.Tick(S5); // 5 s: ainda dentro dos 10 s
+        Assert.Single(t.Host.ModelChecks);
+        await t.Tick(S5);
+        Assert.Equal(2, t.Host.ModelChecks.Count);
+        foreach (int wait in new[] { 30, 60, 120 })
+        {
+            await t.Tick(TimeSpan.FromSeconds(wait - 1));
+            await t.Tick(S1);
+        }
+        Assert.Equal(5, t.Host.ModelChecks.Count);
+        Assert.Equal(ApiResumeState.Queued, t.Job().State);
+        await t.Tick(TimeSpan.FromMinutes(5));
+        Assert.Equal(6, t.Host.ModelChecks.Count);
+        Assert.Equal((ApiResumeState.Failed, "serviço instável"), (t.Job().State, t.Job().Error!.Short));
+        Assert.All(t.Host.ModelChecks, c => Assert.True(c.Fresh));
+        Assert.Empty(t.Launcher.Starts);
+        Assert.Contains(t.Host.Logs, l => Regex.IsMatch(l, @"^Continuar pela API: conferência do modelo sem resposta \(serviço instável\); nova tentativa em 10 s conversa=\S+$"));
+    }
+
+    [Fact]
+    public async Task ModelCheckRecoversWhenTheNetworkIsBack()
+    {
+        using var t = new Supervisor();
+        t.Host.ModelResult = ModelCheckResult.OtherError;
+        t.Host.ModelDetail = "HttpRequestException: No such host is known. (api.openai.com:443)";
+        t.Sup.Enqueue([Stop()], false);
+        await t.Tick();
+        Assert.Equal(ApiResumeState.Queued, t.Job().State);
+        Assert.Null(t.Job().Error);
+        t.Host.ModelResult = ModelCheckResult.Ok;
+        await t.Tick(TimeSpan.FromSeconds(10));
+        Assert.Equal(ApiResumeState.Running, t.Job().State);
+        Assert.Single(t.Launcher.Starts);
+
+        // Enquanto tenta de novo, continua na fila: dá para tirar.
+        using var again = new Supervisor();
+        again.Host.ModelResult = ModelCheckResult.OtherError;
+        again.Sup.Enqueue([Stop()], false);
+        await again.Tick();
+        await again.Tick(TimeSpan.FromSeconds(10));
+        Assert.Equal(2, again.Host.ModelChecks.Count);
+        again.Sup.RemoveFromQueue(again.Job().Id);
+        await again.Tick(S1);
+        Assert.Equal(ApiResumeState.Removed, again.Job().State);
+    }
+
+    [Fact]
+    public async Task TransientModelCheckFailureAfterWaitingForTheAppGoesBackToTheQueue()
+    {
+        using var t = new Supervisor();
+        t.Host.Lock = ThreadLockState.Held;
+        t.Sup.Enqueue([Stop()], false);
+        await t.Tick();
+        Assert.Equal(ApiResumeState.WaitingForApp, t.Job().State);
+        t.Host.Lock = ThreadLockState.Free;
+        t.Host.ModelResult = ModelCheckResult.OtherError;
+        t.Host.ModelDetail = "TaskCanceledException: The request was canceled due to the configured HttpClient.Timeout of 15 seconds elapsing.";
+        await t.Tick(TimeSpan.FromMinutes(30)); // o PC acordou sem rede
+        Assert.Equal(ApiResumeState.Queued, t.Job().State);
+        t.Host.ModelResult = ModelCheckResult.Ok;
+        await t.Tick(TimeSpan.FromSeconds(10));
+        Assert.Equal(ApiResumeState.Running, t.Job().State);
+    }
+
+    [Theory]
+    [InlineData("HTTP 403: {\"error\":{\"message\":\"forbidden\"}}")]
+    [InlineData("HTTP 400: {\"error\":{\"message\":\"bad\"}}")]
+    public async Task DefinitiveModelCheckErrorFailsAtOnce(string detail)
+    {
+        using var t = new Supervisor();
+        t.Host.ModelResult = ModelCheckResult.OtherError;
+        t.Host.ModelDetail = detail;
+        t.Sup.Enqueue([Stop()], false);
+        await t.Tick();
+        Assert.Equal(ApiResumeState.Failed, t.Job().State);
+        Assert.Single(t.Host.ModelChecks);
+        Assert.Empty(t.Launcher.Starts);
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("HttpRequestException: sem rede", true)]
+    [InlineData("HTTP 408: x", true)]
+    [InlineData("HTTP 429: x", true)]
+    [InlineData("HTTP 500: x", true)]
+    [InlineData("HTTP 502: x", true)]
+    [InlineData("HTTP 503: x", true)]
+    [InlineData("HTTP 504: x", true)]
+    [InlineData("HTTP 403: forbidden", false)]
+    [InlineData("HTTP 400: x", false)]
+    [InlineData("HTTP 501: x", false)]
+    public void OnlyNetworkAndServerSideCheckFailuresAreTransient(string? detail, bool transient) =>
+        Assert.Equal(transient, ApiResumeSupervisor.IsTransientCheck(detail));
 
     [Fact]
     public async Task ModelCheckedAgainAtStart()
@@ -721,6 +828,60 @@ public class ApiResumeSupervisorTests
         SavedRunning(t, 100, t.Host.Now.AddMinutes(-20));
         await t.Sup.StartAsync(CancellationToken.None);
         Assert.Equal((ApiResumeState.Failed, "parou sem registrar o fim"), (t.Job().State, t.Job().Error!.Short));
+    }
+
+    [Fact]
+    public async Task CorruptRegistryKeepsTheRunFolders()
+    {
+        using var t = new Supervisor();
+        File.WriteAllText(t.Store.JobsFile, "{not json");
+        string events = t.Store.EventsFile("0123456789abcdef");
+        Directory.CreateDirectory(Path.GetDirectoryName(events)!);
+        File.WriteAllText(events, "{\"type\":\"turn.started\"}\n");
+        await t.Sup.StartAsync(CancellationToken.None);
+        Assert.Empty(t.Sup.Jobs);
+        Assert.True(File.Exists(events)); // sem o registro, as pastas das continuações são a única prova do que rodou
+        Assert.Single(Directory.GetFiles(t.Root, "jobs.corrompido-*.json"));
+    }
+
+    [Fact]
+    public async Task UnreadableRegistryIsNeverOverwritten()
+    {
+        using var t = new Supervisor();
+        var created = t.Host.Now.AddMinutes(-3);
+        var saved = SavedRunning(t, 100, created);
+        t.Launcher.Alive.Add(100); t.Launcher.Created[100] = created;
+        string before = File.ReadAllText(t.Store.JobsFile);
+        using (new FileStream(t.Store.JobsFile, FileMode.Open, FileAccess.Read, FileShare.None))
+            await Assert.ThrowsAnyAsync<IOException>(() => t.Sup.StartAsync(CancellationToken.None));
+
+        // Sem o registro lido, um pedido novo fica só na memória: gravar agora apagaria a continuação que está rodando.
+        Assert.Equal(1, t.Sup.Enqueue([Supervisor.StopB()], false));
+        Assert.Equal(before, File.ReadAllText(t.Store.JobsFile));
+        await t.Sup.ShutdownAsync();
+        Assert.Equal(before, File.ReadAllText(t.Store.JobsFile));
+
+        await t.Sup.StartAsync(CancellationToken.None); // a barra tenta de novo e agora lê
+        Assert.Equal(2, t.Sup.Jobs.Count);
+        Assert.Equal(ApiResumeState.Running, t.Sup.Jobs.Single(j => j.Id == saved.Id).State);
+        Assert.Equal(ApiResumeState.Queued, t.JobOf(Id2).State);
+        string after = File.ReadAllText(t.Store.JobsFile);
+        Assert.Contains(saved.Id, after);
+        Assert.Contains(Id2, after);
+    }
+
+    [Fact]
+    public async Task OneJobThatCannotBeReconciledDoesNotStopTheStart()
+    {
+        using var t = new Supervisor();
+        SavedRunning(t, 100, t.Host.Now.AddMinutes(-20)); // processo morto: classificar o fim lê o registro do Codex
+        t.Host.TailThrows = true;
+        await t.Sup.StartAsync(CancellationToken.None);
+        Assert.Single(t.Sup.Jobs);
+        Assert.Contains(t.Host.Logs, l => l.StartsWith("Continuar pela API: não foi possível conferir a conversa ", StringComparison.Ordinal));
+        t.Host.TailThrows = false;
+        await t.Tick(S1); // o laço segue e classifica na vez seguinte
+        Assert.True(t.Job().IsFinished);
     }
 
     [Fact]

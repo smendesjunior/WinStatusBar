@@ -81,11 +81,20 @@ internal static class Log
     /// <summary>Desligado nos testes (não gravam no log real).</summary>
     public static bool Enabled { get; set; } = true;
 
+    // "sk-" só no começo de uma palavra: "task-…" e "risk-…" em caminhos e mensagens não são chaves.
+    private static readonly System.Text.RegularExpressions.Regex Secret = new(@"(?<![A-Za-z0-9])sk-[A-Za-z0-9_\-]{6,}|\b(?i:Bearer)\s+\S+",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>Tira chaves do texto (sk-…, Bearer …) antes de ir para o registro: uma mensagem de erro pode trazer o pedido de volta.</summary>
+    internal static string Mask(string message)
+        => Secret.Replace(message, m => m.Value.StartsWith("sk-", StringComparison.Ordinal) ? "sk-•••" : "Bearer •••");
+
     public static void Write(string message)
     {
         if (!Enabled) return;
         try
         {
+            message = Mask(message);
             lock (Sync)
             {
                 Directory.CreateDirectory(Paths.DataDir);

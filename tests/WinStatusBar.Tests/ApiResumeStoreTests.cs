@@ -75,6 +75,58 @@ public class ApiResumeStoreTests
     }
 
     [Fact]
+    public void LoadTellsACorruptRegistryFromAnEmptyOne()
+    {
+        string root = TempRoot();
+        try
+        {
+            var store = new ApiResumeStore(root);
+            Assert.Empty(store.Load(out bool corrupt)); // ainda não existe
+            Assert.False(corrupt);
+            store.Save([Job()]);
+            Assert.Single(store.Load(out corrupt));
+            Assert.False(corrupt);
+            File.WriteAllText(store.JobsFile, ""); // queda de energia no meio da gravação
+            Assert.Empty(store.Load(out corrupt));
+            Assert.True(corrupt);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void LoadWaitsForAFileInUse()
+    {
+        string root = TempRoot();
+        try
+        {
+            var store = new ApiResumeStore(root);
+            store.Save([Job()]);
+            var held = new FileStream(store.JobsFile, FileMode.Open, FileAccess.Read, FileShare.None);
+            var release = new Thread(() => { Thread.Sleep(100); held.Dispose(); }); // thread própria: não depende da fila de tarefas dos testes
+            release.Start();
+            Assert.Single(store.Load());
+            release.Join();
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void LoadNeverTreatsAFileItCannotReadAsEmpty()
+    {
+        string root = TempRoot();
+        try
+        {
+            var store = new ApiResumeStore(root);
+            store.Save([Job()]);
+            using (new FileStream(store.JobsFile, FileMode.Open, FileAccess.Read, FileShare.None))
+                Assert.ThrowsAny<IOException>(() => store.Load());
+            Assert.Single(store.Load()); // o arquivo fica onde estava
+            Assert.Empty(Directory.GetFiles(root, "jobs.corrompido-*.json"));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void PruneKeepsUnfinishedAndTwentyNewest()
     {
         var now = CodexResumeCommandTests.At.AddDays(9);

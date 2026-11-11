@@ -35,10 +35,64 @@ internal static partial class CodexConfig
     // ------------------------------------------------------------------ TOML (só chaves de nível superior)
     [GeneratedRegex(@"^\s*\[")] private static partial Regex TableLine();
 
-    private static int TopEnd(List<string> lines)
+    /// <summary>
+    /// Onde acaba o nível superior (a primeira tabela) e quais linhas antes dela começam uma chave. Uma linha dentro de um
+    /// texto de várias linhas ("""…""" ou '''…''') ou de uma lista aberta não é tabela nem chave, mesmo começando com "["
+    /// (lista de listas, "[IMPORTANTE]" nas instruções) ou parecendo "chave = valor".
+    /// </summary>
+    private static (int End, bool[] Starts) TopLevel(List<string> lines)
     {
-        int i = lines.FindIndex(l => TableLine().IsMatch(l));
-        return i < 0 ? lines.Count : i;
+        var starts = new bool[lines.Count];
+        string? text = null; // aspas que fecham o texto de várias linhas aberto
+        int depth = 0;       // listas e tabelas em linha abertas
+        for (int i = 0; i < lines.Count; i++)
+        {
+            bool top = text is null && depth == 0;
+            if (top && TableLine().IsMatch(lines[i])) return (i, starts);
+            starts[i] = top;
+            Scan(lines[i], ref text, ref depth);
+        }
+        return (lines.Count, starts);
+    }
+
+    /// <summary>Avança o estado por uma linha: textos (com \" escapado nos de aspas duplas), comentário e colchetes fora de texto.</summary>
+    private static void Scan(string line, ref string? text, ref int depth)
+    {
+        int i = 0;
+        while (i < line.Length)
+        {
+            if (text is not null)
+            {
+                int close = CloseOf(line, i, text);
+                if (close < 0) return; // o texto continua na linha seguinte
+                i = close + 3;
+                text = null;
+                continue;
+            }
+            char c = line[i];
+            if (c == '#') return;
+            if (c is '"' or '\'')
+            {
+                if (i + 2 < line.Length && line[i + 1] == c && line[i + 2] == c) { text = new string(c, 3); i += 3; continue; }
+                for (i++; i < line.Length && line[i] != c; i++)
+                    if (c == '"' && line[i] == '\\') i++;
+                i++;
+                continue;
+            }
+            if (c is '[' or '{') depth++;
+            else if (c is ']' or '}' && depth > 0) depth--;
+            i++;
+        }
+    }
+
+    private static int CloseOf(string line, int from, string quotes)
+    {
+        for (int i = from; i + 2 < line.Length; i++)
+        {
+            if (quotes[0] == '"' && line[i] == '\\') { i++; continue; }
+            if (line[i] == quotes[0] && line[i + 1] == quotes[0] && line[i + 2] == quotes[0]) return i;
+        }
+        return -1;
     }
 
     private static Regex KeyLine(string key) => new($@"^\s*{Regex.Escape(key)}\s*=\s*(.*)$");
@@ -47,10 +101,10 @@ internal static partial class CodexConfig
     public static string? Get(string toml, string key)
     {
         var lines = toml.Replace("\r\n", "\n").Split('\n').ToList();
-        int end = TopEnd(lines);
+        var (end, starts) = TopLevel(lines);
         var re = KeyLine(key);
         for (int i = 0; i < end; i++)
-            if (re.Match(lines[i]) is { Success: true } m) return ParseString(m.Groups[1].Value);
+            if (starts[i] && re.Match(lines[i]) is { Success: true } m) return ParseString(m.Groups[1].Value);
         return null;
     }
 
@@ -81,10 +135,10 @@ internal static partial class CodexConfig
     {
         string newline = toml.Contains("\r\n") ? "\r\n" : "\n";
         var lines = toml.Replace("\r\n", "\n").Split('\n').ToList();
-        int end = TopEnd(lines);
+        var (end, starts) = TopLevel(lines);
         var re = KeyLine(key);
         int at = -1;
-        for (int i = 0; i < end; i++) if (re.IsMatch(lines[i])) { at = i; break; }
+        for (int i = 0; i < end; i++) if (starts[i] && re.IsMatch(lines[i])) { at = i; break; }
         if (value is null) { if (at >= 0) lines.RemoveAt(at); }
         else if (at >= 0) lines[at] = $"{key} = {Quote(value)}";
         else lines.Insert(0, $"{key} = {Quote(value)}");
@@ -178,6 +232,47 @@ internal static partial class CodexConfig
         SetAutostart(true);
         Log.Write($"Integração com o Codex ligada (encaminhador {GatewayBase}{state.BasePath}; pedidos da OpenAI para {state.Upstream ?? "a OpenAI"})");
         return null;
+    }
+
+    /// <summary>O que desfazer quando a ligação foi gravada mas o encaminhador não subiu.</summary>
+    internal enum EnableRollback
+    {
+        /// <summary>Já estava ligado (correção ou religar): fica como estava; a barra e o início com o Windows iniciam o encaminhador.</summary>
+        None,
+        /// <summary>Devolve o config.toml e deixa a ligação gravada como desligada (instalação nova ou desligada pela pessoa).</summary>
+        Restore,
+        /// <summary>Devolve o config.toml e apaga o estado que não existia: a ligação automática tenta de novo na próxima abertura da barra.</summary>
+        RestoreAndForget,
+    }
+
+    /// <summary>
+    /// O Codex nunca fica apontando para uma porta sem ninguém por causa de uma ligação nova que não se completou.
+    /// <paramref name="wasOn"/>: a ligação já estava ligada antes; <paramref name="hadState"/>: o integracao.json já existia
+    /// (numa instalação nova o instalador o grava como desligado, e ele continua lá).
+    /// </summary>
+    internal static EnableRollback RollbackAfterFailedStart(bool wasOn, bool hadState)
+        => wasOn ? EnableRollback.None : hadState ? EnableRollback.Restore : EnableRollback.RestoreAndForget;
+
+    /// <summary>Desfaz a ligação que acabou de ser gravada (ver <see cref="RollbackAfterFailedStart"/>). True quando o config.toml foi devolvido.</summary>
+    public static async Task<bool> UndoEnableAsync(bool wasOn, bool hadState, string? copyBefore, CancellationToken ct)
+    {
+        var rollback = RollbackAfterFailedStart(wasOn, hadState);
+        if (rollback == EnableRollback.None) return false;
+        string? copy = Load().Copia;
+        await DisableAsync(ct);
+        // A cópia feita nesta tentativa ficou igual ao config.toml devolvido: sem isto, cada tentativa deixaria mais uma.
+        try
+        {
+            if (copy is not null && copy != copyBefore && File.Exists(copy) && File.Exists(ConfigFile)
+                && await File.ReadAllTextAsync(copy, ct) == await File.ReadAllTextAsync(ConfigFile, ct))
+                File.Delete(copy);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        // Opções "minha API" guardadas ao desfazer ficam no estado (voltam ao ligar); só um estado sem nada a guardar é apagado.
+        if (rollback == EnableRollback.RestoreAndForget && Load().MinhaApiGuardadas is null)
+            try { File.Delete(CodexIntegration.StateFile); } catch (Exception ex) { Log.Write("Ligar: estado da ligação não apagado: " + ex.Message); }
+        Log.Write("Ligação com o Codex desfeita: o encaminhador não iniciou");
+        return true;
     }
 
     /// <summary>Desliga: devolve o config.toml, tira as entradas da barra do catálogo e o início automático.</summary>
