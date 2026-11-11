@@ -466,23 +466,15 @@ public static class AgentPrompt
                    .Distinct(StringComparer.OrdinalIgnoreCase).Prepend(workDir).ToList();
         string? lastMessageFile = null;
         var args = new List<string>();
+        bool viaCmd = exe.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase);
+        // Pedido do Claude pela entrada padrão (só via cmd.exe ou quando é longo demais para a linha de comando).
+        string? stdinPrompt = null;
         // Sessão nova no meio de uma conversa da barra (veio de outra IA): a conversa vai como contexto.
         if (o.ResumeSession is null) prompt = ConversationHandoff.WithTranscript(prompt, o.History);
         if (target == Target.Claude)
         {
-            args.AddRange(["-p", WithAttachmentList(prompt, o.Attachments), "--output-format", "stream-json", "--verbose", "--include-partial-messages"]);
-            if (o.SystemPrompt is { Length: > 0 } system) args.AddRange(["--append-system-prompt", system]);
-            if (o.ResumeSession is { } sid) args.AddRange(["--resume", sid]);
-            if (!string.IsNullOrEmpty(model)) args.AddRange(["--model", model]);
-            if (!string.IsNullOrEmpty(effort)) args.AddRange(["--effort", effort]);
-            foreach (var d in dirs.Skip(1)) args.AddRange(["--add-dir", d]);
-            var allowed = (o.Web ? new[] { "WebSearch", "WebFetch" } : []).Concat(o.AllowedTools).Distinct().ToList();
-            if (allowed.Count > 0) { args.Add("--allowedTools"); args.AddRange(allowed); }
-            if (o.Unrestricted) args.AddRange(["--permission-mode", "bypassPermissions"]);
-            else if (o.AllowEdits) args.AddRange(["--permission-mode", "acceptEdits"]);
-            // Não grava sessão nem carrega MCPs; sem hooks, a chamada auxiliar (resumo, roteiro do acompanhamento)
-            // não aparece na barra como tarefa nem substitui a tarefa principal em destaque.
-            if (o.Ephemeral) args.AddRange(["--no-session-persistence", "--strict-mcp-config", "--settings", "{\"disableAllHooks\":true}"]);
+            (var claudeArgs, stdinPrompt) = ClaudeArguments(WithAttachmentList(prompt, o.Attachments), model, effort, o, dirs.Skip(1), viaCmd);
+            args.AddRange(claudeArgs);
         }
         else
         {
@@ -502,13 +494,13 @@ public static class AgentPrompt
             args.Add(WithAttachmentList(prompt, o.Attachments));
         }
 
-        bool viaCmd = exe.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase);
         var psi = new ProcessStartInfo(viaCmd ? Path.Combine(Environment.SystemDirectory, "cmd.exe") : exe)
         {
             RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
             UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = workDir,
             StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
         };
+        if (stdinPrompt is not null) psi.StandardInputEncoding = new UTF8Encoding(false); // sem BOM: iria no começo do pedido
         if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
         foreach (var a in args) psi.ArgumentList.Add(a);
 
@@ -521,7 +513,13 @@ public static class AgentPrompt
         {
             proc = Process.Start(psi);
             if (proc is null) return new(string.Empty, null, LocalizedText.T("Não foi possível iniciar o agente"));
-            proc.StandardInput.Close();
+            if (stdinPrompt is not null)
+            {
+                try { await proc.StandardInput.WriteAsync(stdinPrompt.AsMemory(), ct); proc.StandardInput.Close(); }
+                catch (IOException) { } // o processo fechou antes de ler: o motivo vem pela saída de erro, logo abaixo
+                catch { try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } throw; }
+            }
+            else proc.StandardInput.Close();
             var stderrTask = proc.StandardError.ReadToEndAsync(ct);
             using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } });
 
@@ -584,7 +582,7 @@ public static class AgentPrompt
             string answer = !string.IsNullOrWhiteSpace(final) ? final!.Trim() : text.ToString().Trim();
             if (error is null && answer.Length == 0 && proc.ExitCode != 0)
                 error = LastLine(stderr) ?? LocalizedText.T("O agente terminou sem resposta");
-            return new(answer, sessionId, error) { Blocked = blocked, Servers = loaded };
+            return new(CliAnswer(target, error, answer, text.ToString()), sessionId, error) { Blocked = blocked, Servers = loaded };
         }
         catch (OperationCanceledException) { return new(text.ToString().Trim(), sessionId, LocalizedText.T("Interrompido")); }
         catch (Exception ex) { return new(text.ToString().Trim(), sessionId, ex.Message); }
@@ -594,6 +592,44 @@ public static class AgentPrompt
             if (lastMessageFile is not null) try { File.Delete(lastMessageFile); } catch { }
         }
     }
+
+    /// <summary>Acima disto o pedido do Claude vai pela entrada padrão (a linha de comando do Windows para em 32.767 caracteres).</summary>
+    internal const int ClaudeArgumentLimit = 20000;
+
+    /// <summary>
+    /// Argumentos do "claude -p". O pedido segue como argumento, como sempre, menos em dois casos, em que vai pela
+    /// entrada padrão (<c>Stdin</c>) e o "-p" fica sem valor: via cmd.exe (só existe o claude.cmd; quebras de linha
+    /// cortariam o comando e aspas, &amp; e % seriam reinterpretados) ou quando os argumentos passam de
+    /// <see cref="ClaudeArgumentLimit"/> caracteres.
+    /// </summary>
+    internal static (List<string> Args, string? Stdin) ClaudeArguments(string prompt, string? model, string? effort, Options o, IEnumerable<string> addDirs, bool viaCmd)
+    {
+        var args = new List<string>();
+        args.AddRange(["-p", prompt, "--output-format", "stream-json", "--verbose", "--include-partial-messages"]);
+        if (o.SystemPrompt is { Length: > 0 } system) args.AddRange(["--append-system-prompt", system]);
+        if (o.ResumeSession is { } sid) args.AddRange(["--resume", sid]);
+        if (!string.IsNullOrEmpty(model)) args.AddRange(["--model", model]);
+        if (!string.IsNullOrEmpty(effort)) args.AddRange(["--effort", effort]);
+        foreach (var d in addDirs) args.AddRange(["--add-dir", d]);
+        var allowed = (o.Web ? new[] { "WebSearch", "WebFetch" } : []).Concat(o.AllowedTools).Distinct().ToList();
+        if (allowed.Count > 0) { args.Add("--allowedTools"); args.AddRange(allowed); }
+        if (o.Unrestricted) args.AddRange(["--permission-mode", "bypassPermissions"]);
+        else if (o.AllowEdits) args.AddRange(["--permission-mode", "acceptEdits"]);
+        // Não grava sessão nem carrega MCPs; sem hooks, a chamada auxiliar (resumo, roteiro do acompanhamento)
+        // não aparece na barra como tarefa nem substitui a tarefa principal em destaque.
+        if (o.Ephemeral) args.AddRange(["--no-session-persistence", "--strict-mcp-config", "--settings", "{\"disableAllHooks\":true}"]);
+        // +3 por argumento: o espaço e as aspas que a linha de comando acrescenta.
+        if (!viaCmd && args.Sum(a => a.Length + 3) <= ClaudeArgumentLimit) return (args, null);
+        args.RemoveAt(1);
+        return (args, prompt);
+    }
+
+    /// <summary>
+    /// Resposta de uma execução por linha de comando. No Claude, um "result" com is_error traz o texto do provedor, que
+    /// já é o erro: como resposta fica só o que chegou em fluxo (senão o erro era mostrado e guardado como a fala da IA).
+    /// </summary>
+    internal static string CliAnswer(Target target, string? error, string answer, string streamed)
+        => error is null || target != Target.Claude ? answer : streamed.Trim();
 
     /// <summary>Para IA local e API: texto dos arquivos anexados no próprio prompt (até 200 KB cada) e a lista das pastas.</summary>
     private static string InlineAttachments(string prompt, IReadOnlyList<string> attachments)
@@ -756,17 +792,33 @@ public static class AgentPrompt
         using var req = new HttpRequestMessage(HttpMethod.Post, ApiUrl(api, api.Kind == "anthropic" ? "messages" : "chat/completions"))
         { Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json") };
         Authorize(req, api);
-        return await StreamAsync(req, onText, ct, line =>
-        {
-            if (!line.StartsWith("data:")) return null;
-            string data = line[5..].Trim();
-            if (data == "[DONE]") return null;
-            var n = JsonNode.Parse(data);
-            if (n?["error"] is JsonNode err) throw new InvalidOperationException(err["message"]?.GetValue<string>() ?? err.ToJsonString());
-            return api.Kind == "anthropic"
-                ? (n?["type"]?.GetValue<string>() == "content_block_delta" ? n["delta"]?["text"]?.GetValue<string>() : null)
-                : n?["choices"]?[0]?["delta"]?["content"]?.GetValue<string>();
-        });
+        return await StreamAsync(req, onText, ct, line => ApiStreamPiece(api.Kind, line));
+    }
+
+    /// <summary>
+    /// Trecho de texto de uma linha do fluxo (SSE) da API: Anthropic ("content_block_delta") ou compatível com OpenAI
+    /// ("choices[0].delta.content", inclusive o servidor local). Linha sem texto devolve nulo: "choices" vazio (primeiro
+    /// bloco do Azure, bloco final só com o uso) não interrompe mais a resposta. Um "error" vira exceção com a mensagem
+    /// do provedor, seja objeto ({"message":…}) ou texto simples.
+    /// </summary>
+    internal static string? ApiStreamPiece(string kind, string line)
+    {
+        if (!line.StartsWith("data:")) return null;
+        string data = line[5..].Trim();
+        if (data == "[DONE]") return null;
+        if (JsonNode.Parse(data) is not JsonObject n) return null;
+        if (n["error"] is { } err)
+            throw new InvalidOperationException(err switch
+            {
+                JsonObject o when o["message"] is JsonValue mv && mv.TryGetValue<string>(out var message) => message,
+                JsonValue v when v.TryGetValue<string>(out var text) => text,
+                _ => err.ToJsonString(),
+            });
+        static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var s) ? s : null;
+        if (kind == "anthropic")
+            return Text(n["type"]) == "content_block_delta" && n["delta"] is JsonObject delta ? Text(delta["text"]) : null;
+        return n["choices"] is JsonArray { Count: > 0 } choices && choices[0] is JsonObject first && first["delta"] is JsonObject d
+            ? Text(d["content"]) : null;
     }
 
     /// <summary>Lê uma resposta HTTP em fluxo, linha a linha, acumulando o texto extraído por <paramref name="piece"/>.</summary>

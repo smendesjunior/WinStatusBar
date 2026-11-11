@@ -53,6 +53,16 @@ public sealed partial class BarWindow
     private bool FullAccessOn => _settings.Current.ContextActionsEnabled && _allowEdits;
     private Task<bool> ConfirmDesktopElevationAsync(CancellationToken ct)
         => FullAccessOn ? Task.FromResult(true) : ShowApprovalAsync("Permissão de administrador", "A tarefa precisa de acesso elevado. Autorizar o auxiliar do WinStatusBar a solicitar permissão de administrador pelo UAC? A barra principal continuará sem elevação.",ct);
+    /// <summary>
+    /// O WinUI só abre um ContentDialog por vez (o segundo ShowAsync lança exceção): as três perguntas do chat
+    /// (autorização, conectores do Claude, perguntas do Codex) passam por aqui, uma de cada vez.
+    /// </summary>
+    private readonly SemaphoreSlim _dialogGate=new(1,1);
+    /// <summary>
+    /// Onde ancorar as perguntas: só o painel do chat. Nunca a janela da barra (72 px de altura: o diálogo ficaria
+    /// invisível e ainda assim modal). Sem o painel, a pergunta vale como recusada.
+    /// </summary>
+    private XamlRoot? DialogRoot=>_panelInput?.XamlRoot;
     private Task<bool> ShowApprovalAsync(string title,string text,CancellationToken ct)
     {
         var completion=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -60,15 +70,19 @@ public sealed partial class BarWindow
         {
             ContentDialog? dialog=null;
             using var registration=ct.Register(()=>DispatcherQueue.TryEnqueue(()=>dialog?.Hide()));
+            bool entered=false;
             try
             {
+                await _dialogGate.WaitAsync(ct);entered=true;
                 ct.ThrowIfCancellationRequested();
-                dialog=new ContentDialog{XamlRoot=_panelInput?.XamlRoot??Root.XamlRoot,Title=title,
+                if(DialogRoot is not {} root){completion.TrySetResult(false);return;}
+                dialog=new ContentDialog{XamlRoot=root,Title=title,
                     Content=new ScrollViewer{MaxHeight=360,Content=new TextBlock{Text=text,TextWrapping=TextWrapping.Wrap}},
                     PrimaryButtonText="Autorizar",CloseButtonText="Cancelar",DefaultButton=ContentDialogButton.Close};
                 completion.TrySetResult(await dialog.ShowAsync()==ContentDialogResult.Primary&&!ct.IsCancellationRequested);
             }
             catch(Exception ex){completion.TrySetException(ex);}
+            finally{if(entered)_dialogGate.Release();}
         }))completion.TrySetException(new InvalidOperationException("A janela foi fechada."));
         return completion.Task.WaitAsync(ct);
     }
@@ -93,8 +107,11 @@ public sealed partial class BarWindow
         var completion=new TaskCompletionSource<(bool Ok,bool Always)>(TaskCreationOptions.RunContinuationsAsynchronously);
         if(!DispatcherQueue.TryEnqueue(async()=>
         {
+            bool entered=false;
             try
             {
+                await _dialogGate.WaitAsync();entered=true;
+                if(DialogRoot is not {} root){completion.TrySetResult((false,false));return;}
                 var content=new StackPanel{Spacing=8};
                 content.Children.Add(new TextBlock{Text="O Claude tentou usar conectores da sua conta e precisa da sua autorização:",TextWrapping=TextWrapping.Wrap});
                 foreach(var g in groups)
@@ -102,12 +119,13 @@ public sealed partial class BarWindow
                 var always=new CheckBox{Content="Sempre permitir estes conectores no chat da barra"};
                 content.Children.Add(always);
                 content.Children.Add(new TextBlock{Text="Ao autorizar, o pedido continua na mesma conversa com o conector liberado.",TextWrapping=TextWrapping.Wrap,Opacity=0.7});
-                var dialog=new ContentDialog{XamlRoot=_panelInput?.XamlRoot??Root.XamlRoot,Title="Usar conectores",Content=new ScrollViewer{MaxHeight=360,Content=content},
+                var dialog=new ContentDialog{XamlRoot=root,Title="Usar conectores",Content=new ScrollViewer{MaxHeight=360,Content=content},
                     PrimaryButtonText="Autorizar e continuar",CloseButtonText="Agora não",DefaultButton=ContentDialogButton.Primary};
                 bool ok=await dialog.ShowAsync()==ContentDialogResult.Primary;
                 completion.TrySetResult((ok,always.IsChecked==true));
             }
             catch(Exception ex){completion.TrySetException(ex);}
+            finally{if(entered)_dialogGate.Release();}
         }))return;
         var (accepted,forever)=await completion.Task;
         if(!accepted||_conv!=conv)return;
@@ -158,8 +176,10 @@ public sealed partial class BarWindow
         {
             ContentDialog? dialog=null;
             using var registration=ct.Register(()=>DispatcherQueue.TryEnqueue(()=>dialog?.Hide()));
+            bool entered=false;
             try
             {
+                await _dialogGate.WaitAsync(ct);entered=true;
                 ct.ThrowIfCancellationRequested();var content=new StackPanel{Spacing=10};var fields=new Dictionary<string,TextBox>();
                 foreach(var question in args.GetProperty("questions").EnumerateArray())
                 {
@@ -168,12 +188,15 @@ public sealed partial class BarWindow
                         field.PlaceholderText=string.Join(" / ",options.EnumerateArray().Select(o=>o.GetProperty("label").GetString()));
                     fields[question.GetProperty("id").GetString()!]=field;content.Children.Add(field);
                 }
-                dialog=new ContentDialog{XamlRoot=_panelInput?.XamlRoot??Root.XamlRoot,Title="Pergunta do Codex",Content=new ScrollViewer{Content=content,MaxHeight=400},PrimaryButtonText="Responder",CloseButtonText="Cancelar"};
+                // Sem o painel: como "Cancelar" (nenhuma resposta).
+                if(DialogRoot is not {} root){completion.TrySetResult(new JsonObject{["answers"]=new JsonObject()});return;}
+                dialog=new ContentDialog{XamlRoot=root,Title="Pergunta do Codex",Content=new ScrollViewer{Content=content,MaxHeight=400},PrimaryButtonText="Responder",CloseButtonText="Cancelar"};
                 var result=await dialog.ShowAsync();var answers=new JsonObject();
                 if(result==ContentDialogResult.Primary&&!ct.IsCancellationRequested)foreach(var pair in fields)answers[pair.Key]=new JsonObject{["answers"]=new JsonArray(pair.Value.Text)};
                 completion.TrySetResult(new JsonObject{["answers"]=answers});
             }
             catch(Exception ex){completion.TrySetException(ex);}
+            finally{if(entered)_dialogGate.Release();}
         }))completion.TrySetException(new InvalidOperationException("A janela foi fechada."));
         return completion.Task.WaitAsync(ct);
     }

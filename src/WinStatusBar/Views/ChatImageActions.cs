@@ -63,9 +63,25 @@ internal static class ChatImageActions
     {
         if (uri.IsFile) return uri.LocalPath;
         string ext = Path.GetExtension(uri.AbsolutePath) is { Length: > 1 and < 6 } e ? e : ".png";
+        DeleteOldDownloads();
         string path = Path.Combine(Path.GetTempPath(), "wsb-imagem-" + Guid.NewGuid().ToString("N")[..8] + ext);
         await File.WriteAllBytesAsync(path, await Http.GetByteArrayAsync(uri));
         return path;
+    }
+
+    /// <summary>
+    /// Cada Copiar, Salvar ou Abrir de uma imagem remota baixa uma cópia para a pasta temporária e nada a apagava.
+    /// Antes de baixar outra, somem as cópias com mais de um dia (as recentes podem estar abertas ou na área de transferência).
+    /// </summary>
+    private static void DeleteOldDownloads()
+    {
+        try
+        {
+            var limit = DateTime.UtcNow.AddDays(-1);
+            foreach (var old in Directory.EnumerateFiles(Path.GetTempPath(), "wsb-imagem-*"))
+                try { if (File.GetLastWriteTimeUtc(old) < limit) File.Delete(old); } catch { }
+        }
+        catch { }
     }
 
     private static async Task CopyAsync(Uri uri)

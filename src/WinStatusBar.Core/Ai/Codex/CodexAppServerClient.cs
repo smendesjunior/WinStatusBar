@@ -18,10 +18,43 @@ public sealed class CodexAppServerClient
         public bool ResetDefinitive { get; init; }
     }
 
-    public static string? FindCodexExecutable()
+    /// <summary>
+    /// Guarda por um tempo o resultado de uma busca cara (aqui, o executável do Codex): a busca varre pastas e o PATH e era
+    /// refeita várias vezes na abertura e a cada 2 minutos, também na thread da interface. Um caminho guardado só vale
+    /// enquanto o arquivo existir; "não encontrado" também fica guardado pelo mesmo tempo.
+    /// </summary>
+    internal sealed class PathMemo(Func<string?> search, TimeSpan ttl, Func<long>? clock = null, Func<string, bool>? exists = null)
+    {
+        private readonly object _gate = new();
+        private readonly Func<long> _clock = clock ?? (() => Environment.TickCount64);
+        private readonly Func<string, bool> _exists = exists ?? File.Exists;
+        private bool _known;
+        private string? _path;
+        private long _at;
+
+        public string? Get()
+        {
+            lock (_gate)
+            {
+                long now = _clock();
+                if (_known && now - _at < ttl.TotalMilliseconds && (_path is null || _exists(_path))) return _path;
+                _path = search();
+                _at = _clock();
+                _known = true;
+                return _path;
+            }
+        }
+    }
+
+    private static readonly PathMemo CodexExecutable = new(SearchCodexExecutable, TimeSpan.FromMinutes(2));
+
+    public static string? FindCodexExecutable() => CodexExecutable.Get();
+
+    private static string? SearchCodexExecutable()
     {
         var candidates = new List<string>();
-        string bin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OpenAI", global::WinStatusBar.Core.LocalizedText.T("Codex"), "bin");
+        // Nomes de pasta: literais, nunca pelo tradutor ("Links" virava "Enlaces"/"Liens" e a pasta do WinGet não era lida).
+        string bin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OpenAI", "Codex", "bin");
         try
         {
             if (Directory.Exists(bin))
@@ -35,7 +68,7 @@ public sealed class CodexAppServerClient
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var dirs = new List<string>
         {
-            Path.Combine(local, "Microsoft", "WinGet", global::WinStatusBar.Core.LocalizedText.T("Links")), Path.Combine(roaming, "npm"), Path.Combine(home, "scoop", "shims"),
+            Path.Combine(local, "Microsoft", "WinGet", "Links"), Path.Combine(roaming, "npm"), Path.Combine(home, "scoop", "shims"),
             Path.Combine(home, ".local", "bin"),
         };
         foreach (var scope in new[] { EnvironmentVariableTarget.Process, EnvironmentVariableTarget.User, EnvironmentVariableTarget.Machine })

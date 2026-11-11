@@ -39,7 +39,9 @@ public static class QuotaDetailsView
         var now = DateTimeOffset.Now;
         bool isCodex = kind == AgentKind.Codex;
         QuotaSnapshot? q = isCodex ? hub.Codex.Quota : hub.Claude.Quota;
-        string? error = isCodex ? hub.Codex.LastError : hub.Claude.LastQuotaError;
+        // O erro guardado é o original do provedor (JSON, inglês, exceção); na tela vai explicado.
+        string? rawError = isCodex ? hub.Codex.LastError : hub.Claude.LastQuotaError;
+        string? error = rawError is null ? null : AiErrorExplainer.QuotaError(isCodex ? AgentPrompt.Target.Codex : AgentPrompt.Target.Claude, rawError);
         int interval = isCodex ? s.CodexQuotaIntervalMin : s.ClaudeQuotaIntervalMin;
 
         // Largura fixa: o menu é dimensionado na abertura e atualizado a cada 5 s; conteúdo de largura variável ficaria cortado.
