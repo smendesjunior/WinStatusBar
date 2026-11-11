@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.9.0] - 2026-11-11 · compilação 20261111162310
+
+### Adicionado
+- IAs da barra em outros programas do PC: o encaminhador local (porta 11435) agora lista as IAs configuradas na barra (`/codexias/modelos`) para programas do próprio computador, como o suplemento "IA Local" do Word, Excel e PowerPoint, que passa a oferecer Gemini, DeepSeek, Grok, Lenovo Qira e as APIs próprias ao lado dos modelos locais. As chaves continuam só no Cofre de Credenciais do Windows.
+
+### Alterado
+- O encaminhador também roda com a ligação do Codex desligada quando um programa do PC usa as IAs da barra (marca `office.json`, gravada pelo próprio programa). Desligar a ligação com o Codex não o encerra nesse caso.
+
 ## [1.8.0] - 2026-11-11 · compilação 20261111152910
 
 ### Adicionado

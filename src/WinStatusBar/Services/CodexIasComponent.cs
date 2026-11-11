@@ -55,11 +55,11 @@ internal static class CodexIasComponent
         if (Interlocked.Exchange(ref _ensuring, 1) == 1) return false;
         try
         {
-            if (!Available || CommandInFlight || !CodexIntegration.LoadState().Ligado) return false;
+            if (!Available || CommandInFlight || !CodexIntegration.GatewayWanted()) return false;
             // Pela resposta do encaminhador, não pelo nome do processo: --verificar e --entrar têm o mesmo nome, e um
             // encaminhador travado continua na lista de processos.
             if (await GatewayOnlineAsync().ConfigureAwait(false)) { _startsWithoutAnswer = 0; _nextStartUtc = default; return false; }
-            if (CommandInFlight || !CodexIntegration.LoadState().Ligado || DateTime.UtcNow < _nextStartUtc) return false;
+            if (CommandInFlight || !CodexIntegration.GatewayWanted() || DateTime.UtcNow < _nextStartUtc) return false;
             // Uma segunda cópia sai sozinha (o encaminhador garante uma só). Se ele não responde depois de 3 inícios
             // (porta ocupada por outro programa), as tentativas passam a ser a cada 10 minutos.
             if (++_startsWithoutAnswer >= 3) _nextStartUtc = DateTime.UtcNow.AddMinutes(10);

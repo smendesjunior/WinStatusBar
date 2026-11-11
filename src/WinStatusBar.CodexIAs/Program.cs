@@ -86,7 +86,7 @@ internal static class Program
     {
         using var instance = new Mutex(true, ServiceMutex, out bool first);
         if (!first) return 0;
-        if (!CodexIntegration.LoadState().Ligado) { Log.Write("Encaminhador não iniciado: a ligação com o Codex está desligada"); return 0; }
+        if (!CodexIntegration.GatewayWanted()) { Log.Write("Encaminhador não iniciado: a ligação com o Codex está desligada e nenhum programa do PC (Office) usa as IAs da barra"); return 0; }
 
         using var host = new Control(); host.CreateControl(); Ui.Init();
         var registry = new ModelRegistry();
@@ -99,6 +99,13 @@ internal static class Program
                     string? only = body?["ia"] is JsonValue o && o.TryGetValue<string>(out var id) && id.Length > 0 ? id : null;
                     var report = await registry.CheckAsync(remove, ct, only);
                     return (200, JsonNode.Parse(CodexIntegration.Serialize(report))!);
+                case "modelos":
+                    // Lista guardada das IAs da barra para outros programas do PC (suplemento do Office). Sem lista ainda,
+                    // dispara a primeira verificação em segundo plano.
+                    var models = registry.Models;
+                    if (models.Count == 0)
+                        _ = Task.Run(async () => { try { await registry.CheckAsync(false, CancellationToken.None); } catch (Exception ex) { Log.Write("Verificação pedida pela lista: " + ex.Message); } });
+                    return (200, new JsonObject { ["modelos"] = JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(models.OrderBy(m => m.Provider).ThenBy(m => m.DisplayName).ToList())) });
                 case "sair":
                     try { host.BeginInvoke(new Action(Application.Exit)); } catch { }
                     return (200, new JsonObject { ["ok"] = true });
@@ -202,13 +209,15 @@ internal static class Program
 
     private static async Task<(bool, string)> DisableAsync()
     {
-        if (await ServiceRunningAsync())
+        // Com o suplemento do Office usando as IAs da barra, o encaminhador continua rodando para ele.
+        bool office = File.Exists(CodexIntegration.OfficeClientFile);
+        if (!office && await ServiceRunningAsync())
         {
             try { using var empty = new StringContent(""); await Local.PostAsync("/codexias/sair", empty); } catch { }
             for (int i = 0; i < 40 && await ServiceRunningAsync(); i++) await Task.Delay(250);
         }
         await CodexConfig.DisableAsync(CancellationToken.None);
-        return (true, "Desligado: o Codex voltou à configuração de antes.");
+        return (true, "Desligado: o Codex voltou à configuração de antes." + (office ? " O encaminhador continua ligado para o suplemento do Office." : ""));
     }
 
     private static async Task<(bool, string)> CheckAsync(bool removeObsolete, string? only = null)

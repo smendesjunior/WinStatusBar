@@ -83,6 +83,15 @@ public static class CodexIntegration
     public static void SaveState(State state) => WriteAtomic(StateFile, JsonSerializer.Serialize(state, Pretty));
 
     /// <summary>
+    /// Marca de outro programa deste PC que usa as IAs da barra pelo encaminhador (ex.: o suplemento "IA Local" do Word,
+    /// Excel e PowerPoint). Gravada pelo próprio programa; com ela, o encaminhador roda mesmo com a ligação do Codex desligada.
+    /// </summary>
+    public static string OfficeClientFile => Path.Combine(DataDir, "office.json");
+
+    /// <summary>O encaminhador deve rodar: ligação com o Codex ligada ou algum programa do PC (Office) usando as IAs da barra.</summary>
+    public static bool GatewayWanted() => LoadState().Ligado || File.Exists(OfficeClientFile);
+
+    /// <summary>
     /// Chamado pelo instalador (decisão de 09/11/2026): a ligação automática com o Codex só acontece onde a barra já estava
     /// instalada. Numa instalação nova, grava a ligação como desligada (a barra pula a ligação automática quando o estado
     /// existe); a pessoa liga em Configurações › Codex e modelos. Nunca troca uma escolha já gravada. True = gravou.

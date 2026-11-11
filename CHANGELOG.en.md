@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.9.0] - 2026-11-11 · build 20261111162310
+
+### Added
+- Bar AIs in other programs on this PC: the local gateway (port 11435) now lists the AIs configured in the bar (`/codexias/modelos`) to programs on the same computer, such as the "IA Local" add-in for Word, Excel and PowerPoint, which now offers Gemini, DeepSeek, Grok, Lenovo Qira and custom APIs next to the local models. Keys stay in the Windows Credential Locker only.
+
+### Changed
+- The gateway also runs with the Codex link turned off when a program on the PC uses the bar's AIs (an `office.json` marker written by that program). Turning the Codex link off no longer stops it in that case.
+
 ## [1.8.0] - 2026-11-11 · build 20261111152910
 
 ### Added

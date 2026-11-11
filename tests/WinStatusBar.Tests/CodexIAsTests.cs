@@ -626,11 +626,25 @@ public class CodexIAsRobustnessTests
     {
         string body = ApiResumeSourceTests.Body(Component(), "public static async Task<bool> EnsureRunningAsync()");
         Assert.Contains("!Available", body);
-        Assert.Contains("CodexIntegration.LoadState().Ligado", body); // ligação desligada (instalação nova): nunca inicia
+        // Ligação desligada (instalação nova) e nenhum programa do PC usando as IAs da barra: nunca inicia.
+        Assert.Contains("CodexIntegration.GatewayWanted()", body);
         Assert.Contains("GatewayOnlineAsync()", body);
         Assert.Contains("CommandInFlight", body);
         Assert.DoesNotContain("GetProcessesByName", body);
         Assert.DoesNotMatch(@"\bRunning\b", body);
+    }
+
+    [Fact]
+    public void Encaminhador_roda_so_com_o_Codex_ligado_ou_com_a_marca_do_Office()
+    {
+        string integration = RepoSource.Read("src", "WinStatusBar.Core", "Ai", "Codex", "CodexIntegration.cs");
+        Assert.Contains("public static bool GatewayWanted() => LoadState().Ligado || File.Exists(OfficeClientFile);", integration);
+        Assert.Contains("\"office.json\"", integration);
+        string program = RepoSource.Read("src", "WinStatusBar.CodexIAs", "Program.cs");
+        Assert.Contains("if (!CodexIntegration.GatewayWanted())", program);
+        Assert.Contains("case \"modelos\":", program);
+        // Desligar o Codex não derruba o encaminhador que o suplemento do Office usa.
+        Assert.Contains("if (!office && await ServiceRunningAsync())", program);
     }
 
     [Fact]
