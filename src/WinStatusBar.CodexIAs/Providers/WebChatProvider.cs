@@ -26,7 +26,8 @@ internal sealed class WebChatProvider : IProvider
     private IReadOnlyList<Mode>? _modes;
     private DateTime _lastUse = DateTime.UtcNow;
     private System.Windows.Forms.Timer? _idle;
-    private static readonly TimeSpan IdleClose = TimeSpan.FromMinutes(15);
+    /// <summary>Espera escolhida na barra (Manter a IA aberta depois da resposta); 1 min por padrão.</summary>
+    private static TimeSpan IdleClose => WinStatusBar.Core.Settings.AppSettings.AiRelease(BarSettings.Load().AiReleaseSeconds);
 
     public WebChatProvider(WebSite site) { _site = site; _modes = LoadModes(); }
 
@@ -106,8 +107,8 @@ internal sealed class WebChatProvider : IProvider
     {
         _lastUse = DateTime.UtcNow;
         if (_web?.CoreWebView2 is not null && _form is { IsDisposed: false }) return _web;
-        // Sem uso por 15 min, a página fecha (libera memória); o próximo pedido a abre de novo.
-        _idle ??= new System.Windows.Forms.Timer { Interval = 60_000 };
+        // Pouco depois do último uso, a página fecha (libera memória); o próximo pedido a abre de novo.
+        _idle ??= new System.Windows.Forms.Timer { Interval = 5_000 };
         _idle.Tick -= OnIdleTick;
         _idle.Tick += OnIdleTick;
         _idle.Start();
@@ -141,7 +142,7 @@ internal sealed class WebChatProvider : IProvider
     private void OnIdleTick(object? sender, EventArgs e)
     {
         if (_gate.CurrentCount == 0 || DateTime.UtcNow - _lastUse < IdleClose || _form is null) return;
-        Log.Write($"{_site.Label}: página oculta fechada (sem uso há 15 min)");
+        Log.Write($"{_site.Label}: página oculta fechada (sem uso há {IdleClose.TotalSeconds:0} s)");
         _idle?.Stop();
         var form = _form;
         _form = null; _web = null; _activeKey = null;

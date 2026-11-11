@@ -158,6 +158,14 @@ public sealed class AppSettings
     /// ("5m", "1h", "0" = libera logo após responder, "-1" = sempre carregado).
     /// </summary>
     public string LocalModelKeepAlive { get; set; } = WinStatusBar.Core.Ai.LocalKeepAlive.DefaultValue;
+    /// <summary>
+    /// Segundos que os recursos de uma IA (página oculta do Gemini e do Copilot, Lenovo Qira) ficam abertos depois da
+    /// resposta, para uma pergunta em seguida não pagar a abertura de novo. Trocar de IA fecha os da anterior na hora.
+    /// </summary>
+    public int AiReleaseSeconds { get; set; } = DefaultAiReleaseSeconds;
+    public const int DefaultAiReleaseSeconds = 60;
+    public static readonly IReadOnlyList<int> AiReleaseChoices = [5, 60, 300, 900];
+    public static TimeSpan AiRelease(int seconds) => TimeSpan.FromSeconds(AiReleaseChoices.Contains(seconds) ? seconds : DefaultAiReleaseSeconds);
     /// <summary>Andamento de conversas no ChatGPT e no Claude (chat), lido da janela dos aplicativos.</summary>
     public bool ApiActivityEnabled { get; set; } = true;
     public List<string> DisabledApiActivityProviders { get; set; } = new();
@@ -213,6 +221,7 @@ public sealed class AppSettings
         LocalServerProcesses ??= new();
         DisabledApiActivityProviders ??= new();
         LocalModelKeepAlive = WinStatusBar.Core.Ai.LocalKeepAlive.Normalize(LocalModelKeepAlive);
+        if (!AiReleaseChoices.Contains(AiReleaseSeconds)) AiReleaseSeconds = DefaultAiReleaseSeconds;
         foreach (var m in DefaultOrder)
             if (!ModuleOrder.Contains(m))
             {

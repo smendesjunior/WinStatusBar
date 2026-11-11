@@ -251,7 +251,9 @@ public sealed class CodexProvider : IAiQuotaProvider, IAgentActivityProvider, ID
 
     private async Task QueryQuotaAsync(CancellationToken ct)
     {
-        Executable ??= CodexAppServerClient.FindCodexExecutable();
+        // Procura de novo a cada consulta (a busca fica guardada por 2 min e confere se o arquivo existe): o app do Codex
+        // se atualiza trocando a pasta da versão, e o caminho guardado aqui na abertura deixava de existir (11/11/2026).
+        Executable = CodexAppServerClient.FindCodexExecutable();
         if (Executable is null) { LastError = global::WinStatusBar.Core.LocalizedText.T("Codex não encontrado"); _failures++; return; }
         var result = await _client.QueryAsync(Executable, TimeSpan.FromSeconds(45), ct);
         LastQuotaQuery = DateTimeOffset.Now;

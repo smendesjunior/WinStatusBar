@@ -82,7 +82,7 @@ internal static class GeminiWebSession
                 _visible = new(monitor.Work.Left + (monitor.Work.Width - w) / 2, monitor.Work.Top + (monitor.Work.Height - h) / 2, w, h);
             }
             if (File.Exists(App.IconPath)) window.AppWindow.SetIcon(App.IconPath);
-            window.AppWindow.Closing += (sender, e) => { e.Cancel = true; _interactive = false; SetNoActivate(window, true); sender.Hide(); sender.IsShownInSwitchers = false; _ = DetectAsync(); };
+            window.AppWindow.Closing += (sender, e) => { e.Cancel = true; _interactive = false; SetNoActivate(window, true); sender.Hide(); sender.IsShownInSwitchers = false; _ = DetectAsync(); Idle.Restart(_ui); };
             window.Closed += (_, _) => { _window = null; _web = null; };
             _window = window; _web = web;
             // Fora de todas as telas, sem ativar: o WebView2 precisa de um hospedeiro XAML carregado.
@@ -137,10 +137,14 @@ internal static class GeminiWebSession
     public static Task<bool> ResetAsync() => CloseAsync(TimeSpan.FromSeconds(30));
 
     /// <summary>
-    /// Página parada há 15 min: fecha (o navegador oculto dela ocupa centenas de MB). A próxima pergunta abre outra, com
-    /// o mesmo login e o histórico da barra como contexto. Ocupada respondendo, fica aberta.
+    /// Pouco depois da resposta (espera das configurações, 1 min por padrão), a página fecha: o navegador oculto dela
+    /// ocupa centenas de MB. A próxima pergunta abre outra, com o mesmo login e o histórico da barra como contexto.
+    /// Ocupada respondendo, fica aberta.
     /// </summary>
-    private static readonly IdleCloser Idle = new(TimeSpan.FromMinutes(15), () => CloseAsync(TimeSpan.Zero));
+    private static readonly IdleCloser Idle = new(IdleCloser.Configured, () => CloseAsync(TimeSpan.Zero));
+
+    /// <summary>A pessoa trocou de IA no chat: fecha a página agora (se não estiver respondendo).</summary>
+    public static Task<bool> ReleaseAsync() => _window is null ? Task.FromResult(true) : CloseAsync(TimeSpan.Zero);
 
     private static Task<bool> CloseAsync(TimeSpan waitIfBusy) => OnUi(async () =>
     {
@@ -164,6 +168,7 @@ internal static class GeminiWebSession
         await web.CoreWebView2.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
         web.CoreWebView2.Navigate("about:blank");
         Save(new(false, null, null));
+        Idle.Restart(_ui);
         return true;
     });
 

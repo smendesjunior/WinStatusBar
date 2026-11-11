@@ -29,6 +29,12 @@ public sealed partial class SettingsWindow
 
         // ---- IAs e contas: um cartão por IA, a API própria e os conectores de cada uma.
         var accounts = _organizedPages["accounts"];
+        // Memória: escolher uma IA não abre nada; os recursos dela abrem no envio e fecham depois da resposta.
+        accounts.Children.Add(GroupTitle(Localization.T("Memória")));
+        accounts.Children.Add(Group(Choice(Localization.T("Manter a IA aberta depois da resposta"),
+            Localization.T("Gemini e Copilot (página oculta) e Lenovo Qira só abrem quando você envia a pergunta e fecham depois deste tempo sem uso. Mais tempo deixa a pergunta seguinte mais rápida; menos tempo libera a memória antes. Ao trocar de IA no chat, a anterior fecha na hora."),
+            [(Localization.T("Fechar logo após responder"), 5), (Localization.T("1 minuto (recomendado)"), 60), (Localization.T("5 minutos"), 300), (Localization.T("15 minutos"), 900)],
+            s => s.AiReleaseSeconds, (s, v) => s.AiReleaseSeconds = v)));
         BuildCliConnections(accounts);
         AddCopilotCard(accounts);
         foreach (var provider in AdditionalAiAccounts.Providers.Where(p => p.Endpoint is not null && p.Id != "gemini"))

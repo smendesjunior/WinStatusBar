@@ -1968,7 +1968,7 @@ Claude 5h {4} · 7d {5}</value>
     <value>AI クォータ</value>
   </data>
   <data name="SFCD95B14BEDAADE7" xml:space="preserve">
-    <value>記憶</value>
+    <value>メモリ</value>
   </data>
   <data name="SFD0877C83312E0B5" xml:space="preserve">
     <value>その他のローカルサーバー</value>
@@ -4526,5 +4526,29 @@ Claude 5h {4} · 7d {5}</value>
   </data>
   <data name="S7997752AE4490F6B" xml:space="preserve">
     <value>クォータを確認中…</value>
+  </data>
+  <data name="S9ECE3B02314C96A2" xml:space="preserve">
+    <value>回答後も AI を開いたままにする時間</value>
+  </data>
+  <data name="S919CF76BD0A1DA26" xml:space="preserve">
+    <value>Gemini と Copilot(非表示ページ)および Lenovo Qira は、質問を送信したときだけ開き、この時間使われないと閉じます。長くすると次の質問が速くなり、短くするとメモリが早く解放されます。チャットで AI を切り替えると、前の AI はすぐに閉じます。</value>
+  </data>
+  <data name="SEC894D97C65D9146" xml:space="preserve">
+    <value>回答後すぐに閉じる</value>
+  </data>
+  <data name="S931CEDE598247533" xml:space="preserve">
+    <value>1 分(推奨)</value>
+  </data>
+  <data name="S7C6E4F38FBB63D77" xml:space="preserve">
+    <value>5 分</value>
+  </data>
+  <data name="S7D28361114C0A6E7" xml:space="preserve">
+    <value>15 分</value>
+  </data>
+  <data name="S8DD667E64D23ACD5" xml:space="preserve">
+    <value>クリックしてショートカットを押してください</value>
+  </data>
+  <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
+    <value>ここをクリックして組み合わせを押してください(例: Ctrl+Shift+F9)。Backspace で消去します。</value>
   </data>
 </root>

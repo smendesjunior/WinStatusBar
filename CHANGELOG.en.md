@@ -7,6 +7,24 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.8.0] - 2026-11-11 · build BUILD
+
+### Added
+- On-demand AI memory: picking an AI in the chat no longer opens anything. The hidden Gemini and Copilot page and Lenovo Qira open only when you send a question, close shortly after the answer and, when you switch AIs, the previous one's resources close right away (the local AI model is also unloaded on a switch).
+- Settings › AIs and accounts › Memory: "Keep the AI open after the answer" (close right away, 1 minute, 5 or 15 minutes; default 1 minute).
+- Network panel: the Mobile hotspot button is highlighted while it is on and shows how many devices are connected.
+- Voice shortcuts (Bar chat): the field records the combination you press instead of requiring you to type it.
+- Claude connectors: the list read by "Check" shows each connector with a colored state (connected, needs sign-in, failed), its name and origin; "Detect" adds every connected connector of the account to the always-allowed list in one go.
+
+### Changed
+- Lenovo Qira: the bar starts the Qira core on the first request (about 30 s to answer from fully closed, a few seconds for the next ones) and stops the whole of Qira after use, freeing 1.8 to 2.5 GB. Only a Qira opened by the bar is stopped; while the Lenovo app window is open it stays on.
+- The AIs in Codex follow the same rule and the same wait for the hidden pages and for Qira.
+
+### Fixed
+- Opening the panel with Qira selected started (and sometimes restarted) the whole of Qira without any question.
+- The hidden Gemini and Copilot pages stayed open for 15 minutes after each answer, and forever after closing the sign-in window or signing out.
+- Codex quota: after the Codex app updated itself, the bar kept looking for the program in the old version folder and showed an English error until it was restarted. It now finds the new version by itself, and the error got a plain explanation.
+
 ## [1.7.0] - 2026-11-11 · build 20261111140800
 
 ### Changed

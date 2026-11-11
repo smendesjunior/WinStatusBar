@@ -39,10 +39,11 @@ public class HiddenWebPagesTests
     [Theory]
     [InlineData("CopilotWebSession.cs")]
     [InlineData("GeminiWebSession.cs")]
-    public void ChatPagesCloseAfterFifteenIdleMinutes(string file)
+    public void ChatPagesCloseSoonAfterTheLastUse(string file)
     {
         string code = RepoSource.Read("src", "WinStatusBar", "Services", file);
-        Assert.Contains("new(TimeSpan.FromMinutes(15), () => CloseAsync(TimeSpan.Zero))", code);
+        // 11/11/2026: a espera vem das configurações (1 min por padrão), não mais 15 min fixos.
+        Assert.Contains("new(IdleCloser.Configured, () => CloseAsync(TimeSpan.Zero))", code);
         Assert.Contains("finally { Gate.Release(); Idle.Restart(_ui); }", code);
     }
 }

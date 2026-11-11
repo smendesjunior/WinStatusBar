@@ -38,6 +38,9 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
     private bool _wifiRefreshing;
     private Button? _bluetoothButton;
     private TextBlock? _bluetoothLabel;
+    private Button? _hotspotButton;
+    private TextBlock? _hotspotLabel;
+    private bool _hotspotRefreshing;
     private DeviceWatcher? _bluetoothWatcher;
     private readonly Dictionary<string, DeviceInformation> _bluetoothDevices = new();
 
@@ -95,6 +98,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
                 button.Content = content;
                 if (label == "Wi-Fi") { _wifiButton = button; _wifiLabel = name; }
                 else if (label == "Bluetooth") { _bluetoothButton = button; _bluetoothLabel = name; }
+                else { _hotspotButton = button; _hotspotLabel = name; }
             }
             button.Click += async (_, _) =>
             {
@@ -139,6 +143,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         if (_disposed || _open) return;
         _open = true; _ticks = 0; _alias = null;
         _ = RefreshWifiButtonAsync();
+        _ = RefreshHotspotButtonAsync();
         StartBluetoothWatcher();
         _testButton.Visibility = _settings.Current.SpeedTestEnabled ? Visibility.Visible : Visibility.Collapsed;
         _hub.CpuSampled += Render;
@@ -176,7 +181,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             _ethernetButton.Visibility = ethernet is not null ? Visibility.Visible : Visibility.Collapsed;
             _ethernetButton.Content = (ethernet?.Alias ?? "Ethernet") + " · conectada";
             string? alias = active?.Alias;
-            if (alias != _alias || ++_ticks % 5 == 0) { _alias = alias; _ = LoadDetailsAsync(alias); _ = RefreshWifiButtonAsync(); }
+            if (alias != _alias || ++_ticks % 5 == 0) { _alias = alias; _ = LoadDetailsAsync(alias); _ = RefreshWifiButtonAsync(); _ = RefreshHotspotButtonAsync(); }
         }
         catch (Exception ex) { App.Log("Painel rede: " + ex.Message); }
     }
@@ -196,6 +201,24 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         }
         catch (Exception ex) { App.Log("Estado Wi-Fi: " + ex.Message); _wifiLabel.Text = "Wi-Fi"; _wifiButton.ClearValue(FrameworkElement.StyleProperty); }
         finally { _wifiRefreshing = false; }
+    }
+
+    /// <summary>Hotspot ligado: botão em destaque (como Wi-Fi e Bluetooth conectados) e o número de dispositivos.</summary>
+    private async Task RefreshHotspotButtonAsync()
+    {
+        if (_hotspotRefreshing || _hotspotButton is null || _hotspotLabel is null) return;
+        _hotspotRefreshing = true;
+        try
+        {
+            var state = await Task.Run(HotspotState.Read);
+            if (!_open || _disposed) return;
+            _hotspotLabel.Text = HotspotState.Label(state);
+            ToolTipService.SetToolTip(_hotspotButton, HotspotState.Tooltip(state));
+            if (state is { On: true }) _hotspotButton.Style = _ethernetButton.Style;
+            else _hotspotButton.ClearValue(FrameworkElement.StyleProperty);
+        }
+        catch (Exception ex) { App.Log("Estado do hotspot: " + ex.Message); }
+        finally { _hotspotRefreshing = false; }
     }
 
     private void StartBluetoothWatcher()

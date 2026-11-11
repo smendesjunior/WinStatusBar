@@ -45,6 +45,7 @@ internal sealed class QiraProvider : IProvider
         Cdp? cdp = null;
         try
         {
+            QiraLifecycle.MarkUse(); // a contagem para encerrar o Qira recomeça a cada pedido
             // A barra pode estar usando o Qira agora: espera a vez (as respostas dele levam até 4 min).
             turn = await QiraSharedTurn.AcquireAsync(TimeSpan.FromSeconds(1), ct);
             if (turn is null)
@@ -62,6 +63,8 @@ internal sealed class QiraProvider : IProvider
             }
             bool launched = false;
             string? mode = null;
+            // Fechado (o normal entre um pedido e outro): abre agora, só para este pedido.
+            if (!QiraLifecycle.AnyRunning()) onText("*Abrindo o Qira…*");
             for (int round = 0; ; round++)
             {
                 var hub = await EnsureHubAsync(ct);
@@ -131,9 +134,33 @@ internal sealed class QiraProvider : IProvider
         finally
         {
             cdp?.Dispose();
+            QiraLifecycle.MarkUse();
             turn?.Dispose();
             _gate.Release();
+            ScheduleStop();
         }
+    }
+
+    private static System.Threading.Timer? _stopTimer;
+
+    /// <summary>
+    /// Depois de cada uso: encerra o Qira aberto sob demanda quando a espera escolhida na barra (Manter a IA aberta depois
+    /// da resposta) passar sem outro pedido. Ocupado, na barra ou aqui, confere de novo depois (ver QiraLifecycle).
+    /// </summary>
+    private static void ScheduleStop(TimeSpan? after = null)
+    {
+        static TimeSpan Configured() => WinStatusBar.Core.Settings.AppSettings.AiRelease(BarSettings.Load().AiReleaseSeconds);
+        var grace = after ?? Configured();
+        var timer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                if (await QiraLifecycle.StopIfIdleAsync(Configured(), Log.Write)) return;
+                if (QiraLifecycle.Owned) ScheduleStop(TimeSpan.FromSeconds(30) > grace ? TimeSpan.FromSeconds(30) : grace);
+            }
+            catch (Exception ex) { Log.Write("Qira: encerrar depois do uso: " + ex.Message); }
+        }, null, grace + TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+        Interlocked.Exchange(ref _stopTimer, timer)?.Dispose();
     }
 
     private static async Task<string?> ReadModeAsync(Cdp cdp, TimeSpan wait, CancellationToken ct)
@@ -156,6 +183,7 @@ internal sealed class QiraProvider : IProvider
     {
         if (!File.Exists(Launcher)) throw new QiraException("O Qira parou de responder e o iniciador dele não foi encontrado para reabri-lo.");
         Log.Write("Qira: núcleo sem resposta; reiniciando o Qira inteiro (como Sair e abrir de novo)");
+        bool owned = QiraLifecycle.Owned; // aberto sob demanda: continua assim depois do reinício (e fecha depois do uso)
         // Lista comum (QiraSharedTurn) e só o que roda da pasta do Qira: outro programa com o mesmo nome de processo fica de fora.
         foreach (var name in QiraSharedTurn.ProcessNames)
             foreach (var p in Process.GetProcessesByName(name)) using (p) { try { if (QiraSharedTurn.IsQiraProcess(p)) p.Kill(); } catch { } }
@@ -174,6 +202,7 @@ internal sealed class QiraProvider : IProvider
             if (watching && await PageUrlAsync(BridgePort, ct) is not null) break;
             await Task.Delay(300, ct);
         }
+        if (owned) await QiraLifecycle.MarkOwnedAsync(CancellationToken.None);
         Log.Write("Qira: reaberto pelo iniciador oficial");
     }
 
@@ -292,6 +321,8 @@ internal sealed class QiraProvider : IProvider
         }
         finally { foreach (var p in hubs) p.Dispose(); }
 
+        // Qira todo fechado: primeiro o núcleo (sem ele a interface abre sozinha e a primeira resposta leva ~50 s).
+        await QiraLifecycle.EnsureNucleusAsync(Log.Write, ct);
         var psi = new ProcessStartInfo(HubExe) { UseShellExecute = false, WorkingDirectory = AppDir };
         // Depuração só em 127.0.0.1 e sem --remote-allow-origins (páginas da web não conseguem se conectar).
         psi.Environment["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = $"--remote-debugging-port={BridgePort}";

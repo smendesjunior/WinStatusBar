@@ -25,5 +25,19 @@ internal static class VoiceShortcut
         foreach (byte key in modifiers.AsEnumerable().Reverse()) keybd_event(key, 0, 2, 0);
         return true;
     }
+    /// <summary>
+    /// Texto do atalho a partir das teclas pressionadas no campo das configurações ("Ctrl+Shift+F9"), no formato que
+    /// <see cref="Send"/> aceita: pelo menos um modificador e uma letra, número, tecla de função ou Espaço. null se não servir.
+    /// </summary>
+    public static string? Format(bool ctrl, bool alt, bool shift, int virtualKey)
+    {
+        string? key = virtualKey == 0x20 ? "Space"
+            : virtualKey is >= 0x30 and <= 0x39 or >= 0x41 and <= 0x5A ? ((char)virtualKey).ToString()
+            : virtualKey is >= 0x70 and <= 0x87 ? "F" + (virtualKey - 0x70 + 1)
+            : null;
+        if (key is null || !(ctrl || alt || shift)) return null;
+        return (ctrl ? "Ctrl+" : "") + (alt ? "Alt+" : "") + (shift ? "Shift+" : "") + key;
+    }
+
     [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extra);
 }

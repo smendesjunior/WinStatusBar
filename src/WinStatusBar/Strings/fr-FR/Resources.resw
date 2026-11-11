@@ -4527,4 +4527,28 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S7997752AE4490F6B" xml:space="preserve">
     <value>Consultation des quotas…</value>
   </data>
+  <data name="S9ECE3B02314C96A2" xml:space="preserve">
+    <value>Garder l'IA ouverte après la réponse</value>
+  </data>
+  <data name="S919CF76BD0A1DA26" xml:space="preserve">
+    <value>Gemini et Copilot (page masquée) et Lenovo Qira ne s'ouvrent que lorsque vous envoyez la question et se ferment après ce délai sans utilisation. Un délai plus long accélère la question suivante ; un délai plus court libère la mémoire plus tôt. Quand vous changez d'IA dans le chat, la précédente se ferme aussitôt.</value>
+  </data>
+  <data name="SEC894D97C65D9146" xml:space="preserve">
+    <value>Fermer juste après la réponse</value>
+  </data>
+  <data name="S931CEDE598247533" xml:space="preserve">
+    <value>1 minute (recommandé)</value>
+  </data>
+  <data name="S7C6E4F38FBB63D77" xml:space="preserve">
+    <value>5 minutes</value>
+  </data>
+  <data name="S7D28361114C0A6E7" xml:space="preserve">
+    <value>15 minutes</value>
+  </data>
+  <data name="S8DD667E64D23ACD5" xml:space="preserve">
+    <value>Cliquez et appuyez sur le raccourci</value>
+  </data>
+  <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
+    <value>Cliquez ici et appuyez sur la combinaison (ex. : Ctrl+Shift+F9). Retour arrière l'efface.</value>
+  </data>
 </root>

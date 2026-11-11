@@ -524,6 +524,7 @@ public partial class App : Application
         ExitStep("configurações", () => _settingsWindow?.CloseForExit());
         ExitStep("bandeja", () => _tray?.Dispose());
         ExitStep("ponte do Codex", CodexBridgeHost.Stop);
+        ExitStep("recursos das IAs", AiResources.ReleaseAllForExit);
         ExitStep("monitoramento", () => Hub.Dispose());
         ExitStep("instância única", () => _singleInstance?.ReleaseMutex());
         // No modo padrão (OnLastWindowClose) o Exit() do WinUI só pede para as janelas fecharem e espera a última

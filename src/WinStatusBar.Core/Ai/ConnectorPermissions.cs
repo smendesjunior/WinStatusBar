@@ -41,6 +41,34 @@ public static class ConnectorPermissions
         return end > 4 ? toolName[(end + 2)..] : toolName;
     }
 
+    public enum ServerState { Connected, NeedsSignIn, Failed, Unknown }
+
+    /// <summary>Um servidor da lista do Claude ("claude mcp list"): nome do servidor, nome para exibir, origem, endereço ou comando e estado.</summary>
+    public sealed record Server(string Name, string Display, string Origin, string Detail, ServerState State);
+
+    /// <summary>
+    /// Lê as linhas de "claude mcp list" ("claude.ai Google Drive: https://… - ✓ Connected"). Linhas fora desse formato
+    /// (cabeçalhos, avisos) ficam de fora.
+    /// </summary>
+    public static IReadOnlyList<Server> ParseMcpList(string output)
+    {
+        var list = new List<Server>();
+        foreach (string raw in output.Split('\n'))
+        {
+            string line = raw.Trim();
+            int status = line.LastIndexOf(" - ", StringComparison.Ordinal), colon = line.IndexOf(": ", StringComparison.Ordinal);
+            if (status < 0 || colon <= 0 || colon > status) continue;
+            string name = line[..colon].Trim(), detail = line[(colon + 2)..status].Trim(), state = line[(status + 3)..];
+            var parsed = state.Contains("Connected", StringComparison.OrdinalIgnoreCase) ? ServerState.Connected
+                : state.Contains("auth", StringComparison.OrdinalIgnoreCase) ? ServerState.NeedsSignIn
+                : state.Contains("fail", StringComparison.OrdinalIgnoreCase) || state.Contains("error", StringComparison.OrdinalIgnoreCase) ? ServerState.Failed
+                : ServerState.Unknown;
+            string origin = name.StartsWith("claude.ai ", StringComparison.Ordinal) ? "Conta claude.ai" : name.StartsWith("plugin:", StringComparison.Ordinal) ? "Plugin" : "Servidor MCP";
+            list.Add(new(name, DisplayName(RuleForServer(name)), origin, detail, parsed));
+        }
+        return list;
+    }
+
     /// <summary>Bloqueios de conectores agrupados por servidor (outras ferramentas, como Bash, ficam com o modo Editar).</summary>
     public static IReadOnlyList<(string Rule, string Name, IReadOnlyList<string> Tools)> Group(IEnumerable<string> blocked)
         => blocked.Select(t => (Tool: t, Rule: ServerRule(t))).Where(x => x.Rule is not null)

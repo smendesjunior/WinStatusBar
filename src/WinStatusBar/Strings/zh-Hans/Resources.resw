@@ -4527,4 +4527,28 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S7997752AE4490F6B" xml:space="preserve">
     <value>正在查询配额…</value>
   </data>
+  <data name="S9ECE3B02314C96A2" xml:space="preserve">
+    <value>回答后保持 AI 打开的时间</value>
+  </data>
+  <data name="S919CF76BD0A1DA26" xml:space="preserve">
+    <value>Gemini 和 Copilot(隐藏页面)以及 Lenovo Qira 仅在你发送问题时打开,并在闲置这段时间后关闭。时间越长,下一个问题越快;时间越短,内存释放越早。在聊天中切换 AI 时,上一个会立即关闭。</value>
+  </data>
+  <data name="SEC894D97C65D9146" xml:space="preserve">
+    <value>回答后立即关闭</value>
+  </data>
+  <data name="S931CEDE598247533" xml:space="preserve">
+    <value>1 分钟(推荐)</value>
+  </data>
+  <data name="S7C6E4F38FBB63D77" xml:space="preserve">
+    <value>5 分钟</value>
+  </data>
+  <data name="S7D28361114C0A6E7" xml:space="preserve">
+    <value>15 分钟</value>
+  </data>
+  <data name="S8DD667E64D23ACD5" xml:space="preserve">
+    <value>点击后按下快捷键</value>
+  </data>
+  <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
+    <value>点击此处并按下组合键(例如 Ctrl+Shift+F9)。按 Backspace 清除。</value>
+  </data>
 </root>

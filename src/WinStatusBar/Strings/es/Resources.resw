@@ -4527,4 +4527,28 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S7997752AE4490F6B" xml:space="preserve">
     <value>Consultando las cuotas…</value>
   </data>
+  <data name="S9ECE3B02314C96A2" xml:space="preserve">
+    <value>Mantener la IA abierta después de la respuesta</value>
+  </data>
+  <data name="S919CF76BD0A1DA26" xml:space="preserve">
+    <value>Gemini y Copilot (página oculta) y Lenovo Qira solo se abren cuando envías la pregunta y se cierran después de este tiempo sin uso. Más tiempo hace más rápida la pregunta siguiente; menos tiempo libera la memoria antes. Al cambiar de IA en el chat, la anterior se cierra al instante.</value>
+  </data>
+  <data name="SEC894D97C65D9146" xml:space="preserve">
+    <value>Cerrar justo después de responder</value>
+  </data>
+  <data name="S931CEDE598247533" xml:space="preserve">
+    <value>1 minuto (recomendado)</value>
+  </data>
+  <data name="S7C6E4F38FBB63D77" xml:space="preserve">
+    <value>5 minutos</value>
+  </data>
+  <data name="S7D28361114C0A6E7" xml:space="preserve">
+    <value>15 minutos</value>
+  </data>
+  <data name="S8DD667E64D23ACD5" xml:space="preserve">
+    <value>Haz clic y pulsa el atajo</value>
+  </data>
+  <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
+    <value>Haz clic aquí y pulsa la combinación (p. ej., Ctrl+Shift+F9). Retroceso la borra.</value>
+  </data>
 </root>

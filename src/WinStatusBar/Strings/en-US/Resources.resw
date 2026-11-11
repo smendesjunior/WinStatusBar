@@ -4527,4 +4527,28 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S7997752AE4490F6B" xml:space="preserve">
     <value>Checking quotas…</value>
   </data>
+  <data name="S9ECE3B02314C96A2" xml:space="preserve">
+    <value>Keep the AI open after the answer</value>
+  </data>
+  <data name="S919CF76BD0A1DA26" xml:space="preserve">
+    <value>Gemini and Copilot (hidden page) and Lenovo Qira open only when you send a question and close after this time without use. A longer time makes the next question faster; a shorter time frees memory sooner. When you switch AIs in the chat, the previous one closes right away.</value>
+  </data>
+  <data name="SEC894D97C65D9146" xml:space="preserve">
+    <value>Close right after answering</value>
+  </data>
+  <data name="S931CEDE598247533" xml:space="preserve">
+    <value>1 minute (recommended)</value>
+  </data>
+  <data name="S7C6E4F38FBB63D77" xml:space="preserve">
+    <value>5 minutes</value>
+  </data>
+  <data name="S7D28361114C0A6E7" xml:space="preserve">
+    <value>15 minutes</value>
+  </data>
+  <data name="S8DD667E64D23ACD5" xml:space="preserve">
+    <value>Click and press the shortcut</value>
+  </data>
+  <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
+    <value>Click here and press the combination (e.g. Ctrl+Shift+F9). Backspace clears it.</value>
+  </data>
 </root>

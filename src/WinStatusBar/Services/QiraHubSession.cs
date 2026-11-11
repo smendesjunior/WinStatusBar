@@ -124,41 +124,34 @@ internal static class QiraHubSession
         return shared > _lastRestart ? shared : _lastRestart;
     }
 
-    private static DateTime _healthyAt = DateTime.MinValue;
+    // ------------------------------------------------------------------ Qira sob demanda
+    private static Timer? _stopTimer;
 
     /// <summary>
-    /// Conferência antecipada (painel aberto com o Qira como destino): parado por um tempo, o núcleo do Qira costuma
-    /// travar, e o envio só descobria isso depois de 8 s, somando ~25 s de reinício. Assim o reinício acontece enquanto a
-    /// pessoa digita. Só uma por vez, e nunca durante um envio (mesma trava).
+    /// Depois de cada uso: encerra o Qira aberto pela barra quando a espera das configurações passar sem outro pedido
+    /// (ver QiraLifecycle). Ocupado (respondendo aqui ou no Codex) ou com outro uso no meio, confere de novo depois.
     /// </summary>
-    public static void Prewarm()
+    private static void ScheduleStop(TimeSpan? after = null)
     {
-        if (!File.Exists(HubExe) || DateTime.UtcNow - _healthyAt < TimeSpan.FromMinutes(2)) return;
-        _ = Task.Run(async () =>
+        var grace = after ?? IdleCloser.Configured();
+        var timer = new Timer(async _ =>
         {
-            if (!await Gate.WaitAsync(0)) return;
-            IDisposable? turn = null;
             try
             {
-                // Com o Qira em uso pelo Codex IAs, a conferência antecipada não é necessária agora.
-                turn = await QiraSharedTurn.AcquireAsync(TimeSpan.Zero, CancellationToken.None);
-                if (turn is null) return;
-                using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(90));
-                var hub = await EnsureHubAsync(limit.Token);
-                using var cdp = await Cdp.ConnectAsync(hub.WsUrl, limit.Token);
-                if (!await cdp.EvalAsync<bool>(SetupJs, limit.Token)) return;
-                if (await ReadModeAsync(cdp, TimeSpan.FromSeconds(hub.Launched ? 45 : 6), limit.Token) is not null) { _healthyAt = DateTime.UtcNow; return; }
-                if (DateTime.UtcNow - LastRestart() < QiraSharedTurn.RestartInterval) return;
-                _lastRestart = DateTime.UtcNow;
-                QiraSharedTurn.MarkRestart();
-                App.Log("Qira: núcleo sem resposta ao abrir o painel; reiniciando antes do envio");
-                // O reinício vai até o fim: parar no meio deixaria o Qira pela metade.
-                await RestartQiraAsync(CancellationToken.None);
+                if (await QiraLifecycle.StopIfIdleAsync(IdleCloser.Configured(), App.Log)) return;
+                if (QiraLifecycle.Owned) ScheduleStop(TimeSpan.FromSeconds(30) > grace ? TimeSpan.FromSeconds(30) : grace);
             }
-            catch (Exception ex) { App.Log("Qira: conferência antecipada: " + ex.Message); }
-            finally { turn?.Dispose(); Gate.Release(); }
-        });
+            catch (Exception ex) { App.Log("Qira: encerrar depois do uso: " + ex.Message); }
+        }, null, grace + TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+        Interlocked.Exchange(ref _stopTimer, timer)?.Dispose();
     }
+
+    /// <summary>A pessoa trocou de IA no chat (ou a barra vai fechar): encerra agora o Qira aberto pela barra, se estiver parado.</summary>
+    public static Task<bool> ReleaseAsync() => Task.Run(async () =>
+    {
+        try { return await QiraLifecycle.StopIfIdleAsync(TimeSpan.Zero, App.Log); }
+        catch (Exception ex) { App.Log("Qira: encerrar na troca de IA: " + ex.Message); return false; }
+    });
 
     // ------------------------------------------------------------------ Corrigir problemas
     /// <summary>
@@ -204,7 +197,7 @@ internal static class QiraHubSession
                 catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
                 catch { healthy = false; }
             }
-            if (healthy) { _healthyAt = DateTime.UtcNow; steps.Add(new(area, AiRepair.Outcome.Ok, "Respondendo pela ponte local (porta 9339).")); return steps; }
+            if (healthy) { steps.Add(new(area, AiRepair.Outcome.Ok, "Respondendo pela ponte local (porta 9339).")); return steps; }
             // Reiniciado há pouco (pela barra ou pelo Codex): pode estar terminando de abrir; não reinicia em seguida.
             if (DateTime.UtcNow - LastRestart() < TimeSpan.FromMinutes(3))
             {
@@ -274,6 +267,7 @@ internal static class QiraHubSession
         IDisposable? turn = null;
         try
         {
+            QiraLifecycle.MarkUse(); // a contagem para encerrar o Qira recomeça a cada pedido
             // O Codex IAs pode estar usando o mesmo Qira: espera a vez (as respostas do Qira levam até 4 min).
             turn = await QiraSharedTurn.AcquireAsync(TimeSpan.FromSeconds(1), ct);
             if (turn is null)
@@ -288,6 +282,8 @@ internal static class QiraHubSession
             // abrir de novo", no máximo uma vez a cada 10 min, e tenta de novo.
             bool launched = false;
             string? mode = null;
+            // Fechado (o normal entre uma pergunta e outra): abre agora, só para este pedido.
+            if (!QiraLifecycle.AnyRunning()) onText("*Abrindo o Qira…*");
             for (int round = 0; ; round++)
             {
                 var hub = await EnsureHubAsync(ct);
@@ -312,7 +308,6 @@ internal static class QiraHubSession
                 await RestartQiraAsync(CancellationToken.None);
                 ct.ThrowIfCancellationRequested();
             }
-            if (mode is not null) _healthyAt = DateTime.UtcNow;
             if (mode is null && launched)
             {
                 // Núcleo sem resposta logo após abrir: encerra o Hub pelo comando dele; o próximo envio o reabre limpo.
@@ -384,8 +379,10 @@ internal static class QiraHubSession
         finally
         {
             cdp?.Dispose();
+            QiraLifecycle.MarkUse();
             turn?.Dispose();
             Gate.Release();
+            ScheduleStop();
         }
     }
 
@@ -413,6 +410,7 @@ internal static class QiraHubSession
     {
         if (!File.Exists(Launcher)) throw new QiraException("O Qira parou de responder e o iniciador dele não foi encontrado para reabri-lo.");
         App.Log("Qira: núcleo sem resposta; reiniciando o Qira inteiro (como Sair e abrir de novo)");
+        bool owned = QiraLifecycle.Owned; // aberto pela barra: continua sendo dela depois do reinício (e fecha depois do uso)
         // Lista comum (QiraSharedTurn) e só o que roda da pasta do Qira: outro programa com o mesmo nome de processo fica de fora.
         foreach (var name in QiraSharedTurn.ProcessNames)
             foreach (var p in Process.GetProcessesByName(name)) using (p) { try { if (QiraSharedTurn.IsQiraProcess(p)) p.Kill(); } catch { } }
@@ -431,6 +429,7 @@ internal static class QiraHubSession
             if (watching && await PageUrlAsync(BridgePort, ct) is not null) break;
             await Task.Delay(300, ct);
         }
+        if (owned) await QiraLifecycle.MarkOwnedAsync(CancellationToken.None);
         App.Log("Qira: reaberto pelo iniciador oficial");
     }
 
@@ -564,6 +563,8 @@ internal static class QiraHubSession
         }
         finally { foreach (var p in hubs) p.Dispose(); }
 
+        // Qira todo fechado: primeiro o núcleo (sem ele a interface abre sozinha e a primeira resposta leva ~50 s).
+        await QiraLifecycle.EnsureNucleusAsync(App.Log, ct);
         int port = PortFree(BridgePort) ? BridgePort : FreePort();
         var psi = new ProcessStartInfo(HubExe) { UseShellExecute = false, WorkingDirectory = AppDir };
         // Depuração só em 127.0.0.1 e sem --remote-allow-origins: páginas da web não conseguem se conectar.

@@ -1285,8 +1285,11 @@ public sealed partial class BarWindow
 
     private void SelectDestination(string key)
     {
+        bool changed = DestinationKey() != key;
         _settings.Current.CommandTarget = key;
         SaveSettingsQuietly();
+        // Troca de IA: o que a anterior deixou aberto (página oculta, Qira, modelo local) fecha agora.
+        if (changed) AiResources.ReleaseOthers(DestinationKey());
         UpdateTargetUi();
     }
 
@@ -1311,7 +1314,6 @@ public sealed partial class BarWindow
         if (_panel is null) return;
         if (_panel.IsOpen || _closing) return;
         UpdateTargetUi();
-        if (DestinationKey() == QiraChat) QiraHubSession.Prewarm();
         if (CurrentMonitor() is not { } monitor) return;
         _panel.ShowAt(CommandHost, monitor);
         FocusComposerFromBar(); // não aguarda a animação de abertura para receber as teclas

@@ -131,6 +131,29 @@ public sealed partial class SettingsWindow
     }
 
     /// <summary>
+    /// Campo de atalho gravado pelas teclas: com o campo em foco, a combinação pressionada (Ctrl, Alt, Shift e uma tecla)
+    /// vira o texto. Backspace ou Delete limpam; Tab segue para o próximo campo; nada é digitado letra a letra.
+    /// </summary>
+    private static TextBox ShortcutBox(string current, Action<string> save)
+    {
+        var box = new TextBox { Text = current, PlaceholderText = Localization.T("Clique e pressione o atalho"), IsSpellCheckEnabled = false };
+        ToolTipService.SetToolTip(box, Localization.T("Clique aqui e pressione a combinação (ex.: Ctrl+Shift+F9). Backspace limpa."));
+        box.PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == Windows.System.VirtualKey.Tab) return;
+            e.Handled = true;
+            static bool Down(Windows.System.VirtualKey k) => Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(k).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+            bool ctrl = Down(Windows.System.VirtualKey.Control), alt = Down(Windows.System.VirtualKey.Menu), shift = Down(Windows.System.VirtualKey.Shift);
+            if (e.Key is Windows.System.VirtualKey.Back or Windows.System.VirtualKey.Delete && !(ctrl || alt || shift)) { box.Text = string.Empty; save(string.Empty); return; }
+            if (WinStatusBar.Services.VoiceShortcut.Format(ctrl, alt, shift, (int)e.Key) is not { } combo) return;
+            box.Text = combo; box.SelectionStart = combo.Length; save(combo);
+        };
+        // Colar ou texto vindo de fora das teclas: o campo só aceita o que a gravação escreveu.
+        box.Paste += (_, e) => e.Handled = true;
+        return box;
+    }
+
+    /// <summary>
     /// Chat da barra: o chat e o atalho, como cada conversa nova começa, as permissões (todas num grupo só: edição de
     /// arquivos, acesso ao PC e conectores), o histórico e a voz dos aplicativos oficiais.
     /// </summary>
@@ -179,10 +202,8 @@ public sealed partial class SettingsWindow
 
         CommandPage.Children.Add(GroupTitle(Localization.T("Voz nos aplicativos oficiais")));
         CommandPage.Children.Add(Help("O botão de ondas abre ChatGPT ou Claude. Para iniciar voz pelo atalho, informe abaixo a mesma combinação configurada no aplicativo oficial (Ctrl, Alt, Shift e tecla). Sem atalho, o aplicativo é aberto e você inicia a voz nele. Não é o ditado do Windows."));
-        var chatGptVoice = new TextBox { Text = S.CommandChatGptVoiceHotkey, PlaceholderText = Localization.T("ex.: Ctrl+Shift+F9") };
-        chatGptVoice.TextChanged += (_, _) => Commit(s => s.CommandChatGptVoiceHotkey = chatGptVoice.Text.Trim());
-        var claudeVoice = new TextBox { Text = S.CommandClaudeVoiceHotkey, PlaceholderText = Localization.T("ex.: Ctrl+Shift+F9") };
-        claudeVoice.TextChanged += (_, _) => Commit(s => s.CommandClaudeVoiceHotkey = claudeVoice.Text.Trim());
+        var chatGptVoice = ShortcutBox(S.CommandChatGptVoiceHotkey, v => Commit(s => s.CommandChatGptVoiceHotkey = v));
+        var claudeVoice = ShortcutBox(S.CommandClaudeVoiceHotkey, v => Commit(s => s.CommandClaudeVoiceHotkey = v));
         CommandPage.Children.Add(Group(
             Row(Localization.T("Atalho de voz do ChatGPT"), null, chatGptVoice),
             Row(Localization.T("Atalho de voz do Claude"), Localization.T("Se o aplicativo do Claude oferecer um atalho de voz."), claudeVoice)));

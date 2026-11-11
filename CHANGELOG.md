@@ -7,6 +7,24 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.8.0] - 2026-11-11 · compilação BUILD
+
+### Adicionado
+- Memória das IAs sob demanda: escolher uma IA no chat não abre mais nada. A página oculta do Gemini e do Copilot e o Lenovo Qira só abrem quando você envia a pergunta, fecham pouco depois da resposta e, ao trocar de IA, os da anterior fecham na hora (o modelo da IA local também é liberado na troca).
+- Configurações › IAs e contas › Memória: "Manter a IA aberta depois da resposta" (fechar logo, 1 minuto, 5 ou 15 minutos; padrão 1 minuto).
+- Painel de rede: o botão do Hotspot móvel fica em destaque quando ligado e mostra quantos dispositivos estão conectados.
+- Atalhos de voz (Chat da barra): o campo grava a combinação que você pressionar, em vez de exigir a digitação.
+- Conectores do Claude: a lista lida em "Verificar" mostra cada conector com estado colorido (conectado, precisa de login, falhou), nome e origem; "Detectar" acrescenta de uma vez aos sempre permitidos os conectores conectados na conta.
+
+### Alterado
+- Lenovo Qira: a barra sobe o núcleo do Qira no primeiro pedido (resposta em cerca de 30 s com tudo fechado, poucos segundos nas seguintes) e encerra o Qira inteiro depois do uso, liberando de 1,8 a 2,5 GB. Só o Qira aberto pela barra é encerrado; com a janela do aplicativo Lenovo aberta, ele fica ligado.
+- As IAs no Codex seguem a mesma regra e a mesma espera para as páginas ocultas e para o Qira.
+
+### Corrigido
+- Abrir o painel com o Qira escolhido iniciava (e às vezes reiniciava) o Qira inteiro sem nenhuma pergunta.
+- As páginas ocultas do Gemini e do Copilot ficavam abertas por 15 minutos depois de cada resposta, e para sempre depois de fechar a janela de login ou de sair da conta.
+- Cota do Codex: depois de uma atualização do app do Codex, a barra continuava procurando o programa na pasta da versão antiga e mostrava um erro em inglês até ser reiniciada. Agora ela acha a versão nova sozinha, e o erro ganhou explicação em português.
+
 ## [1.7.0] - 2026-11-11 · compilação 20261111140800
 
 ### Alterado

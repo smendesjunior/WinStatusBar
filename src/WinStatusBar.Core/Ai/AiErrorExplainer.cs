@@ -101,7 +101,7 @@ public static class AiErrorExplainer
         // 11) Respostas vazias e programas ausentes.
         if (Has(all, @"^sem resposta$|terminou sem resposta|^o qira não respondeu\.?$|no response|empty response"))
             return E("sem resposta", LocalizedText.F("{0} terminou sem mandar nenhum texto. Tente de novo; se repetir, escolha outro modelo ou outra IA.", new object?[] { who.Subject }));
-        if (Has(all, @"não encontrado neste pc|is not recognized as|enoent|cannot find the file|não foi possível iniciar"))
+        if (Has(all, @"não encontrado neste pc|is not recognized as|enoent|cannot find the file|não pode encontrar o arquivo|error occurred trying to start process|não foi possível iniciar"))
             return E("programa ausente", LocalizedText.F("O programa {0} não foi encontrado ou não abriu neste PC.", new object?[] { who.Of }) + " " + InstallAction(target));
 
         // 12) Pedido recusado sem motivo reconhecido.
