@@ -41,6 +41,8 @@ public sealed class DesktopExperience
         _path = path;
         try { _recipes = File.Exists(path) ? JsonSerializer.Deserialize<List<DesktopRecipe>>(File.ReadAllText(path)) ?? [] : []; }
         catch { _recipes = []; } // arquivo corrompido não impede o executor; é reescrito no próximo acerto
+        // Arquivo danificado pela metade (item nulo ou sem pedido/passos/desvios): só esses itens saem.
+        _recipes.RemoveAll(r => r is null || r.Request is null || r.Steps is null || r.Avoid is null);
     }
 
     public IReadOnlyList<DesktopRecipe> All { get { lock (_gate) return _recipes.ToList(); } }
@@ -60,7 +62,7 @@ public sealed class DesktopExperience
     public bool Remember(string request, string? app, IReadOnlyList<DesktopActionRequest> steps, IReadOnlyList<string> avoid)
     {
         request = Clean(request);
-        if (Sensitive.IsMatch(request) || steps.Any(s => Sensitive.IsMatch(s.Text ?? ""))) return false;
+        if (Sensitive.IsMatch(request) || steps.Any(s => FreeText(s).Any(Sensitive.IsMatch))) return false;
         // Só os passos que fazem algo (observações e listas são diagnóstico, refeitos a cada vez).
         var useful = steps.Where(s => s.Action is not ("context" or "observe" or "observe_foreground" or "list_windows" or "find" or "wait" or "clipboard_get")).ToList();
         if (useful.Count == 0 || useful.All(s => s.Action is "file" && s.Op is "read" or "info" or "exists" or "list")) return false;
@@ -111,11 +113,18 @@ public sealed class DesktopExperience
     public static string? AppFromContext(string? context)
         => context is null ? null : Regex.Match(context, @"Janela (?:ativa|de cima[^:]*): (\S+)") is { Success: true } m ? m.Groups[1].Value : null;
 
+    /// <summary>Campos de texto livre de um passo (onde pode haver conteúdo do usuário): os mesmos que Compact encurta.</summary>
+    private static IEnumerable<string> FreeText(DesktopActionRequest a)
+        => new[] { a.Text, a.Value, a.Find, a.Replace }.Concat(a.Arguments ?? []).OfType<string>();
+
     private static string Compact(DesktopActionRequest a)
     {
         var shortened = a with
         {
             Text = a.Text is null ? null : Cut(a.Text, 80), Values = a.Values is null ? null : [["…"]],
+            Arguments = a.Arguments?.Select(x => Cut(x ?? "", 80)).ToArray(),
+            Value = a.Value is null ? null : Cut(a.Value, 80), Find = a.Find is null ? null : Cut(a.Find, 80),
+            Replace = a.Replace is null ? null : Cut(a.Replace, 80),
             Observation = a.Action == "system" && a.Op == "recipe" ? "novo GUID" : null, Window = 0,
         };
         string json = JsonSerializer.Serialize(shortened, StepJson);

@@ -90,7 +90,7 @@ internal sealed partial class DesktopRuntime
             case "wait_window":
             {
                 string t = r.Target ?? throw new InvalidOperationException("Informe target.");
-                var until = DateTime.UtcNow.AddSeconds(Math.Clamp(r.TimeoutSeconds ?? 20, 1, 300));
+                var until = DateTime.UtcNow.AddSeconds(DesktopActionRequest.WaitWindowSeconds(r.TimeoutSeconds)); // o prazo do auxiliar conta com este mesmo valor
                 while (DateTime.UtcNow < until) { if (FindWindow(t) is { } h) return new("Janela encontrada: " + Label(h) + "."); await Task.Delay(300, ct); }
                 return new($"Nenhuma janela com \"{t}\" apareceu no prazo.", Success: false);
             }
@@ -98,6 +98,7 @@ internal sealed partial class DesktopRuntime
             {
                 IntPtr h = ResolveWindow(r);
                 var snap = WinStatusBar.Services.ContextActions.Capture(h);
+                Remember(snap); // os "#N" devolvidos valem neste retrato (uia por controlId)
                 var hits = snap.Controls.Where(c => r.Name is null || c.Name.Contains(r.Name, StringComparison.OrdinalIgnoreCase) || c.Value.Contains(r.Name, StringComparison.OrdinalIgnoreCase)).Take(40).ToList();
                 return new(hits.Count == 0 ? $"Nenhum controle com \"{r.Name}\" em {Label(h)}."
                     : $"Controles em {Label(h)}: " + string.Join("; ", hits.Select(c => $"#{c.Id} {Cap(c.Name, 40)}" + (c.Value.Length > 0 ? $" = \"{Cap(c.Value, 50)}\"" : "") + (c.Actions.Length > 0 ? " (" + string.Join("/", c.Actions) + ")" : ""))));
@@ -144,8 +145,25 @@ internal sealed partial class DesktopRuntime
                 string url = r.Url ?? throw new InvalidOperationException("Informe url."); string to = r.To ?? r.Path ?? throw new InvalidOperationException("Informe to.");
                 if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http")) throw new InvalidOperationException("URL inválida.");
                 if (Directory.Exists(to)) to = Path.Combine(to, Path.GetFileName(uri.LocalPath) is { Length: > 0 } f ? f : "download");
+                // Como em file: não sobrescreve sem "overwrite":true, e então o existente vai para a Lixeira.
+                if (File.Exists(to))
+                {
+                    if (r.Overwrite != true)
+                        return new("O arquivo já existe; nada foi baixado nem sobrescrito: " + to + ". Use outro nome ou \"overwrite\":true (o existente vai para a Lixeira).", Success: false, Status: DesktopStatus.Blocked);
+                    RequireRecycleBin(to); // antes de baixar: sem Lixeira no destino, o existente não pode ser trocado
+                }
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(to))!);
-                using (var src = await Http.GetStreamAsync(uri, ct)) using (var dst = File.Create(to)) await src.CopyToAsync(dst, ct);
+                // Baixa num arquivo temporário ao lado: uma transferência interrompida nunca deixa o arquivo final pela metade.
+                string part = to + "." + Guid.NewGuid().ToString("N")[..8] + ".part";
+                bool moved = false;
+                try
+                {
+                    using (var src = await Http.GetStreamAsync(uri, ct)) using (var dst = new FileStream(part, FileMode.CreateNew, FileAccess.Write, FileShare.None)) await src.CopyToAsync(dst, ct);
+                    if (File.Exists(to)) RecycleBin(to);
+                    File.Move(part, to);
+                    moved = true;
+                }
+                finally { if (!moved) { try { File.Delete(part); } catch { } } }
                 return new($"Baixado: {to} ({new FileInfo(to).Length / 1024.0:N0} KB).");
             }
             case "powershell": return await PowerShellAsync(r.Text ?? throw new InvalidOperationException("Informe text com o comando."), ct);
@@ -269,7 +287,11 @@ internal sealed partial class DesktopRuntime
         if (r.Op == "kill")
         {
             string name = r.Name ?? throw new InvalidOperationException("Informe name.");
-            int n = 0; foreach (var p in Process.GetProcessesByName(name.Replace(".exe", ""))) using (p) { try { p.Kill(true); n++; } catch { } }
+            string bare = name.Replace(".exe", "");
+            // Partes do Lenovo Qira (uma só encerrada trava o resto) e a própria barra nunca são encerradas por aqui.
+            if ((DesktopSafety.ProtectedProcess(bare) ?? DesktopSafety.ProtectedProcess(name)) is { } why)
+                return new(why, Success: false, Status: DesktopStatus.Blocked);
+            int n = 0; foreach (var p in Process.GetProcessesByName(bare)) using (p) { try { p.Kill(true); n++; } catch { } }
             return new(n == 0 ? $"Nenhum processo \"{name}\" encerrado (inexistente ou sem permissão)." : $"{n} processo(s) \"{name}\" encerrado(s).", Success: n > 0);
         }
         throw new InvalidOperationException("op de process inválida: " + r.Op);
@@ -340,6 +362,9 @@ internal sealed partial class DesktopRuntime
     {
         if (string.IsNullOrWhiteSpace(to)) throw new InvalidOperationException("Informe to.");
         string dest = Directory.Exists(to) ? Path.Combine(to, Path.GetFileName(source.TrimEnd('\\', '/'))) : to;
+        // Pasta para dentro dela mesma: a cópia encontraria o próprio destino e se repetiria sem fim.
+        if (Directory.Exists(source) && DesktopSafety.IsInside(dest, source))
+            throw new BlockedException("O destino fica dentro da própria pasta de origem; nada foi copiado nem movido: " + dest + ". Escolha um destino fora dela.");
         if (File.Exists(dest) || Directory.Exists(dest))
         {
             if (!overwrite) throw new InvalidOperationException("Já existe no destino (nada foi sobrescrito): " + dest + ". Use \"overwrite\":true para mandar o existente para a Lixeira.");
@@ -366,8 +391,19 @@ internal sealed partial class DesktopRuntime
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct ShFileOp { public IntPtr Hwnd; public uint Func; public string From; public string? To; public ushort Flags; public bool Aborted; public IntPtr Mappings; public string? Title; }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern int SHFileOperation(ref ShFileOp op);
+    /// <summary>Recusa que não é erro: nada foi feito e a IA recebe "bloqueada" com o motivo (nunca pede administrador).</summary>
+    private sealed class BlockedException(string message) : InvalidOperationException(message);
+    /// <summary>
+    /// Rede (UNC, unidade mapeada) e unidade removível não têm Lixeira: ali o Windows apagaria em definitivo e em silêncio
+    /// (com estas opções, sem pergunta). Recusa antes de tocar no arquivo.
+    /// </summary>
+    private static void RequireRecycleBin(string path)
+    {
+        if (!DesktopSafety.HasRecycleBin(path)) throw new BlockedException(DesktopSafety.NoRecycleBinMessage(Path.GetFullPath(path)));
+    }
     private static void RecycleBin(string path)
     {
+        RequireRecycleBin(path);
         var op = new ShFileOp { Func = 3, From = Path.GetFullPath(path) + "\0\0", Flags = 0x0040 | 0x0010 | 0x0400 | 0x0004 }; // DELETE, ALLOWUNDO|NOCONFIRMATION|NOERRORUI|SILENT
         int code = SHFileOperation(ref op);
         if (code != 0 || op.Aborted) throw new InvalidOperationException($"Não foi possível enviar para a Lixeira (código {code}).");
@@ -481,12 +517,24 @@ internal sealed partial class DesktopRuntime
         return app;
     }
 
+    /// <summary>
+    /// Confere a op antes de abrir o aplicativo, com as mesmas listas dos "switch" de OfficeOp (state, format e
+    /// insert_image são atendidas antes, por OfficeExpansion, que nunca abre programa).
+    /// </summary>
+    private static void ValidOfficeOp(string app, string op)
+    {
+        if (app.Contains("word")) { if (op is not ("new" or "read" or "write" or "append" or "insert" or "replace" or "save" or "save_as" or "export_pdf" or "close")) throw new InvalidOperationException("op de Word inválida: " + op); }
+        else if (app.Contains("excel")) { if (op is not ("new" or "read" or "write" or "save" or "save_as" or "export_pdf" or "close")) throw new InvalidOperationException("op de Excel inválida: " + op); }
+        else if (app.Contains("powerpoint")) { if (op is not ("read" or "export_pdf" or "save" or "close")) throw new InvalidOperationException("op de PowerPoint inválida: " + op); }
+    }
+
     private static DesktopActionResult OfficeOp(DesktopActionRequest r)
     {
         string app = (r.Application ?? "word").ToLowerInvariant();
         string op = r.Op ?? "read";
         string? path = r.Path is null ? null : Path.GetFullPath(Environment.ExpandEnvironmentVariables(r.Path));
         string? to = r.To is null ? null : Path.GetFullPath(Environment.ExpandEnvironmentVariables(r.To));
+        ValidOfficeOp(app, op); // antes de abrir qualquer programa: uma op errada não pode iniciar o Word à toa
         if (app.Contains("word"))
         {
             dynamic word = OfficeApp("Word.Application", create: true);

@@ -14,6 +14,33 @@ public static class QiraSharedTurn
     public static readonly TimeSpan RestartInterval = TimeSpan.FromMinutes(10);
     private static string RestartFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Qira compartilhado", "ultimo-reinicio.txt");
 
+    /// <summary>
+    /// Partes do Lenovo Qira (nomes de processo), numa lista só para a barra, as IAs no Codex e o executor. O reinício
+    /// completo encerra todas juntas; nenhuma é encerrada sozinha (isso trava o resto).
+    /// </summary>
+    public static readonly IReadOnlyList<string> ProcessNames =
+    [
+        "QuantumAI.Hub", "nextmove-bridge", "ProcessHub", "LenovoQiraCore", "mcpMgmtService", "Lenovo Qira.Launcher", "Ludp.Listener",
+        "Notification.Listener", "lenovo.pfm.pipe", "LocalAgent", "CreatorIMG.MCPServer", "CatchMeUpMcpServer", "CzCloudMcpServer", "file-search-service",
+    ];
+
+    /// <summary>Pasta de instalação do Qira; todas as partes rodam de dentro dela.</summary>
+    public static string InstallRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Lenovo", "Lenovo Qira");
+
+    /// <summary>O executável roda da pasta do Qira? Nomes como "LocalAgent" ou "ProcessHub" existem em outros programas.</summary>
+    public static bool IsQiraImage(string? imagePath) => IsQiraImage(imagePath, InstallRoot);
+
+    public static bool IsQiraImage(string? imagePath, string root)
+        => !string.IsNullOrWhiteSpace(imagePath)
+           && imagePath.StartsWith(Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Processo que é mesmo do Qira (pelo caminho do executável). Caminho ilegível: não é tratado como Qira.</summary>
+    public static bool IsQiraProcess(System.Diagnostics.Process process)
+    {
+        try { return IsQiraImage(Local.SystemSnapshot.ImagePath((uint)process.Id)); }
+        catch { return false; }
+    }
+
     /// <summary>Pega a vez. Devolve null se não conseguiu no prazo (ou se foi cancelado). Liberar com Dispose.</summary>
     public static Task<IDisposable?> AcquireAsync(TimeSpan timeout, CancellationToken ct) => AcquireAsync(LockName, timeout, ct);
 

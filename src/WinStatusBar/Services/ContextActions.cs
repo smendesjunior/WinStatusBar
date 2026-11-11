@@ -41,6 +41,20 @@ internal static partial class ContextActions
         }
         return new(window, pid, Title(window), DateTimeOffset.Now, controls);
     }
+    /// <summary>
+    /// O número de um controle é a posição dele num retrato; quando a tela muda, o mesmo número passa a ser outro controle.
+    /// Leva o número mostrado em <paramref name="shown"/> ao MESMO controle em <paramref name="fresh"/> (identidade da
+    /// acessibilidade + nome). Null quando o número não foi mostrado, ou o controle mudou ou não existe mais.
+    /// </summary>
+    internal static int? Rebind(Snapshot shown, Snapshot fresh, int id)
+    {
+        if (shown.Window != fresh.Window || shown.Process != fresh.Process) return null;
+        var seen = shown.Controls.FirstOrDefault(c => c.Id == id);
+        if (seen is null) return null;
+        var same = fresh.Controls.Where(c => c.Runtime == seen.Runtime && c.Name == seen.Name).ToList();
+        // Identidade repetida (provedor sem identificador próprio): só vale o que ficou no mesmo número.
+        return same.Count == 1 ? same[0].Id : same.FirstOrDefault(c => c.Id == id)?.Id;
+    }
     internal static string Instructions(Snapshot snapshot) => """
 
         [Ações disponíveis na janela do contexto]

@@ -22,10 +22,36 @@ public sealed record DesktopActionRequest(string Action, long Window = 0, string
     bool? Overwrite = null)
 {
     public const int DefaultTimeoutSeconds = 60, MaxTimeoutSeconds = 1800;
-    /// <summary>Ações demoradas (comandos, instalações, Office, arquivos grandes) aceitam até 30 min; as demais, 60 s.</summary>
+    /// <summary>Folga do auxiliar sobre o prazo que a própria operação já controla, para ela responder antes de ser encerrado.</summary>
+    private const int InnerMarginSeconds = 15;
+
+    /// <summary>Espera de wait_window: a pedida, de 1 a 300 s (20 s sem pedido). O auxiliar usa este mesmo valor.</summary>
+    public static int WaitWindowSeconds(int? requested) => Math.Clamp(requested ?? 20, 1, 300);
+
+    /// <summary>
+    /// Prazo do auxiliar para a operação. Ações demoradas (comandos, instalações, Office, arquivos grandes) aceitam até
+    /// 30 min em timeoutSeconds; as demais, 60 s. Operações com prazo próprio (wait_window, Revit) ganham uma folga sobre
+    /// ele, e as de "system" que esperam a pessoa ou somam etapas (receitas, mapeamento de rede) têm padrão maior.
+    /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public int EffectiveTimeoutSeconds => DesktopActionCatalog.Get(Action)?.LongRunning == true
-        && TimeoutSeconds is int t ? Math.Clamp(t, 5, MaxTimeoutSeconds) : DefaultTimeoutSeconds;
+    public int EffectiveTimeoutSeconds
+    {
+        get
+        {
+            if (Action == "wait_window") return Math.Max(DefaultTimeoutSeconds, WaitWindowSeconds(TimeoutSeconds) + InnerMarginSeconds);
+            if (DesktopActionCatalog.Get(Action)?.LongRunning != true) return DefaultTimeoutSeconds;
+            bool revit = Action == "system" && Op == "revit_request"; // prazo interno igual ao pedido (110 s sem pedido)
+            if (TimeoutSeconds is int t) return Math.Min(MaxTimeoutSeconds, Math.Clamp(t, 5, MaxTimeoutSeconds) + (revit ? InnerMarginSeconds : 0));
+            if (Action != "system") return DefaultTimeoutSeconds;
+            return Op switch
+            {
+                "recipe" => 300,                               // etapas somadas: até 60 + 120 + 60 (network.map)
+                "revit_request" => 110 + InnerMarginSeconds,
+                "network_map" or "network_reconnect" => 180,   // diálogo nativo de credenciais, servidor lento
+                _ => DefaultTimeoutSeconds,
+            };
+        }
+    }
 }
 
 /// <summary>Resultado de uma operação: texto legível, evidência opcional (imagem), status e camada usada.</summary>
@@ -75,7 +101,8 @@ public static class DesktopAgentLoop
         AÇÕES EM SEGUNDO PLANO (preferidas)
         Arquivos e pastas: {"action":"file","op":"list|read|write|append|copy|move|rename|delete|mkdir|exists|info|search","path":"...","to":"...","text":"...","pattern":"*.pdf","recursive":true}
           Não sobrescreve: se o destino existir, falha; com "overwrite":true o existente vai para a Lixeira antes. delete vai para a
-          Lixeira. Arquivo aberto em outro programa é avisado (bloqueada). {"action":"zip","path":"pasta","to":"saida.zip"} /
+          Lixeira; onde não há Lixeira (rede, unidade removível) delete e overwrite são recusados (bloqueada), nada é apagado.
+          Arquivo aberto em outro programa é avisado (bloqueada). {"action":"zip","path":"pasta","to":"saida.zip"} /
           {"action":"zip","op":"extract","path":"a.zip","to":"pasta"}.
         Word (instância aberta; "path" abre ou usa o arquivo): {"action":"office","application":"word","op":"...", ...}
           state (documento, salvo?, seleção, alinhamento, fonte) · read · append/insert (cursor) · replace (find/replace) ·
@@ -92,7 +119,7 @@ public static class DesktopAgentLoop
         Registro: {"action":"registry","op":"read|write|delete","path":"HKCU\\Software\\...","name":"Valor","value":"...","format":"String|DWord|QWord|ExpandString"}
           (o resultado traz o valor anterior para reverter). Serviços: {"action":"service","op":"status|start|stop|restart","name":"..."}.
         Programas: {"action":"install","op":"search|install|uninstall|upgrade","name":"Id.Do.Pacote"} via winget. {"action":"print","path":"..."}.
-          {"action":"download","url":"https://...","to":"C:\\pasta"} baixa um arquivo pedido pelo usuário.
+          {"action":"download","url":"https://...","to":"C:\\pasta"} baixa um arquivo pedido pelo usuário (não sobrescreve sem "overwrite":true).
         Comandos (sem janela): {"action":"powershell","text":"script","arguments":["dado 1","dado 2"],"cwd":"C:\\pasta","timeoutSeconds":120}
           — dados (nomes de arquivo, textos) vão em "arguments" e o script lê $args[0], $args[1]: nunca concatene dados no script.
           {"action":"run","application":"programa.exe","arguments":["..."],"cwd":"...","text":"entrada padrão"} devolve código, saída e erros

@@ -51,6 +51,18 @@ public sealed class WindowsQueryCatalog
         ["development.wsl"] = "Get-ItemProperty HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss\\* | Select-Object DistributionName,Version,BasePath"
     };
     public static IReadOnlyCollection<string> Names => Queries.Keys.ToArray();
+    /// <summary>
+    /// The result goes whole into the next model request and a query may return 500 rows (services, processes, features).
+    /// A long answer is first made readable (no \uXXXX escapes) and then cut; the cut text is no longer valid JSON.
+    /// </summary>
+    private const int MaxResultChars = 12000;
+    private static readonly JsonSerializerOptions Relaxed = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    private static string Cut(string json)
+    {
+        if (json.Length <= MaxResultChars) return json;
+        try { json = System.Text.Json.Nodes.JsonNode.Parse(json)?.ToJsonString(Relaxed) ?? json; } catch (JsonException) { }
+        return json.Length <= MaxResultChars ? json : json[..MaxResultChars] + "\n…(truncado; para filtrar, use powershell com Where-Object/Select-Object)";
+    }
     public async Task<DesktopActionResult?> TryExecuteAsync(DesktopActionRequest request, CancellationToken ct)
     {
         if (request.Action != "system") return null;
@@ -70,7 +82,7 @@ public sealed class WindowsQueryCatalog
         {
             using var json = JsonDocument.Parse(result.Stdout);
             bool available = json.RootElement.GetProperty("available").GetBoolean();
-            return new(result.Stdout, Success: available, Status: available ? DesktopStatus.Done : DesktopStatus.Blocked,
+            return new(Cut(result.Stdout), Success: available, Status: available ? DesktopStatus.Done : DesktopStatus.Blocked,
                 Method: "Windows/PowerShell/query");
         }
         catch (JsonException)

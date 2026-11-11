@@ -20,6 +20,14 @@ internal sealed partial class DesktopRuntime
     private readonly WinStatusBar.ExecutorExpansion.RecipeDispatcher _recipes = new();
     private readonly Dictionary<string,Seen> _observations=[];
     private readonly Dictionary<long,WindowInfo> _windows=[];
+    /// <summary>Último retrato de controles MOSTRADO à IA em cada janela (observe/find): os números "#N" valem só nele.</summary>
+    private readonly Dictionary<long,ContextActions.Snapshot> _shown=[];
+    private void Remember(ContextActions.Snapshot? snapshot)
+    {
+        if(snapshot is null)return;
+        if(_shown.Count>=16&&!_shown.ContainsKey(snapshot.Window.ToInt64()))_shown.Clear();
+        _shown[snapshot.Window.ToInt64()]=snapshot;
+    }
 
     public async Task<DesktopActionResult> ExecuteAsync(DesktopActionRequest r,CancellationToken ct)
     {
@@ -34,7 +42,9 @@ internal sealed partial class DesktopRuntime
         if(await ExpandedPasteAsync(r,ct) is { } pasted)return pasted;
         if(await _recipes.TryExecuteAsync(r,ExecuteAsync,ct) is { } recipe)return Readable(recipe);
         if(await _expansion.TryExecuteAsync(r,ct) is { } expanded)return Readable(expanded);
-        if(await SkillAsync(r,ct) is { } skill)return skill;
+        try{if(await SkillAsync(r,ct) is { } skill)return skill;}
+        // Recusa por segurança (sem Lixeira no local, pasta dentro dela mesma): nada foi feito; "bloqueada", não "falhou".
+        catch(BlockedException refused){return new(refused.Message,Success:false,Status:DesktopStatus.Blocked);}
         if(r.Action=="list_windows")return ListWindowsText();
         if(r.Action=="observe_foreground")
         {
@@ -59,8 +69,17 @@ internal sealed partial class DesktopRuntime
         {
             if(r.ControlAction is not ("fill" or "click" or "toggle" or "select"))throw new InvalidOperationException("controlAction deve ser fill, click, toggle ou select.");
             var snapshot=ContextActions.Capture(hwnd);
-            int? id=r.ControlId;
-            if(id is null&&r.Name is { Length: >0 } name)
+            int? id=null;
+            if(r.ControlId is int held)
+            {
+                // O número é a posição no retrato em que foi mostrado (observe/find). A tela pode ter mudado desde então:
+                // vale o MESMO controle (identidade + nome) no retrato de agora, nunca "o que está nessa posição agora".
+                if(!_shown.TryGetValue(hwnd.ToInt64(),out var shown))
+                    throw new InvalidOperationException("controlId só vale para o último observe/find desta janela (os números mudam quando a tela muda). Nada foi acionado; observe de novo ou use \"name\".");
+                id=ContextActions.Rebind(shown,snapshot,held)
+                    ??throw new InvalidOperationException($"O controle #{held} mudou ou não existe mais em {Label(hwnd)}. Nada foi acionado; observe de novo ou use \"name\".");
+            }
+            else if(r.Name is { Length: >0 } name)
                 id=(snapshot.Controls.FirstOrDefault(c=>c.Name.Equals(name,StringComparison.OrdinalIgnoreCase))
                     ??snapshot.Controls.FirstOrDefault(c=>c.Name.Contains(name,StringComparison.OrdinalIgnoreCase)))?.Id;
             if(id is null)throw new InvalidOperationException("Controle não encontrado"+(r.Name is null?"":" com o nome \""+r.Name+"\"")+" em "+Label(hwnd)+". Use find para ver os nomes.");
@@ -68,13 +87,14 @@ internal sealed partial class DesktopRuntime
             return new(done+" ("+Label(hwnd)+")",Success:!done.Contains("Interrompido:"),Method:"UIA/padrão, sem foco");
         }
         if(r.Action=="activate"){Activate(hwnd);return new("Janela ativada: "+Label(hwnd)+".");}
-        // Observação: a informada, se ainda válida; senão a barra observa agora (sem imagem) e segue.
-        Seen seen;
-        if(r.Observation is not null&&_observations.Remove(r.Observation,out var given)&&given.Hwnd==hwnd&&DateTime.UtcNow-given.Time<TimeSpan.FromMinutes(2))seen=given;
-        else seen=Capture(hwnd,image:false).Seen;
+        // Observação informada e ainda válida: a janela precisa ser do mesmo processo. Sem ela, bastam o processo e a
+        // geometria de agora (ler todos os controles da janela aqui só atrasava a entrada); as observações antigas caem.
         GetWindowThreadProcessId(hwnd,out uint pid);GetWindowRect(hwnd,out var bounds);
-        if(pid!=seen.Process)throw new InvalidOperationException("A janela mudou de processo; observe novamente.");
-        if(!bounds.Equals(seen.Bounds))seen=seen with{Bounds=bounds};
+        if(r.Observation is not null&&_observations.Remove(r.Observation,out var given)&&given.Hwnd==hwnd&&DateTime.UtcNow-given.Time<TimeSpan.FromMinutes(2))
+        {
+            if(pid!=given.Process)throw new InvalidOperationException("A janela mudou de processo; observe novamente.");
+        }
+        else _observations.Clear();
         Activate(hwnd);await WaitForInputFocusAsync(hwnd,ct);ct.ThrowIfCancellationRequested();
         GetWindowRect(hwnd,out bounds);
         switch(r.Action)
@@ -176,9 +196,9 @@ internal sealed partial class DesktopRuntime
     {
         Refresh();
         var all=_windows.Values.ToList();
-        var exact=all.FirstOrDefault(w=>w.Process.Equals(target,StringComparison.OrdinalIgnoreCase)||w.Title.Equals(target,StringComparison.OrdinalIgnoreCase));
-        var partial=exact??all.FirstOrDefault(w=>w.Title.Contains(target,StringComparison.OrdinalIgnoreCase))??all.FirstOrDefault(w=>w.Process.Contains(target,StringComparison.OrdinalIgnoreCase));
-        return partial?.Hwnd;
+        // Igual → processo que contém → título com a palavra inteira → título que contém ("Word" é o Word, não "password").
+        int found=DesktopSafety.PickWindow(all.Select(w=>(w.Process,w.Title)).ToList(),target);
+        return found<0?null:all[found].Hwnd;
     }
 
     private string Label(IntPtr hwnd)
@@ -202,6 +222,7 @@ internal sealed partial class DesktopRuntime
     private DesktopActionResult Observe(IntPtr hwnd,bool image)
     {
         var (seen,path,error)=Capture(hwnd,image);
+        Remember(seen.Controls); // os "#N" mostrados abaixo valem neste retrato
         string token=_observations.Keys.First();
         var text=new StringBuilder();
         text.Append(Label(hwnd)).Append($" · [{hwnd.ToInt64()}] · {seen.Bounds.Right-seen.Bounds.Left}×{seen.Bounds.Bottom-seen.Bounds.Top}");
