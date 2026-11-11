@@ -11,7 +11,8 @@ $allowed = @('src/WinStatusBar.Core/Clip/SecretMask.cs', 'tests/WinStatusBar.Tes
 $blockedExtensions = @('.pfx', '.p12', '.pem', '.key')
 # Tokens e chaves + nomes da rede interna e da empresa, que ficam em nomes-internos.txt (fora do git: a lista não
 # pode ir para o repositório público). Uma expressão regular por linha.
-$pattern = 'sk-(proj-|svcacct-|admin-|ant-)?[A-Za-z0-9_\-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|AIza[0-9A-Za-z_\-]{35}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+# "sk-" só conta no começo de uma palavra: "task-0123…" (identificador de tarefa) não é chave.
+$pattern = '(?<![A-Za-z0-9])sk-(proj-|svcacct-|admin-|ant-)?[A-Za-z0-9_\-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|AIza[0-9A-Za-z_\-]{35}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
 $internal = Join-Path $PSScriptRoot 'nomes-internos.txt'
 if (Test-Path -LiteralPath $internal) {
     $names = @(Get-Content -LiteralPath $internal -Encoding UTF8 | Where-Object { $_.Trim() })
