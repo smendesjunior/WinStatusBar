@@ -368,6 +368,9 @@ public sealed class BarViewModel : ObservableObject
     {
         var now = DateTimeOffset.Now;
         bool remaining = settings.QuotaMode == QuotaDisplay.Remaining;
+        // Os erros chegam como o provedor os devolveu (JSON, inglês, exceção); na dica vão explicados.
+        if (codexError is not null) codexError = global::WinStatusBar.Core.Ai.AiErrorExplainer.QuotaError(global::WinStatusBar.Core.Ai.AgentPrompt.Target.Codex, codexError);
+        if (claudeError is not null) claudeError = global::WinStatusBar.Core.Ai.AiErrorExplainer.QuotaError(global::WinStatusBar.Core.Ai.AgentPrompt.Target.Claude, claudeError);
         Codex5h = QuotaService.Text(codex?.Primary, remaining, now);
         Codex7d = QuotaService.Text(codex?.Secondary, remaining, now);
         Claude5h = QuotaService.Text(claude?.Primary, remaining, now);

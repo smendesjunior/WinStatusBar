@@ -102,4 +102,123 @@ public class AiErrorExplainerTests
     [InlineData("", null)]
     public void ProviderErrorBody_IsReadForOllamaOpenAiAndAnthropic(string body, string? expected)
         => Assert.Equal(expected, AgentPrompt.ProviderErrorMessage(body));
+
+    // ---- Fluxo das APIs compatíveis com OpenAI e da Anthropic (linha a linha)
+    [Theory]
+    // Trecho normal.
+    [InlineData("openai", """data: {"choices":[{"index":0,"delta":{"content":"Olá"}}]}""", "Olá")]
+    // Primeiro bloco do Azure (filtros de conteúdo) e bloco final só com o uso: "choices" vazio. Antes interrompia a resposta.
+    [InlineData("openai", """data: {"choices":[],"prompt_filter_results":[{"prompt_index":0}]}""", null)]
+    [InlineData("openai", """data: {"choices":[],"usage":{"prompt_tokens":9,"completion_tokens":12}}""", null)]
+    // Papel sem texto, conteúdo nulo, fim e linhas que não são dados.
+    [InlineData("openai", """data: {"choices":[{"delta":{"role":"assistant"}}]}""", null)]
+    [InlineData("openai", """data: {"choices":[{"delta":{"content":null},"finish_reason":"stop"}]}""", null)]
+    [InlineData("openai", "data: [DONE]", null)]
+    [InlineData("openai", ": keep-alive", null)]
+    [InlineData("openai", "data: 123", null)]
+    // Anthropic.
+    [InlineData("anthropic", """data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Oi"}}""", "Oi")]
+    [InlineData("anthropic", """data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{"}}""", null)]
+    [InlineData("anthropic", """data: {"type":"message_start","message":{"id":"m1"}}""", null)]
+    [InlineData("anthropic", "event: content_block_delta", null)]
+    public void ApiStreamPiece_ReadsTheTextOfEachLine(string kind, string line, string? expected)
+        => Assert.Equal(expected, AgentPrompt.ApiStreamPiece(kind, line));
+
+    [Theory]
+    [InlineData("openai", """data: {"error":{"message":"Rate limit reached","type":"rate_limit_error"}}""", "Rate limit reached")]
+    // "error" como texto simples: antes a leitura de err["message"] lançava outra exceção e a mensagem se perdia.
+    [InlineData("openai", """data: {"error":"model overloaded"}""", "model overloaded")]
+    [InlineData("openai", """data: {"error":{"code":503}}""", """{"code":503}""")]
+    [InlineData("anthropic", """data: {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""", "Overloaded")]
+    public void ApiStreamPiece_ThrowsTheProviderMessage(string kind, string line, string expected)
+        => Assert.Equal(expected, Assert.Throws<InvalidOperationException>(() => AgentPrompt.ApiStreamPiece(kind, line)).Message);
+
+    // ---- "Interrompido" em qualquer idioma do app
+    [Fact]
+    public void Interrupted_IsRecognizedAsLiteralAndTranslated()
+    {
+        Assert.True(AiErrorExplainer.IsInterrupted("Interrompido"));
+        Assert.False(AiErrorExplainer.IsInterrupted(null));
+        Assert.False(AiErrorExplainer.IsInterrupted("HTTP 500"));
+        using (TranslationScope.With(new Dictionary<string, string> { ["Interrompido"] = "Stopped", ["A resposta foi interrompida."] = "The answer was stopped." }))
+        {
+            // O Codex, o Gemini CLI e as sessões web devolvem o literal; o Claude e as APIs, o texto traduzido.
+            Assert.True(AiErrorExplainer.IsInterrupted("Interrompido"));
+            Assert.True(AiErrorExplainer.IsInterrupted("Stopped"));
+            Assert.False(AiErrorExplainer.IsInterrupted("stopped by policy"));
+            Assert.Equal("The answer was stopped.", AiErrorExplainer.Explain(T.Codex, "Interrompido").Message);
+            Assert.Equal("The answer was stopped.", AiErrorExplainer.Explain(T.Claude, "Stopped").Message);
+        }
+        Assert.False(AiErrorExplainer.IsInterrupted("Stopped"));
+    }
+
+    // ---- Erro da consulta de cotas na tela
+    [Theory]
+    [InlineData(T.Codex, "Tempo esgotado ao consultar o Codex")]
+    [InlineData(T.Codex, "Codex não encontrado")]
+    [InlineData(T.Codex, "Limites indisponíveis para esta conta")]
+    [InlineData(T.Claude, "O Claude limitou as consultas. A próxima tentativa será automática.")]
+    [InlineData(T.Claude, "Consulta de cotas indisponível (HTTP 503). Nova tentativa automática em 5 minutos.")]
+    [InlineData(T.Claude, "Não foi possível renovar o login do Claude. Entre novamente pelo Claude Code. (HTTP 400)")]
+    [InlineData(T.Claude, "Reset aceito; não foi possível consultar o novo saldo. Atualize as cotas antes de tentar novamente.")]
+    public void QuotaError_KeepsWhatTheBarItselfWrote(T target, string own)
+        => Assert.Equal(own, AiErrorExplainer.QuotaError(target, own));
+
+    [Fact]
+    public void QuotaError_ExplainsWhatTheProviderReturned()
+    {
+        // JSON do "initialize" do app-server, mensagem em inglês do provedor e exceção do .NET: nada disso aparece cru.
+        string login = AiErrorExplainer.QuotaError(T.Codex, """{"code":-32600,"message":"Not logged in. Please run codex login."}""");
+        Assert.StartsWith("O Codex recusou o login", login);
+        Assert.DoesNotContain("{", login);
+        Assert.StartsWith("A cota ou os créditos da sua conta no Codex acabaram.", AiErrorExplainer.QuotaError(T.Codex, "You've hit your usage limit."));
+        // Erro não reconhecido: a explicação promete "o texto original está abaixo", então ele vai junto.
+        string unknown = AiErrorExplainer.QuotaError(T.Codex, "The pipe has been ended.");
+        Assert.StartsWith("O Codex devolveu um erro que a barra ainda não reconhece", unknown);
+        Assert.EndsWith("\nThe pipe has been ended.", unknown);
+    }
+
+    [Fact]
+    public void QuotaError_KeepsTheBarSentencesInOtherLanguagesToo()
+    {
+        // Em outro idioma a frase da barra chega já traduzida (parece texto do provedor); ainda assim passa sem mudar.
+        using var _ = TranslationScope.With(new Dictionary<string, string>
+        {
+            ["Tempo esgotado ao consultar o Codex"] = "Timed out while querying Codex",
+            ["Consulta de cotas indisponível (HTTP {0}). Nova tentativa automática em 5 minutos."] = "Quota query unavailable (HTTP {0}). Automatic retry in 5 minutes.",
+        });
+        Assert.Equal("Timed out while querying Codex", AiErrorExplainer.QuotaError(T.Codex, "Timed out while querying Codex"));
+        Assert.Equal("Quota query unavailable (HTTP 503). Automatic retry in 5 minutes.",
+            AiErrorExplainer.QuotaError(T.Claude, "Quota query unavailable (HTTP 503). Automatic retry in 5 minutes."));
+    }
+
+    [Fact]
+    public void QuotaError_KnowsEverySentenceTheQuotaClientsWrite()
+    {
+        // Frase nova nos clientes de cota precisa entrar em OwnQuotaSentences (senão, em outro idioma, viraria conselho de chat).
+        string claude = RepoSource.Read("src", "WinStatusBar.Core", "Ai", "Claude", "ClaudeUsageClient.cs");
+        var written = System.Text.RegularExpressions.Regex.Matches(claude, @"new\(null, global::WinStatusBar\.Core\.LocalizedText\.[TF]\(""([^""]+)""")
+            .Select(m => m.Groups[1].Value).ToList();
+        Assert.True(written.Count >= 9, $"só achei {written.Count} frases no ClaudeUsageClient");
+        written.Add(System.Text.RegularExpressions.Regex.Match(claude, @"const string relogin = ""([^""]+)""").Groups[1].Value);
+        string codex = RepoSource.Read("src", "WinStatusBar.Core", "Ai", "Codex", "CodexAppServerClient.cs");
+        var codexWritten = System.Text.RegularExpressions.Regex.Matches(codex, @"return new\((?:null|quota), (?:null|info), [^;]*?LocalizedText\.T\(""([^""]+)""\)")
+            .Select(m => m.Groups[1].Value).ToList();
+        Assert.Equal(4, codexWritten.Count);
+        written.AddRange(codexWritten);
+        written.Add(System.Text.RegularExpressions.Regex.Match(RepoSource.Read("src", "WinStatusBar.Core", "Ai", "Codex", "CodexProvider.cs"),
+            @"LastError = global::WinStatusBar\.Core\.LocalizedText\.T\(""([^""]+)""\)").Groups[1].Value);
+        Assert.All(written, sentence => Assert.Contains(sentence, AiErrorExplainer.OwnQuotaSentences));
+    }
+
+    [Fact]
+    public void QuotaError_IsUsedWhereTheQuotaErrorIsShown()
+    {
+        // O que fica guardado (CodexProvider.LastError, ClaudeCodeProvider.LastQuotaError) continua o original.
+        Assert.Contains("AiErrorExplainer.QuotaError(isCodex ? AgentPrompt.Target.Codex : AgentPrompt.Target.Claude, rawError)",
+            RepoSource.Read("src", "WinStatusBar", "Views", "QuotaDetailsView.cs"));
+        string vm = RepoSource.Read("src", "WinStatusBar", "ViewModels", "BarViewModel.cs");
+        Assert.Contains("AiErrorExplainer.QuotaError(global::WinStatusBar.Core.Ai.AgentPrompt.Target.Codex, codexError)", vm);
+        Assert.Contains("AiErrorExplainer.QuotaError(global::WinStatusBar.Core.Ai.AgentPrompt.Target.Claude, claudeError)", vm);
+    }
 }

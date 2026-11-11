@@ -30,7 +30,7 @@ public static class AiErrorExplainer
         string m = string.IsNullOrWhiteSpace(model) || model == "app" ? LocalizedText.T("escolhido") : model;
         if (text.Length == 0)
             return new(LocalizedText.T("sem detalhe"), LocalizedText.F("{0} falhou sem informar o motivo. Tente de novo; se repetir, escolha outro modelo ou outra IA.", new object?[] { who.Subject }), null);
-        if (text == "Interrompido" || text == LocalizedText.T("Interrompido"))
+        if (IsInterrupted(text))
             return new(LocalizedText.T("interrompido"), LocalizedText.T("A resposta foi interrompida."), null);
 
         string inner = InnerMessage(text);
@@ -113,6 +113,60 @@ public static class AiErrorExplainer
         // 13) Mensagens da própria barra, já explicadas (frase em português, sem códigos), no idioma do app.
         if (technical is null) { string shown = LocalizedText.T(text); return new(ShortOf(shown), shown, null); }
         return E("erro desconhecido", LocalizedText.F("{0} devolveu um erro que a barra ainda não reconhece. Tente de novo; se repetir, escolha outro modelo ou outra IA. O texto original está abaixo.", new object?[] { who.Subject }));
+    }
+
+    /// <summary>
+    /// Resposta parada pela pessoa. Alguns provedores devolvem o literal "Interrompido" (Codex, Gemini CLI, sessões web do
+    /// Copilot e do Gemini) e outros o texto já traduzido: os dois valem, em qualquer idioma do app.
+    /// </summary>
+    public static bool IsInterrupted(string? error) => error == "Interrompido" || error == LocalizedText.T("Interrompido");
+
+    /// <summary>
+    /// Frases que a própria barra escreve ao consultar as cotas (Codex: CodexAppServerClient e CodexProvider; Claude:
+    /// ClaudeUsageClient). Passam por <see cref="QuotaError"/> sem mudar, em qualquer idioma: já dizem o que fazer.
+    /// </summary>
+    internal static readonly string[] OwnQuotaSentences =
+    [
+        "Codex não encontrado",
+        "Não foi possível iniciar o Codex",
+        "Limites indisponíveis",
+        "Limites indisponíveis para esta conta",
+        "Tempo esgotado ao consultar o Codex",
+        "Entre na sua conta pelo Claude Code para consultar as cotas.",
+        "O login do Claude Code não está disponível. Entre novamente na sua conta.",
+        "O login do Claude Code expirou. Abra o Claude Code para renovar a sessão.",
+        "O Claude limitou as consultas. A próxima tentativa será automática.",
+        "O Claude não aceitou o login atual. Abra o Claude Code e entre novamente.",
+        "O login atual não permite consultar as cotas. Entre pelo Claude Code com sua conta de assinatura.",
+        "Consulta de cotas indisponível (HTTP {0}). Nova tentativa automática em 5 minutos.",
+        "A conta não retornou os limites de uso. Nenhum percentual foi estimado.",
+        "A consulta ao Claude demorou demais. O app tentará novamente automaticamente.",
+        "Não foi possível consultar as cotas do Claude. Verifique a conexão e o login no Claude Code.",
+        "Não foi possível renovar o login do Claude. Entre novamente pelo Claude Code.",
+    ];
+
+    /// <summary>
+    /// Erro da consulta de cotas (Codex ou Claude) como aparece na tela. O texto guardado continua o original; aqui o
+    /// erro do provedor (JSON, inglês, exceção) vira a explicação, e a frase que a própria barra escreveu passa sem
+    /// mudar (senão "Tempo esgotado ao consultar o Codex" viraria um conselho de chat).
+    /// </summary>
+    public static string QuotaError(AgentPrompt.Target target, string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || IsOwnQuotaSentence(raw.Trim())) return LocalizedText.T(raw);
+        var e = Explain(target, raw);
+        if (e.Technical is null) return LocalizedText.T(raw);
+        // "O texto original está abaixo": no menu das cotas não há a linha de detalhe técnico do chat, então ele vai junto.
+        return e.Short == LocalizedText.T("erro desconhecido") ? e.Message + "\n" + e.Technical : e.Message;
+    }
+
+    /// <summary>A frase (ou o começo dela, até o "{0}") no idioma do app ou no original em português.</summary>
+    private static bool IsOwnQuotaSentence(string text)
+    {
+        static string Head(string sentence) => sentence.IndexOf('{') is > 0 and var cut ? sentence[..cut] : sentence;
+        foreach (var source in OwnQuotaSentences)
+            if (text.StartsWith(Head(source), StringComparison.Ordinal) || text.StartsWith(Head(LocalizedText.T(source)), StringComparison.Ordinal))
+                return true;
+        return false;
     }
 
     /// <summary>

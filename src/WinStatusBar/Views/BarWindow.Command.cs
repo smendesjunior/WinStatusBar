@@ -288,6 +288,15 @@ public sealed partial class BarWindow
     }
 
     private bool _running, _interrupted;
+    /// <summary>
+    /// Envio em preparo (contexto, escolha da IA, catálogo), antes de <see cref="_running"/>: um segundo Enter nesse
+    /// intervalo repetia o pedido. Cada envio tem a própria senha e só devolve a dele.
+    /// </summary>
+    private object? _submitting;
+    /// <summary>Resumo do histórico em andamento (uma chamada à IA à parte) e a conversa e a contagem de mensagens dele.</summary>
+    private CancellationTokenSource? _summaryCts;
+    private Conversation? _summaryConv;
+    private int _summaryCount;
 
     private Grid? _header;
 
@@ -574,6 +583,7 @@ public sealed partial class BarWindow
             Content = _chatList, Margin = new Thickness(0, 10, 0, 0), VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollMode = ScrollMode.Disabled, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Visibility = Visibility.Collapsed,
         };
+        _chatScroll.ViewChanged += OnChatViewChanged;
         Grid.SetRow(_chatScroll, 1);
         body.Children.Add(_chatScroll);
 
@@ -902,7 +912,9 @@ public sealed partial class BarWindow
                     return;
                 }
                 _panel?.Hide();
-                bool running = Process.GetProcessesByName(destination == ChatGpt ? "ChatGPT" : "Claude").Length > 0;
+                var found = Process.GetProcessesByName(destination == ChatGpt ? "ChatGPT" : "Claude");
+                bool running = found.Length > 0;
+                foreach (var process in found) process.Dispose();
                 if (!running) { OpenChat(destination, string.Empty); await Task.Delay(1500); }
                 await Task.Delay(150);
                 if (!VoiceShortcut.Send(hotkey))
@@ -1198,7 +1210,9 @@ public sealed partial class BarWindow
         if (_projectButton is null) return;
         var t = CurrentTarget();
         string key = AgentPrompt.Key(t);
-        var projects = await Task.Run(() => AgentPrompt.Projects(t));
+        IReadOnlyList<AgentPrompt.Project> projects;
+        try { projects = await Task.Run(() => AgentPrompt.Projects(t)); }
+        catch (Exception ex) { App.Log("Projetos do agente: não foi possível ler · " + ex.Message); return; }
         var current = CurrentProject();
         var menu = new MenuFlyout();
         PopupMaterial.Apply(menu);
@@ -1513,9 +1527,18 @@ public sealed partial class BarWindow
     // ------------------------------------------------------------------ envio
     private async void SubmitCommand(string? overridePrompt = null)
     {
-        if (_commandLabel is null || _running) return;
+        if (_commandLabel is null || _running || _submitting is not null) return;
         string prompt = (overridePrompt ?? _panelInput?.Text ?? string.Empty).Trim();
         if (prompt.Length == 0) return;
+        // A senha vale do Enter até _running ligar (ou até uma saída antecipada). O finally só devolve a própria senha:
+        // a continuação automática dos conectores chama SubmitCommand de dentro deste envio e já tem a dela.
+        var ticket = _submitting = new object();
+        try { await SubmitCommandAsync(prompt, ticket); }
+        finally { if (ReferenceEquals(_submitting, ticket)) _submitting = null; }
+    }
+
+    private async Task SubmitCommandAsync(string prompt, object ticket)
+    {
         var submitClock = System.Diagnostics.Stopwatch.StartNew();
         App.Log($"Chat: envio iniciado ({prompt.Length} caracteres)");
         if (_contextTask is { IsCompleted: false })
@@ -1593,6 +1616,8 @@ public sealed partial class BarWindow
 
         _commandCts?.Cancel();
         var cts = _commandCts = new CancellationTokenSource();
+        // O resumo pendente desta conversa já nasceria velho (vem mensagem nova): para a chamada; o próximo salvamento pede outro.
+        if (_summaryConv == conv) _summaryCts?.Cancel();
         // Gemini CLI: usa a chave do Google AI Studio salva no Cofre do Windows (o login com conta pessoal foi
         // desativado pelo Google). Só neste processo e nos filhos; não grava variável de ambiente no sistema.
         AdditionalAiAccounts.PrepareGemini(_settings.Current);
@@ -1636,7 +1661,7 @@ public sealed partial class BarWindow
         if (_web) details.Append("\n").Append(L.T("Pesquisa na web ligada"));
         answer.StartProgress(looked, details.ToString(), target is T.Claude or T.Codex or T.Gemini, _allowEdits,
             on => { _allowEdits = on; UpdateEditUi(); });
-        _running = true; _interrupted = false;
+        _running = true; _interrupted = false; if (ReferenceEquals(_submitting, ticket)) _submitting = null;
         _commandGlow?.SetActive(true);
         UpdateSendIcon();
 
@@ -1653,25 +1678,35 @@ public sealed partial class BarWindow
         var started = DateTime.Now;
         TimeSpan? firstText = null;
         string sentPrompt = prompt;
+        // Cada trecho traz o texto inteiro até ali: fica só o mais recente e, no máximo, uma chamada na fila da interface
+        // (antes, uma chamada por trecho, cada uma segurando a própria cópia do texto).
+        var pending = new PendingPartial();
+        _chatFollow = true; // pergunta nova: a visão volta a acompanhar a resposta
+        void ShowPartial()
+        {
+            Volatile.Write(ref pending.Queued, 0);
+            if (Volatile.Read(ref pending.Latest) is not { } latest || _commandCts != cts) return;
+            firstText ??= DateTime.Now - started;
+            if (activityRun is not null) _hub.ApiActivity.Receiving(conv.Id, activityRun);
+            answer.Stream(latest);
+            FollowChatEnd();
+        }
         AgentPrompt.Result result;
         try
         {
         result = await Task.Run(() => AgentPrompt.RunAsync(target, sentPrompt, model, effort, api, options,
-            partial => DispatcherQueue.TryEnqueue(() =>
+            partial =>
             {
-                if (_commandCts != cts) return;
-                firstText ??= DateTime.Now - started;
-                if (activityRun is not null) _hub.ApiActivity.Receiving(conv.Id, activityRun);
-                answer.Stream(partial);
-                _chatScroll!.ChangeView(null, _chatScroll.ScrollableHeight, null, true);
-            }),
+                Volatile.Write(ref pending.Latest, partial);
+                if (Interlocked.Exchange(ref pending.Queued, 1) == 0 && !DispatcherQueue.TryEnqueue(ShowPartial)) Volatile.Write(ref pending.Queued, 0);
+            },
             cts.Token));
         }
         catch (OperationCanceledException) { result = new(string.Empty, null, L.T("Interrompido")); }
         catch (Exception ex) { result = new(string.Empty, null, ex.Message); }
         // Erro explicado (causa e o que fazer); o texto técnico original fica no log e numa linha à parte.
         var explained = result.Error is { } rawError ? AiErrorExplainer.Explain(target, rawError, model) : null;
-        if (activityRun is not null) _hub.ApiActivity.End(conv.Id, activityRun, cts.IsCancellationRequested || result.Error == L.T("Interrompido"), explained?.Message);
+        if (activityRun is not null) _hub.ApiActivity.End(conv.Id, activityRun, cts.IsCancellationRequested || AiErrorExplainer.IsInterrupted(result.Error), explained?.Message);
         if (_conv != conv) return; // a conversa foi trocada enquanto respondia
 
         if (result.SessionId is not null) conv.Session = result.SessionId;
@@ -1685,12 +1720,12 @@ public sealed partial class BarWindow
         if (_commandCts == cts)
         {
             _running = false;
-            _interrupted = result.Error == L.T("Interrompido");
+            _interrupted = AiErrorExplainer.IsInterrupted(result.Error);
             _commandGlow?.SetActive(false);
         }
         if (result.Error is { } err)
         {
-            bool stopped = err == L.T("Interrompido");
+            bool stopped = AiErrorExplainer.IsInterrupted(err);
             if (stopped) answer.ShowResume(result.Text.Length == 0, () => SubmitCommand(L.T("Continue de onde parou.")));
             else if (result.Text.Length == 0) answer.ShowError(explained!);
             else answer.ShowErrorBelow(explained!);
@@ -1711,7 +1746,7 @@ public sealed partial class BarWindow
             if (added) SaveSettingsQuietly();
         }
         // Conectores do Claude negados por falta de permissão: libera (ou pergunta) e continua a mesma conversa.
-        if (target == T.Claude && result.Blocked.Count > 0 && !_interrupted && result.Error != L.T("Interrompido"))
+        if (target == T.Claude && result.Blocked.Count > 0 && !_interrupted && !AiErrorExplainer.IsInterrupted(result.Error))
             _ = OfferConnectorPermissionAsync(conv, result.Blocked, options.AllowedTools);
         if (target == T.Qira && result.Error is null && QiraBridge.LastHandler is { Length: > 0 } handler)
             SetNote(L.F("Qira (híbrido) respondeu via {0}.", new object?[] { handler }) + (QiraBridge.CurrentQuota is { } qq ? " " + QiraBridge.QuotaText(qq) + "." : ""));
@@ -1725,6 +1760,35 @@ public sealed partial class BarWindow
             SaveConversation(conv);
             OpenClaudeHistory(sid);
         }
+    }
+
+    /// <summary>Último trecho da resposta em fluxo e se já há uma chamada na fila da interface para mostrá-lo.</summary>
+    private sealed class PendingPartial
+    {
+        public string? Latest;
+        public int Queued;
+    }
+
+    // A rolagem acompanha a resposta em fluxo só enquanto a pessoa não subiu para ler. Quem decide é o último movimento
+    // real da visão (ViewChanged), comparado com o fim para onde a barra a levou: o texto é desenhado a cada 150 ms e a
+    // conversa cresce entre um trecho e outro, então comparar com o fim atual a cada trecho pararia de acompanhar sozinho.
+    private bool _chatFollow = true;
+    private double _chatFollowedTo = double.NegativeInfinity, _chatFollowFloor = double.NegativeInfinity;
+
+    private void OnChatViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_chatScroll is not { } scroll) return;
+        _chatFollow = scroll.VerticalOffset >= Math.Min(_chatFollowFloor, scroll.ScrollableHeight) - 40;
+        _chatFollowFloor = _chatFollowedTo;
+    }
+
+    /// <summary>Leva a visão ao fim da conversa, a menos que a pessoa tenha rolado para cima (mais de 40 px).</summary>
+    private void FollowChatEnd()
+    {
+        if (!_chatFollow || _chatScroll is not { } scroll) return;
+        _chatFollowedTo = scroll.ScrollableHeight;
+        _chatFollowFloor = Math.Min(_chatFollowFloor, _chatFollowedTo);
+        scroll.ChangeView(null, _chatFollowedTo, null, true);
     }
 
     private string TargetLabel(T t, string? model, string? effort)
@@ -1848,6 +1912,9 @@ public sealed partial class BarWindow
     private async void SummarizeConversation(Conversation conv)
     {
         if (!conv.Messages.Any(m => m.Role == "assistant") || conv.AiSummaryFor == conv.Messages.Count) return;
+        // O mesmo resumo (mesma conversa, mesmas mensagens) já está a caminho: o segundo salvamento do turno não pede outro.
+        if (_summaryCts is { IsCancellationRequested: false } && _summaryConv == conv && _summaryCount == conv.Messages.Count) return;
+        CancellationTokenSource? cts = null;
         try
         {
             var target = conv.Target;
@@ -1864,25 +1931,43 @@ public sealed partial class BarWindow
             string ask = "Resuma a conversa abaixo em português do Brasil, em até 2 frases curtas (no máximo 40 palavras): o assunto e a conclusão. " +
                          "Responda somente com o resumo, sem título, sem markdown.\n\n" + transcript;
             int count = conv.Messages.Count;
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+            // Um resumo mais antigo desta mesma conversa ainda a caminho não serve mais: para a chamada dele.
+            // O de outra conversa segue até o fim (ela não será salva de novo para pedir outro).
+            if (_summaryConv == conv) _summaryCts?.Cancel();
+            cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+            _summaryCts = cts; _summaryConv = conv; _summaryCount = count;
+            var token = cts.Token;
             var api = target == T.Api ? ApiConfig() : null;
             var options = new AgentPrompt.Options([], false, false, null, [], Ephemeral: true);
-            var r = await Task.Run(() => AgentPrompt.RunAsync(target, ask, model, effort, api, options, _ => { }, cts.Token));
+            var r = await Task.Run(() => AgentPrompt.RunAsync(target, ask, model, effort, api, options, _ => { }, token));
             if (r.Error is not null || r.Text.Length == 0) return;
             string text = Clean(System.Text.RegularExpressions.Regex.Replace(r.Text, @"(?s)<think>.*?</think>", string.Empty)).Replace('\n', ' ').Trim();
             if (text.Length == 0) return;
+            // Só vale se for mais novo que o resumo já guardado (um pedido antigo pode terminar depois de um mais novo).
+            if (count <= conv.AiSummaryFor) return;
             conv.AiSummary = text.Length > 300 ? text[..300].TrimEnd() + "…" : text;
             conv.AiSummaryFor = count;
             var saved = conv.ToSaved();
             _ = Task.Run(() => ConversationStore.Save(saved));
         }
+        catch (OperationCanceledException) { }
         catch (Exception ex) { App.Log("Resumo do histórico: " + ex.Message); }
+        finally
+        {
+            if (cts is not null)
+            {
+                if (_summaryCts == cts) { _summaryCts = null; _summaryConv = null; }
+                cts.Dispose();
+            }
+        }
     }
 
     /// <summary>Balão do histórico (todas as IAs): cartões com título, resumo da conversa, serviço e horário.</summary>
     private async void ShowHistoryMenu(FrameworkElement anchor)
     {
-        var list = await Task.Run(() => ConversationStore.List(80));
+        List<SavedConversation> list;
+        try { list = await Task.Run(() => ConversationStore.List(80)); }
+        catch (Exception ex) { App.Log("Histórico de conversas: não foi possível ler · " + ex.Message); return; }
         var body = new StackPanel { Spacing = 8, Width = 440 };
         var title = new Grid();
         title.ColumnDefinitions.Add(new ColumnDefinition());
@@ -2042,7 +2127,7 @@ public sealed partial class BarWindow
         private readonly TextBlock _header, _meta;
         private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _timer;
         private string _raw = string.Empty;
-        private bool _dirty;
+        private bool _dirty, _ended;
         private readonly Microsoft.UI.Dispatching.DispatcherQueue _queue;
         // Andamento enquanto a IA trabalha.
         private Microsoft.UI.Dispatching.DispatcherQueueTimer? _clock;
@@ -2174,6 +2259,9 @@ public sealed partial class BarWindow
         /// <summary>Fim do trabalho: some o cartão; fica a linha de contexto e o "Pensou por N s".</summary>
         public void EndProgress()
         {
+            // Também o relógio do texto (150 ms): numa resposta descartada (conversa nova ou outra aberta) ele seguia
+            // ligado para sempre e mantinha a resposta fora da tela na memória. Um trecho atrasado não o religa.
+            _ended = true; _timer.Stop();
             _clock?.Stop(); _clock = null;
             if (_contextLine is not null) { Root.Children.Remove(_contextLine); _contextLine = null; }
             if (_card is not null) { Root.Children.Remove(_card); _card = null; _edits = null; }
@@ -2182,6 +2270,7 @@ public sealed partial class BarWindow
 
         public void Stream(string text)
         {
+            if (_ended) return;
             _raw = text; _dirty = true;
             _header.Text = L.T("Respondendo…");
             if (_phaseText != L.T("Escrevendo a resposta")) SetPhase(L.T("Escrevendo a resposta"));
