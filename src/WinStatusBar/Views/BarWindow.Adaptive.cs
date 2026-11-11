@@ -37,6 +37,9 @@ public sealed partial class BarWindow
     private BrushTransition? _overlayTransition;
     /// <summary>Última aparência de cada janela, ativa e inativa: aplicada na hora quando ela volta para a frente.</summary>
     private readonly Dictionary<(IntPtr Hwnd, bool Active), AdaptiveSample> _lookCache = new();
+    /// <summary>Monitor desta barra na última leitura: os eventos de janela (dezenas por segundo ao arrastar) conferem
+    /// por ele, sem enumerar os monitores a cada evento. Renovado a cada leitura (1 a 3 s).</summary>
+    private MonitorInfo? _lastMonitor;
     private static readonly uint SelfPid = (uint)Environment.ProcessId;
 
     private void StartAdaptive()
@@ -93,6 +96,7 @@ public sealed partial class BarWindow
         _adaptivePoll?.Stop(); _adaptiveSoon?.Stop(); _adaptiveBurst?.Stop(); _adaptiveReveal?.Stop();
         if (_adaptiveHooked) { WindowChangeEvents.Changed -= OnWindowChanged; _adaptiveHooked = false; }
         _adaptiveState = null; _adaptiveTarget = IntPtr.Zero; _pendingOverlay = null;
+        _lastMonitor = null;
         _lookCache.Clear();
         Root.BackgroundTransition = null;
         ResetRegionContrast();
@@ -144,7 +148,7 @@ public sealed partial class BarWindow
 
     private bool OnThisMonitor(IntPtr hwnd)
     {
-        if (CurrentMonitor() is not { } m || !GetWindowRect(hwnd, out var r)) return true; // sem dados: confere
+        if ((_lastMonitor ?? CurrentMonitor()) is not { } m || !GetWindowRect(hwnd, out var r)) return true; // sem dados: confere
         return r.Right > m.Bounds.Left && r.Left < m.Bounds.Right && r.Bottom > m.Bounds.Top && r.Top < m.Bounds.Bottom;
     }
 
@@ -171,7 +175,8 @@ public sealed partial class BarWindow
     {
         if (_closing || global::WinStatusBar.Core.Presence.Away) return;
         if (_sampling) { _resample = true; return; }
-        if (CurrentMonitor() is not { } monitor) return;
+        _lastMonitor = CurrentMonitor();
+        if (_lastMonitor is not { } monitor) return;
         _sampling = true;
         int generation = _foregroundGeneration;
         // Barra já transparente (sem cor por cima): a linha de cima dela mostra o papel de parede de verdade.

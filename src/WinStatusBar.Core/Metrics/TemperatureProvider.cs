@@ -29,8 +29,12 @@ public sealed class TemperatureProvider : IDisposable
         catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException) { return null; }
     }
 
+    /// <summary>Entrada de <see cref="MissingNamespaces"/> para a classe WMI da Lenovo (ausente em PCs de outras marcas).</summary>
+    private const string LenovoKey = "lenovo";
+
     public static double? ReadLenovoCpu()
     {
+        if (MissingNamespaces.TryGetValue(LenovoKey, out var until) && DateTime.UtcNow < until) return null;
         try
         {
             using var query = new ManagementObjectSearcher(@"root\wmi", "SELECT * FROM LENOVO_GAMEZONE_DATA");
@@ -45,11 +49,20 @@ public sealed class TemperatureProvider : IDisposable
                 }
             }
         }
+        catch (ManagementException ex) when (IsMissing(ex))
+        {
+            // PC sem a classe da Lenovo: a consulta falhava a cada 10 s; como os namespaces abaixo, tenta de novo em 10 min.
+            MissingNamespaces[LenovoKey] = DateTime.UtcNow + MissingRetry;
+        }
         catch (ManagementException) { }
         catch (UnauthorizedAccessException) { }
         catch (System.Runtime.InteropServices.COMException) { }
         return null;
     }
+
+    /// <summary>A classe ou o namespace WMI não existe neste PC (não é falha passageira nem falta de permissão).</summary>
+    private static bool IsMissing(ManagementException ex) =>
+        ex.ErrorCode is ManagementStatus.InvalidNamespace or ManagementStatus.InvalidClass or ManagementStatus.NotFound;
 
     /// <summary>Namespaces WMI ausentes (LibreHardwareMonitor/OpenHardwareMonitor não instalados) até quando.</summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> MissingNamespaces = new();
@@ -124,19 +137,22 @@ public sealed class TemperatureProvider : IDisposable
                     using (row)
                     {
                         string id = row["Identifier"]?.ToString() ?? "";
-                        double value = Convert.ToDouble(row["Value"], CultureInfo.InvariantCulture);
+                        double value;
+                        try { value = Convert.ToDouble(row["Value"], CultureInfo.InvariantCulture); }
+                        catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException) { continue; } // valor ilegível: só este sensor
                         string name = row["Name"]?.ToString() ?? "";
                         readings.Add(new(name, value, id.Contains("cpu", StringComparison.OrdinalIgnoreCase)));
                     }
                 }
             }
-            catch (ManagementException ex) when (ex.ErrorCode is ManagementStatus.InvalidNamespace or ManagementStatus.InvalidClass or ManagementStatus.NotFound)
+            catch (ManagementException ex) when (IsMissing(ex))
             {
                 // Programa não instalado: cada tentativa custava ~5 ms de CPU aqui e mais no serviço WMI, a cada 10 s.
                 MissingNamespaces[ns] = DateTime.UtcNow + MissingRetry;
             }
             catch (ManagementException) { }
             catch (UnauthorizedAccessException) { }
+            catch (System.Runtime.InteropServices.COMException) { } // o serviço WMI falhou nesta leitura: fica sem este sensor
         }
         if (adapter is not null)
         {

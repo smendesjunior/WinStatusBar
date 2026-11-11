@@ -19,8 +19,29 @@ internal static class QiraAppBridge
 
     // O chat da barra usa QiraHubSession (ponte oficial do QuantumAI.Hub); aqui só instalação e janelas.
 
+    private static long _installedCheckedAt = long.MinValue;
+    private static bool _installedCached;
+
+    /// <summary><see cref="IsInstalled"/> conferido no máximo uma vez por minuto (para quem pergunta a cada poucos segundos).</summary>
+    private static bool InstalledCached
+    {
+        get
+        {
+            long now = Environment.TickCount64;
+            long checkedAt = Volatile.Read(ref _installedCheckedAt);
+            if (checkedAt == long.MinValue || now - checkedAt >= 60_000)
+            {
+                _installedCached = IsInstalled;
+                Volatile.Write(ref _installedCheckedAt, now);
+            }
+            return _installedCached;
+        }
+    }
+
     internal static List<IntPtr> Windows()
     {
+        // PC sem o Lenovo Qira: não há janela para procurar (a busca tirava uma foto de todos os processos a cada volta).
+        if (!InstalledCached) return [];
         var ids = new HashSet<uint>();
         foreach (var p in Process.GetProcessesByName("QuantumAI.Hub"))
         {

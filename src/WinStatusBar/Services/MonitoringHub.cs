@@ -238,11 +238,17 @@ public sealed class MonitoringHub : IDisposable
                 }
                 if (firstTemperature || temperatureClock.Elapsed.TotalSeconds >= 10)
                 {
-                    var t = s.ShowTemperatures ? await temperatures.SampleAsync(LastGpu?.Adapter, ct) : new TemperatureSample(null, null);
-                    LastTemperature = t;
-                    _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(t, s.ShowTemperatures));
+                    // O relógio anda antes da leitura: uma falha do sensor (ex.: erro COM do WMI) repetia a leitura a cada
+                    // volta, gravava no registro a cada segundo e pulava o resto do ciclo (IA local e envelhecimento).
                     firstTemperature = false;
                     temperatureClock.Restart();
+                    try
+                    {
+                        var t = s.ShowTemperatures ? await temperatures.SampleAsync(LastGpu?.Adapter, ct) : new TemperatureSample(null, null);
+                        LastTemperature = t;
+                        _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(t, s.ShowTemperatures));
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException) { App.Log("Temperaturas: " + ex.Message); }
                 }
                 if (s.LocalEnabled && localClock.ElapsedMilliseconds >= 2000)
                 {
@@ -340,14 +346,15 @@ public sealed class MonitoringHub : IDisposable
         // Servidor local ocioso não disputa a barra no modo automático, mas aparece se "IA local" for escolhida.
         var candidates = all.Where(x => (pinnedKind == AgentKind.Local || !(x.Kind == AgentKind.Local && x.State == AgentState.Idle))
             && (x.State != AgentState.Idle || DateTimeOffset.Now - x.LastActivity < TimeSpan.FromHours(2) || x.Kind == pinnedKind)).ToList();
-        var priority = TaskActivityService.ChoosePriority(candidates, s.PinnedSession, ForegroundAgent());
+        var foreground = ForegroundAgent(); // uma consulta de processo por atualização (o menu de agentes usa a mesma)
+        var priority = TaskActivityService.ChoosePriority(candidates, s.PinnedSession, foreground);
         // Agente escolhido explicitamente, mas sem nenhuma sessão: mostra o próprio agente ocioso (não troca para outro).
         if (pinnedKind is not null && priority is not null && priority.Kind != pinnedKind) priority = null;
         // IA adicional escolhida no menu ("ai:gemini", "ai:deepseek"…): a conversa mais relevante desse serviço feita na barra.
         if (s.PinnedSession is { } pin && pin.StartsWith("ai:", StringComparison.Ordinal))
             priority = TaskActivityService.ChoosePriority(all.Where(x => x.Kind == AgentKind.Api && x.ProviderId == pin[3..]), "auto", null);
         Priority = priority;
-        BuildAgentOptions(all, s, IconOf, candidates);
+        BuildAgentOptions(all, s, IconOf, candidates, foreground);
         bool emphasizeAgent = priority?.State.IsActive() == true;
         // Fluent: camada translúcida (LayerFillColorDefault, no XAML; o acrílico de app ficava opaco porque não enxerga
         // o fundo do sistema da barra) com o traço de cartão do Windows 11,
@@ -364,25 +371,6 @@ public sealed class MonitoringHub : IDisposable
         vm.OllamaWorking = vm.AgentOllama && priority?.State == AgentState.Running;
         vm.ExtraWorking = priority is { Kind: AgentKind.Api, State: AgentState.Running or AgentState.WaitingResponse } ? priority.ProviderId ?? "custom" : string.Empty;
         bool privacy = s.PrivacyMode;
-
-        // Lista de sessões do painel
-        vm.Sessions.Clear();
-        foreach (var x in all)
-        {
-            vm.Sessions.Add(new SessionItem
-            {
-                Id = x.Id, Kind = x.Kind,
-                Agent = x.DisplayAgent,
-                Title = privacy ? global::WinStatusBar.Services.Localization.T("Sessão ") + x.DisplayAgent : Formatters.Truncate(x.DisplayTitle, 80),
-                Caption = privacy ? x.State.ToPt() : Formatters.Truncate(x.Caption ?? x.ProjectName, 90),
-                State = x.State.ToPt() + (x.ActiveSubagents > 0 ? $" · {x.ActiveSubagents} subagente(s)" : string.Empty),
-                When = Relative(x.LastActivity),
-                DotBrush = DotBrush(x.State),
-                Icon = IconOf(x.Kind),
-                Project = privacy ? string.Empty : x.ProjectName,
-            });
-        }
-        vm.NoSessionsVisible = vm.Sessions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         if (priority is null)
         {
@@ -528,7 +516,7 @@ public sealed class MonitoringHub : IDisposable
         return (_codexInstalled, _claudeInstalled, _localInstalled || Local.ServerDisplay is not null);
     }
 
-    private void BuildAgentOptions(IReadOnlyList<AgentSession> all, AppSettings s, Func<AgentKind, ImageSource?> iconOf, List<AgentSession> candidates)
+    private void BuildAgentOptions(IReadOnlyList<AgentSession> all, AppSettings s, Func<AgentKind, ImageSource?> iconOf, List<AgentSession> candidates, AgentKind? foreground)
     {
         var vm = ViewModel;
         bool privacy = s.PrivacyMode;
@@ -539,7 +527,7 @@ public sealed class MonitoringHub : IDisposable
         var (codexOk, claudeOk, localOk) = InstalledAgents();
         var options = new List<AgentOption>();
 
-        var autoPick = TaskActivityService.ChoosePriority(candidates.Where(x => !(x.Kind == AgentKind.Local && x.State == AgentState.Idle)), "auto", ForegroundAgent());
+        var autoPick = TaskActivityService.ChoosePriority(candidates.Where(x => !(x.Kind == AgentKind.Local && x.State == AgentState.Idle)), "auto", foreground);
         options.Add(new AgentOption
         {
             Key = "auto", Name = global::WinStatusBar.Services.Localization.T("Automático"), Glyph = "",
@@ -714,7 +702,7 @@ public sealed class MonitoringHub : IDisposable
             if (fresh && g!.CurrentPercent >= 100) exhausted = "Cota atual esgotada";
             else if (fresh && g!.WeeklyPercent >= 100) exhausted = "Cota semanal esgotada";
             if (fresh) meta.Add("Plano " + (g!.Plan is { } pl ? char.ToUpper(pl[0]) + pl[1..].ToLowerInvariant() : "Gemini"));
-            if (ApiKeyStore.Get(AdditionalAiAccounts.Gemini.Resource) is not null)
+            if (_geminiKeyPresent)
             {
                 // Chave de API: uso real lido do Google AI Studio (pedidos do dia no modelo mais usado); sem leitura, só o nível.
                 var api = GoogleUsageSession.Api;
@@ -743,7 +731,7 @@ public sealed class MonitoringHub : IDisposable
         Right Done(Right r) => r with { Ring1 = r1, Ring2 = r2, Meta = string.Join(" · ", meta), RingNote = ringNote };
         if (top?.State == AgentState.Error) return Done(Pill("Erro", setup: id == "gemini" && _settings.Current.GeminiAuth != "api"));
         if (top?.State.IsActive() == true) return Done(Pill("Em uso"));
-        if (id == "gemini" && _settings.Current.GeminiAuth != "api" && !GeminiWebSession.SignedIn && ApiKeyStore.Get(AdditionalAiAccounts.Gemini.Resource) is null)
+        if (id == "gemini" && _settings.Current.GeminiAuth != "api" && !GeminiWebSession.SignedIn && !_geminiKeyPresent)
             return Done(Pill("Não configurado"));
         return Done(exhausted is not null ? Pill(exhausted) : Pill("Disponível"));
     }
@@ -767,11 +755,15 @@ public sealed class MonitoringHub : IDisposable
 
     private DateTimeOffset _extraCheckedAt;
     private List<(string Id, string Name, ImageSource? Logo)> _extraAis = [];
+    /// <summary>Há chave de API do Gemini no Cofre? Conferido junto com a lista abaixo (a cada 30 s), sem ler a chave:
+    /// a coluna da direita do menu perguntava ao Cofre (e decifrava a chave) a cada atualização dos agentes.</summary>
+    private bool _geminiKeyPresent;
     /// <summary>IAs adicionais configuradas neste PC (consulta ao Cofre no máximo a cada 30 s).</summary>
     private List<(string Id, string Name, ImageSource? Logo)> ExtraAis()
     {
         if (DateTimeOffset.Now - _extraCheckedAt < TimeSpan.FromSeconds(30)) return _extraAis;
         _extraCheckedAt = DateTimeOffset.Now;
+        _geminiKeyPresent = ApiKeyStore.Exists(AdditionalAiAccounts.Gemini.Resource);
         var list = new List<(string, string, ImageSource?)>();
         foreach (var p in AdditionalAiAccounts.Providers.Where(p => p.Endpoint is not null))
         {
@@ -855,11 +847,14 @@ public sealed class MonitoringHub : IDisposable
 
     private static Windows.UI.Color Rgb(int v) => Windows.UI.Color.FromArgb(255, (byte)(v >> 16), (byte)(v >> 8), (byte)v);
 
+    /// <summary>Um só para todas as bolinhas de estado (era criado a cada chamada); as cores lidas são sempre as atuais.</summary>
+    private static Windows.UI.ViewManagement.UISettings? _accentSettings;
+
     private readonly struct UISettingsAccessor
     {
         public Windows.UI.Color Accent(bool dark)
         {
-            try { return new Windows.UI.ViewManagement.UISettings().GetColorValue(dark ? Windows.UI.ViewManagement.UIColorType.AccentLight2 : Windows.UI.ViewManagement.UIColorType.AccentDark1); }
+            try { return (_accentSettings ??= new Windows.UI.ViewManagement.UISettings()).GetColorValue(dark ? Windows.UI.ViewManagement.UIColorType.AccentLight2 : Windows.UI.ViewManagement.UIColorType.AccentDark1); }
             catch { return Rgb(0x0078D4); }
         }
     }

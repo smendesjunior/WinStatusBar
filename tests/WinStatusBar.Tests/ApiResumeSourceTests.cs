@@ -265,6 +265,20 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
+    public void AgentMenuAsksTheVaultForTheGeminiKeyOnlyEvery30Seconds()
+    {
+        // A coluna da direita do menu de agentes roda a cada atualização (5 s ou menos, na thread da interface):
+        // perguntava ao Cofre e decifrava a chave do Gemini uma ou duas vezes por atualização só para saber se existia.
+        string hub = Src("Services", "MonitoringHub.cs");
+        string right = Body(hub, "private Right ExtraRight(");
+        Assert.DoesNotContain("ApiKeyStore.Get(", right);
+        Assert.Contains("_geminiKeyPresent", right);
+        string extras = Body(hub, "private List<(string Id, string Name, ImageSource? Logo)> ExtraAis()");
+        Assert.Contains("_geminiKeyPresent = ApiKeyStore.Exists(AdditionalAiAccounts.Gemini.Resource);", extras);
+        Assert.True(extras.IndexOf("TimeSpan.FromSeconds(30)", StringComparison.Ordinal) < extras.IndexOf("_geminiKeyPresent =", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void VaultPresenceNeverReadsThePassword()
     {
         string body = Body(Src("Services", "ApiKeyStore.cs"), "public static bool Exists(string resource)");
