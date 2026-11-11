@@ -163,7 +163,8 @@ public static class CodexQuotaText
             Technical(access));
     }
 
-    /// <summary>Linha do log quando o bloqueio começa: "Codex cota: uso bloqueado (motivo) até 12/11 23:01". Sem tradução.</summary>
+    /// <summary>Linha do log quando o bloqueio começa: "Codex cota: uso bloqueado (motivo) até 12/11 23:01 · detalhe: …" (o detalhe
+    /// técnico que saiu do aviso do menu). Sem tradução.</summary>
     internal static string BlockLog(QuotaSnapshot quota, DateTimeOffset now)
     {
         var a = quota.Access;
@@ -174,6 +175,7 @@ public static class CodexQuotaText
             : "ordinaryUsageAllowed=false";
         var until = quota.BlockedUntil(now);
         string when = until is null ? "horário não informado" : $"{DayMonth(until.Value)} {Time(until.Value)}";
-        return $"Codex cota: uso bloqueado ({why}) até {when}";
+        string detail = Technical(a);
+        return $"Codex cota: uso bloqueado ({why}) até {when}" + (detail.Length > 0 ? " · detalhe: " + detail : "");
     }
 }

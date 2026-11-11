@@ -12,7 +12,7 @@ public class ApiResumeTranslationsTests
             yield return ["src", "WinStatusBar.Core", "Ai", "Codex", "ApiResume", Path.GetFileName(file)];
         yield return ["src", "WinStatusBar", "Services", "CodexApiResumeService.cs"];
         yield return ["src", "WinStatusBar", "Views", "CodexApiResumeView.cs"];
-        yield return ["src", "WinStatusBar", "Views", "ContinueViaApiDialog.cs"];
+        yield return ["src", "WinStatusBar", "Views", "ContinueViaApiPanel.cs"];
         yield return ["src", "WinStatusBar", "Views", "BarWindow.Activity.cs"];
     }
 

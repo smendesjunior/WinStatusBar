@@ -18,7 +18,7 @@ public static class QuotaDetailsView
     public const double ContentWidth = 380;
     private static Brush? _accent;
     private static bool _resetPending;
-    internal static bool ResetPending => _resetPending || ContinueViaApiDialog.IsOpen;
+    internal static bool ResetPending => _resetPending || ApiResumeInline.Busy;
     private static string? _resetMessage;
     private static readonly Dictionary<string, string> ResetAttempts = new();
 
@@ -189,19 +189,13 @@ public static class QuotaDetailsView
         _ => w.Label,
     };
 
-    /// <summary>Aviso do bloqueio da conta do Codex: cinco linhas e o detalhe técnico em letra pequena (selecionável).</summary>
+    /// <summary>Aviso do bloqueio da conta do Codex: cinco linhas. O detalhe técnico fica só no registro (linha "Codex cota:").</summary>
     private static UIElement BlockBanner(Core.Ai.Codex.CodexBlockBanner banner, ElementTheme theme)
     {
         var panel = new StackPanel { Spacing = 2 };
         panel.Children.Add(Text(banner.Title, "BodyStrongTextBlockStyle", wrap: true));
         foreach (var line in new[] { banner.Reason, banner.Returns, banner.Effect, banner.Confirmed })
             panel.Children.Add(Text(line, "BodyTextBlockStyle", wrap: true));
-        if (banner.Technical.Length > 0)
-            panel.Children.Add(new TextBlock
-            {
-                Text = banner.Technical, FontSize = 11, Opacity = 0.78, IsTextSelectionEnabled = true,
-                TextWrapping = TextWrapping.Wrap, MaxWidth = ContentWidth - 24, Margin = new Thickness(0, 4, 0, 0),
-            });
         return new Border
         {
             Width = ContentWidth,

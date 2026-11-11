@@ -7,7 +7,8 @@ namespace WinStatusBar.Views;
 
 /// <summary>
 /// Seção "Conversas paradas pela cota" do menu da cota do Codex e os cartões das continuações pela API.
-/// Não guarda estado próprio: o menu é refeito a cada 5 s (e pausa enquanto a janela ou uma confirmação está aberta).
+/// Não guarda estado próprio: o menu é refeito a cada 5 s (e pausa enquanto a escolha ou uma confirmação está aberta).
+/// Nada abre janela por cima: a barra tem só a altura da faixa, e uma janela de diálogo dela ficaria invisível.
 /// </summary>
 internal static class CodexApiResumeView
 {
@@ -29,18 +30,28 @@ internal static class CodexApiResumeView
 
         if (stops is { Count: > 0 })
         {
+            var choose = new StackPanel { Spacing = 8 };
             var button = new Button
             {
                 Content = ApiResumeText.ContinueButton,
                 IsEnabled = svc.HasKey && !svc.IsStoreBuild,
             };
-            button.Click += async (_, _) =>
+            button.Click += (_, _) =>
             {
-                if (button.XamlRoot is { } root) await ContinueViaApiDialog.ShowAsync(root, theme, svc);
+                int at = panel.Children.IndexOf(choose);
+                if (at < 0) return;
+                FrameworkElement? inline = null;
+                inline = ContinueViaApiPanel.Build(svc, () =>
+                {
+                    int i = inline is null ? -1 : panel.Children.IndexOf(inline);
+                    if (i >= 0) panel.Children[i] = choose;
+                });
+                panel.Children[at] = inline;
             };
-            panel.Children.Add(button);
-            if (!svc.HasKey) panel.Children.Add(Caption(ApiResumeText.NoKeyHint));
-            if (svc.IsStoreBuild) panel.Children.Add(Caption(ApiResumeText.StoreHint));
+            choose.Children.Add(button);
+            if (!svc.HasKey) choose.Children.Add(Caption(ApiResumeText.NoKeyHint));
+            if (svc.IsStoreBuild) choose.Children.Add(Caption(ApiResumeText.StoreHint));
+            panel.Children.Add(choose);
         }
         foreach (var job in svc.VisibleJobs) panel.Children.Add(JobCard(job, svc));
         return panel;
@@ -83,26 +94,25 @@ internal static class CodexApiResumeView
         foreach (var action in actions)
         {
             var b = new Button { Content = ApiResumeText.ActionLabel(action) };
-            b.Click += async (_, _) => await RunAsync(action, job, svc, b.XamlRoot);
+            b.Click += (_, _) => Run(action, job, svc, card, buttons);
             buttons.Children.Add(b);
         }
         if (buttons.Children.Count > 0) card.Children.Add(buttons);
         return card;
     }
 
-    private static async Task RunAsync(ApiResumeAction action, ApiResumeJob job, CodexApiResumeService svc, XamlRoot? root)
+    private static void Run(ApiResumeAction action, ApiResumeJob job, CodexApiResumeService svc, StackPanel card, StackPanel buttons)
     {
         var sup = svc.Supervisor;
         switch (action)
         {
             case ApiResumeAction.Stop:
-                if (await ConfirmAsync(root, Localization.T("Parar a continuação pela API?"), ApiResumeText.StopConfirm, Localization.T("Parar")))
-                    sup.Stop(job.Id);
+                Confirm(card, buttons, Localization.T("Parar a continuação pela API?"), ApiResumeText.StopConfirm, Localization.T("Parar"),
+                    () => sup.Stop(job.Id));
                 break;
             case ApiResumeAction.ForceKill:
-                if (await ConfirmAsync(root, Localization.T("Encerrar à força?"), ApiResumeErrors.For(ApiResumeProblem.StopNotAnswered).Message,
-                        ApiResumeText.ActionLabel(ApiResumeAction.ForceKill)))
-                    sup.ForceKill(job.Id);
+                Confirm(card, buttons, Localization.T("Encerrar à força?"), ApiResumeErrors.For(ApiResumeProblem.StopNotAnswered).Message,
+                    ApiResumeText.ActionLabel(ApiResumeAction.ForceKill), () => sup.ForceKill(job.Id));
                 break;
             case ApiResumeAction.AllowWhenQuotaBack: sup.AllowWhenQuotaBack(job.Id); break;
             case ApiResumeAction.RemoveFromQueue: sup.RemoveFromQueue(job.Id); break;
@@ -113,15 +123,25 @@ internal static class CodexApiResumeView
         }
     }
 
-    private static async Task<bool> ConfirmAsync(XamlRoot? root, string title, string message, string primary)
+    /// <summary>Confirmação no próprio cartão: troca os botões pela pergunta e volta a eles ao cancelar.</summary>
+    private static void Confirm(StackPanel card, StackPanel buttons, string title, string message, string primary, Action yes)
     {
-        if (root is null) return false;
-        var dialog = new ContentDialog
-        {
-            Title = title, Content = message, PrimaryButtonText = primary, CloseButtonText = Localization.T("Cancelar"),
-            DefaultButton = ContentDialogButton.Close, XamlRoot = root,
-        };
-        return await ContinueViaApiDialog.ShowModalAsync(dialog) == ContentDialogResult.Primary;
+        int at = card.Children.IndexOf(buttons);
+        if (at < 0) return;
+        var ask = new StackPanel { Spacing = 4 };
+        var release = ApiResumeInline.Hold(ask);
+        ask.Children.Add(Text(title, bold: true));
+        ask.Children.Add(Caption(message));
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var ok = new Button { Content = primary };
+        var cancel = new Button { Content = Localization.T("Cancelar") };
+        void Back() { int i = card.Children.IndexOf(ask); if (i >= 0) card.Children[i] = buttons; release(); }
+        ok.Click += (_, _) => { yes(); Back(); };
+        cancel.Click += (_, _) => Back();
+        row.Children.Add(ok);
+        row.Children.Add(cancel);
+        ask.Children.Add(row);
+        card.Children[at] = ask;
     }
 
     private static TextBlock Text(string text, bool bold = false) => new()

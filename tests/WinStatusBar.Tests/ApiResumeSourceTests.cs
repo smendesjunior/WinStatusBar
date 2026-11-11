@@ -162,13 +162,40 @@ public class ApiResumeSourceTests
     }
 
     [Fact]
-    public void DialogStartsUncheckedAndSwitchesStepsInPlace()
+    public void ChoiceHappensInsideTheQuotaMenuStartingUnchecked()
     {
-        string dialog = Src("Views", "ContinueViaApiDialog.cs");
-        foreach (var piece in new[] { "IsChecked = false", "c.CanMark", "ApiResumeText.ShowParallelChoice(", "ShowModalAsync(", "svc.PrepareAsync(", "svc.Confirm(" })
-            Assert.Contains(piece, dialog);
-        Assert.True(Regex.Matches(dialog, @"args\.Cancel = true").Count >= 2);
+        string panel = Src("Views", "ContinueViaApiPanel.cs");
+        foreach (var piece in new[] { "IsChecked = false", "c.CanMark", "ApiResumeText.ShowParallelChoice(", "svc.PrepareAsync(", "svc.Confirm(", "ApiResumeInline.Hold(" })
+            Assert.Contains(piece, panel);
+        Assert.Contains("ContinueViaApiPanel.Build(", Src("Views", "CodexApiResumeView.cs"));
     }
+
+    /// <summary>A barra tem só a altura da faixa: uma janela de diálogo dela fica invisível e bloqueia os cliques.</summary>
+    [Fact]
+    public void NoDialogWindowOverTheBar()
+    {
+        Assert.False(File.Exists(Path.Combine(RepoSource.Root(), "src", "WinStatusBar", "Views", "ContinueViaApiDialog.cs")));
+        foreach (var file in new[] { "CodexApiResumeView.cs", "ContinueViaApiPanel.cs", "ApiResumeInline.cs" })
+            Assert.DoesNotContain("ContentDialog", Src("Views", file));
+    }
+
+    [Fact]
+    public void InlineHoldIsReleasedWhenTheMenuCloses()
+    {
+        string inline = Src("Views", "ApiResumeInline.cs");
+        Assert.Contains("Unloaded +=", inline);
+        Assert.Contains("Interlocked.Decrement", inline);
+        Assert.Contains("ApiResumeInline.Hold(", Src("Views", "CodexApiResumeView.cs"));
+    }
+
+    /// <summary>O detalhe técnico do bloqueio fica só no registro, fora da faixa amarela.</summary>
+    [Fact]
+    public void BlockBannerHasNoTechnicalLine() =>
+        Assert.DoesNotContain("banner.Technical", Src("Views", "QuotaDetailsView.cs"));
+
+    [Fact]
+    public void ActivityCardWaitsWhileConfirming() =>
+        Assert.Contains("if (nextApiKey != apiKey && !ApiResumeInline.Busy)", Src("Views", "BarWindow.Activity.cs"));
 
     [Fact]
     public void SectionOnlyWithBlockOrJobs()
@@ -181,14 +208,14 @@ public class ApiResumeSourceTests
 
     [Fact]
     public void QuotaMenuPausesWhileTheDialogIsOpen() =>
-        Assert.Contains("internal static bool ResetPending => _resetPending || ContinueViaApiDialog.IsOpen;", Src("Views", "QuotaDetailsView.cs"));
+        Assert.Contains("internal static bool ResetPending => _resetPending || ApiResumeInline.Busy;", Src("Views", "QuotaDetailsView.cs"));
 
     [Theory]
     [InlineData("CodexApiResumeView.cs")]
-    [InlineData("ContinueViaApiDialog.cs")]
+    [InlineData("ContinueViaApiPanel.cs")]
     public void ViewsNeverSubscribeToEvents(string file)
     {
-        string[] allowed = ["Click", "Checked", "Unchecked", "PrimaryButtonClick", "SecondaryButtonClick", "SelectionChanged"];
+        string[] allowed = ["Click", "Checked", "Unchecked", "SelectionChanged"];
         foreach (Match m in Regex.Matches(Src("Views", file), @"\.(\w+) \+="))
             Assert.Contains(m.Groups[1].Value, allowed);
     }

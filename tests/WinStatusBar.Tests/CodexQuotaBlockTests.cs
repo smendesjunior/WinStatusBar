@@ -209,9 +209,9 @@ public class CodexQuotaBlockTests
         Assert.Equal("Parada pela cota do Codex", CodexQuotaText.StoppedCaption(null));
         Assert.Equal("O Codex está sem cota (créditos do workspace esgotados); o app não confirmou resposta",
             CodexQuotaText.ChatRefused("créditos do workspace esgotados"));
-        Assert.Equal("Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01",
+        Assert.Equal("Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01 · detalhe: ordinaryUsageAllowed=false · rateLimitReachedType=workspace_owner_credits_depleted · saldo de créditos 0",
             CodexQuotaText.BlockLog(Parse(CreditsDepleted, Seen)!, Seen));
-        Assert.Equal("Codex cota: uso bloqueado (ordinaryUsageAllowed=false) até horário não informado",
+        Assert.Equal("Codex cota: uso bloqueado (ordinaryUsageAllowed=false) até horário não informado · detalhe: ordinaryUsageAllowed=false",
             CodexQuotaText.BlockLog(Snapshot(Seen, Official(Seen, false), used7d: 10), Seen));
     }
 
@@ -279,7 +279,7 @@ public class CodexQuotaBlockTests
         provider.ApplyQuota(Parse(CreditsDepleted, Seen)!, official: true, Seen);
         provider.ApplyQuota(Parse(CreditsDepleted, Seen.AddMinutes(10))!, official: true, Seen.AddMinutes(10));
         provider.ApplyQuota(Snapshot(Seen.AddHours(1), Official(Seen.AddHours(1), true), used7d: 10), official: true, Seen.AddHours(1));
-        Assert.Equal(["Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01", "Codex cota: uso liberado"], log);
+        Assert.Equal(["Codex cota: uso bloqueado (workspace_owner_credits_depleted) até 12/11 23:01 · detalhe: ordinaryUsageAllowed=false · rateLimitReachedType=workspace_owner_credits_depleted · saldo de créditos 0", "Codex cota: uso liberado"], log);
     }
 
     [Fact]

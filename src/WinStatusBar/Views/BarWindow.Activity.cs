@@ -84,7 +84,7 @@ public sealed partial class BarWindow
                 var now = DateTimeOffset.Now;
                 if (job is not null) heading.Text = WinStatusBar.Core.Ai.Codex.ApiResume.ApiResumeText.CardTitle;
                 string nextApiKey = $"{job?.Id}|{job?.State}|{job?.Detail}|{job?.Tokens}|{job?.Spend}|{job?.ForceOffered}|{(job?.StartedAt is { } s ? (int)(now - s).TotalMinutes : -1)}|{other?.Id}|{(other?.StartedAt is { } o ? (int)(now - o).TotalMinutes : -1)}";
-                if (nextApiKey != apiKey)
+                if (nextApiKey != apiKey && !ApiResumeInline.Busy)
                 {
                     apiKey = nextApiKey;
                     apiCard.Content = job is null ? null : CodexApiResumeView.JobCard(job, svc);
