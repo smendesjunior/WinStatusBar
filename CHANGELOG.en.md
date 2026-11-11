@@ -7,7 +7,7 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
-## [1.6.0] - 2026-11-11 · build BUILD
+## [1.6.0] - 2026-11-11 · build 20261111031856
 
 ### Added
 - Bar AIs in Codex: Gemini and Copilot through the account, API-key models, local models and Claude without the commands option now work on files. They ask for each command or file to write, and Codex itself runs it, with the conversation's permissions and showing every step.

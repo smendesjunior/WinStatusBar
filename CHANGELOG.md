@@ -7,7 +7,7 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
-## [1.6.0] - 2026-11-11 · compilação BUILD
+## [1.6.0] - 2026-11-11 · compilação 20261111031856
 
 ### Adicionado
 - IAs da barra no Codex: Gemini e Copilot pela conta, APIs com chave, modelos locais e o Claude sem a opção de comandos agora trabalham nos arquivos. Eles pedem cada comando ou arquivo a gravar, e o próprio Codex executa, com as permissões da conversa e mostrando cada passo.
