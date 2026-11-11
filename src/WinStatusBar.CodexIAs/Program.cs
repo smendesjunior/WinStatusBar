@@ -172,15 +172,28 @@ internal static class Program
     {
         if (!await ServiceRunningAsync() && await PortBusyAsync())
             return (false, $"A porta {Paths.GatewayPort} está em uso por outro programa (talvez o encaminhador antigo do Codex). Feche-o e tente de novo.");
+        // Como estava antes: se o encaminhador não subir, uma ligação nova é desfeita (o Codex não fica numa porta morta).
+        bool hadState = File.Exists(CodexIntegration.StateFile);
+        var before = CodexIntegration.LoadState();
+        bool wasOn = before.Ligado;
         if (await CodexConfig.EnableAsync(CancellationToken.None) is { } error) return (false, error);
         if (!await ServiceRunningAsync())
         {
-            StartService();
-            var until = DateTime.UtcNow.AddSeconds(20);
-            while (!await ServiceRunningAsync())
+            bool up = false;
+            try
             {
-                if (DateTime.UtcNow > until) return (false, "A ligação foi feita, mas o encaminhador não iniciou. Veja o registro em " + Paths.LogFile);
-                await Task.Delay(500);
+                StartService();
+                var until = DateTime.UtcNow.AddSeconds(20);
+                while (!(up = await ServiceRunningAsync()) && DateTime.UtcNow <= until) await Task.Delay(500);
+            }
+            catch (Exception ex) { Log.Write("Ligar: o encaminhador não iniciou: " + ex.Message); }
+            if (!up)
+            {
+                bool undone = false;
+                try { undone = await CodexConfig.UndoEnableAsync(wasOn, hadState, before.Copia, CancellationToken.None); }
+                catch (Exception ex) { Log.Write("Ligar: a ligação não foi desfeita: " + ex.Message); }
+                return (false, (undone ? "O encaminhador não iniciou, então a ligação foi desfeita: o Codex voltou à configuração de antes."
+                    : "A ligação foi feita, mas o encaminhador não iniciou.") + " Veja o registro em " + Paths.LogFile);
             }
         }
         var (ok, message) = await CheckAsync(false);

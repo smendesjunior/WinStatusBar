@@ -24,19 +24,43 @@ public sealed class ApiResumeStore(string root)
     public string EventsFile(string id) => Path.Combine(FolderOf(id), "events.jsonl");
     public string StderrFile(string id) => Path.Combine(FolderOf(id), "stderr.txt");
 
-    public List<ApiResumeJob> Load(Action<string>? log = null)
+    public List<ApiResumeJob> Load(Action<string>? log = null) => Load(out _, log);
+
+    /// <summary>
+    /// Lê o registro. <paramref name="corrupt"/>: o arquivo existia mas não era um registro válido (foi posto de lado), então
+    /// a lista vazia não quer dizer "nenhuma continuação". Arquivo em uso ou sem permissão: tenta mais duas vezes e, se não
+    /// der, lança (IOException ou UnauthorizedAccessException) em vez de fingir que o registro está vazio.
+    /// </summary>
+    public List<ApiResumeJob> Load(out bool corrupt, Action<string>? log = null)
     {
-        if (!File.Exists(JobsFile)) return [];
+        corrupt = false;
+        if (ReadJobsFile() is not { } text) return [];
         try
         {
-            return JsonSerializer.Deserialize<List<ApiResumeJob>>(File.ReadAllText(JobsFile), Options)?.Where(j => j is not null).ToList() ?? [];
+            return JsonSerializer.Deserialize<List<ApiResumeJob>>(text, Options)?.Where(j => j is not null).ToList() ?? [];
         }
         catch (JsonException)
         {
+            corrupt = true;
             string aside = Path.Combine(root, $"jobs.corrompido-{DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)}.json");
             try { File.Move(JobsFile, aside, overwrite: true); } catch (IOException) { }
             log?.Invoke($"Continuar pela API: jobs.json corrompido; posto de lado em {Path.GetFileName(aside)}");
             return [];
+        }
+    }
+
+    internal const int ReadAttempts = 3;
+    internal static TimeSpan ReadRetryDelay { get; set; } = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>Texto do jobs.json; null quando ele não existe. Antivírus, backup ou sincronização seguram o arquivo por instantes.</summary>
+    private string? ReadJobsFile()
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            if (!File.Exists(JobsFile)) return null;
+            try { return File.ReadAllText(JobsFile); }
+            catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException) { return null; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException && attempt < ReadAttempts) { Thread.Sleep(ReadRetryDelay); }
         }
     }
 

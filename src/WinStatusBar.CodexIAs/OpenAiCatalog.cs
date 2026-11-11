@@ -35,7 +35,8 @@ public static partial class OpenAiCatalog
 
     public static void SaveState(State state)
     {
-        try { Directory.CreateDirectory(Paths.DataDir); File.WriteAllText(StateFile, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true })); }
+        // Gravação atômica: uma queda no meio não deixa o registro pela metade (ele seria lido como "primeira vez").
+        try { WinStatusBar.Core.Ai.Codex.CodexIntegration.WriteAtomic(StateFile, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true })); }
         catch (Exception ex) { Log.Write("OpenAI: não gravou o registro de modelos: " + ex.Message); }
     }
 
@@ -70,14 +71,11 @@ public static partial class OpenAiCatalog
         foreach (var a in new[] { "debug", "models", "--bundled" }) psi.ArgumentList.Add(a);
         try
         {
-            using var proc = Process.Start(psi);
-            if (proc is null) return null;
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
             limit.CancelAfter(TimeSpan.FromSeconds(60));
-            var stdout = proc.StandardOutput.ReadToEndAsync(limit.Token);
-            _ = proc.StandardError.ReadToEndAsync(limit.Token);
-            await proc.WaitForExitAsync(limit.Token);
-            return (JsonNode.Parse(await stdout)?["models"] as JsonArray);
+            // No fim do prazo o codex é encerrado (antes ficava rodando sem dono).
+            if (await WinStatusBar.Core.Ai.Codex.CodexModelLevels.OutputAsync(psi, limit.Token) is not { } output) return null;
+            return JsonNode.Parse(output)?["models"] as JsonArray;
         }
         catch (Exception ex) { Log.Write("OpenAI: lista de modelos do Codex falhou: " + ex.Message); return null; }
     }

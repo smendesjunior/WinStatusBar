@@ -79,14 +79,11 @@ internal static class OpenAiKey
         catch (Exception ex) { Log.Write("OpenAI — minha API: chave protegida não lida: " + ex.GetType().Name); }
         try
         {
-            if (File.Exists(SettingsService.SettingsPath)
-                && JsonSerializer.Deserialize(File.ReadAllText(SettingsService.SettingsPath), AppSettingsContext.Default.AppSettings) is { } settings)
-            {
-                foreach (var api in settings.CustomApis)
-                    if (Uri.TryCreate(api.BaseUrl.Trim(), UriKind.Absolute, out var u) && u.Host.Equals("api.openai.com", StringComparison.OrdinalIgnoreCase)
-                        && Providers.ApiProvider.Key(api.Resource) is { Length: > 0 } key)
-                        return key;
-            }
+            // BarSettings abre o settings.json sem travar a gravação da barra e guarda a leitura enquanto o arquivo não muda.
+            foreach (var api in BarSettings.Load().CustomApis)
+                if (Uri.TryCreate(api.BaseUrl.Trim(), UriKind.Absolute, out var u) && u.Host.Equals("api.openai.com", StringComparison.OrdinalIgnoreCase)
+                    && Providers.ApiProvider.Key(api.Resource) is { Length: > 0 } key)
+                    return key;
         }
         catch { }
         return null;

@@ -73,7 +73,15 @@ public static partial class BridgeServer
 
     /// <summary>Esforço pedido no seletor do Codex ("none" ou ausente = padrão da IA).</summary>
     public static string? EffortOf(JsonNode payload)
-        => payload["reasoning"]?["effort"]?.GetValue<string>() is { Length: > 0 } e && e != "none" ? e : null;
+        => payload["reasoning"] is JsonObject reasoning && reasoning["effort"] is JsonValue value && value.TryGetValue<string>(out var e)
+           && e.Length > 0 && e != "none" ? e : null;
+
+    /// <summary>Erro de formato do pedido (um campo veio com outro tipo): antes de qualquer resposta, vira um 400 curto.</summary>
+    internal static bool BadShape(Exception ex)
+        => ex is InvalidOperationException or FormatException or InvalidCastException or KeyNotFoundException or ArgumentException
+            or NullReferenceException or IndexOutOfRangeException;
+
+    internal const string BadShapeMessage = "Invalid request format";
 
     /// <summary>Intervalo do aviso "ainda trabalhando" (response.in_progress) nos silêncios; trocável só nos testes.</summary>
     internal static TimeSpan KeepAliveInterval { get; set; } = TimeSpan.FromSeconds(5);
@@ -125,11 +133,19 @@ public static partial class BridgeServer
     internal static async Task RespondCoreAsync(Stream stream, string slug, (IProvider Provider, AiModel Model)? target, JsonNode payload,
         bool commands, CancellationTokenSource run, BridgeConnection connection)
     {
-        var conversation = ConversationReader.Read(payload);
+        Conversation conversation;
+        try { conversation = ConversationReader.Read(payload); }
+        catch (Exception ex) when (BadShape(ex))
+        {
+            // Nada foi escrito ainda: um 400 curto em vez de fechar a conexão sem resposta (o Codex só veria a queda).
+            Log.Write("Pedido com formato inesperado: " + ex.GetType().Name);
+            await PlainAsync(stream, 400, BadShapeMessage);
+            return;
+        }
         bool actions = conversation.Actions && UsesActions(target, commands);
         if (!actions) conversation = conversation with { Actions = false };
         string responseId = "resp_cdx_" + Guid.NewGuid().ToString("N");
-        bool streaming = payload["stream"]?.GetValue<bool>() ?? false;
+        bool streaming = payload["stream"] is JsonValue streamValue && streamValue.TryGetValue<bool>(out bool streamOn) && streamOn;
         var updates = Channel.CreateUnbounded<string>(new() { SingleReader = true });
 
         async Task Event(JsonObject data)

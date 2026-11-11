@@ -40,16 +40,15 @@ internal sealed partial class ApiProvider : IProvider
         var list = Known.Select(s => new ApiProvider(s)).ToList();
         try
         {
-            if (File.Exists(SettingsService.SettingsPath)
-                && JsonSerializer.Deserialize(File.ReadAllText(SettingsService.SettingsPath), AppSettingsContext.Default.AppSettings) is { } settings)
-                foreach (var api in settings.CustomApis)
-                {
-                    if (string.IsNullOrWhiteSpace(api.BaseUrl) || IsOpenAi(api.BaseUrl)) continue;
-                    string name = string.IsNullOrWhiteSpace(api.Name) ? new Uri(api.BaseUrl).Host : api.Name.Trim();
-                    string id = "propria-" + Slug.From(name);
-                    if (list.Any(p => p._service.Id == id)) continue;
-                    list.Add(new(new(id, name, api.Kind, api.BaseUrl.Trim(), api.Resource)));
-                }
+            // BarSettings abre o settings.json sem travar a gravação da barra e guarda a leitura enquanto o arquivo não muda.
+            foreach (var api in BarSettings.Load().CustomApis)
+            {
+                if (string.IsNullOrWhiteSpace(api.BaseUrl) || IsOpenAi(api.BaseUrl)) continue;
+                string name = string.IsNullOrWhiteSpace(api.Name) ? new Uri(api.BaseUrl).Host : api.Name.Trim();
+                string id = "propria-" + Slug.From(name);
+                if (list.Any(p => p._service.Id == id)) continue;
+                list.Add(new(new(id, name, api.Kind, api.BaseUrl.Trim(), api.Resource)));
+            }
         }
         catch (Exception ex) { Log.Write("APIs da barra: configurações não lidas: " + ex.Message); }
         return list;

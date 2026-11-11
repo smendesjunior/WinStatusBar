@@ -82,10 +82,31 @@ internal sealed class CodexApiResumeService : IApiResumeHost
         _ = StartSupervisorAsync();
     }
 
+    /// <summary>
+    /// Inicia o supervisor; se o registro não pôde ser lido agora (arquivo em uso, sem permissão), tenta de novo com espera
+    /// crescente até dar certo ou a barra fechar. Sem isto, uma falha passageira ao abrir deixava a fila parada até reiniciar.
+    /// </summary>
     private async Task StartSupervisorAsync()
     {
-        try { await Supervisor.StartAsync(_cts.Token).ConfigureAwait(false); }
-        catch (Exception e) { App.Log($"Continuar pela API: não iniciou ({e.GetType().Name}: {ApiResumeErrors.Redact(e.Message)})"); }
+        TimeSpan[] waits = [TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(60)];
+        for (int attempt = 0; !_cts.IsCancellationRequested; attempt++)
+        {
+            try
+            {
+                await Supervisor.StartAsync(_cts.Token).ConfigureAwait(false);
+                if (attempt > 0) App.Log($"Continuar pela API: iniciou na tentativa {attempt + 1}");
+                return;
+            }
+            catch (OperationCanceledException) when (_cts.IsCancellationRequested) { return; }
+            catch (Exception e)
+            {
+                // Uma linha na primeira falha e depois a cada 10 tentativas: o registro não enche se o problema durar.
+                if (attempt % 10 == 0)
+                    App.Log($"Continuar pela API: não iniciou ({e.GetType().Name}: {ApiResumeErrors.Redact(e.Message)}); a barra tenta de novo sozinha");
+            }
+            try { await Task.Delay(waits[Math.Min(attempt, waits.Length - 1)], _cts.Token).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+        }
     }
 
     private void OnQuotaChanged(object? sender, EventArgs e) => Supervisor.QuotaChanged();

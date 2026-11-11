@@ -54,12 +54,8 @@ public static class CodexModelLevels
             };
             if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
             foreach (var a in new[] { "debug", "models", "--bundled" }) psi.ArgumentList.Add(a);
-            using var proc = Process.Start(psi);
-            if (proc is null) return 0;
-            var stdout = proc.StandardOutput.ReadToEndAsync(ct);
-            _ = proc.StandardError.ReadToEndAsync(ct);
-            await proc.WaitForExitAsync(ct);
-            using var doc = JsonDocument.Parse(await stdout);
+            if (await OutputAsync(psi, ct) is not { } output) return 0;
+            using var doc = JsonDocument.Parse(output);
             var levels = Parse(doc.RootElement);
             if (levels.Count == 0) return 0;
             _levels = levels;
@@ -71,6 +67,29 @@ public static class CodexModelLevels
         }
         catch (Exception ex) when (ex is not OperationCanceledException) { return 0; }
         finally { Refreshing.Release(); }
+    }
+
+    /// <summary>
+    /// Roda um programa sem janela até o fim e devolve a saída padrão (null se não iniciou). Se o prazo vencer ou o pedido
+    /// for cancelado com o programa ainda aberto, ele e os filhos são encerrados antes de o cancelamento seguir: um
+    /// "codex debug models" travado não fica rodando sem dono. <paramref name="psi"/> precisa redirecionar a saída.
+    /// </summary>
+    public static async Task<string?> OutputAsync(ProcessStartInfo psi, CancellationToken ct, Action<int>? onStarted = null)
+    {
+        using var proc = Process.Start(psi);
+        if (proc is null) return null;
+        try
+        {
+            onStarted?.Invoke(proc.Id);
+            var stdout = proc.StandardOutput.ReadToEndAsync(ct);
+            if (psi.RedirectStandardError) _ = proc.StandardError.ReadToEndAsync(ct);
+            await proc.WaitForExitAsync(ct).ConfigureAwait(false);
+            return await stdout.ConfigureAwait(false);
+        }
+        finally
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+        }
     }
 
     /// <summary>{"models":[{"slug","supported_reasoning_levels":[{"effort"}],"default_reasoning_level"}]} → níveis por modelo.</summary>

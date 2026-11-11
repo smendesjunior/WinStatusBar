@@ -36,16 +36,39 @@ internal static class CodexIasComponent
     public static int Generation { get; private set; }
     public static void NotifyModelsChanged() => Generation++;
 
-    /// <summary>Ligação com o Codex ligada e o encaminhador parado (ex.: depois de uma atualização): inicia.</summary>
-    public static void EnsureRunning()
+    private static int _commands, _ensuring, _startsWithoutAnswer;
+    private static DateTime _nextStartUtc;
+
+    /// <summary>Um comando do componente (--ligar, --desligar, --verificar…) está rodando: ele mesmo para e inicia o encaminhador.</summary>
+    public static bool CommandInFlight => Volatile.Read(ref _commands) > 0;
+
+    /// <summary>
+    /// Ligação com o Codex ligada e o encaminhador sem responder (depois de uma atualização, ou porque ele caiu): inicia.
+    /// Pode ser chamado de tempos em tempos: não faz nada com a ligação desligada, com o encaminhador respondendo ou com um
+    /// comando do componente em andamento.
+    /// </summary>
+    public static void EnsureRunning() => _ = EnsureRunningAsync();
+
+    /// <summary>True quando iniciou o encaminhador agora.</summary>
+    public static async Task<bool> EnsureRunningAsync()
     {
+        if (Interlocked.Exchange(ref _ensuring, 1) == 1) return false;
         try
         {
-            if (!Available || !CodexIntegration.LoadState().Ligado || Running) return;
+            if (!Available || CommandInFlight || !CodexIntegration.LoadState().Ligado) return false;
+            // Pela resposta do encaminhador, não pelo nome do processo: --verificar e --entrar têm o mesmo nome, e um
+            // encaminhador travado continua na lista de processos.
+            if (await GatewayOnlineAsync().ConfigureAwait(false)) { _startsWithoutAnswer = 0; _nextStartUtc = default; return false; }
+            if (CommandInFlight || !CodexIntegration.LoadState().Ligado || DateTime.UtcNow < _nextStartUtc) return false;
+            // Uma segunda cópia sai sozinha (o encaminhador garante uma só). Se ele não responde depois de 3 inícios
+            // (porta ocupada por outro programa), as tentativas passam a ser a cada 10 minutos.
+            if (++_startsWithoutAnswer >= 3) _nextStartUtc = DateTime.UtcNow.AddMinutes(10);
             Process.Start(new ProcessStartInfo(ExePath) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(ExePath)! })?.Dispose();
             App.Log("IAs no Codex: encaminhador iniciado.");
+            return true;
         }
-        catch (Exception ex) { App.Log("IAs no Codex: " + ex.Message); }
+        catch (Exception ex) { App.Log("IAs no Codex: " + ex.Message); return false; }
+        finally { Volatile.Write(ref _ensuring, 0); }
     }
 
     /// <summary>
@@ -83,11 +106,16 @@ internal static class CodexIasComponent
         var started = DateTime.Now.AddSeconds(-1);
         var psi = new ProcessStartInfo(ExePath) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(ExePath)! };
         foreach (var a in args) psi.ArgumentList.Add(a);
-        using var process = Process.Start(psi) ?? throw new InvalidOperationException("O componente das IAs no Codex não iniciou.");
-        try { await process.WaitForExitAsync(ct); }
-        catch (OperationCanceledException) { try { process.Kill(entireProcessTree: true); } catch { } throw; }
-        var result = CodexIntegration.LoadCommand();
-        return result is not null && result.Em >= started ? result
-            : new(args.FirstOrDefault() ?? "", process.ExitCode == 0, process.ExitCode == 0 ? "Concluído." : $"O componente terminou com o código {process.ExitCode}.", DateTime.Now);
+        Interlocked.Increment(ref _commands); // enquanto o comando roda, EnsureRunning não inicia o encaminhador por conta própria
+        try
+        {
+            using var process = Process.Start(psi) ?? throw new InvalidOperationException("O componente das IAs no Codex não iniciou.");
+            try { await process.WaitForExitAsync(ct); }
+            catch (OperationCanceledException) { try { process.Kill(entireProcessTree: true); } catch { } throw; }
+            var result = CodexIntegration.LoadCommand();
+            return result is not null && result.Em >= started ? result
+                : new(args.FirstOrDefault() ?? "", process.ExitCode == 0, process.ExitCode == 0 ? "Concluído." : $"O componente terminou com o código {process.ExitCode}.", DateTime.Now);
+        }
+        finally { Interlocked.Decrement(ref _commands); }
     }
 }

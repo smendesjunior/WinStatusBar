@@ -568,6 +568,19 @@ public class CodexIAsClaudeCommandsJobTests
         int write = cp.IndexOf("proc.StandardInput.WriteAsync", StringComparison.Ordinal);
         Assert.True(add >= 0 && add < write, $"add={add} write={write}");
     }
+
+    /// <summary>Cancelar enquanto o pedido ainda está sendo enviado: o claude não pode ficar rodando com meio pedido.</summary>
+    [Fact]
+    public void Cancelar_durante_o_envio_do_pedido_encerra_o_Claude()
+    {
+        string cp = RepoSource.Read("src", "WinStatusBar.CodexIAs", "Providers", "ClaudeProvider.cs");
+        int register = cp.IndexOf("ct.Register(", StringComparison.Ordinal);
+        int write = cp.IndexOf("proc.StandardInput.WriteAsync", StringComparison.Ordinal);
+        Assert.True(register >= 0 && register < write, $"register={register} write={write}");
+        int last = cp.IndexOf("finally", write, StringComparison.Ordinal);
+        Assert.True(last > write);
+        Assert.Contains("Kill(entireProcessTree: true)", cp[last..(last + 400)]);
+    }
 }
 
 public class CodexIAsClaudeCommandsToolStatusTests
