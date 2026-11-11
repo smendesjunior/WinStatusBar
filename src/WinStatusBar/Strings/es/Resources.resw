@@ -4551,4 +4551,7 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
     <value>Haz clic aquí y pulsa la combinación (p. ej., Ctrl+Shift+F9). Retroceso la borra.</value>
   </data>
+  <data name="S0971CC29408EFDE2" xml:space="preserve">
+    <value>No hay ningún destino disponible para Elegir por mí. Configura una cuenta o API, activa la IA local o elige un destino manualmente.</value>
+  </data>
 </root>

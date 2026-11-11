@@ -4551,4 +4551,7 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
     <value>ここをクリックして組み合わせを押してください(例: Ctrl+Shift+F9)。Backspace で消去します。</value>
   </data>
+  <data name="S0971CC29408EFDE2" xml:space="preserve">
+    <value>「おまかせ」で使える送信先がありません。アカウントまたは API を設定するか、ローカル AI をオンにするか、送信先を手動で選んでください。</value>
+  </data>
 </root>

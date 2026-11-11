@@ -1584,9 +1584,8 @@ public sealed partial class BarWindow
                 if (_commandCts == routeCts) { _running = false; UpdateSendIcon(); }
             }
             if (routeCts.IsCancellationRequested || _commandCts != routeCts || _conv != before || DestinationKey() != "auto") return;
-            if (routed is { CanRun: false }) { SetNote(L.T("Nenhum destino elegível foi encontrado para Escolha por mim. Configure uma conta ou API, ou escolha um destino manualmente. IA local não participa da escolha automática.")); return; }
+            if (routed is { CanRun: false }) { SetNote(L.T("Nenhum destino disponível para Escolha por mim. Configure uma conta ou API, ligue a IA local ou escolha um destino manualmente.")); return; }
         }
-        if (automatic && _conv is { Target: T.Local }) { SetNote(L.T("Esta conversa usa IA local. Selecione IA local manualmente para continuar, ou inicie uma nova conversa com Escolha por mim.")); return; }
         var target = routed?.Target ?? CurrentTarget();
         // Troca de IA no meio da conversa (como no Codex): outro destino ou outra conta de API continua a mesma conversa.
         // A IA nova começa sessão própria e recebe o histórico da barra; a anterior não tem as mensagens do meio.

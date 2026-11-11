@@ -7,6 +7,22 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.10.0] - 2026-11-11 · compilação BUILD
+
+### Adicionado
+- Escolha por mim: quando não há nenhuma conta ou API disponível, a pergunta vai para a IA local (se estiver ligada) e, por fim, para o Lenovo Qira, em vez de parar num aviso.
+- Escolha por mim: o Lenovo Qira pode ser escolhido quando o pedido cita o Qira ou depende de um recurso dele (com o Qira instalado e ligado).
+- Escolha por mim: a escolha leva em conta o que cada IA faz, como ela é cobrada (assinatura, por uso ou sem custo por pedido), a cota usada do Claude e do Codex, os créditos do Qira e se há anexos, modo Editar ou pesquisa na web.
+
+### Alterado
+- Escolha por mim: só o começo de um pedido longo (2.000 caracteres) é enviado ao modelo que faz a escolha.
+- Escolha por mim: as listas de modelos das contas e APIs são reaproveitadas por 5 minutos, e uma lista lenta não atrasa mais as outras.
+- Uma conversa em IA local continua nela com Escolha por mim selecionado.
+
+### Corrigido
+- Escolha por mim: modelos Gemini maiores eram tratados como leves, porque "mini" aparece dentro de "gemini". O mesmo erro afetava o modelo usado no roteiro de tarefas.
+- Escolha por mim: uma resposta do modelo auxiliar com cercas de código ou texto em volta era descartada e valia o destino padrão. Agora ela é lida e, se não servir, o próximo modelo auxiliar tenta.
+
 ## [1.9.0] - 2026-11-11 · compilação 20261111162310
 
 ### Adicionado

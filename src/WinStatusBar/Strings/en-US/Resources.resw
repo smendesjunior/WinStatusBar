@@ -4551,4 +4551,7 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
     <value>Click here and press the combination (e.g. Ctrl+Shift+F9). Backspace clears it.</value>
   </data>
+  <data name="S0971CC29408EFDE2" xml:space="preserve">
+    <value>No destination is available for Choose for me. Set up an account or API, turn on local AI, or choose a destination manually.</value>
+  </data>
 </root>

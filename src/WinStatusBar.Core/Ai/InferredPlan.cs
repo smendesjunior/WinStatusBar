@@ -10,15 +10,27 @@ public static partial class InferredPlan
 {
     public const int MaxSteps = 10;
 
+    private static readonly string[] LightWords = ["haiku", "mini", "nano", "luna", "fast", "faster", "fastest", "affordable"];
+
+    /// <summary>A palavra inteira, sem letra ou número colado: "mini" vale em "gpt-5-mini" e não em "gemini-2.5-pro".</summary>
+    internal static bool HasWord(string text, string word)
+    {
+        for (int i = text.IndexOf(word, StringComparison.OrdinalIgnoreCase); i >= 0; i = text.IndexOf(word, i + 1, StringComparison.OrdinalIgnoreCase))
+        {
+            bool before = i == 0 || !char.IsLetterOrDigit(text[i - 1]);
+            int end = i + word.Length;
+            if (before && (end == text.Length || !char.IsLetterOrDigit(text[end]))) return true;
+        }
+        return false;
+    }
+
     /// <summary>
     /// Modelo mais simples do provedor que executa a tarefa, no menor esforço: Haiku no Claude; no Codex, o primeiro
     /// modelo descrito como rápido/econômico (mini, nano, luna…) na ordem do catálogo (mais novo primeiro).
     /// </summary>
     public static (string? Model, string? Effort) SimplestModel(AgentPrompt.Catalog catalog, IReadOnlyDictionary<string, string>? descriptions = null)
     {
-        static bool Light(string s) => s.Contains("haiku", StringComparison.OrdinalIgnoreCase) || s.Contains("mini", StringComparison.OrdinalIgnoreCase)
-            || s.Contains("nano", StringComparison.OrdinalIgnoreCase) || s.Contains("luna", StringComparison.OrdinalIgnoreCase)
-            || s.Contains("fast", StringComparison.OrdinalIgnoreCase) || s.Contains("affordable", StringComparison.OrdinalIgnoreCase);
+        static bool Light(string s) => LightWords.Any(w => HasWord(s, w));
         var option = catalog.Models.FirstOrDefault(m => Light(m.Id) || Light(m.Label) || descriptions?.GetValueOrDefault(m.Id) is { } d && Light(d));
         if (option is null) return (catalog.AppModel, catalog.AppModel is null ? null : "low");
         string? effort = option.Efforts.FirstOrDefault(e => e is "none" or "minimal") ?? option.Efforts.FirstOrDefault(e => e == "low") ?? option.Efforts.FirstOrDefault();

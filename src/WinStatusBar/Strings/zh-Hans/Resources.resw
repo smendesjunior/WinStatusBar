@@ -4551,4 +4551,7 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
     <value>点击此处并按下组合键(例如 Ctrl+Shift+F9)。按 Backspace 清除。</value>
   </data>
+  <data name="S0971CC29408EFDE2" xml:space="preserve">
+    <value>“帮我选”没有可用的目标。请设置账户或 API、开启本地 AI，或手动选择目标。</value>
+  </data>
 </root>

@@ -4551,4 +4551,7 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SBEAF7E3C2542ADF7" xml:space="preserve">
     <value>Clique aqui e pressione a combinação (ex.: Ctrl+Shift+F9). Backspace limpa.</value>
   </data>
+  <data name="S0971CC29408EFDE2" xml:space="preserve">
+    <value>Nenhum destino disponível para Escolha por mim. Configure uma conta ou API, ligue a IA local ou escolha um destino manualmente.</value>
+  </data>
 </root>

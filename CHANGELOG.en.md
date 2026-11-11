@@ -7,6 +7,22 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.10.0] - 2026-11-11 · build BUILD
+
+### Added
+- Choose for me: when no account or API is available, the question goes to the local AI (if turned on) and, last, to Lenovo Qira, instead of stopping at a notice.
+- Choose for me: Lenovo Qira can be chosen when the request mentions Qira or depends on one of its features (with Qira installed and turned on).
+- Choose for me: the choice now considers what each AI does, how it is billed (subscription, pay per use or no cost per request), the used quota of Claude and Codex, Qira credits, and whether there are attachments, Edit mode or web search.
+
+### Changed
+- Choose for me: only the start of a long request (2,000 characters) is sent to the model that makes the choice.
+- Choose for me: the model lists of accounts and APIs are reused for 5 minutes, and one slow list no longer delays the others.
+- A local AI conversation continues there with Choose for me selected.
+
+### Fixed
+- Choose for me: larger Gemini models were treated as lightweight because "mini" appears inside "gemini". The same error affected the model used for the task outline.
+- Choose for me: an answer from the helper model wrapped in code fences or extra text was discarded and the default destination was used. It is now read and, if it is still unusable, the next helper model tries.
+
 ## [1.9.0] - 2026-11-11 · build 20261111162310
 
 ### Added
