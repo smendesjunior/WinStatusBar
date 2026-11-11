@@ -103,7 +103,22 @@ public class CodexIAsCompactionV2Tests
         var entry = CodexCatalog.Entry(new AiModel("codexias-x", "p", "x", "X", "d", [], null, 0));
         Assert.Equal(CodexCatalog.ContextWindow, entry["context_window"]!.GetValue<int>());
         Assert.Equal(CodexCatalog.ContextWindow, entry["max_context_window"]!.GetValue<int>());
-        Assert.True(CodexCatalog.ContextWindow > 500_000); // maior que a do Sol ("OpenAI — minha API"), para não haver "downshift"
+        Assert.True(CodexCatalog.ContextWindow > 872_000); // maior que a maior janela da OpenAI no catálogo: sem "downshift" na troca
+        // e pequena o bastante para o pedido inteiro (~4 bytes por token, com folga) caber no limite do encaminhador (64 MB)
+        Assert.True((long)CodexCatalog.ContextWindow * 8 < 64L * 1024 * 1024);
+    }
+
+    [Fact]
+    public void Pedido_grande_demais_e_distinguido_de_pedido_invalido()
+    {
+        using var compressor = new ZstdSharp.Compressor(1);
+        byte[] big = compressor.Wrap(new byte[65 * 1024 * 1024]).ToArray();
+        Assert.Null(Gateway.Unzstd(big, out bool tooBig));
+        Assert.True(tooBig);
+        Assert.Null(Gateway.Unzstd([1, 2, 3], out bool invalidTooBig));
+        Assert.False(invalidTooBig);
+        byte[] small = compressor.Wrap(Encoding.UTF8.GetBytes("{\"a\":1}")).ToArray();
+        Assert.Equal("{\"a\":1}", Encoding.UTF8.GetString(Gateway.Unzstd(small, out _)!));
     }
 
     [Fact]

@@ -149,8 +149,10 @@ internal sealed class Gateway : IDisposable
         return null;
     }
 
-    private static byte[]? Unzstd(byte[] body)
+    /// <summary>Descomprime o pedido; null quando é inválido ou, com <paramref name="tooBig"/>, maior que <see cref="MaxBody"/>.</summary>
+    internal static byte[]? Unzstd(byte[] body, out bool tooBig)
     {
+        tooBig = false;
         try
         {
             using var input = new MemoryStream(body);
@@ -161,12 +163,14 @@ internal sealed class Gateway : IDisposable
             while ((n = zstd.Read(chunk, 0, chunk.Length)) > 0)
             {
                 output.Write(chunk, 0, n);
-                if (output.Length > MaxBody) return null;
+                if (output.Length > MaxBody) { tooBig = true; return null; }
             }
             return output.ToArray();
         }
         catch { return null; }
     }
+
+    internal const string TooBigMessage = "Conversa grande demais para o encaminhador da WinStatusBar. Use /compact no Codex ou comece uma conversa nova.";
 
     private async Task RouteAsync(Request request, NetworkStream stream, Socket socket)
     {
@@ -181,7 +185,7 @@ internal sealed class Gateway : IDisposable
         if (request.Header("Origin") is not null || !LocalHost(request.Header("Host")))
         { await BridgeServer.PlainAsync(stream, 403, "Local application access only"); return; }
         if (request.Method == "CHUNKED") { await BridgeServer.PlainAsync(stream, 400, "Content-Length required"); return; }
-        if (request.Method == "TOOBIG") { await BridgeServer.PlainAsync(stream, 413, "Request too large"); return; }
+        if (request.Method == "TOOBIG") { await BridgeServer.PlainAsync(stream, 413, TooBigMessage); return; }
 
         if (request.Path.StartsWith("/codexias/", StringComparison.Ordinal))
         {
@@ -197,7 +201,12 @@ internal sealed class Gateway : IDisposable
         string encoding = (request.Header("Content-Encoding") ?? "identity").Trim().ToLowerInvariant();
         if (encoding == "zstd")
         {
-            if (Unzstd(request.Body) is not { } plain) { await BridgeServer.PlainAsync(stream, 400, "Invalid compressed request"); return; }
+            if (Unzstd(request.Body, out bool tooBig) is not { } plain)
+            {
+                if (tooBig) Log.Write("Pedido do Codex maior que " + (MaxBody / (1024 * 1024)) + " MB descomprimido: recusado (conversa grande demais)");
+                await BridgeServer.PlainAsync(stream, tooBig ? 413 : 400, tooBig ? TooBigMessage : "Invalid compressed request");
+                return;
+            }
             decoded = plain;
         }
         else if (encoding is not ("identity" or "")) { await BridgeServer.PlainAsync(stream, 415, "Unsupported Content-Encoding"); return; }

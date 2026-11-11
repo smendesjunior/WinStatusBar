@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.10.2] - 2026-11-11 · compilação 20261111193117
+
+### Corrigido
+- Codex: a janela de contexto declarada para as IAs da barra passa de 10 milhões para 2 milhões de tokens. Continua acima da de qualquer modelo da OpenAI (a troca de modelo segue sem compactar), mas uma conversa muito longa volta a ser compactada pelo Codex antes de o pedido passar do limite de 64 MB do encaminhador.
+- Codex: um pedido grande demais para o encaminhador mostra "Conversa grande demais… Use /compact ou comece uma conversa nova", em vez de "Invalid compressed request".
+
 ## [1.10.1] - 2026-11-11 · compilação 20261111191845
 
 ### Corrigido

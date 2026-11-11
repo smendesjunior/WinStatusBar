@@ -44,8 +44,11 @@ public static class CodexCatalog
     /// para uma delas no meio de uma conversa longa fazia o Codex compactar antes de enviar ("model_downshift"), primeiro
     /// com o modelo anterior (que podia estar sem cota) e depois com o novo, e o turno falhava. Com uma janela grande, a
     /// conversa segue inteira no Codex e o encaminhador continua decidindo o que vai para a IA.
+    /// 2 milhões: acima da maior janela da OpenAI no catálogo (872 mil), para não haver "downshift" na troca, e ainda abaixo
+    /// do limite de pedido do encaminhador (Gateway.MaxBody, 64 MB). Uma janela maior (10 milhões, na 1.10.1) deixava a
+    /// conversa crescer sem compactar até o pedido passar desse limite e ser recusado.
     /// </summary>
-    internal const int ContextWindow = 10_000_000;
+    internal const int ContextWindow = 2_000_000;
 
     /// <summary>Entrada do catálogo no mesmo formato das demais (base: a entrada que a ponte da barra usava).</summary>
     public static JsonObject Entry(AiModel m)

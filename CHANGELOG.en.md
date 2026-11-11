@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.10.2] - 2026-11-11 · build 20261111193117
+
+### Fixed
+- Codex: the context window declared for bar AIs goes from 10 million to 2 million tokens. It is still above every OpenAI model (switching models still does not compact), but a very long conversation is compacted by Codex again before the request goes over the gateway's 64 MB limit.
+- Codex: a request too large for the gateway now shows "conversation too large… use /compact or start a new conversation" (in Portuguese) instead of "Invalid compressed request".
+
 ## [1.10.1] - 2026-11-11 · build 20261111191845
 
 ### Fixed
