@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.12.1] - 2026-11-12 · compilação 20261112140401
+
+### Alterado
+- Texto da barra em Semibold nos títulos e nos valores (velocidade da rede, GHz, GB, porcentagens). No Medium os valores pequenos ainda pareciam finos; o tamanho não mudou, então a barra não fica mais larga.
+
 ## [1.12.0] - 2026-11-12 · compilação 20261112133228
 
 ### Adicionado

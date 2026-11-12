@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.12.1] - 2026-11-12 · build 20261112140401
+
+### Changed
+- Bar text is Semibold for both titles and values (network speed, GHz, GB, percentages). At Medium the small values still looked thin; the size is unchanged, so the bar doesn't get wider.
+
 ## [1.12.0] - 2026-11-12 · build 20261112133228
 
 ### Added
