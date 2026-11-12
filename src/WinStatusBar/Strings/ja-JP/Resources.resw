@@ -4554,4 +4554,7 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S0971CC29408EFDE2" xml:space="preserve">
     <value>「おまかせ」で使える送信先がありません。アカウントまたは API を設定するか、ローカル AI をオンにするか、送信先を手動で選んでください。</value>
   </data>
+  <data name="S85396500014F78C9" xml:space="preserve">
+    <value>バー、Codex、Office アドインのモデル一覧を更新し、この PC で設定した AI を Codex のモデル選択に追加します。転送が有効なときは、6 時間ごとに自動でも確認します。</value>
+  </data>
 </root>

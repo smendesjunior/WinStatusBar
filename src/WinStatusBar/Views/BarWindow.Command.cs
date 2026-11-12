@@ -301,6 +301,10 @@ public sealed partial class BarWindow
     private int _summaryCount;
 
     private Grid? _header;
+    // Visual Fluent do chat (ChatFluentSkin): referências guardadas para trocar só as cores quando o tema muda,
+    // sem recriar o painel nem religar eventos.
+    private Button[] _skinQuietButtons = [];
+    private Border? _selectorGroup, _composerCard, _composerDivider;
 
     /// <summary>
     /// "+ Nova conversa" fica sempre com o nome inteiro (pedido de 07/11/2026). Se o cabeçalho não couber,
@@ -560,22 +564,31 @@ public sealed partial class BarWindow
         _newChatButton.Click += (_, _) => NewConversation();
         ToolTipService.SetToolTip(_newChatButton, L.T("Nova conversa"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_newChatButton, L.T("Nova conversa"));
+        ChatFluentSkin.AttachHoverMotion(_newChatButton);
         _header = header;
         var selectors = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
         if (_targetButton is not null) selectors.Children.Add(_targetButton);
         if (_projectButton is not null) selectors.Children.Add(_projectButton);
         // Modelo e esforço no cabeçalho, com o nome inteiro visível (antes ficava cortado na linha de ferramentas).
         if (_modelButton is not null) selectors.Children.Add(_modelButton);
-        Grid.SetColumn(selectors, 1);
+        // IA · projeto · modelo numa cápsula só (mesmos botões e menus; só o invólucro é novo).
+        _selectorGroup = new Border
+        {
+            Child = selectors, CornerRadius = new CornerRadius(16), Padding = new Thickness(4, 1, 4, 1), Margin = new Thickness(6, 0, 6, 0),
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center,
+        };
+        Grid.SetColumn(_selectorGroup, 1);
         var history = IconButton("", L.T("Histórico de conversas"));
         history.Click += (_, _) => ShowHistoryMenu(history);
         _historyButton = IconButton("", L.T("Continuar no app"));
         _historyButton.Flyout = BuildContinueMenu();
         var close = IconButton("", L.T("Fechar"));
         close.Click += (_, _) => ClosePanel();
-        header.Children.Add(_newChatButton); header.Children.Add(selectors);
+        header.Children.Add(_newChatButton); header.Children.Add(_selectorGroup);
         Button[] hb = [history, _historyButton, close];
         for (int i = 0; i < hb.Length; i++) { Grid.SetColumn(hb[i], i + 2); header.Children.Add(hb[i]); }
+        foreach (var b in hb) ChatFluentSkin.AttachHoverMotion(b);
+        _skinQuietButtons = [.. hb, .. _skinQuietButtons];
         body.Children.Add(header);
 
         // Conversa: balões e cartão de andamento. Sem altura máxima própria: a janela limita e só esta área rola.
@@ -628,12 +641,20 @@ public sealed partial class BarWindow
         composer.Children.Add(toolbar);
         var composerCard = new Border
         {
-            Margin = new Thickness(0, 10, 0, 0),
+            Margin = new Thickness(0, 12, 0, 0),
             Background = PanelKit.Res("ControlFillColorDefaultBrush"), BorderBrush = PanelKit.Res("SurfaceStrokeColorDefaultBrush"),
             BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(8, 8, 6, 6), Child = composer,
         };
+        _composerCard = composerCard;
         Grid.SetRow(composerCard, 2);
+        // Linha fina entre a conversa e o campo, dentro da margem do cartão (não muda a altura medida).
+        _composerDivider = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(4, 5, 4, 0),
+            IsHitTestVisible = false, Visibility = Visibility.Collapsed };
+        Grid.SetRow(_composerDivider, 2);
+        body.Children.Add(_composerDivider);
         body.Children.Add(composerCard);
+        _chatScroll.RegisterPropertyChangedCallback(UIElement.VisibilityProperty,
+            (_, _) => _composerDivider.Visibility = _chatScroll.Visibility);
 
         _note = PanelKit.Caption(string.Empty, 11);
         _note.Margin = new Thickness(6, 6, 6, 0);
@@ -650,9 +671,60 @@ public sealed partial class BarWindow
             return h;
         }
         _panel = new ChatPanelWindow(body, header, composerCard, ChatWidth, DesiredHeight);
+        _panel.ThemeApplied += RefreshChatSkin;
+        RefreshChatSkin();
         _panel.Opened += FocusComposerFromBar;
         // Fecha no X ou ao clicar fora; a conversa fica guardada e volta ao reabrir (até "Nova conversa").
         _panel.Hidden += () => _composerCaret?.Pause();
+    }
+
+    /// <summary>
+    /// Aplica (ou reaplica, quando o tema do Windows muda) o visual Fluent do chat em controles já criados: só forma
+    /// e pincéis de tema do WinUI 3. Nada é recriado e nenhum evento é religado.
+    /// </summary>
+    private void RefreshChatSkin()
+    {
+        if (_newChatButton is not null) ChatFluentSkin.StyleAccentButton(_newChatButton);
+        foreach (var b in _skinQuietButtons) ChatFluentSkin.StyleQuietButton(b);
+        if (_panelSend is not null) ChatFluentSkin.StyleSendButton(_panelSend);
+        foreach (var pill in new[] { _contextButton, _webButton, _editButton })
+            if (pill is not null) ChatFluentSkin.StylePill(pill);
+        if (_selectorGroup is not null)
+        {
+            _selectorGroup.Background = ChatFluentSkin.CardFill;
+            _selectorGroup.BorderBrush = ChatFluentSkin.CardStroke;
+            _selectorGroup.BorderThickness = new Thickness(1);
+        }
+        if (_composerCard is not null)
+        {
+            _composerCard.Background = ChatFluentSkin.ComposerFill;
+            _composerCard.BorderBrush = ChatFluentSkin.ComposerStroke;
+            _composerCard.CornerRadius = new CornerRadius(12);
+            _composerCard.Padding = new Thickness(10, 10, 8, 8);
+        }
+        if (_composerDivider is not null) _composerDivider.Background = ChatFluentSkin.Hairline;
+        if (_chatList is not null)
+            foreach (var child in _chatList.Children)
+            {
+                if (child is Border { Tag: "skin-bubble" } bubble) StyleUserBubble(bubble);
+                else if (child is Border { Child: Grid g } && g.Children.Count > 0 && g.Children[0] is Border { Tag: "skin-avatar" } avatar) StyleAvatar(avatar);
+            }
+    }
+
+    private static void StyleUserBubble(Border bubble)
+    {
+        bubble.Background = ChatFluentSkin.CardFill;
+        bubble.BorderBrush = ChatFluentSkin.CardStroke;
+        bubble.BorderThickness = new Thickness(1);
+        bubble.CornerRadius = new CornerRadius(12);
+        bubble.Padding = new Thickness(13, 8, 13, 9);
+    }
+
+    private static void StyleAvatar(Border avatar)
+    {
+        avatar.Background = ChatFluentSkin.CardFill;
+        avatar.BorderBrush = ChatFluentSkin.CardStroke;
+        if (avatar.Child is FontIcon icon) icon.Foreground = ChatFluentSkin.AccentText;
     }
 
     /// <summary>
@@ -661,10 +733,10 @@ public sealed partial class BarWindow
     /// </summary>
     private Grid BuildToolbar()
     {
-        var bar = new Grid { ColumnSpacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        // Coluna 5 (flexível) é a do modelo: se faltar espaço, só o nome do modelo encurta com "…"; nada é cortado.
-        for (int i = 0; i < 11; i++)
-            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = i == 5 ? new GridLength(1, GridUnitType.Star) : GridLength.Auto });
+        var bar = new Grid { ColumnSpacing = 6, VerticalAlignment = VerticalAlignment.Center };
+        // Coluna 4 é o espaço flexível entre as pílulas (o que vai junto e o que a IA pode fazer) e o grupo da direita.
+        for (int i = 0; i < 10; i++)
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = i == 4 ? new GridLength(1, GridUnitType.Star) : GridLength.Auto });
         Border Divider() => new()
         {
             Width = 1, Height = 16, Margin = new Thickness(2, 0, 2, 0), VerticalAlignment = VerticalAlignment.Center,
@@ -773,12 +845,16 @@ public sealed partial class BarWindow
         // O seletor de modelo vai para o cabeçalho (BuildPanel); a coluna 5 fica como espaço flexível.
         (FrameworkElement Item, int Column)[] layout =
         [
-            (attach, 0), (_contextButton, 1), (Divider(), 2), (_webButton, 3), (_editButton, 4),
-            (options, 6), (Divider(), 7), (mic, 8), (voice, 9), (_panelSend, 10),
+            (attach, 0), (_contextButton, 1), (_webButton, 2), (_editButton, 3),
+            (Divider(), 5), (options, 6), (mic, 7), (voice, 8), (_panelSend, 9),
         ];
         foreach (var (item, column) in layout) { Grid.SetColumn(item, column); bar.Children.Add(item); }
         foreach (var control in bar.Children.OfType<Control>().Where(c => c != _contextButton && c != _webButton && c != _editButton))
         { control.Width = 28; control.Height = 28; control.CornerRadius = new CornerRadius(14); control.VerticalAlignment = VerticalAlignment.Center; }
+        // Visual Fluent depois do ajuste de tamanho acima (senão ele seria desfeito). Cores: RefreshChatSkin.
+        _skinQuietButtons = [attach, options, mic, voice];
+        foreach (var b in _skinQuietButtons) ChatFluentSkin.AttachHoverMotion(b);
+        ChatFluentSkin.AttachHoverMotion(_panelSend);
         return bar;
     }
 
@@ -936,8 +1012,7 @@ public sealed partial class BarWindow
         _editButton.IsEnabled = supported;
         _editButton.IsChecked = supported && _allowEdits;
         _currentAnswer?.SetEdits(supported && _allowEdits);
-        _editButton.Background = supported && _allowEdits ? PanelKit.Res("AccentFillColorDefaultBrush") : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        _editButton.Foreground = PanelKit.Res(supported && _allowEdits ? "TextOnAccentFillColorPrimaryBrush" : "TextFillColorSecondaryBrush");
+        // Cores de ligado/desligado/desabilitado: estados nativos do ToggleButton (ChatFluentSkin.StylePill).
         string tip = !supported ? "Edição indisponível para este destino" : _allowEdits ? "Edição de arquivos e ações no contexto ligadas" : "Edição e ações no contexto desligadas";
         ToolTipService.SetToolTip(_editButton, L.T(tip));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_editButton, L.T(tip));
@@ -964,9 +1039,7 @@ public sealed partial class BarWindow
     {
         if (_contextButton is null) return;
         _contextButton.IsChecked = _useContext;
-        _contextButton.Background = _useContext ? PanelKit.Res("AccentFillColorDefaultBrush") : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        _contextButton.Foreground = PanelKit.Res(_useContext ? "TextOnAccentFillColorPrimaryBrush" : "TextFillColorSecondaryBrush");
-        _contextButton.BorderBrush = _useContext ? new SolidColorBrush(Microsoft.UI.Colors.Transparent) : PanelKit.Res("ControlStrokeColorDefaultBrush");
+        // Cores de ligado/desligado: estados nativos do ToggleButton (ChatFluentSkin.StylePill).
         string tip = _useContext ? "Contexto da tela ligado: a janela anterior ao chat vai junto com a mensagem"
                                  : "Contexto da tela desligado: só o que você digitar e anexar";
         ToolTipService.SetToolTip(_contextButton, L.T(tip));
@@ -1860,12 +1933,14 @@ public sealed partial class BarWindow
             content.Children.Add(new ScrollViewer { Content = row, HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
                 HorizontalScrollMode = ScrollMode.Enabled, VerticalScrollMode = ScrollMode.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
         }
-        _chatList!.Children.Add(new Border
+        var bubble = new Border
         {
             HorizontalAlignment = HorizontalAlignment.Right, MaxWidth = ChatWidth * 0.8,
             Background = PanelKit.Res("SubtleFillColorSecondaryBrush"), CornerRadius = new CornerRadius(8), Padding = new Thickness(12, 7, 12, 8),
-            Child = content,
-        });
+            Child = content, Tag = "skin-bubble",
+        };
+        StyleUserBubble(bubble);
+        _chatList!.Children.Add(bubble);
         _chatScroll!.Visibility = Visibility.Visible;
     }
 
@@ -2110,11 +2185,25 @@ public sealed partial class BarWindow
     private AnswerView AddAssistantBlock(string label)
     {
         var view = new AnswerView(label, DispatcherQueue);
+        // Avatar pequeno à esquerda; a resposta (AnswerView: andamento, Markdown, metadados, copiar) segue igual.
+        var avatar = new Border
+        {
+            Width = 30, Height = 30, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Tag = "skin-avatar",
+            VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 22, 0, 0),
+            Child = new FontIcon { Glyph = "", FontSize = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+        };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(avatar, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        StyleAvatar(avatar);
+        var row = new Grid { ColumnSpacing = 10 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        Grid.SetColumn(view.Root, 1);
+        row.Children.Add(avatar); row.Children.Add(view.Root);
         _chatList!.Children.Add(new Border
         {
             HorizontalAlignment = HorizontalAlignment.Stretch, MaxWidth = ChatWidth - 12,
             Padding = new Thickness(4, 2, 4, 2),
-            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Child = view.Root,
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Child = row,
         });
         return view;
     }

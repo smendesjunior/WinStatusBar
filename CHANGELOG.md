@@ -7,6 +7,20 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.11.0] - 2026-11-12 · compilação 20261112124208
+
+### Adicionado
+- Modelos que respondem de verdade: a verificação de modelos manda um pedido curto de teste a cada modelo das APIs com chave (Gemini pela chave, DeepSeek, Grok e APIs próprias). Os que o serviço recusa (aposentados ou sem acesso no seu plano, como o Gemini 2.5 Pro, que o Google tirou de chaves novas) saem das listas da barra, do Codex e do suplemento do Office, com o motivo em Configurações › Codex e modelos. Os que estão só sem cota agora continuam na lista e aparecem marcados.
+- Um pedido recusado do mesmo jeito no uso também tira o modelo na hora, e a mensagem explica o motivo.
+- Sincronização automática: o encaminhador verifica os modelos sozinho a cada 6 horas (e 3 minutos depois de abrir, se a última verificação tiver mais de 6 horas). O suplemento do Office relê a lista a cada 2 minutos.
+
+### Corrigido
+- Claude no Codex com comandos: programas instalados com a barra já aberta (por exemplo o adb do Android) ficavam invisíveis para o Claude, que passava minutos procurando ou tentando instalar o que já estava no PC. O Claude, o Codex e o Gemini CLI agora recebem o PATH atual do Windows a cada pedido.
+- Erros do Google em forma de lista (`[{"error": …}]`) mostravam só "HTTP 404"; agora aparece o motivo.
+
+### Alterado
+- Texto da barra um pouco mais encorpado (peso 450 da Segoe UI Variable, entre o Normal e o Medium).
+
 ## [1.10.4] - 2026-11-11 · compilação 20261112004236
 
 ### Corrigido

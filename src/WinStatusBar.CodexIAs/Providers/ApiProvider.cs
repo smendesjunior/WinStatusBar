@@ -69,22 +69,39 @@ internal sealed partial class ApiProvider : IProvider
 
     private AgentPrompt.ApiConfig? Config() => Key(_service.Resource) is { Length: > 0 } key ? new(_service.Kind, _service.BaseUrl, key) : null;
 
+    /// <summary>O serviço recusou este modelo no último teste ou pedido (fica fora das listas).</summary>
+    internal bool Refuses(string modelId) => ApiModelAvailability.IsRefused(_service.BaseUrl, modelId);
+
+    /// <summary>
+    /// Modelos de conversa do serviço que respondem de verdade: cada um listado recebe um pedido mínimo ("ok"). Os que o
+    /// serviço recusa (aposentado, sem acesso no plano) ficam fora do Codex, da barra e do Office, com o motivo no relatório.
+    /// </summary>
     public async Task<Listing> ListAsync(CancellationToken ct)
     {
         if (Config() is not { } config) return Listing.Off("sem chave da API na barra");
-        var catalog = await AgentPrompt.CatalogAsync(AgentPrompt.Target.Api, config, ct);
+        var catalog = await AgentPrompt.CatalogAsync(AgentPrompt.Target.Api, config, ct, includeRefused: true);
         if (catalog.Error is { Length: > 0 } error)
         {
             // Chave recusada: não adianta manter as opções no Codex. Falha de rede: mantém as de antes.
             bool refused = error.StartsWith("HTTP 401", StringComparison.Ordinal) || error.StartsWith("HTTP 403", StringComparison.Ordinal);
             return refused ? Listing.Off("a API recusou a chave (" + error + ")") : Listing.Fail(error);
         }
+        var chat = catalog.Models.Where(m => IsChatModel(m.Id, m.Label)).ToList();
+        var (usable, refusedModels, noQuota) = await ApiModelAvailability.CheckAsync(_service.BaseUrl, chat, m => m.Id,
+            (m, token) => AgentPrompt.ProbeApiModelAsync(config, m.Id, token), ct);
+        foreach (var (m, why) in refusedModels) Log.Write($"{_service.Name}: {m.Label} fora ({why})");
         string prefix = CodexCatalog.Prefix + "api-" + Slug.From(_service.Id) + "-";
-        return new(catalog.Models.Where(m => IsChatModel(m.Id, m.Label))
+        var models = usable
             .Select(m => new AiModel(prefix + Slug.From(m.Id), Name, m.Id, MenuName(m.Label),
                 $"{_service.Name} pela sua chave da API (cobrança da própria API), pela WinStatusBar. Só texto.",
                 m.Efforts, m.DefaultEffort, -2))
-            .DistinctBy(m => m.Slug).DistinctBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase).ToList());
+            .DistinctBy(m => m.Slug).DistinctBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
+        string? issue = models.Count == 0 && refusedModels.Count > 0 ? "o serviço recusou todos os modelos testados" : null;
+        return new(models, issue)
+        {
+            Refused = refusedModels.Select(r => $"{r.Model.Label} ({r.Reason})").ToList(),
+            NoQuota = noQuota.Select(m => m.Label).ToList(),
+        };
     }
 
     /// <summary>

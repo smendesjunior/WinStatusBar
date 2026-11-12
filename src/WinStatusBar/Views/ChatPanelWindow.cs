@@ -45,7 +45,14 @@ internal sealed class ChatPanelWindow : Window
         bool dark = App.IsDarkTheme;
         _root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
         _frame.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); // o acrílico do sistema aparece por trás
+        ThemeApplied?.Invoke();
     }
+
+    /// <summary>Depois de cada aplicação de tema: o conteúdo do chat atualiza as cores próprias sem ser recriado.</summary>
+    public event Action? ThemeApplied;
+
+    /// <summary>Tema do Windows mudou com o chat vivo (aberto ou oculto): reaplica o visual.</summary>
+    public void RefreshTheme() { if (!_disposing) ApplyTheme(); }
 
     /// <param name="desiredHeight">
     /// Altura natural do conteúdo (DIPs), somada pelas partes. Não usar body.DesiredSize: o WinUI limita esse valor

@@ -29,7 +29,13 @@ internal sealed class ModelRegistry
 
     private IEnumerable<IProvider> Providers => _fixed.Concat(_apis);
 
-    public IReadOnlyCollection<AiModel> Models => _bySlug.Values.ToList();
+    /// <summary>
+    /// As opções guardadas, sem as de API que o serviço passou a recusar depois da verificação (um pedido recusado tira
+    /// o modelo na hora da lista do Office; o seletor do Codex muda na próxima verificação).
+    /// </summary>
+    public IReadOnlyCollection<AiModel> Models => _bySlug.Values.Where(m => !Refused(m)).ToList();
+
+    private bool Refused(AiModel m) => _apis.OfType<ApiProvider>().FirstOrDefault(p => p.Name == m.Provider) is { } api && api.Refuses(m.Id);
 
     private static List<AiModel> Load()
     {
@@ -86,10 +92,15 @@ internal sealed class ModelRegistry
                 var report = new CodexIntegration.ServiceReport(provider.Label, now.Count, listing.Issue, listing.Failed,
                     first ? [] : now.Where(m => !beforeSlugs.Contains(m.Slug)).Select(m => m.DisplayName).ToList(),
                     before.Where(m => !nowSlugs.Contains(m.Slug)).Select(m => m.DisplayName).ToList(),
-                    provider.Name, listing.NeedsLogin ? provider.Name : null);
+                    provider.Name, listing.NeedsLogin ? provider.Name : null)
+                {
+                    Recusados = listing.Failed ? [] : listing.Refused.ToList(),
+                    SemCota = listing.Failed ? [] : listing.NoQuota.ToList(),
+                };
                 services.Add(report);
                 Log.Write($"{provider.Label}: {now.Count} opções" + (listing.Issue is { } why ? $" ({(listing.Failed ? "falhou" : "fora")}: {why})" : "")
-                    + (report.Novos.Count > 0 ? $"; novas: {string.Join(", ", report.Novos)}" : "") + (report.Sairam.Count > 0 ? $"; saíram: {string.Join(", ", report.Sairam)}" : ""));
+                    + (report.Novos.Count > 0 ? $"; novas: {string.Join(", ", report.Novos)}" : "") + (report.Sairam.Count > 0 ? $"; saíram: {string.Join(", ", report.Sairam)}" : "")
+                    + (report.Recusados.Count > 0 ? $"; recusados pelo serviço: {report.Recusados.Count}" : "") + (report.SemCota.Count > 0 ? $"; sem cota agora: {string.Join(", ", report.SemCota)}" : ""));
             }
             // Uma API própria tirada da barra: as opções dela saem.
             var gone = previous.Values.Where(m => Providers.All(p => p.Name != m.Provider)).ToList();

@@ -52,7 +52,13 @@ public static class CodexIntegration
     /// "openai", "openai-api" e "ollama" são do próprio seletor do Codex). <see cref="Login"/>: site que pede login.
     /// </summary>
     public sealed record ServiceReport(string Nome, int Total, string? Motivo, bool Falhou, List<string> Novos, List<string> Sairam,
-        string? Id = null, string? Login = null);
+        string? Id = null, string? Login = null)
+    {
+        /// <summary>Modelos que o serviço lista mas recusa ao ser testado ("nome (motivo)"): ficam fora das listas.</summary>
+        public List<string> Recusados { get; init; } = [];
+        /// <summary>Modelos que responderam "sem cota agora" (HTTP 429): continuam nas listas.</summary>
+        public List<string> SemCota { get; init; } = [];
+    }
 
     /// <summary>O seletor do Codex na verificação (só com a ligação ligada).</summary>
     public sealed record CodexReport(bool Ligado, bool CatalogoAtualizado, List<string> OpenAiNovos, List<string> OpenAiSairam,

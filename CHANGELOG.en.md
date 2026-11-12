@@ -7,6 +7,20 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.11.0] - 2026-11-12 · build 20261112124208
+
+### Added
+- Only models that actually answer: the model check sends a short test request to every model of the key-based APIs (Gemini by API key, DeepSeek, Grok and custom APIs). Models the service refuses (retired or not included in your plan, such as Gemini 2.5 Pro, which Google no longer offers to new keys) are removed from the bar, Codex and the Office add-in lists, with the reason shown in Settings › Codex and models. Models that are only out of quota right now stay listed and are flagged.
+- A regular request refused the same way also removes the model right away, and the error explains why.
+- Automatic sync: the forwarder checks the models on its own every 6 hours (and 3 minutes after starting when the last check is older than 6 hours). The Office add-in reloads the list every 2 minutes.
+
+### Fixed
+- Claude in Codex with commands: programs installed while the bar was already running (for example Android's adb) were invisible to Claude, which spent minutes searching for or trying to install tools that were already there. Claude, Codex and Gemini CLI now get the current Windows PATH on every request.
+- Google errors wrapped in a list (`[{"error": …}]`) showed only "HTTP 404"; the reason is shown now.
+
+### Changed
+- Slightly heavier bar text (Segoe UI Variable weight 450, between Normal and Medium).
+
 ## [1.10.4] - 2026-11-11 · build 20261112004236
 
 ### Fixed

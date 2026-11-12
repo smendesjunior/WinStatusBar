@@ -48,7 +48,7 @@ public static class AiErrorExplainer
             return E("modelo sem ferramentas", LocalizedText.F("O modelo {0} não sabe usar ferramentas (ações no PC, conectores). Desligue o lápis Editar ou escolha outro modelo.", new object?[] { m }));
 
         // 2) Modelo inexistente ou não instalado.
-        if (Has(all, @"model[^.]{0,80}(not found|does not exist|not_found|is not available|unknown)|model_not_found|try pulling it|no such model|invalid model|unknown model"))
+        if (Has(all, @"model[^.]{0,80}(not found|does not exist|not_found|is not available|no longer available|unknown)|is no longer available to new users|model_not_found|try pulling it|no such model|invalid model|unknown model"))
             return target == AgentPrompt.Target.Local
                 ? E("modelo não instalado", LocalizedText.F("O modelo {0} não está instalado na IA local. Escolha outro na lista de modelos ou baixe-o no terminal com: ollama pull {0}", new object?[] { m }))
                 : E("modelo indisponível", LocalizedText.F("O modelo {0} não existe {1} ou a sua conta não tem acesso a ele. Escolha outro modelo no seletor.", new object?[] { m, who.In }));

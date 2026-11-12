@@ -4554,4 +4554,7 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S0971CC29408EFDE2" xml:space="preserve">
     <value>“帮我选”没有可用的目标。请设置账户或 API、开启本地 AI，或手动选择目标。</value>
   </data>
+  <data name="S85396500014F78C9" xml:space="preserve">
+    <value>更新状态栏、Codex 和 Office 加载项的模型列表，并将此电脑上配置的 AI 添加到 Codex 的模型选择器。转发器开启时，检查也会每 6 小时自动运行一次。</value>
+  </data>
 </root>

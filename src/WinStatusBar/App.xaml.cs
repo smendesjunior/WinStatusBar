@@ -43,6 +43,7 @@ public partial class App : Application
     {
         StartupTimeline.Mark("WinUI");
         InitializeComponent();
+        ApplyBarTextWeight();
         _exitWatchdog = new ExitWatchdog(ExitTimeout, ForceExit);
         UnhandledException += (_, e) => { Log(global::WinStatusBar.Services.Localization.T("Exceção não tratada: ") + e.Exception); e.Handled = true; };
         AppDomain.CurrentDomain.UnhandledException += (_, e) => { Log("Falha fatal: " + e.ExceptionObject); ReleaseAppBars(); };
@@ -52,6 +53,29 @@ public partial class App : Application
     private static string InstanceSuffix
     {
         get { try { return WindowsIdentity.GetCurrent().User?.Value ?? Environment.UserName; } catch { return Environment.UserName; } }
+    }
+
+    /// <summary>
+    /// Peso do texto da barra (pedido de 12/11/2026: um pouco mais grosso, bem de leve). A Segoe UI Variable é variável:
+    /// 450 fica entre o Normal (400), que parecia fino, e o Medium (500). O XAML só aceita os pesos com nome, por isso o
+    /// valor entra aqui, antes de qualquer janela usar os estilos.
+    /// </summary>
+    internal const ushort BarTextWeight = 450;
+
+    private void ApplyBarTextWeight()
+    {
+        try
+        {
+            foreach (string key in new[] { "BarTitleText", "BarValueText" })
+                if (Resources.TryGetValue(key, out var value) && value is Style { IsSealed: false } style)
+                {
+                    foreach (var old in style.Setters.OfType<Setter>().Where(s => s.Property == Microsoft.UI.Xaml.Controls.TextBlock.FontWeightProperty).ToList())
+                        style.Setters.Remove(old);
+                    style.Setters.Add(new Setter(Microsoft.UI.Xaml.Controls.TextBlock.FontWeightProperty, new Windows.UI.Text.FontWeight(BarTextWeight)));
+                }
+                else Log($"Peso do texto da barra: estilo {key} não encontrado ou já em uso");
+        }
+        catch (Exception ex) { Log("Peso do texto da barra não aplicado: " + ex.Message); }
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)

@@ -23,6 +23,11 @@ public sealed record Conversation(string Prompt, IReadOnlyList<(string Role, str
 /// </summary>
 public sealed record Listing(IReadOnlyList<AiModel> Models, string? Issue = null, bool Failed = false, bool NeedsLogin = false)
 {
+    /// <summary>Modelos listados pelo serviço que ele recusa ao ser testado ("nome: motivo"); ficam fora do Codex.</summary>
+    public IReadOnlyList<string> Refused { get; init; } = [];
+    /// <summary>Modelos que responderam "sem cota agora" (HTTP 429): continuam no Codex.</summary>
+    public IReadOnlyList<string> NoQuota { get; init; } = [];
+
     /// <summary>IA não configurada neste PC (sem login, sem chave, não instalada): fica fora do Codex.</summary>
     public static Listing Off(string why) => new([], why);
     /// <summary>Site sem login (a barra mostra "Entrar" na linha dele).</summary>

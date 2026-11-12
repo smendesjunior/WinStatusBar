@@ -71,7 +71,7 @@ public sealed partial class SettingsWindow
     private void BuildModelsPage()
     {
         var page = AddPage("models", Localization.T("Codex e modelos"),
-            Localization.T("Atualize as listas de modelos da barra e do Codex e ligue as IAs configuradas neste PC no seletor de modelos do Codex. Nada é verificado sozinho: só quando você clica."),
+            Localization.T("Atualize as listas de modelos da barra, do Codex e do suplemento do Office e ligue as IAs configuradas neste PC no seletor de modelos do Codex. A verificação também roda sozinha a cada 6 horas, com o encaminhador ligado."),
             "");
         page.Children.Add(GroupTitle(Localization.T("Modelos")));
 
@@ -85,7 +85,7 @@ public sealed partial class SettingsWindow
         listsCard.Children.Add(new TextBlock
         {
             Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap,
-            Text = "Um clique atualiza as duas listas de uma vez: os seletores de modelo do chat da barra (Claude, Gemini e Copilot com os modos dos sites, níveis de pensamento dos modelos da OpenAI, Lenovo Qira, APIs com chave e modelos locais) e o seletor de modelos do Codex, quando a ligação abaixo está ligada (IAs da barra e modelos novos da OpenAI e do Ollama). Gemini e Copilot são lidos dos próprios sites; leva cerca de 1 minuto.",
+            Text = "Um clique atualiza as listas de uma vez: os seletores de modelo do chat da barra (Claude, Gemini e Copilot com os modos dos sites, níveis de pensamento dos modelos da OpenAI, Lenovo Qira, APIs com chave e modelos locais), o seletor de modelos do Codex, quando a ligação abaixo está ligada (IAs da barra e modelos novos da OpenAI e do Ollama), e o suplemento do Office. Cada modelo das APIs com chave recebe um pedido curto de teste: os que o serviço recusa (aposentados ou sem acesso no seu plano) saem das listas, e um pedido recusado no uso também tira o modelo na hora. Gemini e Copilot são lidos dos próprios sites; leva cerca de 1 minuto.",
         });
         listsCard.Children.Add(checkRow);
         listsCard.Children.Add(feedback);
@@ -220,6 +220,8 @@ public sealed partial class SettingsWindow
                 : $"{s.Total} {(s.Total == 1 ? "opção" : "opções")}{(linked ? " no seletor do Codex" : "; entram no Codex ao ligar")}.";
             if (s.Novos.Count > 0) detail += "\nNovos: " + Short(s.Nome, s.Novos) + ".";
             if (s.Sairam.Count > 0) detail += "\nSaíram: " + Short(s.Nome, s.Sairam) + ".";
+            if (s.Recusados.Count > 0) detail += "\nFora, recusados pelo serviço: " + Short(s.Nome, s.Recusados) + ".";
+            if (s.SemCota.Count > 0) detail += "\nSem cota agora (continuam na lista): " + Short(s.Nome, s.SemCota) + ".";
             text.Children.Add(Help(detail));
             row.Children.Add(text);
 

@@ -119,6 +119,13 @@ internal static class Program
         // Primeira vez (sem lista guardada): uma verificação para o seletor do Codex não ficar sem as IAs da barra.
         if (!File.Exists(Paths.ModelsFile))
             _ = Task.Run(async () => { try { await registry.CheckAsync(false, CancellationToken.None); } catch (Exception ex) { Log.Write("Verificação inicial: " + ex.Message); } });
+        // Sincronização automática: a barra, o Codex e o suplemento do Office ficam só com os modelos que respondem, sem
+        // depender do botão "Verificar e atualizar modelos".
+        using var autoCheck = new System.Threading.Timer(_ => _ = Task.Run(async () =>
+        {
+            try { Log.Write("Verificação automática dos modelos"); await registry.CheckAsync(false, CancellationToken.None); }
+            catch (Exception ex) { Log.Write("Verificação automática: " + ex.Message); }
+        }), null, AutoCheckDue(CodexIntegration.LoadReport()?.VerificadoEm, DateTime.Now), AutoCheckInterval);
 
         using var quitEvent = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEventName);
         var watcher = new Thread(() => { quitEvent.WaitOne(); try { host.BeginInvoke(new Action(Application.Exit)); } catch { } }) { IsBackground = true };
@@ -126,6 +133,19 @@ internal static class Program
         Application.Run();
         Log.Write("Encaminhador do Codex encerrado");
         return 0;
+    }
+
+    /// <summary>Intervalo da verificação automática dos modelos.</summary>
+    internal static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(6);
+    /// <summary>Espera mínima depois de iniciar (o Windows e a barra ainda abrindo).</summary>
+    internal static readonly TimeSpan AutoCheckMinDelay = TimeSpan.FromMinutes(3);
+
+    /// <summary>Quando fazer a primeira verificação automática: 3 min depois de abrir, ou quando a última fizer 6 h.</summary>
+    internal static TimeSpan AutoCheckDue(DateTime? lastCheck, DateTime now)
+    {
+        if (lastCheck is not { } last) return AutoCheckMinDelay;
+        var remaining = last + AutoCheckInterval - now;
+        return remaining < AutoCheckMinDelay ? AutoCheckMinDelay : remaining > AutoCheckInterval ? AutoCheckInterval : remaining;
     }
 
     /// <summary>O encaminhador em execução é este componente (e não outro programa na porta 11435).</summary>

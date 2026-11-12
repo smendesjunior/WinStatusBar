@@ -4554,4 +4554,7 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S0971CC29408EFDE2" xml:space="preserve">
     <value>Aucune destination n'est disponible pour Choisir pour moi. Configurez un compte ou une API, activez l'IA locale ou choisissez une destination manuellement.</value>
   </data>
+  <data name="S85396500014F78C9" xml:space="preserve">
+    <value>Mettez à jour les listes de modèles de la barre, de Codex et du complément Office, et ajoutez les IA configurées sur ce PC au sélecteur de modèles de Codex. La vérification s'exécute aussi toute seule toutes les 6 heures, quand le relais est actif.</value>
+  </data>
 </root>

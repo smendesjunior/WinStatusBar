@@ -143,7 +143,11 @@ public static class AgentPrompt
     private static readonly (string Id, string Label)[] ClaudeModels =
         [("claude-opus-5-5", "Opus 5.5"), ("claude-sonnet-5-5", "Sonnet 5.5"), ("claude-haiku-5-5", "Haiku 5.5"), ("claude-fable-5-1", "Fable 5.1")];
 
-    public static async Task<Catalog> CatalogAsync(Target target, ApiConfig? api, CancellationToken ct)
+    /// <summary>
+    /// Modelos de uma IA. Nas APIs, os que o serviço recusa (<see cref="ApiModelAvailability"/>) ficam de fora; só a
+    /// verificação de modelos pede todos (<paramref name="includeRefused"/>), para testá-los de novo.
+    /// </summary>
+    public static async Task<Catalog> CatalogAsync(Target target, ApiConfig? api, CancellationToken ct, bool includeRefused = false)
     {
         try
         {
@@ -155,7 +159,7 @@ public static class AgentPrompt
                 Target.Copilot => CopilotAppBridge.Catalog(),
                 Target.Qira => QiraBridge.Catalog(),
                 Target.Local => await LocalCatalogAsync(ct),
-                _ => await ApiCatalogAsync(api, ct),
+                _ => await ApiCatalogAsync(api, ct, includeRefused),
             };
         }
         catch (Exception ex) { return new([], null, null, ex.Message); }
@@ -324,7 +328,7 @@ public static class AgentPrompt
         catch { return true; }
     }
 
-    private static async Task<Catalog> ApiCatalogAsync(ApiConfig? api, CancellationToken ct)
+    private static async Task<Catalog> ApiCatalogAsync(ApiConfig? api, CancellationToken ct, bool includeRefused = false)
     {
         if (api is null || string.IsNullOrWhiteSpace(api.BaseUrl) || string.IsNullOrEmpty(api.Key))
             return new([], null, null, LocalizedText.T("Configure a API em Configurações › IAs e contas"));
@@ -346,7 +350,35 @@ public static class AgentPrompt
             try { await Codex.CodexModelLevels.EnsureAsync(ct); } catch { }
             models = ApiModelCatalog.Recent(models);
         }
+        if (!includeRefused) models = models.Where(m => !ApiModelAvailability.IsRefused(api.BaseUrl, m.Id)).ToList();
         return new(models, models.FirstOrDefault()?.Id, null, null);
+    }
+
+    /// <summary>
+    /// Teste mínimo de um modelo da API ("ok", sem fluxo): diz se o serviço atende esse modelo com a chave cadastrada.
+    /// Usado pela verificação de modelos; cada teste é um pedido curto cobrado pela API.
+    /// </summary>
+    public static async Task<ApiModelAvailability.Probe> ProbeApiModelAsync(ApiConfig api, string model, CancellationToken ct)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+        var messages = new JsonArray(new JsonObject { ["role"] = "user", ["content"] = "Responda só: ok" });
+        JsonObject body = api.Kind == "anthropic"
+            ? new() { ["model"] = model, ["max_tokens"] = 16, ["messages"] = messages }
+            : new() { ["model"] = model, ["messages"] = messages };
+        using var req = new HttpRequestMessage(HttpMethod.Post, ApiUrl(api, api.Kind == "anthropic" ? "messages" : "chat/completions"))
+        { Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json") };
+        Authorize(req, api);
+        try
+        {
+            using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            int code = (int)resp.StatusCode;
+            if (resp.IsSuccessStatusCode) return new(ApiModelAvailability.Verdict.Available, null);
+            string? msg = ProviderErrorMessage(await resp.Content.ReadAsStringAsync(cts.Token));
+            return new(ApiModelAvailability.Classify(code, msg), $"HTTP {code}" + (msg is null ? string.Empty : $": {msg}"));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return new(ApiModelAvailability.Verdict.Unknown, "sem resposta em 30 s"); }
+        catch (HttpRequestException ex) { return new(ApiModelAvailability.Verdict.Unknown, ex.Message); }
     }
 
     private static string ApiUrl(ApiConfig api, string path)
@@ -503,6 +535,8 @@ public static class AgentPrompt
         if (stdinPrompt is not null) psi.StandardInputEncoding = new UTF8Encoding(false); // sem BOM: iria no começo do pedido
         if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
         foreach (var a in args) psi.ArgumentList.Add(a);
+        // PATH de agora (programas instalados com a barra aberta ficam visíveis para o agente).
+        FreshPath.Apply(psi);
 
         var text = new StringBuilder();
         var blocked = new List<string>();
@@ -743,6 +777,18 @@ public static class AgentPrompt
     {
         string trimmed = body.Trim();
         if (trimmed.Length == 0) return null;
+        // O Google (endpoint compatível com a OpenAI) manda o erro dentro de uma lista: [{"error":{…}}]. Antes o motivo
+        // se perdia e o Codex mostrava só "HTTP 404".
+        if (trimmed.StartsWith('['))
+        {
+            try
+            {
+                if (JsonNode.Parse(trimmed) is JsonArray { Count: > 0 } list && list[0] is JsonObject first)
+                    trimmed = first.ToJsonString();
+                else return null;
+            }
+            catch (JsonException) { return null; }
+        }
         if (trimmed.StartsWith('{'))
         {
             string inner = AiErrorExplainer.InnerMessage(trimmed);
@@ -792,7 +838,11 @@ public static class AgentPrompt
         using var req = new HttpRequestMessage(HttpMethod.Post, ApiUrl(api, api.Kind == "anthropic" ? "messages" : "chat/completions"))
         { Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json") };
         Authorize(req, api);
-        return await StreamAsync(req, onText, ct, line => ApiStreamPiece(api.Kind, line));
+        var result = await StreamAsync(req, onText, ct, line => ApiStreamPiece(api.Kind, line));
+        // Recusa do modelo pelo serviço (aposentado, sem acesso): ele sai dos seletores da barra, do Codex e do Office.
+        if (string.IsNullOrEmpty(result.Text) && ApiModelAvailability.RecordRunError(api.BaseUrl, model, result.Error) is { } refused)
+            return result with { Error = result.Error + " — " + refused + ". O modelo saiu da lista; escolha outro." };
+        return result;
     }
 
     /// <summary>

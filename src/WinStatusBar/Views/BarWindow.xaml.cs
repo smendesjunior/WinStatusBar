@@ -177,6 +177,7 @@ public sealed partial class BarWindow : Window
         BuildColumns();
         UpdateGlowColors();
         UpdateAgentGlow(restart: true);
+        _panel?.RefreshTheme(); // chat vivo (aberto ou oculto) acompanha o tema e o Alto Contraste do Windows
         if (_panels.Count > 0) ApplyBarOptions();
         if (AppBar is not null)
         {

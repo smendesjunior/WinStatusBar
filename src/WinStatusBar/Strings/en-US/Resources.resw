@@ -4554,4 +4554,7 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S0971CC29408EFDE2" xml:space="preserve">
     <value>No destination is available for Choose for me. Set up an account or API, turn on local AI, or choose a destination manually.</value>
   </data>
+  <data name="S85396500014F78C9" xml:space="preserve">
+    <value>Update the model lists of the bar, Codex and the Office add-in, and add the AIs set up on this PC to the Codex model picker. The check also runs on its own every 6 hours while the forwarder is on.</value>
+  </data>
 </root>

@@ -47,6 +47,8 @@ public sealed class ClaudeProvider : IProvider
         };
         if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
         foreach (var a in args) psi.ArgumentList.Add(a);
+        // PATH de agora, não o de quando o encaminhador abriu: programas instalados depois (adb, git…) ficam visíveis.
+        FreshPath.Apply(psi);
         if (commands)
         {
             // Sem isso o Claude Code corta cada comando em 2 a 10 min; etapas de 20 a 40 min precisam caber.

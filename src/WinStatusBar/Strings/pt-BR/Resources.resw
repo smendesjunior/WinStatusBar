@@ -4554,4 +4554,7 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S0971CC29408EFDE2" xml:space="preserve">
     <value>Nenhum destino disponível para Escolha por mim. Configure uma conta ou API, ligue a IA local ou escolha um destino manualmente.</value>
   </data>
+  <data name="S85396500014F78C9" xml:space="preserve">
+    <value>Atualize as listas de modelos da barra, do Codex e do suplemento do Office e ligue as IAs configuradas neste PC no seletor de modelos do Codex. A verificação também roda sozinha a cada 6 horas, com o encaminhador ligado.</value>
+  </data>
 </root>
