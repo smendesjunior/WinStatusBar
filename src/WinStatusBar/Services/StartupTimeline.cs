@@ -1,11 +1,13 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace WinStatusBar.Services;
 
 /// <summary>
 /// Cronômetro da abertura: marca cada etapa desde o nascimento do processo e grava uma linha só no log
-/// ("Abertura em X s: …"), para saber onde está cada segundo depois do logon.
+/// ("Abertura em X s: …"), para saber onde está cada segundo depois do logon. Também abre a barra com prioridade
+/// acima do normal (no logon ela disputa a CPU com dezenas de programas) e volta ao normal quando os serviços ligam.
 /// </summary>
 internal static class StartupTimeline
 {
@@ -13,7 +15,32 @@ internal static class StartupTimeline
     private static readonly StringBuilder Steps = new();
     private static DateTime? _processStart;
     private static TimeSpan _last;
-    private static bool _done;
+    private static bool _done, _boosted;
+
+    /// <summary>Primeira coisa que roda do código da barra (antes do Main): separa o .NET subindo do WinUI subindo.</summary>
+    [ModuleInitializer]
+    internal static void OnModuleLoaded()
+    {
+        Mark(".NET");
+        try
+        {
+            using var self = Process.GetCurrentProcess();
+            if (self.PriorityClass == ProcessPriorityClass.Normal)
+            {
+                self.PriorityClass = ProcessPriorityClass.AboveNormal;
+                _boosted = true;
+            }
+        }
+        catch { }
+    }
+
+    /// <summary>Volta à prioridade normal (a barra roda o dia todo; acima do normal só durante a abertura).</summary>
+    public static void EndBoost()
+    {
+        if (!_boosted) return;
+        _boosted = false;
+        try { using var self = Process.GetCurrentProcess(); self.PriorityClass = ProcessPriorityClass.Normal; } catch { }
+    }
 
     private static TimeSpan SinceProcessStart()
     {
@@ -47,6 +74,9 @@ internal static class StartupTimeline
             line = $"Abertura em {Format(_last)} desde o processo: {Steps}.";
         }
         App.Log(line);
+        // Bibliotecas .NET carregadas até a barra aparecer: o que estiver aqui sem precisar atrasa a abertura.
+        var names = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetName().Name ?? "?").Order(StringComparer.OrdinalIgnoreCase).ToList();
+        App.Log($"Abertura: {names.Count} bibliotecas .NET carregadas antes da barra: {string.Join(", ", names)}.");
     }
 
     private static string Format(TimeSpan t) => t.TotalSeconds >= 1 ? $"{t.TotalSeconds:0.0} s" : $"{t.TotalMilliseconds:0} ms";

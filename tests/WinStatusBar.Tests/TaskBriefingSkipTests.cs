@@ -24,7 +24,8 @@ public class TaskBriefingSkipTests
     {
         string app = RepoSource.Read("src", "WinStatusBar", "App.xaml.cs");
         int created = app.IndexOf("Hub = new MonitoringHub(_dispatcher, Settings);", StringComparison.Ordinal);
-        int started = app.IndexOf("Hub.Start();", created, StringComparison.Ordinal);
+        // As leituras ligam depois da primeira pintura: DeferredStep("monitoramento", Hub.Start) em StartDeferredServices.
+        int started = app.IndexOf("Hub.Start)", created, StringComparison.Ordinal);
         int wired = app.IndexOf(line, StringComparison.Ordinal);
         Assert.True(created >= 0 && created < wired && wired < started, $"criado={created} ligado={wired} iniciado={started}");
     }

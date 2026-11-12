@@ -122,7 +122,7 @@ public class ApiResumeSourceTests
         // As barras leem App.ApiResume ao montar a coluna do agente: o serviço existe antes delas. O laço dele só liga
         // depois da primeira pintura (StartDeferredServices), quando a bandeja também já existe para os balões.
         string app = App();
-        int hub = app.IndexOf("Hub.Start();", StringComparison.Ordinal);
+        int hub = app.IndexOf("Hub = new MonitoringHub(", StringComparison.Ordinal);
         int create = app.IndexOf("ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);", StringComparison.Ordinal);
         int bars = app.IndexOf("RebuildBars();", StringComparison.Ordinal);
         Assert.True(hub >= 0 && hub < create && create < bars, $"{hub} {create} {bars}");

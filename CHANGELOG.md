@@ -7,6 +7,15 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.10.4] - 2026-11-11 · compilação 20261112004236
+
+### Corrigido
+- Entrada no Windows: a barra se desenha antes de começar as leituras (CPU, GPU, bateria, temperaturas, cotas, Codex, Claude Code e conversas), que agora ligam logo depois da primeira pintura. No logon, essas leituras disputavam o disco e o processador com a barra.
+- Entrada no Windows: a barra abre com prioridade acima do normal e volta ao normal assim que os serviços ligam, para não perder a disputa com os outros programas que sobem junto.
+
+### Alterado
+- O registro da abertura separa o tempo do .NET e o do WinUI e lista as bibliotecas carregadas antes de a barra aparecer.
+
 ## [1.10.3] - 2026-11-11 · compilação 20261112001012
 
 ### Corrigido

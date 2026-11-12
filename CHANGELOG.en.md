@@ -7,6 +7,15 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.10.4] - 2026-11-11 · build 20261112004236
+
+### Fixed
+- Windows sign-in: the bar draws itself before starting its readings (CPU, GPU, battery, temperatures, quotas, Codex, Claude Code and chats), which now start right after the first paint. At sign-in those readings competed with the bar for disk and CPU.
+- Windows sign-in: the bar starts at above-normal priority and goes back to normal once its services are up, so it does not lose out to the other programs starting at the same time.
+
+### Changed
+- The startup log splits .NET and WinUI time and lists the libraries loaded before the bar appears.
+
 ## [1.10.3] - 2026-11-11 · build 20261112001012
 
 ### Fixed

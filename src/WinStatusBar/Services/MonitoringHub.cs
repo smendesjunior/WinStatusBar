@@ -95,8 +95,6 @@ public sealed class MonitoringHub : IDisposable
         Codex.QuotaChanged += (_, _) => QueueAgentRefresh();
         Claude.QuotaChanged += (_, _) => QueueAgentRefresh();
         Pipe.MessageReceived += m => Claude.Apply(m);
-        // Tarefas do Claude Code já em andamento quando a barra abre: lidas na hora, sem esperar o próximo evento.
-        _ = Task.Run(() => { try { if (Claude.Bootstrap(TimeSpan.FromMinutes(10)) > 0) QueueAgentRefresh(); } catch (Exception ex) { App.Log("Claude (retomada): " + ex.Message); } });
         AgentState? lastLocal = null;
         Local.SessionsChanged += (_, _) =>
         {
@@ -106,9 +104,20 @@ public sealed class MonitoringHub : IDisposable
         Pipe.Error += ex => App.Log("Named Pipe: " + ex.GetType().Name + ": " + ex.Message);
     }
 
+    /// <summary>Leituras ligadas (Start já rodou): antes disso, ApplySettings só guarda as opções.</summary>
+    private bool _started;
+
+    /// <summary>
+    /// Liga as leituras (CPU, GPU, bateria, temperaturas, cotas, Codex, Claude, pipe e conversas). Roda logo depois da
+    /// primeira pintura da barra: no logon, essas leituras disputavam o disco e a CPU com ela.
+    /// </summary>
     public void Start()
     {
+        if (_started) return;
+        _started = true;
         ApplySettings();
+        // Tarefas do Claude Code já em andamento quando a barra abre: lidas na hora, sem esperar o próximo evento.
+        _ = Task.Run(() => { try { if (Claude.Bootstrap(TimeSpan.FromMinutes(10)) > 0) QueueAgentRefresh(); } catch (Exception ex) { App.Log("Claude (retomada): " + ex.Message); } });
         Pipe.Start();
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
@@ -143,7 +152,7 @@ public sealed class MonitoringHub : IDisposable
         if (s.LocalEnabled) Activity.EnabledKinds.Add(AgentKind.Local);
         if (s.QiraEnabled) Activity.EnabledKinds.Add(AgentKind.Qira);
         if (s.ApiActivityEnabled) Activity.EnabledKinds.Add(AgentKind.Api);
-        if (s.CodexEnabled && !Codex.Enabled) Codex.Start();
+        if (_started && s.CodexEnabled && !Codex.Enabled) Codex.Start();
         if (!s.CodexEnabled && Codex.Enabled) Codex.Stop();
         ViewModel.UpdateTemperatures(LastTemperature ?? new TemperatureSample(null, null), s.ShowTemperatures);
         QueueAgentRefresh();

@@ -60,9 +60,19 @@ public class BarHardeningTests
         int bars = At(launched, "RebuildBars();"), low = At(launched, "DispatcherQueuePriority.Low"), start = At(launched, "StartDeferredServices();");
         Assert.True(bars >= 0 && bars < low && low < start, $"{bars} {low} {start}");
         Assert.Contains("if (_exiting) return;", later);
-        // O que muda o desenho da barra continua antes dela: monitoramento (IAs visíveis) e as opções da área de
-        // transferência (botão). O histórico, os emojis, a janela e o gancho dela carregam depois.
-        Assert.True(At(launched, "Hub.Start();") < bars && At(launched, "Clip.ClipHost.ApplySettings(Settings.Current, start: false);") < bars);
+        // O que muda o desenho da barra continua antes dela: as opções do monitoramento (IAs visíveis) e as da área de
+        // transferência (botão). As leituras do monitoramento, o histórico, os emojis, a janela e o gancho vêm depois.
+        Assert.True(At(launched, "Hub.ApplySettings();") < bars && At(launched, "Clip.ClipHost.ApplySettings(Settings.Current, start: false);") < bars);
+        Assert.DoesNotContain("Hub.Start", launched);
+        Assert.True(At(later, "Hub.Start") >= 0 && At(later, "Hub.Start") < At(later, "Clip.ClipHost.Start()"), "as leituras ligam primeiro");
+        string hub = Src("Services", "MonitoringHub.cs");
+        string hubStart = Body(hub, "public void Start()");
+        Assert.Contains("if (_started) return;", hubStart);
+        Assert.Contains("Claude.Bootstrap(", hubStart);
+        Assert.DoesNotContain("Claude.Bootstrap(", Body(hub, "public MonitoringHub("));
+        Assert.Contains("if (_started && s.CodexEnabled && !Codex.Enabled) Codex.Start();", Body(hub, "public void ApplySettings()"));
+        // A prioridade acima do normal vale só durante a abertura.
+        Assert.Contains("StartupTimeline.EndBoost();", later);
         Assert.DoesNotContain("Clip.ClipHost.Start()", launched);
         Assert.Contains("Clip.ClipHost.Start()", later);
         string clip = Src("Clip", "ClipHost.cs");

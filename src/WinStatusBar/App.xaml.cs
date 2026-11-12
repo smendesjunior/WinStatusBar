@@ -41,7 +41,7 @@ public partial class App : Application
 
     public App()
     {
-        StartupTimeline.Mark(".NET e WinUI");
+        StartupTimeline.Mark("WinUI");
         InitializeComponent();
         _exitWatchdog = new ExitWatchdog(ExitTimeout, ForceExit);
         UnhandledException += (_, e) => { Log(global::WinStatusBar.Services.Localization.T("Exceção não tratada: ") + e.Exception); e.Handled = true; };
@@ -124,8 +124,10 @@ public partial class App : Application
         Hub.ChatGptChat.CodexThreadTitles = () => Hub.Codex.KnownTitles;
         Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;
         Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
-        Hub.Start();
-        StartupTimeline.Mark("início do monitoramento");
+        // Só as opções antes das barras (quais IAs aparecem: o layout nasce certo). As leituras ligam depois da primeira
+        // pintura, em StartDeferredServices.
+        Hub.ApplySettings();
+        StartupTimeline.Mark("opções do monitoramento");
         ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);
         // A continuação pela API roda com a tela apagada e lê os tokens da conversa: com uma em aberto, o Codex segue sendo lido.
         Hub.Codex.ReconcileWhileAway = () => ApiResume?.Supervisor.HasUnfinished == true;
@@ -210,6 +212,7 @@ public partial class App : Application
     {
         if (_exiting) return;
         var clock = Stopwatch.StartNew();
+        DeferredStep("monitoramento", Hub.Start); // primeiro: os números da barra são o que a pessoa vê primeiro
         if (Settings.Current.ClipboardEnabled)
         {
             try { Clip.ClipHost.Start(); }
@@ -244,6 +247,7 @@ public partial class App : Application
         });
         DeferredStep("Claude Code", StartClaudeIntegrationWatch);
         DeferredStep("atalho da barra de comando", StartCommandHotkey);
+        StartupTimeline.EndBoost(); // prioridade acima do normal só até aqui
         Log($"Serviços ligados depois da barra em {clock.ElapsedMilliseconds} ms.");
     }
 
