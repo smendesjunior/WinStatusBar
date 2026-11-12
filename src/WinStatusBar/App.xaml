@@ -16,7 +16,9 @@
             <Style x:Key="BarTitleText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource BarFont}" />
                 <Setter Property="FontSize" Value="12" />
-                <Setter Property="FontWeight" Value="Normal" />
+                <!-- Peso do texto da barra (pedido de 12/11/2026: mais encorpado). Valor com nome: o peso numérico
+                     (450/500) aplicado por código era recusado pelo WinUI (0x8000FFFF) e a barra ficava no Normal. -->
+                <Setter Property="FontWeight" Value="Medium" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="TextWrapping" Value="NoWrap" />
@@ -25,7 +27,7 @@
             <Style x:Key="BarValueText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource BarFont}" />
                 <Setter Property="FontSize" Value="11" />
-                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="FontWeight" Value="Medium" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="TextWrapping" Value="NoWrap" />

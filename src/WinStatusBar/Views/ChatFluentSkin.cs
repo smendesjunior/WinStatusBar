@@ -64,7 +64,7 @@ internal static class ChatFluentSkin
         button.ClearValue(Control.BorderThicknessProperty);
         button.Width = 32;
         button.Height = 32;
-        button.CornerRadius = new CornerRadius(8);
+        button.CornerRadius = new CornerRadius(16); // redondo, como as pílulas e o enviar
     }
 
     /// <summary>Enviar: botão de destaque nativo (inclui o estado desabilitado do sistema quando o campo está vazio).</summary>
@@ -74,10 +74,34 @@ internal static class ChatFluentSkin
         button.ClearValue(Control.BackgroundProperty);
         button.ClearValue(Control.ForegroundProperty);
         button.ClearValue(Control.BorderBrushProperty);
-        button.Width = 34;
-        button.Height = 34;
+        button.Width = 32; // mesma altura dos demais: cantos concêntricos com o campo
+        button.Height = 32;
         button.Padding = new Thickness(0);
-        button.CornerRadius = new CornerRadius(17);
+        button.CornerRadius = new CornerRadius(16);
+    }
+
+    /// <summary>
+    /// Menus do chat com cantos concêntricos: moldura de raio 12 e itens de raio 7. A distância do item até a borda
+    /// é 5 nos dois eixos (contorno 1 + preenchimento da moldura 2 + margem do item 2; dos lados, 1 + 4), e 12 = 7 + 5.
+    /// Realce, seleção, foco e acrílico continuam os nativos do WinUI.
+    /// </summary>
+    public static void RoundMenu(MenuFlyout menu)
+    {
+        var style = new Style(typeof(MenuFlyoutPresenter)) { BasedOn = menu.MenuFlyoutPresenterStyle };
+        style.Setters.Add(new Setter(Control.CornerRadiusProperty, new CornerRadius(12)));
+        menu.MenuFlyoutPresenterStyle = style;
+        // Os itens são montados ao abrir (Opening); o arredondamento vem depois, em Opened.
+        menu.Opened += (_, _) => RoundItems(menu.Items);
+    }
+
+    private static void RoundItems(System.Collections.Generic.IList<MenuFlyoutItemBase> items)
+    {
+        foreach (var item in items)
+        {
+            if (item is MenuFlyoutSeparator) continue;
+            item.CornerRadius = new CornerRadius(7);
+            if (item is MenuFlyoutSubItem sub) RoundItems(sub.Items);
+        }
     }
 
     /// <summary>Microanimação de escala só em botões, ao passar o mouse e clicar. Desligada quando o Windows desliga animações.</summary>

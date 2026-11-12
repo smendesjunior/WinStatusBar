@@ -7,6 +7,20 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.12.0] - 2026-11-12 · build 20261112133228
+
+### Added
+- Chat hover glow: buttons and pills light up softly in the Windows accent color while the mouse is over them; an active pill also shows a short accent line underneath. At rest they look exactly like native WinUI 3 controls. The glow is skipped when Windows animations are off or High Contrast is on.
+
+### Changed
+- Chat panel visual refinement in the WinUI 3 / Fluent style: every button is round, the AI, project and model selectors sit together in one capsule with thin dividers, the toolbar is regrouped (attach, Context, Web, Edit … options, dictation, voice, send), the send button uses the native accent style, and answers have a small avatar.
+- The message box keeps its original shape and now has a light shadow outside it for depth over the acrylic.
+- Chat menus (destination, attach, options, voice, continue, project, model) and the effort picker have concentric rounded corners.
+- The chat follows a Windows theme change even while it stays open.
+
+### Fixed
+- Bar text is actually bolder now: the weight 450 from 1.11.0 was rejected by WinUI, so the bar stayed at Normal. It now uses the Medium weight.
+
 ## [1.11.0] - 2026-11-12 · build 20261112124208
 
 ### Added

@@ -7,6 +7,20 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.12.0] - 2026-11-12 · compilação 20261112133228
+
+### Adicionado
+- Brilho no chat ao passar o mouse: botões e pílulas acendem de leve na cor de destaque do Windows enquanto o mouse está em cima; a pílula ligada mostra também um traço de destaque embaixo. Em repouso ficam iguais aos controles nativos do WinUI 3. Sem brilho quando as animações do Windows estão desligadas ou no Alto Contraste.
+
+### Alterado
+- Visual do chat refinado no estilo WinUI 3 / Fluent: todos os botões redondos, seletores de IA, projeto e modelo juntos numa cápsula com divisórias finas, ferramentas reagrupadas (anexar, Contexto, Web, Editar … opções, ditado, voz, enviar), botão de enviar no estilo de destaque nativo e um pequeno avatar nas respostas.
+- A caixa de mensagem mantém o formato original e ganhou uma sombra leve por fora, para dar profundidade sobre o acrílico.
+- Menus do chat (destino, anexar, opções, voz, continuar, projeto, modelo) e o seletor de esforço com cantos concêntricos.
+- O chat acompanha a troca de tema do Windows mesmo aberto.
+
+### Corrigido
+- Texto da barra mais encorpado de verdade: o peso 450 da versão 1.11.0 era recusado pelo WinUI e a barra continuava no peso Normal. Agora usa o peso Medium.
+
 ## [1.11.0] - 2026-11-12 · compilação 20261112124208
 
 ### Adicionado

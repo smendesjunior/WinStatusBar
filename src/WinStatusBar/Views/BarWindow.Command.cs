@@ -305,6 +305,8 @@ public sealed partial class BarWindow
     // sem recriar o painel nem religar eventos.
     private Button[] _skinQuietButtons = [];
     private Border? _selectorGroup, _composerCard, _composerDivider;
+    private readonly List<Border> _selectorDividers = [];
+    private ChatGlowLayer? _headerGlow, _toolbarGlow, _bodyGlow;
 
     /// <summary>
     /// "+ Nova conversa" fica sempre com o nome inteiro (pedido de 07/11/2026). Se o cabeçalho não couber,
@@ -567,10 +569,21 @@ public sealed partial class BarWindow
         ChatFluentSkin.AttachHoverMotion(_newChatButton);
         _header = header;
         var selectors = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
-        if (_targetButton is not null) selectors.Children.Add(_targetButton);
-        if (_projectButton is not null) selectors.Children.Add(_projectButton);
         // Modelo e esforço no cabeçalho, com o nome inteiro visível (antes ficava cortado na linha de ferramentas).
-        if (_modelButton is not null) selectors.Children.Add(_modelButton);
+        // Entre os seletores, um traço fino que some junto com o botão seguinte (ex.: projeto oculto na IA local).
+        foreach (var selector in new[] { _targetButton, _projectButton, _modelButton })
+        {
+            if (selector is null) continue;
+            if (selectors.Children.Count > 0)
+            {
+                var divider = new Border { Width = 1, Height = 16, Margin = new Thickness(3, 0, 3, 0), VerticalAlignment = VerticalAlignment.Center,
+                    IsHitTestVisible = false, Visibility = selector.Visibility };
+                selector.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => divider.Visibility = selector.Visibility);
+                _selectorDividers.Add(divider);
+                selectors.Children.Add(divider);
+            }
+            selectors.Children.Add(selector);
+        }
         // IA · projeto · modelo numa cápsula só (mesmos botões e menus; só o invólucro é novo).
         _selectorGroup = new Border
         {
@@ -589,6 +602,10 @@ public sealed partial class BarWindow
         for (int i = 0; i < hb.Length; i++) { Grid.SetColumn(hb[i], i + 2); header.Children.Add(hb[i]); }
         foreach (var b in hb) ChatFluentSkin.AttachHoverMotion(b);
         _skinQuietButtons = [.. hb, .. _skinQuietButtons];
+        _headerGlow = new ChatGlowLayer(header);
+        _headerGlow.Add(_newChatButton, ChatGlowLayer.Kind.Accent);
+        _headerGlow.Add(_selectorGroup, ChatGlowLayer.Kind.Capsule);
+        foreach (var b in hb) _headerGlow.Add(b, ChatGlowLayer.Kind.Quiet);
         body.Children.Add(header);
 
         // Conversa: balões e cartão de andamento. Sem altura máxima própria: a janela limita e só esta área rola.
@@ -655,6 +672,8 @@ public sealed partial class BarWindow
         body.Children.Add(composerCard);
         _chatScroll.RegisterPropertyChangedCallback(UIElement.VisibilityProperty,
             (_, _) => _composerDivider.Visibility = _chatScroll.Visibility);
+        _bodyGlow = new ChatGlowLayer(body);
+        _bodyGlow.Add(composerCard, ChatGlowLayer.Kind.Card);
 
         _note = PanelKit.Caption(string.Empty, 11);
         _note.Margin = new Thickness(6, 6, 6, 0);
@@ -674,6 +693,7 @@ public sealed partial class BarWindow
         _panel.ThemeApplied += RefreshChatSkin;
         RefreshChatSkin();
         _panel.Opened += FocusComposerFromBar;
+        _panel.Hidden += () => { _headerGlow?.ClearHover(); _toolbarGlow?.ClearHover(); };
         // Fecha no X ou ao clicar fora; a conversa fica guardada e volta ao reabrir (até "Nova conversa").
         _panel.Hidden += () => _composerCaret?.Pause();
     }
@@ -689,20 +709,29 @@ public sealed partial class BarWindow
         if (_panelSend is not null) ChatFluentSkin.StyleSendButton(_panelSend);
         foreach (var pill in new[] { _contextButton, _webButton, _editButton })
             if (pill is not null) ChatFluentSkin.StylePill(pill);
+        // Cantos concêntricos: raio de fora = raio de dentro + distância entre as bordas (padding + contorno), igual
+        // nos dois eixos. Cápsula dos seletores: botões 26 (raio 13) + 2 + 1 = 32 de altura, raio 16.
         if (_selectorGroup is not null)
         {
             _selectorGroup.Background = ChatFluentSkin.CardFill;
             _selectorGroup.BorderBrush = ChatFluentSkin.CardStroke;
             _selectorGroup.BorderThickness = new Thickness(1);
+            _selectorGroup.Padding = new Thickness(2);
+            _selectorGroup.CornerRadius = new CornerRadius(16);
+            foreach (var selector in new[] { _targetButton, _projectButton, _modelButton })
+                if (selector is not null) { selector.Height = 26; selector.CornerRadius = new CornerRadius(13); }
         }
+        // Campo no formato original (pedido de 12/11/2026); a profundidade vem só da sombra por fora (ChatGlowLayer.Kind.Card).
         if (_composerCard is not null)
         {
-            _composerCard.Background = ChatFluentSkin.ComposerFill;
-            _composerCard.BorderBrush = ChatFluentSkin.ComposerStroke;
-            _composerCard.CornerRadius = new CornerRadius(12);
-            _composerCard.Padding = new Thickness(10, 10, 8, 8);
+            _composerCard.Background = PanelKit.Res("ControlFillColorDefaultBrush");
+            _composerCard.BorderBrush = PanelKit.Res("SurfaceStrokeColorDefaultBrush");
+            _composerCard.CornerRadius = new CornerRadius(8);
+            _composerCard.Padding = new Thickness(8, 8, 6, 6);
         }
         if (_composerDivider is not null) _composerDivider.Background = ChatFluentSkin.Hairline;
+        foreach (var divider in _selectorDividers) divider.Background = ChatFluentSkin.Hairline;
+        _headerGlow?.Refresh(); _toolbarGlow?.Refresh(); _bodyGlow?.Refresh();
         if (_chatList is not null)
             foreach (var child in _chatList.Children)
             {
@@ -745,7 +774,7 @@ public sealed partial class BarWindow
 
         var attach = IconButton("", L.T("Anexar"));
         var attachMenu = new MenuFlyout();
-        PopupMaterial.Apply(attachMenu);
+        PopupMaterial.Apply(attachMenu); ChatFluentSkin.RoundMenu(attachMenu);
         var files = new MenuFlyoutItem { Text = L.T("Arquivos…"), Icon = new FontIcon { Glyph = "" } };
         files.Click += async (_, _) => await PickFilesAsync();
         var folder = new MenuFlyoutItem { Text = L.T("Pasta…"), Icon = new FontIcon { Glyph = "" } };
@@ -855,13 +884,17 @@ public sealed partial class BarWindow
         _skinQuietButtons = [attach, options, mic, voice];
         foreach (var b in _skinQuietButtons) ChatFluentSkin.AttachHoverMotion(b);
         ChatFluentSkin.AttachHoverMotion(_panelSend);
+        _toolbarGlow = new ChatGlowLayer(bar);
+        foreach (var b in _skinQuietButtons) _toolbarGlow.Add(b, ChatGlowLayer.Kind.Quiet);
+        foreach (var pill in new ToggleButton[] { _contextButton, _webButton, _editButton }) _toolbarGlow.Add(pill, ChatGlowLayer.Kind.Toggle);
+        _toolbarGlow.Add(_panelSend, ChatGlowLayer.Kind.Accent);
         return bar;
     }
 
     private MenuFlyout BuildTargetMenu()
     {
         var menu = new MenuFlyout();
-        PopupMaterial.Apply(menu);
+        PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
         menu.Opening += (_, _) =>
         {
             menu.Items.Clear();
@@ -953,7 +986,7 @@ public sealed partial class BarWindow
     private MenuFlyout BuildOptionsMenu()
     {
         var menu = new MenuFlyout();
-        PopupMaterial.Apply(menu);
+        PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
         menu.Opening += (_, _) =>
         {
             menu.Items.Clear();
@@ -976,7 +1009,7 @@ public sealed partial class BarWindow
 
     private MenuFlyout BuildVoiceMenu()
     {
-        var menu = new MenuFlyout(); PopupMaterial.Apply(menu);
+        var menu = new MenuFlyout(); PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
         foreach (var (destination, name) in new[] { (ChatGpt, "ChatGPT · voz ao vivo"), (ClaudeChat, "Claude · voz ao vivo") })
         {
             var item = new MenuFlyoutItem { Text = name, Icon = new FontIcon { Glyph = "" } };
@@ -1077,7 +1110,7 @@ public sealed partial class BarWindow
     private MenuFlyout BuildContinueMenu()
     {
         var menu = new MenuFlyout();
-        PopupMaterial.Apply(menu);
+        PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
         menu.Opening += (_, _) =>
         {
             menu.Items.Clear();
@@ -1144,11 +1177,12 @@ public sealed partial class BarWindow
         centerContent.Children.Add(bigText); centerContent.Children.Add(smallLine);
         var center = new Button
         {
-            Content = centerContent, HorizontalAlignment = HorizontalAlignment.Center, Padding = new Thickness(14, 4, 14, 5), CornerRadius = new CornerRadius(8),
+            Content = centerContent, HorizontalAlignment = HorizontalAlignment.Center, Padding = new Thickness(16, 4, 16, 5), CornerRadius = new CornerRadius(20),
             Background = PanelKit.Res("SubtleFillColorSecondaryBrush"), BorderThickness = new Thickness(0), MaxWidth = 170,
         };
         ToolTipService.SetToolTip(center, L.T("Escolher o modelo"));
         var reset = IconButton("", L.T("Voltar ao padrão do app"));
+        ChatFluentSkin.StyleQuietButton(reset);
         reset.Width = reset.Height = 28; reset.CornerRadius = new CornerRadius(14); ((FontIcon)reset.Content).FontSize = 13;
         reset.VerticalAlignment = VerticalAlignment.Top;
         Grid.SetColumn(center, 1); Grid.SetColumn(reset, 2);
@@ -1157,9 +1191,10 @@ public sealed partial class BarWindow
 
         // Trilho de esforço: um ponto por nível; o botão redondo marca o escolhido.
         var track = new Grid { Height = 28, Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent) };
-        track.Children.Add(new Border { CornerRadius = new CornerRadius(8), Background = PanelKit.Res("ControlFillColorSecondaryBrush"),
+        // Trilho em cápsula (28, raio 14); o marcador de 22 fica a 3 da borda: 11 + 3 = 14, concêntrico.
+        track.Children.Add(new Border { CornerRadius = new CornerRadius(14), Background = PanelKit.Res("ControlFillColorSecondaryBrush"),
             BorderBrush = PanelKit.Res("ControlStrokeColorDefaultBrush"), BorderThickness = new Thickness(1) });
-        var cells = new Grid { Padding = new Thickness(2, 0, 2, 0) };
+        var cells = new Grid { Padding = new Thickness(3, 0, 3, 0) };
         track.Children.Add(cells);
         panel.Children.Add(track);
         var note = PanelKit.Caption(L.T("Este modelo não tem níveis de esforço."), 11);
@@ -1238,7 +1273,7 @@ public sealed partial class BarWindow
         center.Click += (_, _) =>
         {
             var menu = new MenuFlyout();
-            PopupMaterial.Apply(menu);
+            PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
             string chosen = _settings.Current.CommandModels.GetValueOrDefault(key) ?? string.Empty;
             menu.Items.Add(new MenuFlyoutItem { Text = L.T("Selecionar modelo"), IsEnabled = false });
             void AddModel(string id, string text)
@@ -1258,10 +1293,10 @@ public sealed partial class BarWindow
 
         Render();
         var flyout = PanelKit.CreateFlyout(panel, () => { }, () => { });
-        // Raio padrão do WinUI 3 (8) igual no balão e no trilho.
+        // Cantos concêntricos: trilho e botão de voltar (raio 14) a 9 da borda (8 + contorno) → balão de raio 23.
         var style = new Style(typeof(FlyoutPresenter)) { BasedOn = flyout.FlyoutPresenterStyle };
         style.Setters.Add(new Setter(FlyoutPresenter.PaddingProperty, new Thickness(8)));
-        style.Setters.Add(new Setter(FlyoutPresenter.CornerRadiusProperty, new CornerRadius(8)));
+        style.Setters.Add(new Setter(FlyoutPresenter.CornerRadiusProperty, new CornerRadius(23)));
         flyout.FlyoutPresenterStyle = style;
         flyout.Placement = FlyoutPlacementMode.TopEdgeAlignedRight;
         flyout.ShowAt(_modelButton);
@@ -1290,7 +1325,7 @@ public sealed partial class BarWindow
         catch (Exception ex) { App.Log("Projetos do agente: não foi possível ler · " + ex.Message); return; }
         var current = CurrentProject();
         var menu = new MenuFlyout();
-        PopupMaterial.Apply(menu);
+        PopupMaterial.Apply(menu); ChatFluentSkin.RoundMenu(menu);
         void Pick(AgentPrompt.Project? p)
         {
             if (p is null) _settings.Current.CommandProjects.Remove(key);
@@ -2188,7 +2223,7 @@ public sealed partial class BarWindow
         // Avatar pequeno à esquerda; a resposta (AnswerView: andamento, Markdown, metadados, copiar) segue igual.
         var avatar = new Border
         {
-            Width = 30, Height = 30, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Tag = "skin-avatar",
+            Width = 30, Height = 30, CornerRadius = new CornerRadius(15), BorderThickness = new Thickness(1), Tag = "skin-avatar",
             VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 22, 0, 0),
             Child = new FontIcon { Glyph = "", FontSize = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
         };
