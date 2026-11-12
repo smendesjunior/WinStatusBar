@@ -38,6 +38,46 @@ public class BarHardeningTests
         Assert.Contains("RemoveWindowSubclass(_hwnd, _proc, 0x5742);", Body(appBar, "public void Dispose()"));
     }
 
+    // ---------------------------------------------------------------- abertura
+
+    [Fact]
+    public void TheBarIsDrawnBeforeTheServicesItDoesNotNeedToAppear()
+    {
+        // Na entrada no Windows a barra levava ~30 s para aparecer: ponte e encaminhador do Codex, sessões web ocultas,
+        // vigia do Claude e atalho global rodavam antes da primeira pintura. Agora ligam logo depois dela.
+        string app = Src("App.xaml.cs");
+        string launched = Body(app, "protected override void OnLaunched(");
+        string[] deferred = ["ApiResume.Start()", "CopilotWebSession.Install(", "QiraHubSession.Install()", "GoogleUsageSession.Install(",
+            "GeminiWebSession.Install(", "MicrosoftCreditsSession.Install(", "CodexBridgeHost.Start", "CodexIasComponent.EnsureRunning()",
+            "StartClaudeIntegrationWatch", "StartCommandHotkey", "StartApiUsageAutoRefresh"];
+        string later = Body(app, "private void StartDeferredServices()");
+        foreach (string call in deferred)
+        {
+            Assert.DoesNotContain(call, launched);
+            Assert.Contains(call, later);
+        }
+        // Liga só depois da primeira pintura (prioridade baixa, depois das barras) e nunca durante a saída.
+        int bars = At(launched, "RebuildBars();"), low = At(launched, "DispatcherQueuePriority.Low"), start = At(launched, "StartDeferredServices();");
+        Assert.True(bars >= 0 && bars < low && low < start, $"{bars} {low} {start}");
+        Assert.Contains("if (_exiting) return;", later);
+        // O que muda o desenho da barra continua antes dela: monitoramento (IAs visíveis) e as opções da área de
+        // transferência (botão). O histórico, os emojis, a janela e o gancho dela carregam depois.
+        Assert.True(At(launched, "Hub.Start();") < bars && At(launched, "Clip.ClipHost.ApplySettings(Settings.Current, start: false);") < bars);
+        Assert.DoesNotContain("Clip.ClipHost.Start()", launched);
+        Assert.Contains("Clip.ClipHost.Start()", later);
+        string clip = Src("Clip", "ClipHost.cs");
+        Assert.Contains("public static bool Active => Options.ClipboardEnabled && !StartFailed;", clip);
+        Assert.Contains("if (!start) return;", Body(clip, "public static void ApplySettings("));
+        // Falhou ao ligar: o botão some, como quando a área de transferência não iniciava antes das barras.
+        Assert.Contains("b.ApplyAppearance()", later);
+        // Os ícones do Shell dos atalhos (Gerenciador de Tarefas, Configurações, Store) não eram exibidos em lugar
+        // nenhum e, no logon, esperavam o Windows montar o cache de aplicativos.
+        Assert.DoesNotContain("LoadShortcutIcons", app);
+        Assert.DoesNotContain("StoreIcon", Src("ViewModels", "BarViewModel.cs"));
+        // Cada etapa da abertura é cronometrada numa linha do log.
+        Assert.Contains("StartupTimeline.Finish(\"barra na tela\")", launched);
+    }
+
     // ---------------------------------------------------------------- monitores
 
     [Fact]

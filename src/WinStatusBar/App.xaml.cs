@@ -41,6 +41,7 @@ public partial class App : Application
 
     public App()
     {
+        StartupTimeline.Mark(".NET e WinUI");
         InitializeComponent();
         _exitWatchdog = new ExitWatchdog(ExitTimeout, ForceExit);
         UnhandledException += (_, e) => { Log(global::WinStatusBar.Services.Localization.T("Exceção não tratada: ") + e.Exception); e.Handled = true; };
@@ -100,7 +101,9 @@ public partial class App : Application
         }
 #endif
         _dispatcher = DispatcherQueue.GetForCurrentThread();
+        StartupTimeline.Mark("recursos da interface");
         Settings.Load();
+        StartupTimeline.Mark("preferências");
         if (SettingsService.LoadNote is { } loadNote) Log("Preferências: " + loadNote);
         // A atualização automática espera uma resposta de IA em andamento (o botão de Configurações não espera).
         // Chamado fora da thread da interface: uma leitura que falhe conta como "não ocupada" (AppUpdater.Busy).
@@ -114,41 +117,32 @@ public partial class App : Application
         UpdateTheme();
         _ui = new UISettings();
         _ui.ColorValuesChanged += (_, _) => _dispatcher.TryEnqueue(() => { UpdateTheme(); foreach (var b in _bars) b.ApplyAppearance(); Hub.QueueAgentRefresh(); });
+        StartupTimeline.Mark("tema e idioma");
 
         Hub = new MonitoringHub(_dispatcher, Settings);
+        StartupTimeline.Mark("criação do monitoramento");
         Hub.ChatGptChat.CodexThreadTitles = () => Hub.Codex.KnownTitles;
         Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;
         Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
         Hub.Start();
+        StartupTimeline.Mark("início do monitoramento");
         ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);
         // A continuação pela API roda com a tela apagada e lê os tokens da conversa: com uma em aberto, o Codex segue sendo lido.
         Hub.Codex.ReconcileWhileAway = () => ApiResume?.Supervisor.HasUnfinished == true;
-        ApiResume.Start();
-        StartApiUsageAutoRefresh();
-        CopilotWebSession.Install(_dispatcher!);
-        QiraHubSession.Install();
         WinStatusBar.Core.Ai.AgentPrompt.OllamaKeepAlive = () => Settings.Current.LocalModelKeepAlive;
-        GoogleUsageSession.Install(_dispatcher!);
-        GeminiWebSession.Install(_dispatcher!);
-        MicrosoftCreditsSession.Install(_dispatcher!);
-        CodexBridgeHost.Start(); // Claude, Gemini, Copilot e Qira no seletor de modelos do Codex
-        CodexIasComponent.EnsureRunning(); // IAs configuradas no seletor do Codex (encaminhador, com a ligação ligada)
-        CodexIasComponent.AutoEnableOnce(); // primeira vez com esta versão num PC com o Codex: liga sozinha
-        // O encaminhador pode cair no meio do dia; com a ligação ligada, o Codex inteiro para de responder. A cada
-        // minuto: nada acontece com a ligação desligada, o encaminhador respondendo ou um comando do componente rodando.
-        _codexIasWatch = _dispatcher!.CreateTimer();
-        _codexIasWatch.Interval = TimeSpan.FromSeconds(60);
-        // Sem pausa com a tela desligada: o Codex pode estar numa tarefa longa pelo encaminhador a noite toda.
-        _codexIasWatch.Tick += (_, _) => CodexIasComponent.EnsureRunning();
-        _codexIasWatch.Start();
-        StartClaudeIntegrationWatch();
-        // Área de transferência e emojis (Win+V / Win+.), antes das barras: o botão só aparece se estiver ativa.
-        if (Settings.Current.ClipboardEnabled)
-            try { Clip.ClipHost.ApplySettings(Settings.Current); } catch (Exception ex) { Log(global::WinStatusBar.Services.Localization.T("Área de transferência: ") + ex); }
-        StartCommandHotkey();
+        // Área de transferência e emojis (Win+V / Win+.): só as opções antes das barras (decidem se o botão aparece); o
+        // histórico, os emojis, a janela e o gancho de teclado carregam depois da primeira pintura.
+        Clip.ClipHost.ApplySettings(Settings.Current, start: false);
 
-        LoadShortcutIcons();
         RebuildBars();
+        StartupTimeline.Mark("barra: registro na área de trabalho");
+        // Prioridade baixa: roda depois do layout e da primeira pintura das barras. Só então liga os serviços que a
+        // barra não precisa para aparecer (na entrada no Windows, eles disputavam o disco com a primeira pintura).
+        _dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () =>
+        {
+            StartupTimeline.Finish("barra na tela");
+            StartDeferredServices();
+        });
         // Ponto de partida da comparação: sem ele, o primeiro aviso de tela depois de abrir (mesmo sem mudança nenhuma)
         // fechava e recriava todas as barras, cancelando a resposta de IA em andamento.
         _lastMonitorKey = MonitorKey(GetMonitors());
@@ -205,6 +199,59 @@ public partial class App : Application
             try { Directory.CreateDirectory(SettingsService.DataDir); File.WriteAllText(Path.Combine(SettingsService.DataDir, ".welcomed"), DateTime.Now.ToString("s")); } catch { }
             if (Settings.Current.Notifications) _tray.ShowBalloon("WinStatusBar", global::WinStatusBar.Services.Localization.T("A barra está ativa. Clique com o botão direito no ícone da bandeja para opções."));
         }
+    }
+
+    /// <summary>
+    /// Serviços ligados logo depois de a barra aparecer: continuação pela API, sessões web ocultas (Copilot, Qira,
+    /// cotas do Google, Gemini, créditos da Microsoft), ponte e encaminhador do Codex, vigia do Claude Code e atalho
+    /// global. Antes ficavam na frente da primeira pintura.
+    /// </summary>
+    private void StartDeferredServices()
+    {
+        if (_exiting) return;
+        var clock = Stopwatch.StartNew();
+        if (Settings.Current.ClipboardEnabled)
+        {
+            try { Clip.ClipHost.Start(); }
+            catch (Exception ex)
+            {
+                Log(global::WinStatusBar.Services.Localization.T("Área de transferência: ") + ex);
+                foreach (var b in _bars) b.ApplyAppearance(); // sem ela, o botão da barra some (como antes)
+            }
+        }
+        DeferredStep("continuação pela API", () => ApiResume.Start());
+        DeferredStep("métricas da OpenAI", StartApiUsageAutoRefresh);
+        DeferredStep("sessões web", () =>
+        {
+            CopilotWebSession.Install(_dispatcher!);
+            QiraHubSession.Install();
+            GoogleUsageSession.Install(_dispatcher!);
+            GeminiWebSession.Install(_dispatcher!);
+            MicrosoftCreditsSession.Install(_dispatcher!);
+        });
+        DeferredStep("ponte do Codex", CodexBridgeHost.Start); // Claude, Gemini, Copilot e Qira no seletor de modelos do Codex
+        DeferredStep("IAs no Codex", () =>
+        {
+            CodexIasComponent.EnsureRunning(); // IAs configuradas no seletor do Codex (encaminhador, com a ligação ligada)
+            CodexIasComponent.AutoEnableOnce(); // primeira vez com esta versão num PC com o Codex: liga sozinha
+            // O encaminhador pode cair no meio do dia; com a ligação ligada, o Codex inteiro para de responder. A cada
+            // minuto: nada acontece com a ligação desligada, o encaminhador respondendo ou um comando do componente rodando.
+            _codexIasWatch = _dispatcher!.CreateTimer();
+            _codexIasWatch.Interval = TimeSpan.FromSeconds(60);
+            // Sem pausa com a tela desligada: o Codex pode estar numa tarefa longa pelo encaminhador a noite toda.
+            _codexIasWatch.Tick += (_, _) => CodexIasComponent.EnsureRunning();
+            _codexIasWatch.Start();
+        });
+        DeferredStep("Claude Code", StartClaudeIntegrationWatch);
+        DeferredStep("atalho da barra de comando", StartCommandHotkey);
+        Log($"Serviços ligados depois da barra em {clock.ElapsedMilliseconds} ms.");
+    }
+
+    /// <summary>Um serviço que falha ao ligar é registrado e não impede os seguintes.</summary>
+    private static void DeferredStep(string name, Action step)
+    {
+        try { step(); }
+        catch (Exception ex) { Log($"Abertura ({name}): {ex.GetType().Name}: {ex.Message}"); }
     }
 
     /// <summary>
@@ -338,14 +385,6 @@ public partial class App : Application
         else IsDarkTheme = mode == ThemeMode.Dark;
         ThemeBrushes.Refresh();
         IconService.ClearThemeCache();
-    }
-
-    private void LoadShortcutIcons()
-    {
-        var vm = Hub.ViewModel;
-        vm.TaskManagerIcon = IconService.ShellIcon(WindowsLauncherService.TaskManagerPath);
-        vm.SettingsIcon = IconService.ShellIcon(@"shell:AppsFolder\" + WindowsLauncherService.SettingsAumid);
-        vm.StoreIcon = IconService.ShellIcon(@"shell:AppsFolder\" + WindowsLauncherService.StoreAumid);
     }
 
     /// <summary>Cria uma barra por monitor conforme as configurações (principal ou todos).</summary>

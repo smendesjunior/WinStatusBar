@@ -117,14 +117,16 @@ public class ApiResumeSourceTests
     private static string App() => Src("App.xaml.cs");
 
     [Fact]
-    public void ServiceStartsAfterTheHubAndBeforeTheTray()
+    public void ServiceIsCreatedBeforeTheBarsAndStartsRightAfterTheyAppear()
     {
+        // As barras leem App.ApiResume ao montar a coluna do agente: o serviço existe antes delas. O laço dele só liga
+        // depois da primeira pintura (StartDeferredServices), quando a bandeja também já existe para os balões.
         string app = App();
         int hub = app.IndexOf("Hub.Start();", StringComparison.Ordinal);
         int create = app.IndexOf("ApiResume = new CodexApiResumeService(Hub, Settings, _dispatcher);", StringComparison.Ordinal);
-        int start = app.IndexOf("ApiResume.Start();", StringComparison.Ordinal);
-        int tray = app.IndexOf("_tray = new TrayIconService(IconPath);", StringComparison.Ordinal);
-        Assert.True(hub >= 0 && hub < create && create < start && start < tray, $"{hub} {create} {start} {tray}");
+        int bars = app.IndexOf("RebuildBars();", StringComparison.Ordinal);
+        Assert.True(hub >= 0 && hub < create && create < bars, $"{hub} {create} {bars}");
+        Assert.Contains("ApiResume.Start()", Body(app, "private void StartDeferredServices()"));
     }
 
     [Fact]

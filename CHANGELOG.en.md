@@ -7,6 +7,15 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.10.3] - 2026-11-11 · build 20261112001012
+
+### Fixed
+- Windows sign-in: the bar shows up much sooner. It was already started together with Explorer, but it only drew itself after starting Codex, the model bridge, the Copilot, Gemini and Qira sessions, the clipboard history and the command bar shortcut; at sign-in that took about 30 s. The bar now appears first and those services start right after.
+- The bar no longer loads, on every start, Task Manager, Settings and Microsoft Store icons that were never shown. At sign-in they waited for Windows to build its app list.
+
+### Changed
+- The bar log records how long each startup step took ("Abertura em … s").
+
 ## [1.10.2] - 2026-11-11 · build 20261111193117
 
 ### Fixed

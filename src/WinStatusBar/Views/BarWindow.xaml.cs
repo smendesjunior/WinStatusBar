@@ -48,6 +48,7 @@ public sealed partial class BarWindow : Window
         _settings = settings;
         MonitorDevice = monitorDevice;
         InitializeComponent();
+        StartupTimeline.Mark("barra: XAML");
         Title = global::WinStatusBar.Services.Localization.T("WinStatusBar");
         _hwnd = WindowNative.GetWindowHandle(this);
         EnableFolderDrop(ExplorerShortcutButton, OnExplorerShortcut);
@@ -64,6 +65,7 @@ public sealed partial class BarWindow : Window
         Closed += (_, _) => VM.PropertyChanged -= OnBatteryAvailabilityChanged;
         ConfigureWindow();
         ApplyAppearance();
+        StartupTimeline.Mark("barra: janela e aparência");
 
         _layoutTimer = DispatcherQueue.CreateTimer();
         _layoutTimer.Interval = TimeSpan.FromSeconds(3);
@@ -73,10 +75,13 @@ public sealed partial class BarWindow : Window
         SetupQuotaModeSwitch();
         SetupExtraIconAnimation();
         SetupActivityFlyout();
+        StartupTimeline.Mark("barra: cotas e atividade");
         SetupDetailPanels();
+        StartupTimeline.Mark("barra: painéis");
         StabilizeTextWidths();
         SetupCommandBar();
         ApplyCommandBarOptions();
+        StartupTimeline.Mark("barra: caixa de comando");
         PopupMaterial.Apply(MoreMenu);
         SetupAgentGlow();
         // Todos os menus da barra (inclusive os criados depois) seguem o tema do Windows com camada de contraste.

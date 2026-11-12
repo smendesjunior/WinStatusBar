@@ -7,6 +7,15 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.10.3] - 2026-11-11 · compilação 20261112001012
+
+### Corrigido
+- Entrada no Windows: a barra aparece bem antes. Ela já era aberta junto com o Explorer, mas só se desenhava depois de ligar o Codex, a ponte de modelos, as sessões do Copilot, Gemini e Qira, o histórico da área de transferência e o atalho da barra de comando; no logon isso levava cerca de 30 s. Agora a barra aparece primeiro e esses serviços ligam logo em seguida.
+- A barra deixou de carregar, a cada abertura, ícones do Gerenciador de Tarefas, das Configurações e da Microsoft Store que não eram exibidos. No logon, eles esperavam o Windows montar a lista de aplicativos.
+
+### Alterado
+- O registro da barra grava, a cada abertura, quanto tempo levou cada etapa ("Abertura em … s").
+
 ## [1.10.2] - 2026-11-11 · compilação 20261111193117
 
 ### Corrigido

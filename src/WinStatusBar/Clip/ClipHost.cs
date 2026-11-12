@@ -26,6 +26,15 @@ public static class ClipHost
     public static void Start()
     {
         if (Started) return;
+        try { StartCore(); StartFailed = false; }
+        catch { StartFailed = true; throw; }
+    }
+
+    /// <summary>A última tentativa de ligar falhou (histórico, emojis, janela ou gancho): o botão da barra some.</summary>
+    public static bool StartFailed { get; private set; }
+
+    static void StartCore()
+    {
         UI = DispatcherQueue.GetForCurrentThread();
         store = new Store();
         Log.Init(store.Dir);
@@ -60,7 +69,11 @@ public static class ClipHost
     public static Core.Settings.AppSettings Options { get; private set; } = new();
     static string[] ignored = [];
 
-    public static bool Active => Started && Options.ClipboardEnabled;
+    /// <summary>
+    /// Ligada nas opções e sem falha ao ligar. Vale também no primeiro segundo da abertura, antes de o histórico ser
+    /// carregado (<see cref="Start"/> roda depois da primeira pintura da barra): o botão já nasce no lugar certo.
+    /// </summary>
+    public static bool Active => Options.ClipboardEnabled && !StartFailed;
     public static bool HandlesWinV => Active && Options.ClipboardWinV;
     public static bool HandlesEmojiKeys => Active && Options.ClipboardEmojiKeys;
 
@@ -68,10 +81,13 @@ public static class ClipHost
         => ignored.Any(n => process.Equals(n, StringComparison.OrdinalIgnoreCase) || process.Equals(Path.GetFileNameWithoutExtension(n), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Aplica as configurações: liga/desliga, atalhos, pausa e limites do histórico.</summary>
-    public static void ApplySettings(Core.Settings.AppSettings s)
+    /// <param name="start">false só na abertura da barra: guarda as opções agora e deixa o carregamento do histórico,
+    /// dos emojis, da janela e do gancho de teclado para depois da primeira pintura.</param>
+    public static void ApplySettings(Core.Settings.AppSettings s, bool start = true)
     {
         Options = s;
         ignored = (s.ClipboardIgnoredApps ?? "").Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!start) return;
         if (s.ClipboardEnabled && !Started) Start();
         if (clip is not null) clip.Paused = s.ClipboardPaused || !s.ClipboardEnabled;
         if (!s.ClipboardEnabled) window?.HidePanel();

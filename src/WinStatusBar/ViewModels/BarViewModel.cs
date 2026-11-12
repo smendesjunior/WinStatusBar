@@ -293,12 +293,6 @@ public sealed class BarViewModel : ObservableObject
     public Visibility CodexQuotaVisible { get => _codexVisible; set => Set(ref _codexVisible, value); }
     public Visibility ClaudeQuotaVisible { get => _claudeVisible; set => Set(ref _claudeVisible, value); }
 
-    // ---------- Atalhos ----------
-    private ImageSource? _tm, _settings, _store;
-    public ImageSource? TaskManagerIcon { get => _tm; set => Set(ref _tm, value); }
-    public ImageSource? SettingsIcon { get => _settings; set => Set(ref _settings, value); }
-    public ImageSource? StoreIcon { get => _store; set => Set(ref _store, value); }
-
     // ---------- Atualizações ----------
     public void UpdateCpu(CpuSample s)
     {
