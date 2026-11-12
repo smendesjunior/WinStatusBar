@@ -148,6 +148,26 @@ public static class GeminiCli
         static double Version(string id) { var m = System.Text.RegularExpressions.Regex.Match(id, @"gemini-(\d+(?:\.\d+)?)"); return m.Success ? double.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0; }
     }
 
+    /// <summary>Endereço da API do Google no registro de recusas (a chave do registro usa só o host).</summary>
+    internal const string GoogleApiBase = "https://generativelanguage.googleapis.com";
+
+    /// <summary>O Google recusou este modelo no último teste ou uso (fica fora do seletor).</summary>
+    public static bool IsRefused(string model) => ApiModelAvailability.IsRefused(GoogleApiBase, model);
+
+    /// <summary>
+    /// Erro do CLI que mostra que o Google não atende o modelo (404 / NOT_FOUND, ou 429 com "limit: 0"): grava no
+    /// registro de recusas e devolve o motivo; outros erros devolvem null e não mudam nada.
+    /// </summary>
+    public static string? RecordRefusal(string model, string? error)
+    {
+        if (string.IsNullOrEmpty(error)) return null;
+        int status = System.Text.RegularExpressions.Regex.IsMatch(error, @"\b404\b|NOT_FOUND", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ? 404
+            : System.Text.RegularExpressions.Regex.IsMatch(error, @"\b429\b|RESOURCE_EXHAUSTED", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ? 429
+            : System.Text.RegularExpressions.Regex.IsMatch(error, @"\b403\b|PERMISSION_DENIED", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ? 403
+            : System.Text.RegularExpressions.Regex.IsMatch(error, @"\b400\b|INVALID_ARGUMENT", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ? 400 : 0;
+        return status == 0 ? null : ApiModelAvailability.RecordRunError(GoogleApiBase, model, $"HTTP {status}: {error}");
+    }
+
     public static AgentPrompt.Catalog Catalog()
     {
         string? model = null;
@@ -158,13 +178,17 @@ public static class GeminiCli
                 model = root["model"] is JsonObject m ? m["name"]?.GetValue<string>() : root["model"]?.GetValue<string>();
         }
         catch { }
+        // Modelos que o Google recusa para a chave (aposentados, cota zero no plano, inexistentes) ficam fora, como no
+        // Codex e no Office: o registro é o da verificação de modelos (Configurações › Codex e modelos). Antes, este
+        // seletor lia a lista do Google direto e mostrava o Gemini 2.5, o 4 Argon etc. mesmo recusados.
+        if (model is not null && IsRefused(model)) model = null;
         var models = new List<AgentPrompt.ModelOption>();
         if (model is not null) models.Add(new(model, AgentPrompt.Pretty(model), [], null));
         // Sem modelo no settings.json, o roteamento automático do CLI escolheu um modelo que levou 252 s para "6 x 7";
         // o padrão provisório é o Flash-Lite atual (3,5 s no mesmo teste). A pessoa pode trocar no seletor do chat.
         foreach (var id in new[] { DefaultModel }.Concat(_accountModels ?? Fallback))
-            if (!models.Any(m => m.Id == id)) models.Add(new(id, AgentPrompt.Pretty(id), [], null));
-        model ??= DefaultModel;
+            if (!IsRefused(id) && !models.Any(m => m.Id == id)) models.Add(new(id, AgentPrompt.Pretty(id), [], null));
+        model ??= models.FirstOrDefault()?.Id ?? DefaultModel;
         string? error = Find() is null ? LocalizedText.T("Gemini CLI não encontrado neste PC")
             : !SignedIn() ? (UsesApiKey ? LocalizedText.T("Salve uma chave do Google AI Studio em Configurações › IAs e contas › Gemini › Chave de API")
                 : LocalizedText.T("Entre com a conta Google em Configurações › IAs e contas › Gemini › Entrar")) : null;
@@ -230,6 +254,9 @@ public static class GeminiCli
             if (text.Length == 0 && final is { Length: > 0 }) { text.Append(final); onText(final); }
             if (proc.ExitCode != 0 && error is null)
                 error = err.Length > 0 ? Short(FriendlyError(err)!) : LocalizedText.F("O Gemini CLI terminou com erro ({0})", new object?[] { proc.ExitCode });
+            // Pedido pela chave recusado porque o Google não atende o modelo: sai do seletor na hora, como nas APIs.
+            if (text.Length == 0 && UsesApiKey && RecordRefusal(string.IsNullOrEmpty(model) ? DefaultModel : model, error ?? err) is { } why)
+                error = LocalizedText.F("O Google recusou este modelo ({0}). Ele saiu da lista; escolha outro.", new object?[] { why });
             return new(text.ToString(), session, FriendlyError(error));
         }
         catch (OperationCanceledException) { return new(text.ToString(), session, "Interrompido"); }

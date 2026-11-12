@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.12.2] - 2026-11-12 · build 20261112141822
+
+### Fixed
+- Chat model picker in "Gemini · API key" mode: models Google refuses for your key (retired ones such as Gemini 2.5, or ones your plan has no access to, such as Gemini 4 Argon and 4 Carbon) are now hidden, as they already were in Codex and the Office add-in. Before, this picker read Google's list directly and showed every model.
+- A saved model choice that left the list falls back to the default model, and a Gemini CLI request refused by Google removes that model from the list right away.
+
 ## [1.12.1] - 2026-11-12 · build 20261112140401
 
 ### Changed

@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.12.2] - 2026-11-12 · compilação 20261112141822
+
+### Corrigido
+- Seletor de modelo do chat no modo "Gemini · chave de API": os modelos que o Google recusa para a sua chave (aposentados, como o Gemini 2.5, ou sem acesso no plano, como o Gemini 4 Argon e o 4 Carbon) saem da lista, como já saíam do Codex e do suplemento do Office. Antes, esse seletor lia a lista do Google direto e mostrava todos.
+- Uma escolha de modelo guardada que saiu da lista volta ao modelo padrão, e um pedido pelo Gemini CLI recusado pelo Google tira o modelo da lista na hora.
+
 ## [1.12.1] - 2026-11-12 · compilação 20261112140401
 
 ### Alterado

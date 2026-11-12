@@ -78,6 +78,26 @@ public class ApiModelAvailabilityTests : IDisposable
         Assert.False(ApiModelAvailability.IsRefused(Google, "flash"));
     }
 
+    /// <summary>Caso real (12/11/2026): o seletor "Gemini · chave de API" mostrava 2.5 Pro e 4 Argon recusados.</summary>
+    [Fact] public void GeminiKeyPickerHidesRefusedModels()
+    {
+        ApiModelAvailability.Record(Google, "models/gemini-2.5-pro", V.Refused, "o serviço aposentou este modelo para a sua chave");
+        var ids = WinStatusBar.Core.Ai.Gemini.GeminiCli.Catalog().Models.Select(m => m.Id).ToList();
+        Assert.DoesNotContain("gemini-2.5-pro", ids);
+        Assert.Contains(WinStatusBar.Core.Ai.Gemini.GeminiCli.DefaultModel, ids);
+    }
+
+    [Theory]
+    [InlineData("[API Error: models/gemini-4-argon is not found for API version v1beta (Status: NOT_FOUND)]", true)]
+    [InlineData("Quota exceeded for metric: generate_content_free_tier_requests, limit: 0 (429 RESOURCE_EXHAUSTED)", true)]
+    [InlineData("429 RESOURCE_EXHAUSTED: Resource has been exhausted", false)]
+    [InlineData("Interrompido", false)]
+    public void GeminiCliErrorMarksRefusedModel(string error, bool refused)
+    {
+        Assert.Equal(refused, WinStatusBar.Core.Ai.Gemini.GeminiCli.RecordRefusal("gemini-teste", error) is not null);
+        Assert.Equal(refused, WinStatusBar.Core.Ai.Gemini.GeminiCli.IsRefused("gemini-teste"));
+    }
+
     [Fact] public void ErrorExplainerTreatsRetiredModelAsUnavailable()
     {
         var e = AiErrorExplainer.Explain(AgentPrompt.Target.Api, "HTTP 404: " + Gone, "gemini-2.5-pro");

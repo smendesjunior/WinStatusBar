@@ -415,7 +415,8 @@ public sealed partial class BarWindow
         string key = AgentPrompt.Key(t);
         string? model = _settings.Current.CommandModels.GetValueOrDefault(key) is { Length: > 0 } m ? m : c?.AppModel;
         string? effort = _settings.Current.CommandEfforts.GetValueOrDefault(key) is { Length: > 0 } e ? e : c?.AppEffort;
-        if (t == T.Api && c is { Models.Count: > 0 } && !c.Models.Any(x => x.Id == model)) model = c.AppModel;
+        // Escolha guardada que saiu da lista (ex.: modelo que o serviço passou a recusar): volta ao padrão.
+        if (t is T.Api or T.Gemini && c is { Models.Count: > 0 } && !c.Models.Any(x => x.Id == model)) model = c.AppModel;
         var option = c?.Models.FirstOrDefault(x => x.Id == model);
         if (effort is not null && option is not null && option.Efforts.Count > 0 && !option.Efforts.Contains(effort)) effort = option.DefaultEffort;
         if (option is not null && option.Efforts.Count == 0) effort = null;
