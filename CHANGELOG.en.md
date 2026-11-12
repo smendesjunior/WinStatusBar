@@ -7,6 +7,13 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.12.3] - 2026-11-12 · build 20261112143828
+
+### Fixed
+- Pasting a clipboard item (Win+V) into the app you came from: the bar now hands focus back to that app before closing the panel and sends Ctrl+V only once the app is really in front. Before, the panel closed first, Windows sometimes activated another window, and Ctrl+V landed in the wrong place or nowhere. Apps running as administrator, which Windows protects, get the item ready for your own Ctrl+V.
+- Win+V sometimes not opening the panel: when Windows refuses focus, the bar retries and, if that still fails, shows the panel on top of everything instead of behind the current window. The shortcut also recovers faster (within 5 s instead of 30 s) when Windows drops the keyboard hook on its own.
+- Shadow around the chat's picker capsule and input box: it now follows the rounded corners, without the dark smudge and clipped corners.
+
 ## [1.12.2] - 2026-11-12 · build 20261112141822
 
 ### Fixed

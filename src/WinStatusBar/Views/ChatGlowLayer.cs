@@ -74,10 +74,10 @@ internal sealed class ChatGlowLayer
         surface.SourceVisual = mask;
         var maskBrush = _compositor.CreateSurfaceBrush(surface);
         maskBrush.Stretch = CompositionStretch.Fill;
-        // Botões: uma sombra inteira. Cartões: quatro faixas recortadas (acima, abaixo, esquerda, direita), assim a
-        // sombra só aparece fora do cartão.
+        // Uma sombra por item. Nos cartões ela é recortada pelo contorno arredondado (ver Sync), assim só aparece por
+        // fora, inclusive nos cantos. As quatro faixas retas de antes deixavam os cantos sem sombra.
         var parts = new List<(SpriteVisual, DropShadow)>();
-        for (int i = 0; i < (IsCard(kind) ? 4 : 1); i++)
+        for (int i = 0; i < 1; i++)
         {
             var shadow = _compositor.CreateDropShadow();
             shadow.Mask = maskBrush; // só a sombra aparece; o próprio retângulo não é desenhado
@@ -212,29 +212,32 @@ internal sealed class ChatGlowLayer
             item.Geometry.CornerRadius = new Vector2(radius, radius);
             item.Mask.Size = size;
             item.Surface.SourceSize = size;
-            for (int i = 0; i < item.Parts.Count; i++)
+            foreach (var (sprite, _) in item.Parts)
             {
-                var sprite = item.Parts[i].Sprite;
                 sprite.Size = size;
                 sprite.Offset = offset;
-                if (item.Parts.Count == 4)
-                {
-                    // Recorte de cada faixa: margem negativa deixa a sombra sair do cartão; nunca cobre o interior.
-                    const float out_ = -40f;
-                    var clip = _compositor.CreateInsetClip();
-                    (clip.LeftInset, clip.TopInset, clip.RightInset, clip.BottomInset) = i switch
-                    {
-                        0 => (out_, out_, out_, size.Y),          // acima
-                        1 => (out_, size.Y, out_, out_),          // abaixo
-                        2 => (out_, 0f, size.X, 0f),              // esquerda
-                        _ => (size.X, 0f, out_, 0f),              // direita
-                    };
-                    sprite.Clip = clip;
-                }
+                if (IsCard(item.Kind)) sprite.Clip = OutsideClip(size, radius);
             }
             if (item.Bar is not null)
                 item.Bar.Offset = new Vector3(offset.X + size.X / 2f - 9f, offset.Y + size.Y + 3f, 0);
         }
+    }
+
+    /// <summary>
+    /// Recorte "só por fora": uma área 40 px maior que o cartão menos o próprio cartão com os cantos arredondados.
+    /// A sombra nunca escurece o interior translúcido e acompanha a curva dos cantos.
+    /// </summary>
+    private CompositionGeometricClip OutsideClip(Vector2 size, float radius)
+    {
+        const float margin = 40f;
+        var device = Microsoft.Graphics.Canvas.CanvasDevice.GetSharedDevice();
+        using var outer = Microsoft.Graphics.Canvas.Geometry.CanvasGeometry.CreateRectangle(device,
+            -margin, -margin, size.X + margin * 2, size.Y + margin * 2);
+        using var inner = Microsoft.Graphics.Canvas.Geometry.CanvasGeometry.CreateRoundedRectangle(device,
+            0, 0, size.X, size.Y, radius, radius);
+        var ring = outer.CombineWith(inner, Matrix3x2.Identity, Microsoft.Graphics.Canvas.Geometry.CanvasGeometryCombine.Exclude);
+        var path = _compositor.CreatePathGeometry(new CompositionPath(ring));
+        return _compositor.CreateGeometricClip(path);
     }
 
     private static float CornerOf(FrameworkElement element) => element switch

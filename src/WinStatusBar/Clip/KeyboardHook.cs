@@ -6,8 +6,8 @@ namespace WinStatusBar.Clip;
 /// <summary>
 /// Win+V (area de transferencia) e Win+. / Win+; (emojis), no lugar do painel nativo.
 /// Hook de teclado de baixo nivel numa thread propria. O Windows remove esses hooks sem avisar
-/// (apos suspender, bloquear a tela ou se o sistema travar por um instante), por isso ele e
-/// reinstalado a cada 30 segundos.
+/// (apos suspender, bloquear a tela, ou quando o processo demora a responder, por exemplo numa coleta de lixo
+/// do .NET), por isso ele e reinstalado a cada 5 segundos (antes 30: o Win+V ficava ate meio minuto sem funcionar).
 /// </summary>
 public sealed class KeyboardHook
 {
@@ -21,7 +21,7 @@ public sealed class KeyboardHook
         {
             proc = Callback;
             Install();
-            Native.SetTimer(IntPtr.Zero, UIntPtr.Zero, 30000, IntPtr.Zero);
+            Native.SetTimer(IntPtr.Zero, UIntPtr.Zero, 5000, IntPtr.Zero);
             while (Native.GetMessage(out var m, IntPtr.Zero, 0, 0) > 0)
             {
                 if (m.message == 0x0113) { Install(); continue; } // WM_TIMER

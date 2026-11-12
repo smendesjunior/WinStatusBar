@@ -7,6 +7,13 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.12.3] - 2026-11-12 · compilação 20261112143828
+
+### Corrigido
+- Colar um item da área de transferência (Win+V) no app de origem: a barra devolve o foco ao app antes de fechar o painel e só envia o Ctrl+V quando ele está de fato à frente. Antes, o painel fechava primeiro, o Windows às vezes ativava outra janela e o Ctrl+V caía no lugar errado ou em lugar nenhum. Em apps abertos como administrador, que o Windows protege, o item fica pronto para o seu próprio Ctrl+V.
+- Win+V que às vezes não abria o painel: quando o Windows recusa o foco, a barra tenta de novo e, se ainda falhar, mostra o painel por cima de tudo, em vez de deixá-lo atrás da janela atual. O atalho também volta mais rápido (em até 5 s, antes 30 s) quando o Windows desliga o gancho do teclado por conta própria.
+- Sombra da cápsula dos seletores e do campo do chat: segue os cantos arredondados, sem o borrão escuro e os cantos cortados.
+
 ## [1.12.2] - 2026-11-12 · compilação 20261112141822
 
 ### Corrigido

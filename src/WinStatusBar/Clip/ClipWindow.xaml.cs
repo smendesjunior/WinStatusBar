@@ -106,15 +106,43 @@ public sealed partial class ClipWindow : Window, IClipActions
     // ================================================================== mostrar / esconder
     public void TogglePanel(string which, PointInt32? anchor = null)
     {
-        if (panelVisible && which == tab) HidePanel();
+        // Fecha só se o painel está de fato à frente. Se ele abriu sem receber o foco (ficou atrás de outra janela),
+        // o próximo Win+V o traz para a frente em vez de "fechar" um painel que a pessoa nem via.
+        // Por cima de tudo (ver EnsureShown) ele está visível mesmo sem foco: aí o atalho fecha.
+        if (panelVisible && which == tab && (Native.GetForegroundWindow() == hwnd || topmostFallback)) HidePanel();
         else ShowPanel(which, anchor);
     }
+
+    /// <summary>
+    /// Confere, logo depois de abrir, se o painel recebeu o foco. O Windows às vezes recusa a troca (janela de
+    /// administrador ou do sistema à frente): tenta de novo e, se ainda assim falhar, deixa o painel por cima de tudo
+    /// até ser fechado, em vez de aberto atrás da janela atual, invisível.
+    /// </summary>
+    async void EnsureShown()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            await Task.Delay(50);
+            if (!panelVisible || Native.GetForegroundWindow() == hwnd) return;
+            if (i == 1)
+            {
+                Native.keybd_event(0xE8, 0, 0, UIntPtr.Zero); Native.keybd_event(0xE8, 0, 2, UIntPtr.Zero);
+                Native.ForceForeground(hwnd);
+            }
+        }
+        if (!panelVisible || Native.GetForegroundWindow() == hwnd) return;
+        Log.Write($"Painel aberto sem foco (em primeiro plano: {Native.Describe(Native.GetForegroundWindow())}); fica por cima até fechar.");
+        if (appWin.Presenter is OverlappedPresenter p) p.IsAlwaysOnTop = true;
+        topmostFallback = true;
+    }
+
+    bool topmostFallback;
 
     /// <summary>Abre o painel. Pelo atalho: junto ao cursor de texto; pelo botão da barra: logo abaixo dele, alinhado à direita.</summary>
     public void ShowPanel(string which, PointInt32? anchor = null)
     {
         Root.RequestedTheme = WinStatusBar.App.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light; // mesmo tema da barra
-        if (panelVisible) { SelectTab(which); Native.ForceForeground(hwnd); return; }
+        if (panelVisible) { SelectTab(which); Native.ForceForeground(hwnd); EnsureShown(); return; }
         IntPtr fg = Native.GetForegroundWindow();
         prevHwnd = fg == hwnd ? IntPtr.Zero : fg;
         // So os cards de arquivos sao refeitos (conferem se os arquivos ainda existem); os demais mantem as miniaturas
@@ -129,6 +157,7 @@ public sealed partial class ClipWindow : Window, IClipActions
         appWin.Show(true);
         Activate();
         Native.ForceForeground(hwnd);
+        EnsureShown();
         FocusFirst();
         // Prepara a outra aba em segundo plano, para a troca de aba ser instantanea
         DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
@@ -141,6 +170,7 @@ public sealed partial class ClipWindow : Window, IClipActions
     public void HidePanel()
     {
         panelVisible = false;
+        if (topmostFallback && appWin.Presenter is OverlappedPresenter p) { p.IsAlwaysOnTop = false; topmostFallback = false; }
         appWin.Hide();
     }
 
@@ -413,12 +443,37 @@ public sealed partial class ClipWindow : Window, IClipActions
         }
         catch (Exception ex) { Log.Write(global::WinStatusBar.Services.Localization.T("Colar: ") + ex); return; }
         clip.Bump(it);
-        HidePanel();
-        if (paste && ClipHost.Options.ClipboardAutoPaste && prevHwnd != IntPtr.Zero && !Native.IsShellWindow(prevHwnd))
+        IntPtr target = prevHwnd;
+        if (!paste || !ClipHost.Options.ClipboardAutoPaste || target == IntPtr.Zero || !Native.IsWindow(target) || Native.IsShellWindow(target))
         {
-            Native.SetForegroundWindow(prevHwnd);
-            await Task.Delay(90);
-            Native.SendCtrlV();
+            HidePanel();
+            return;
+        }
+        // Devolve o foco ANTES de esconder o painel: enquanto o painel está em primeiro plano o Windows deixa a barra
+        // escolher a próxima janela. Escondendo antes, o Windows ativava outra janela (às vezes a errada), recusava a
+        // troca e o Ctrl+V caía no lugar errado ou em lugar nenhum.
+        Native.ForceForeground(target);
+        HidePanel();
+        for (int i = 0; i < 20 && !Native.IsForeground(target); i++)
+        {
+            await Task.Delay(25);
+            if (i == 4) Native.ForceForeground(target);
+        }
+        if (!Native.IsForeground(target))
+        {
+            Log.Write($"Colar: o app de destino não voltou ao primeiro plano ({Native.Describe(target)}; em primeiro plano: {Native.Describe(Native.GetForegroundWindow())}). O item ficou na área de transferência.");
+            return;
+        }
+        if (Native.IsElevatedAboveUs(target))
+        {
+            Log.Write($"Colar: {Native.Describe(target)} roda como administrador; o Windows bloqueia o Ctrl+V automático. O item ficou na área de transferência.");
+            return;
+        }
+        await Task.Delay(60); // o app de destino termina de receber o foco antes das teclas
+        if (Native.SendCtrlV() == 0)
+        {
+            int error = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
+            Log.Write($"Colar: o Windows recusou o Ctrl+V para {Native.Describe(target)} (erro {error}).");
         }
     }
 

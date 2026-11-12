@@ -90,13 +90,63 @@ internal static class Native
 
     static INPUT Key(ushort vk, bool up) => new() { type = 1, u = new INPUTUNION { ki = new KEYBDINPUT { wVk = vk, dwFlags = up ? KEYEVENTF_KEYUP : 0 } } };
 
-    public static void SendCtrlV()
+    /// <summary>Envia Ctrl+V; devolve quantas teclas o Windows aceitou (0 = recusado).</summary>
+    public static uint SendCtrlV()
     {
         var list = new List<INPUT>();
         foreach (int mod in new[] { 0x10, 0x12, 0x5B, 0x5C }) // solta Shift/Alt/Win se ainda estiverem pressionadas
             if (GetAsyncKeyState(mod) < 0) list.Add(Key((ushort)mod, true));
         list.Add(Key(0x11, false)); list.Add(Key(0x56, false)); list.Add(Key(0x56, true)); list.Add(Key(0x11, true));
-        SendInput((uint)list.Count, list.ToArray(), Marshal.SizeOf<INPUT>());
+        return SendInput((uint)list.Count, list.ToArray(), Marshal.SizeOf<INPUT>());
+    }
+
+    [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr h, uint flags);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+    [DllImport("advapi32.dll", SetLastError = true)] static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+    [DllImport("advapi32.dll", SetLastError = true)] static extern bool GetTokenInformation(IntPtr token, int cls, out int info, int size, out int ret);
+
+    /// <summary>A janela está em primeiro plano (ela ou a janela principal dela).</summary>
+    public static bool IsForeground(IntPtr h)
+    {
+        IntPtr fg = GetForegroundWindow();
+        return fg != IntPtr.Zero && (fg == h || GetAncestor(fg, 2 /* GA_ROOT */) == GetAncestor(h, 2));
+    }
+
+    /// <summary>
+    /// O app da janela roda como administrador e a barra não: o Windows descarta em silêncio as teclas que a barra
+    /// envia para ele (UIPI). Nesse caso o item fica na área de transferência para o Ctrl+V da própria pessoa.
+    /// </summary>
+    public static bool IsElevatedAboveUs(IntPtr h)
+    {
+        GetWindowThreadProcessId(h, out uint pid);
+        return pid != 0 && IsElevated(pid) && !IsElevated((uint)Environment.ProcessId);
+    }
+
+    static bool IsElevated(uint pid)
+    {
+        IntPtr p = OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */, false, pid);
+        if (p == IntPtr.Zero) return false;
+        try
+        {
+            if (!OpenProcessToken(p, 0x0008 /* TOKEN_QUERY */, out IntPtr t)) return false;
+            try { return GetTokenInformation(t, 20 /* TokenElevation */, out int e, 4, out _) && e != 0; }
+            finally { CloseHandle(t); }
+        }
+        finally { CloseHandle(p); }
+    }
+
+    /// <summary>Nome da classe e do processo da janela, para o log.</summary>
+    public static string Describe(IntPtr h)
+    {
+        if (h == IntPtr.Zero) return "(nenhuma)";
+        var sb = new StringBuilder(64);
+        GetClassName(h, sb, 64);
+        GetWindowThreadProcessId(h, out uint pid);
+        string name = "?";
+        try { using var p = Process.GetProcessById((int)pid); name = p.ProcessName; } catch { }
+        return $"{name}/{sb}";
     }
 
     /// <summary>Digita o texto no app em foco (como o painel de emojis nativo, sem usar a area de transferencia).</summary>
