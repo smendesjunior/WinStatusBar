@@ -293,14 +293,14 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
 
     private static string AutoTestText()
     {
-        static string Mbps(double? v) => v is double x ? x.ToString(x >= 100 ? "0" : "0.#") : "—";
+        static string Mbps(double? v) => v is double x ? x.ToString(x >= 100 ? "0" : "0.#") + " Mb/s" : "—";
         if (AutoSpeedTest.Running) return global::WinStatusBar.Services.Localization.T("testando…");
         if (AutoSpeedTest.Paused is { } paused) return paused;
         if (AutoSpeedTest.Last is not { } r) return global::WinStatusBar.Services.Localization.T("primeiro teste em instantes");
         int minutes = (int)(DateTimeOffset.Now - AutoSpeedTest.LastAt).TotalMinutes;
         string ago = minutes < 1 ? global::WinStatusBar.Services.Localization.T("agora") : global::WinStatusBar.Services.Localization.F("há {0} min", minutes);
         string ping = r.LatencyMs is double p ? $" · ping {p:0} ms" : "";
-        return $"D {Mbps(r.DownloadMbps)} · U {Mbps(r.UploadMbps)} Mbps{ping} · {ago}";
+        return $"D {Mbps(r.DownloadMbps)} · U {Mbps(r.UploadMbps)}{ping} · {ago}";
     }
 
     private void OnAutoTestChanged() { if (_open && !_disposed) _ = LoadDetailsAsync(_alias); }

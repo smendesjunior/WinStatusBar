@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.13.1] - 2026-11-13 · compilação 20261113130704
+
+### Corrigido
+- Teste automático de velocidade: a unidade aparece nos dois valores, como em "D 96,7 Mb/s · U 99,3 Mb/s".
+
 ## [1.13.0] - 2026-11-13 · compilação 20261113130130
 
 ### Adicionado

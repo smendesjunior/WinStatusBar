@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.13.1] - 2026-11-13 · build 20261113130704
+
+### Fixed
+- Automatic speed test: the unit now shows on both values, as in "D 96.7 Mb/s · U 99.3 Mb/s".
+
 ## [1.13.0] - 2026-11-13 · build 20261113130130
 
 ### Added
