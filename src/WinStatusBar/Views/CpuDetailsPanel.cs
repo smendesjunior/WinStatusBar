@@ -30,6 +30,13 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
     private readonly WinStatusBar.Core.Settings.SettingsService _settings;
     private FrameworkElement _appsSection = null!;
     private bool AppsOn => _settings.Current.CpuPanelApps;
+    private readonly TextBox _search = new()
+    {
+        PlaceholderText = global::WinStatusBar.Services.Localization.T("Pesquisar processos, inclusive em segundo plano"),
+        FontSize = 12, Margin = new Thickness(0, 6, 0, 2), MinHeight = 0,
+    };
+    private int _searchVersion;
+    private string Query => _search.Text.Trim();
 
     public CpuDetailsPanel(MonitoringHub hub, WinStatusBar.Core.Settings.SettingsService settings)
     {
@@ -51,6 +58,10 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
         body.Children.Add(PanelKit.Summary(live, _specs));
 
         _appsSection = Section(_appsTitle);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_search, _search.PlaceholderText);
+        ((StackPanel)_appsSection).Children.Add(_search);
+        _search.TextChanged += (_, _) => { _searchVersion++; int v = _searchVersion; _ = SearchSoonAsync(v); };
+        _search.KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape && _search.Text.Length > 0) { _search.Text = ""; e.Handled = true; } };
         body.Children.Add(_appsSection);
         body.Children.Add(_apps);
 
@@ -168,14 +179,22 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
     }
 
     // ------------------------------------------------------------------ aplicativos
+    private async Task SearchSoonAsync(int version)
+    {
+        await Task.Delay(250);
+        if (version != _searchVersion || _disposed || !_open) return;
+        await RefreshAppsAsync();
+    }
+
     private async Task RefreshAppsAsync()
     {
+        if (Query.Length > 0) { await RefreshSearchAsync(); return; }
         if (_loadingApps || _disposed) return;
         _loadingApps = true;
         try
         {
             var apps = await Task.Run(RunningApps.Capture);
-            if (_disposed || !_open) return;
+            if (_disposed || !_open || Query.Length > 0) return;
             if (_apps.Children.OfType<FrameworkElement>().Any(e => e.Tag is "confirm")) return; // não reconstrói durante uma confirmação
             long totalMemory = apps.SelectMany(app => app.Processes).DistinctBy(process => process.Pid)
                 .Sum(process => Math.Max(0, process.WorkingSet));
@@ -188,6 +207,106 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
         }
         catch (Exception ex) { App.Log(global::WinStatusBar.Services.Localization.T("Painel CPU (aplicativos): ") + ex.Message); }
         finally { _loadingApps = false; }
+    }
+
+    private bool _searching;
+
+    /// <summary>Com texto na pesquisa, a lista mostra todos os processos que casam (com ou sem janela) no lugar dos aplicativos.</summary>
+    private async Task RefreshSearchAsync()
+    {
+        if (_searching || _disposed) return;
+        _searching = true;
+        string query = Query;
+        try
+        {
+            var found = await Task.Run(() => RunningApps.Search(query));
+            if (_disposed || !_open || query != Query) return;
+            if (_apps.Children.OfType<FrameworkElement>().Any(e => e.Tag is "confirm")) return;
+            _apps.Children.Clear();
+            if (found.Count == 0) { _apps.Children.Add(Caption(global::WinStatusBar.Services.Localization.F("Nenhum processo com \"{0}\".", query), 12)); return; }
+            foreach (var group in found) _apps.Children.Add(ProcessRow(group));
+        }
+        catch (Exception ex) { App.Log("Painel CPU (pesquisa): " + ex.Message); }
+        finally
+        {
+            _searching = false;
+            if (query != Query && _open && !_disposed) _ = RefreshAppsAsync(); // o texto mudou durante a busca
+        }
+    }
+
+    private FrameworkElement ProcessRow(ProcessGroup group)
+    {
+        var container = new StackPanel();
+        var header = new Grid { Height = 36, Padding = new Thickness(2, 0, 6, 0), CornerRadius = new CornerRadius(4), ColumnSpacing = 8 };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(18) });
+        header.ColumnDefinitions.Add(new ColumnDefinition());
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var icon = group.IconSource is { } src ? IconService.ShellIcon(src, 32) : null;
+        FrameworkElement glyph = icon is not null ? new Image { Source = icon, Width = 18, Height = 18 } : new FontIcon { Glyph = "", FontSize = 15 };
+        header.Children.Add(glyph);
+        var names = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        names.Children.Add(new TextBlock { Text = group.Name, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 });
+        string kind = group.HasWindow ? global::WinStatusBar.Services.Localization.T("com janela") : global::WinStatusBar.Services.Localization.T("segundo plano");
+        string count = group.Processes.Count > 1 ? " · " + global::WinStatusBar.Services.Localization.F("{0} processos", group.Processes.Count) : "";
+        names.Children.Add(Caption(group.Image + count + " · " + kind, 10));
+        ToolTipService.SetToolTip(names, string.Join("\n", group.Processes.Take(15).Select(p => $"{p.Label} · PID {p.Pid}")));
+        Grid.SetColumn(names, 1); header.Children.Add(names);
+        var memory = new TextBlock { Text = FormatAppMemory(group.Processes.Sum(p => Math.Max(0, p.WorkingSet))), FontSize = 12, MinWidth = 72, TextAlignment = TextAlignment.Right };
+        Grid.SetColumn(memory, 2); header.Children.Add(memory);
+        var endButton = new Button { Content = global::WinStatusBar.Services.Localization.T("Finalizar tarefa"), FontSize = 11, Padding = new Thickness(9, 2, 9, 3), MinHeight = 0, Height = 24 };
+        endButton.Visibility = _settings.Current.AllowEndTask && !group.Critical ? Visibility.Visible : Visibility.Collapsed;
+        endButton.Click += (_, _) => ShowProcessConfirm(container, group);
+        Grid.SetColumn(endButton, 3); header.Children.Add(endButton);
+        if (group.Critical) ToolTipService.SetToolTip(header, global::WinStatusBar.Services.Localization.T("Processo essencial do Windows: não pode ser finalizado por aqui."));
+        foreach (var child in header.Children.OfType<FrameworkElement>()) child.VerticalAlignment = VerticalAlignment.Center;
+        container.Children.Add(header);
+        return container;
+    }
+
+    private void ShowProcessConfirm(StackPanel container, ProcessGroup group)
+    {
+        foreach (var old in container.Children.OfType<FrameworkElement>().Where(e => e.Tag is "confirm").ToList()) container.Children.Remove(old);
+        var box = new Grid
+        {
+            Tag = "confirm", Padding = new Thickness(12, 8, 8, 8), Margin = new Thickness(26, 2, 0, 6), ColumnSpacing = 6,
+            CornerRadius = new CornerRadius(6), Background = WinStatusBar.Services.ThemeBrushes.Get("CardBackgroundFillColorSecondaryBrush"),
+        };
+        box.ColumnDefinitions.Add(new ColumnDefinition());
+        box.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        box.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var text = new TextBlock
+        {
+            Text = group.Processes.Count > 1
+                ? global::WinStatusBar.Services.Localization.F("Finalizar {0} ({1} processos)?", group.Name, group.Processes.Count)
+                : global::WinStatusBar.Services.Localization.F("Finalizar {0}?", group.Name),
+            FontSize = 12, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center,
+        };
+        var hint = Caption(global::WinStatusBar.Services.Localization.T("Encerramento forçado: alterações não salvas serão perdidas."), 11);
+        hint.TextWrapping = TextWrapping.Wrap;
+        var info = new StackPanel { Spacing = 1 }; info.Children.Add(text); info.Children.Add(hint);
+        var ok = PanelKit.Small(new Button { Content = global::WinStatusBar.Services.Localization.T("Finalizar"), FontSize = 12, Padding = new Thickness(10, 3, 10, 4), VerticalAlignment = VerticalAlignment.Center });
+        if (Application.Current.Resources.TryGetValue("AccentButtonStyle", out var accentStyle)) ok.Style = (Style)accentStyle;
+        var cancel = PanelKit.Small(new Button { Content = global::WinStatusBar.Services.Localization.T("Cancelar"), FontSize = 12, Padding = new Thickness(10, 3, 10, 4), VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(ok, 1); Grid.SetColumn(cancel, 2);
+        box.Children.Add(info); box.Children.Add(ok); box.Children.Add(cancel);
+        container.Children.Add(box);
+        cancel.Click += (_, _) => container.Children.Remove(box);
+        ok.Click += async (_, _) =>
+        {
+            ok.IsEnabled = cancel.IsEnabled = false;
+            int failed = await Task.Run(() => RunningApps.ForceEnd(group));
+            App.Log($"Pesquisa de processos: finalizado {group.Image} ({group.Processes.Count - failed}/{group.Processes.Count})");
+            if (failed > 0)
+            {
+                text.Text = global::WinStatusBar.Services.Localization.F("{0} processo(s) não puderam ser finalizados.", failed);
+                hint.Text = global::WinStatusBar.Services.Localization.T("Sem permissão: processos do sistema ou de administrador só pelo Gerenciador de Tarefas como administrador.");
+                ok.Visibility = Visibility.Collapsed; cancel.Content = global::WinStatusBar.Services.Localization.T("Fechar"); cancel.IsEnabled = true;
+                return;
+            }
+            container.Children.Remove(box);
+            await RefreshSearchAsync();
+        };
     }
 
     private static string FormatAppMemory(long bytes) => bytes <= 0 ? "—"

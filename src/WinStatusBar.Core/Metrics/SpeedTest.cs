@@ -8,15 +8,28 @@ public enum SpeedTestPhase { Latency, Download, Upload, Done }
 public sealed record SpeedTestResult(double? DownloadMbps, double? UploadMbps, double? LatencyMs);
 
 /// <summary>
-/// Teste de velocidade sob demanda (só quando o usuário clica em Testar) contra os servidores públicos de teste
-/// da Cloudflare (speed.cloudflare.com). Só dados aleatórios de teste trafegam; nada do PC é enviado.
-/// Download e upload usam 4 conexões paralelas por ~8 s e descartam o 1º segundo (aquecimento do TCP).
+/// Teste de velocidade contra os servidores públicos de teste da Cloudflare (speed.cloudflare.com). Só dados
+/// aleatórios de teste trafegam; nada do PC é enviado. Completo (botão Testar): 4 conexões por ~8 s, descartando o
+/// 1º segundo (aquecimento do TCP). Leve (<see cref="Light"/>, teste automático): até 3 s e no máximo 12 MB de
+/// download e 4 MB de upload, por isso fica abaixo do real em conexões muito rápidas.
 /// </summary>
 public sealed class SpeedTest
 {
     private const string Down = "https://speed.cloudflare.com/__down?bytes=", Up = "https://speed.cloudflare.com/__up";
     private static readonly HttpClient Http = CreateClient();
-    private static readonly TimeSpan Duration = TimeSpan.FromSeconds(8), Warmup = TimeSpan.FromSeconds(1);
+    private readonly TimeSpan Duration = TimeSpan.FromSeconds(8), Warmup = TimeSpan.FromSeconds(1);
+    private readonly int Poll = 200;
+    private readonly long DownCap, UpCap, DownChunk = 50_000_000, UpChunk = 25_000_000;
+
+    public SpeedTest() { }
+
+    private SpeedTest(TimeSpan duration, TimeSpan warmup, long downCap, long upCap)
+    {
+        Duration = duration; Warmup = warmup; Poll = 50;
+        DownCap = downCap; UpCap = upCap; DownChunk = downCap / 4; UpChunk = upCap / 4;
+    }
+
+    public static SpeedTest Light() => new(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(0.5), 12_000_000, 4_000_000);
 
     /// <summary>Fase e valor parcial (Mbps ou ms), chamado várias vezes por segundo fora da thread de UI.</summary>
     public event Action<SpeedTestPhase, double>? Progress;
@@ -32,8 +45,8 @@ public sealed class SpeedTest
     public async Task<SpeedTestResult> RunAsync(CancellationToken ct)
     {
         double? latency = await LatencyAsync(ct);
-        double? down = await MeasureAsync(SpeedTestPhase.Download, DownloadWorker, ct);
-        double? up = await MeasureAsync(SpeedTestPhase.Upload, UploadWorker, ct);
+        double? down = await MeasureAsync(SpeedTestPhase.Download, DownloadWorker, DownCap, ct);
+        double? up = await MeasureAsync(SpeedTestPhase.Upload, UploadWorker, UpCap, ct);
         Progress?.Invoke(SpeedTestPhase.Done, 0);
         return new SpeedTestResult(down, up, latency);
     }
@@ -60,7 +73,7 @@ public sealed class SpeedTest
     private delegate Task Worker(Counter counter, CancellationToken ct);
     private sealed class Counter { public long Bytes; }
 
-    private async Task<double?> MeasureAsync(SpeedTestPhase phase, Worker worker, CancellationToken ct)
+    private async Task<double?> MeasureAsync(SpeedTestPhase phase, Worker worker, long cap, CancellationToken ct)
     {
         var counter = new Counter();
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -69,15 +82,19 @@ public sealed class SpeedTest
         long warmBytes = -1; double warmTime = 0, last = 0;
         while (sw.Elapsed < Duration)
         {
-            await Task.Delay(200, ct);
+            await Task.Delay(Poll, ct);
             long bytes = Interlocked.Read(ref counter.Bytes);
-            if (warmBytes < 0 && sw.Elapsed >= Warmup) { warmBytes = bytes; warmTime = sw.Elapsed.TotalSeconds; continue; }
+            double now = sw.Elapsed.TotalSeconds;
+            bool capped = cap > 0 && bytes >= cap;
+            // Com teto, o aquecimento também termina ao passar de 1/5 do teto (conexões rápidas chegam ao teto antes de 0,5 s).
+            if (warmBytes < 0 && !capped && (sw.Elapsed >= Warmup || (cap > 0 && bytes >= cap / 5))) { warmBytes = bytes; warmTime = now; continue; }
+            if (warmBytes < 0 && capped) { last = bytes * 8 / now / 1e6; Progress?.Invoke(phase, last); break; }
             if (warmBytes >= 0)
             {
-                double secs = sw.Elapsed.TotalSeconds - warmTime;
-                if (secs > 0.1) { last = (bytes - warmBytes) * 8 / secs / 1e6; Progress?.Invoke(phase, last); }
+                double secs = now - warmTime;
+                if (secs > (capped ? 0.02 : 0.1)) { last = (bytes - warmBytes) * 8 / secs / 1e6; Progress?.Invoke(phase, last); }
             }
-            if (workers.All(w => w.IsCompleted)) break;
+            if (capped || workers.All(w => w.IsCompleted)) break;
         }
         stop.Cancel();
         try { await Task.WhenAll(workers); } catch { }
@@ -85,14 +102,14 @@ public sealed class SpeedTest
         return last > 0 ? last : null;
     }
 
-    private static async Task DownloadWorker(Counter counter, CancellationToken ct)
+    private async Task DownloadWorker(Counter counter, CancellationToken ct)
     {
         var buffer = new byte[64 * 1024];
         while (!ct.IsCancellationRequested)
         {
             try
             {
-                using var r = await Http.GetAsync(Down + "50000000", HttpCompletionOption.ResponseHeadersRead, ct);
+                using var r = await Http.GetAsync(Down + DownChunk, HttpCompletionOption.ResponseHeadersRead, ct);
                 if (!r.IsSuccessStatusCode) return;
                 await using var s = await r.Content.ReadAsStreamAsync(ct);
                 int n;
@@ -102,13 +119,13 @@ public sealed class SpeedTest
         }
     }
 
-    private static async Task UploadWorker(Counter counter, CancellationToken ct)
+    private async Task UploadWorker(Counter counter, CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
             try
             {
-                using var content = new RandomContent(25_000_000, counter);
+                using var content = new RandomContent(UpChunk, counter);
                 using var r = await Http.PostAsync(Up, content, ct);
                 if (!r.IsSuccessStatusCode) return;
             }

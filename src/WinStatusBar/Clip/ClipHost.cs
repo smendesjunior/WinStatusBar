@@ -43,7 +43,16 @@ public static class ClipHost
         ClipVM.Store = store;
         window = new ClipWindow(store, clip);
         hook = new KeyboardHook();
-        hook.Pressed += tab => UI.TryEnqueue(() => window.TogglePanel(tab));
+        hook.Pressed += tab =>
+        {
+            long t0 = Environment.TickCount64;
+            UI.TryEnqueue(() =>
+            {
+                long wait = Environment.TickCount64 - t0;
+                string r = window.TogglePanel(tab);
+                Log.Write($"Atalho {tab}: a barra atendeu {wait} ms depois → {r}.");
+            });
+        };
         hook.Start();
         Started = true;
         clip.Paused = Options.ClipboardPaused;

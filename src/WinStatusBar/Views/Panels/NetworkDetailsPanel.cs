@@ -147,6 +147,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         StartBluetoothWatcher();
         _testButton.Visibility = _settings.Current.SpeedTestEnabled ? Visibility.Visible : Visibility.Collapsed;
         _hub.CpuSampled += Render;
+        AutoSpeedTest.Changed += OnAutoTestChanged;
         Render();
     }
 
@@ -159,6 +160,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         if (watcher?.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop();
         _bluetoothDevices.Clear();
         _hub.CpuSampled -= Render;
+        AutoSpeedTest.Changed -= OnAutoTestChanged;
         _speed.Cancel();
         ShowMain(true);
     }
@@ -285,8 +287,23 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         }
         else if (d.LinkBitsPerSecond > 0)
             rows.Add((global::WinStatusBar.Services.Localization.T("Velocidade do link"), d.LinkBitsPerSecond >= 1_000_000_000 ? $"{d.LinkBitsPerSecond / 1e9:0.#} Gbps" : $"{d.LinkBitsPerSecond / 1e6:0} Mbps"));
+        if (_settings.Current.SpeedTestEnabled) rows.Add((global::WinStatusBar.Services.Localization.T("Teste automático"), AutoTestText()));
         PanelKit.FillSpecs(_specs, rows);
     }
+
+    private static string AutoTestText()
+    {
+        static string Mbps(double? v) => v is double x ? x.ToString(x >= 100 ? "0" : "0.#") : "—";
+        if (AutoSpeedTest.Running) return global::WinStatusBar.Services.Localization.T("testando…");
+        if (AutoSpeedTest.Paused is { } paused) return paused;
+        if (AutoSpeedTest.Last is not { } r) return global::WinStatusBar.Services.Localization.T("primeiro teste em instantes");
+        int minutes = (int)(DateTimeOffset.Now - AutoSpeedTest.LastAt).TotalMinutes;
+        string ago = minutes < 1 ? global::WinStatusBar.Services.Localization.T("agora") : global::WinStatusBar.Services.Localization.F("há {0} min", minutes);
+        string ping = r.LatencyMs is double p ? $" · ping {p:0} ms" : "";
+        return $"D {Mbps(r.DownloadMbps)} · U {Mbps(r.UploadMbps)} Mbps{ping} · {ago}";
+    }
+
+    private void OnAutoTestChanged() { if (_open && !_disposed) _ = LoadDetailsAsync(_alias); }
 
     public void Dispose() { _disposed = true; Stop(); }
 }
@@ -508,6 +525,8 @@ internal sealed class SpeedTestView
         if (_cts is not null) { Cancel(); return; }
         using var run = new CancellationTokenSource();
         _cts = run;
+        AutoSpeedTest.ManualRunning = true;
+        AutoSpeedTest.CancelCurrent();
         var ui = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         _run.Content = global::WinStatusBar.Services.Localization.T("Cancelar");
         _down.Text = _up.Text = _ping.Text = "—";
@@ -535,6 +554,6 @@ internal sealed class SpeedTestView
         }
         catch (OperationCanceledException) { _phase.Text = global::WinStatusBar.Services.Localization.T("Teste cancelado."); StopAnimation(); DrawGauge(_displayed = _target = 0); }
         catch (Exception ex) { _phase.Text = "Falha no teste: " + ex.Message; StopAnimation(); DrawGauge(_displayed = _target = 0); }
-        finally { _cts = null; _run.Content = global::WinStatusBar.Services.Localization.T("Testar novamente"); }
+        finally { _cts = null; AutoSpeedTest.ManualRunning = false; _run.Content = global::WinStatusBar.Services.Localization.T("Testar novamente"); }
     }
 }

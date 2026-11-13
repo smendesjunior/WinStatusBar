@@ -4557,4 +4557,52 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>バー、Codex、Office アドインのモデル一覧を更新し、この PC で設定した AI を Codex のモデル選択に追加します。転送が有効なときは、6 時間ごとに自動でも確認します。</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>一時停止: インターネットなし</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>一時停止: 従量制ネットワーク</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>自動テスト</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>テスト中…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>まもなく最初のテスト</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>プロセスを検索 (バックグラウンドを含む)</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>「{0}」に一致するプロセスはありません。</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>ウィンドウあり</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>バックグラウンド</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Windows の重要なプロセスです。ここからは終了できません。</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>{0} ({1} 個のプロセス) を終了しますか?</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>{0} を終了しますか?</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>強制終了: 保存されていない変更は失われます。</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>{0} 個のプロセスを終了できませんでした。</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>権限がありません: システムまたは管理者のプロセスは、管理者として実行したタスク マネージャーからのみ終了できます。</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} 個のプロセス</value>
+  </data>
 </root>

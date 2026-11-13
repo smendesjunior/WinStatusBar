@@ -14,6 +14,9 @@ internal sealed record AppGroup(uint RootPid, string Name, string? IconSource, I
     public string Key => $"{RootPid}:{Name}";
 }
 
+/// <summary>Resultado da pesquisa: todos os processos de um executável, com ou sem janela.</summary>
+internal sealed record ProcessGroup(string Image, string Name, string? IconSource, IReadOnlyList<AppProcess> Processes, bool HasWindow, bool Critical);
+
 /// <summary>
 /// Lista os aplicativos com janelas visíveis (mesmos critérios da aba Processos › Aplicativos do Gerenciador de Tarefas):
 /// janelas de nível superior visíveis, sem dono, não ocultas pelo DWM e que não sejam janelas de ferramenta.
@@ -23,10 +26,11 @@ internal static class RunningApps
 {
     private static readonly HashSet<string> ShellClasses = new(StringComparer.Ordinal) { "Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd" };
     /// <summary>Encerramento forçado nunca é oferecido: o shell e o host de apps UWP afetariam outras janelas.</summary>
+    // Nomes sem ".exe": é assim que SystemSnapshot.ReadProcesses os devolve.
     private static readonly HashSet<string> ProtectedImages = new(StringComparer.OrdinalIgnoreCase)
-        { "explorer.exe", "ApplicationFrameHost.exe", "dwm.exe", "sihost.exe", "ShellExperienceHost.exe", "StartMenuExperienceHost.exe", "SearchHost.exe", "TextInputHost.exe" };
+        { "explorer", "ApplicationFrameHost", "dwm", "sihost", "ShellExperienceHost", "StartMenuExperienceHost", "SearchHost", "TextInputHost" };
     private static readonly HashSet<string> HiddenImages = new(StringComparer.OrdinalIgnoreCase)
-        { "TextInputHost.exe", "ShellExperienceHost.exe", "StartMenuExperienceHost.exe", "SearchHost.exe", "LockApp.exe" };
+        { "TextInputHost", "ShellExperienceHost", "StartMenuExperienceHost", "SearchHost", "LockApp" };
     private static readonly Dictionary<string, string> Descriptions = new(StringComparer.OrdinalIgnoreCase);
 
     public static List<AppGroup> Capture()
@@ -112,6 +116,57 @@ internal static class RunningApps
                 processes, titles.Keys.ToList(), shell));
         }
         return groups.OrderBy(g => g.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+
+    /// <summary>Processos essenciais do Windows: aparecem na pesquisa, mas sem o botão de encerrar.</summary>
+    private static readonly HashSet<string> CriticalImages = new(StringComparer.OrdinalIgnoreCase)
+        { "System", "[System Process]", "Idle", "Registry", "Secure System", "smss", "csrss", "wininit", "winlogon",
+          "services", "lsass", "LsaIso", "svchost", "fontdrvhost", "Memory Compression", "dwm", "explorer",
+          "sihost", "ctfmon", "spoolsv", "MsMpEng", "NisSrv", "SecurityHealthService", "audiodg", "conhost" };
+
+    /// <summary>
+    /// Pesquisa em todos os processos (com ou sem janela, inclusive em segundo plano), agrupados pelo executável.
+    /// Casa com o nome do executável, a descrição do arquivo e os títulos das janelas.
+    /// </summary>
+    public static List<ProcessGroup> Search(string query)
+    {
+        query = query.Trim();
+        if (query.Length == 0) return [];
+        var procs = SystemSnapshot.ReadProcesses();
+        uint self = (uint)Environment.ProcessId;
+        var titles = new Dictionary<uint, string>();
+        EnumWindows((hwnd, _) =>
+        {
+            if (IsAppWindow(hwnd, out string title)) { GetWindowThreadProcessId(hwnd, out uint pid); titles.TryAdd(pid, title); }
+            return true;
+        }, IntPtr.Zero);
+        var groups = new List<ProcessGroup>();
+        foreach (var image in procs.Values.Where(p => p.Pid != 0 && p.Pid != self).GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            var members = image.ToList();
+            string? path = members.Select(p => SystemSnapshot.ImagePath(p.Pid)).FirstOrDefault(p => p is not null);
+            string name = Describe(path, image.Key);
+            bool match = image.Key.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                || name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                || members.Any(p => titles.TryGetValue(p.Pid, out var t) && t.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+            if (!match) continue;
+            var processes = members.Select(p => new AppProcess(p.Pid, titles.TryGetValue(p.Pid, out var t) ? t : p.Name, WorkingSet(p.Pid)))
+                .OrderByDescending(p => p.WorkingSet).ToList();
+            groups.Add(new ProcessGroup(image.Key, name, path, processes, members.Any(p => titles.ContainsKey(p.Pid)), CriticalImages.Contains(image.Key)));
+        }
+        return groups.OrderByDescending(g => g.Processes.Sum(p => p.WorkingSet)).Take(30).ToList();
+    }
+
+    /// <summary>Encerra à força todos os processos do grupo. Retorna quantos não puderam ser encerrados (sem permissão).</summary>
+    public static int ForceEnd(ProcessGroup group)
+    {
+        if (group.Critical) return group.Processes.Count;
+        int failed = 0;
+        foreach (var member in group.Processes)
+            try { using var p = Process.GetProcessById((int)member.Pid); p.Kill(); }
+            catch (ArgumentException) { } // já tinha saído
+            catch { failed++; }
+        return failed;
     }
 
     /// <summary>Fecha como o botão X: WM_CLOSE para cada janela do app. Retorna sem aguardar.</summary>

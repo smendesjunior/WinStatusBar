@@ -7,6 +7,18 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.13.0] - 2026-11-13 · compilação 20261113130130
+
+### Adicionado
+- Teste automático de velocidade a cada 10 minutos: no painel de rede, a linha "Teste automático", abaixo da taxa do link, mostra D (download), U (upload) e o ping do último teste e há quanto tempo ele foi feito. É um teste leve, de no máximo cerca de 16 MB, e fica pausado em rede limitada (plano de dados, roaming ou celular roteado por USB), sem internet, com a tela apagada e durante o teste manual. Ele é ligado e desligado junto com o teste de velocidade em Configurações.
+- Pesquisa de processos no painel da CPU: a caixa abaixo de "Aplicativos" procura em todos os processos, inclusive os ocultos e os em segundo plano, pelo nome do executável, pela descrição ou pelo título da janela. "Finalizar tarefa" encerra todos os processos daquele executável, depois de confirmar. Os processos essenciais do Windows aparecem na pesquisa, mas não podem ser finalizados por ela.
+
+### Corrigido
+- Lista de aplicativos: o Explorador de Arquivos e as janelas do shell voltam a ser tratados como protegidos (sem o encerramento forçado), e o teclado virtual e o painel de emojis deixam de aparecer como aplicativos.
+
+### Alterado
+- Win+V: registro no log de quanto tempo a barra leva para atender o atalho e de por que o painel fechou, para diagnosticar quando ele não abre.
+
 ## [1.12.3] - 2026-11-12 · compilação 20261112143828
 
 ### Corrigido

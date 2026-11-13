@@ -104,13 +104,15 @@ public sealed partial class ClipWindow : Window, IClipActions
     }
 
     // ================================================================== mostrar / esconder
-    public void TogglePanel(string which, PointInt32? anchor = null)
+    public string TogglePanel(string which, PointInt32? anchor = null)
     {
         // Fecha só se o painel está de fato à frente. Se ele abriu sem receber o foco (ficou atrás de outra janela),
         // o próximo Win+V o traz para a frente em vez de "fechar" um painel que a pessoa nem via.
         // Por cima de tudo (ver EnsureShown) ele está visível mesmo sem foco: aí o atalho fecha.
-        if (panelVisible && which == tab && (Native.GetForegroundWindow() == hwnd || topmostFallback)) HidePanel();
-        else ShowPanel(which, anchor);
+        if (panelVisible && which == tab && (Native.GetForegroundWindow() == hwnd || topmostFallback)) { HidePanel(); return "fechou"; }
+        bool was = panelVisible;
+        ShowPanel(which, anchor);
+        return was ? "trouxe para a frente" : "abriu";
     }
 
     /// <summary>
@@ -176,7 +178,11 @@ public sealed partial class ClipWindow : Window, IClipActions
 
     void OnActivated(object sender, WindowActivatedEventArgs e)
     {
-        if (e.WindowActivationState == WindowActivationState.Deactivated && panelVisible && !suppressHide) HidePanel();
+        if (e.WindowActivationState == WindowActivationState.Deactivated && panelVisible && !suppressHide)
+        {
+            Log.Write($"Painel fechado ao perder o foco (em primeiro plano: {Native.Describe(Native.GetForegroundWindow())}).");
+            HidePanel();
+        }
     }
 
     void Place(IntPtr fg, PointInt32? anchor)

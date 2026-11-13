@@ -63,7 +63,7 @@ public sealed partial class SettingsWindow
         NetworkRows.Children.Add(Divider());
         NetworkRows.Children.Add(Toggle(Localization.T("Wi-Fi, Bluetooth e hotspot no painel de rede"), "Mostra Wi-Fi, Bluetooth e Hotspot móvel no painel da barra. Wi-Fi e Bluetooth abrem listas junto aos botões, para conectar ou parear; o hotspot é configurado no Windows.", s => s.NetworkConnectionsVisible, (s,v) => s.NetworkConnectionsVisible = v));
         NetworkRows.Children.Add(Divider());
-        NetworkRows.Children.Add(Toggle("Teste de velocidade", "Mostra o teste no painel da rede. Só consome dados quando você inicia; usa servidores da Cloudflare.", s => s.SpeedTestEnabled, (s,v) => s.SpeedTestEnabled = v));
+        NetworkRows.Children.Add(Toggle("Teste de velocidade", "Mostra o teste no painel da rede e mede sozinho a cada 10 minutos (teste leve, cerca de 16 MB; pausa em rede limitada, como celular ou plano de dados). Usa servidores da Cloudflare.", s => s.SpeedTestEnabled, (s,v) => s.SpeedTestEnabled = v));
 
         // Conectar agora: os mesmos seletores do painel de rede, num cartão só.
         page.Children.Add(GroupTitle(Localization.T("Conectar agora")));

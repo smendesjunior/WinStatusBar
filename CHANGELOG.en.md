@@ -7,6 +7,18 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.13.0] - 2026-11-13 · build 20261113130130
+
+### Added
+- Automatic speed test every 10 minutes: the network panel has an "Automatic test" row under the link rate, with D (download), U (upload), the ping of the last test and how long ago it ran. The test is light (about 16 MB at most). It pauses on metered networks (data plans, roaming or a USB-tethered phone), without internet, while the screen is off and during a manual test. It is turned on and off together with the speed test in Settings.
+- Process search in the CPU panel: the box under "Apps" searches every process, including hidden and background ones, by executable name, description or window title. "End task" ends every process of that executable after a confirmation. Essential Windows processes show up in the search but can't be ended from it.
+
+### Fixed
+- App list: File Explorer and the shell windows are treated as protected again (no forced end), and the touch keyboard and emoji panel no longer show up as apps.
+
+### Changed
+- Win+V: the log records how long the bar takes to handle the shortcut and why the panel closed, to diagnose cases where it doesn't open.
+
 ## [1.12.3] - 2026-11-12 · build 20261112143828
 
 ### Fixed

@@ -15,16 +15,21 @@ public sealed class KeyboardHook
     Native.HookProc proc;
     IntPtr hook;
 
+    // Diagnóstico: quanto tempo o Windows esperou pelo gancho (do momento da tecla até a chamada).
+    int lateKeys, maxLag;
+    long lastPauseTicks;
+
     public void Start()
     {
         var t = new Thread(() =>
         {
             proc = Callback;
             Install();
+            lastPauseTicks = GC.GetTotalPauseDuration().Ticks;
             Native.SetTimer(IntPtr.Zero, UIntPtr.Zero, 5000, IntPtr.Zero);
             while (Native.GetMessage(out var m, IntPtr.Zero, 0, 0) > 0)
             {
-                if (m.message == 0x0113) { Install(); continue; } // WM_TIMER
+                if (m.message == 0x0113) { Install(); Report(); continue; } // WM_TIMER
                 Native.TranslateMessage(ref m);
                 Native.DispatchMessage(ref m);
             }
@@ -42,11 +47,29 @@ public sealed class KeyboardHook
         if (antigo != IntPtr.Zero) Native.UnhookWindowsHookEx(antigo);
     }
 
+    void Report()
+    {
+        int late = Interlocked.Exchange(ref lateKeys, 0), lag = Interlocked.Exchange(ref maxLag, 0);
+        long pause = GC.GetTotalPauseDuration().Ticks;
+        double pausedMs = TimeSpan.FromTicks(pause - lastPauseTicks).TotalMilliseconds;
+        lastPauseTicks = pause;
+        var info = GC.GetGCMemoryInfo(GCKind.Any);
+        double lastPause = info.PauseDurations.Length > 0 ? info.PauseDurations[0].TotalMilliseconds + (info.PauseDurations.Length > 1 ? info.PauseDurations[1].TotalMilliseconds : 0) : 0;
+        if (late > 0 || pausedMs > 150)
+            Log.Write($"Diagnóstico do gancho: {late} teclas atrasadas (maior atraso {lag} ms); coletor de lixo parou o processo {pausedMs:N0} ms nos últimos 5 s (última coleta: geração {info.Generation}, {lastPause:N0} ms, {(info.Compacted ? "compactou" : "sem compactar")}, heap {info.HeapSizeBytes / 1048576} MB).");
+    }
+
     IntPtr Callback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= 0)
         {
             var kb = Marshal.PtrToStructure<Native.KBDLLHOOKSTRUCT>(lParam);
+            int lag = Environment.TickCount - (int)kb.time;
+            if (lag > 150 && lag < 60000)
+            {
+                Interlocked.Increment(ref lateKeys);
+                if (lag > maxLag) maxLag = lag;
+            }
             bool injected = (kb.flags & 0x10) != 0;
             string target = kb.vkCode switch { 0x56 => "clip", 0xBE or 0xBA or 0xBF => "emoji", _ => null };
             // Atalho desligado nas configurações (ou recurso desativado): deixa o Windows abrir o painel nativo.
@@ -64,6 +87,8 @@ public sealed class KeyboardHook
                         // tecla "mascara": impede o menu Iniciar de abrir ao soltar o Win
                         Native.keybd_event(0xE8, 0, 0, UIntPtr.Zero);
                         Native.keybd_event(0xE8, 0, 2, UIntPtr.Zero);
+                        int l = lag;
+                        ThreadPool.QueueUserWorkItem(_ => Log.Write($"Atalho {target}: tecla recebida pelo gancho {l} ms depois de pressionada."));
                         Pressed?.Invoke(target);
                     }
                     return (IntPtr)1;

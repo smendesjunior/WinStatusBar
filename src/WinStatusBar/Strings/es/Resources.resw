@@ -4557,4 +4557,52 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>Actualice las listas de modelos de la barra, de Codex y del complemento de Office, y añada las IA configuradas en este PC al selector de modelos de Codex. La verificación también se ejecuta sola cada 6 horas, con el reenviador activo.</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>en pausa: sin internet</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>en pausa: red de uso medido</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>Prueba automática</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>probando…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>primera prueba en breve</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>Buscar procesos, incluidos los de segundo plano</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>Ningún proceso con "{0}".</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>con ventana</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>segundo plano</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Proceso esencial de Windows: no se puede finalizar desde aquí.</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>¿Finalizar {0} ({1} procesos)?</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>¿Finalizar {0}?</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>Cierre forzado: se perderán los cambios no guardados.</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>No se pudieron finalizar {0} proceso(s).</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>Sin permiso: los procesos del sistema o de administrador solo desde el Administrador de tareas como administrador.</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} procesos</value>
+  </data>
 </root>

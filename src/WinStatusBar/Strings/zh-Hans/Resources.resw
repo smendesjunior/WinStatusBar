@@ -4557,4 +4557,52 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>更新状态栏、Codex 和 Office 加载项的模型列表，并将此电脑上配置的 AI 添加到 Codex 的模型选择器。转发器开启时，检查也会每 6 小时自动运行一次。</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>已暂停：无网络</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>已暂停：按流量计费的网络</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>自动测试</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>正在测试…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>即将进行首次测试</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>搜索进程（包括后台进程）</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>没有与“{0}”匹配的进程。</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>有窗口</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>后台</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Windows 关键进程：无法在此结束。</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>结束 {0}（{1} 个进程）？</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>结束 {0}？</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>强制结束：未保存的更改将丢失。</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>有 {0} 个进程无法结束。</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>无权限：系统或管理员进程只能在以管理员身份运行的任务管理器中结束。</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} 个进程</value>
+  </data>
 </root>

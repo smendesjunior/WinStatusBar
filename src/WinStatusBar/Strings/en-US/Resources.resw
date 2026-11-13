@@ -4557,4 +4557,52 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>Update the model lists of the bar, Codex and the Office add-in, and add the AIs set up on this PC to the Codex model picker. The check also runs on its own every 6 hours while the forwarder is on.</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>paused: no internet</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>paused: metered network</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>Automatic test</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>testing…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>first test shortly</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>Search processes, including background ones</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>No process matching "{0}".</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>with window</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>background</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Essential Windows process: it can't be ended from here.</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>End {0} ({1} processes)?</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>End {0}?</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>Forced end: unsaved changes will be lost.</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>{0} process(es) could not be ended.</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>No permission: system or administrator processes can only be ended from Task Manager run as administrator.</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} processes</value>
+  </data>
 </root>

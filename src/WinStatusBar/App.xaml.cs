@@ -246,6 +246,7 @@ public partial class App : Application
             _codexIasWatch.Tick += (_, _) => CodexIasComponent.EnsureRunning();
             _codexIasWatch.Start();
         });
+        DeferredStep("teste automático de velocidade", () => AutoSpeedTest.Start(Settings, _dispatcher!));
         DeferredStep("Claude Code", StartClaudeIntegrationWatch);
         DeferredStep("atalho da barra de comando", StartCommandHotkey);
         StartupTimeline.EndBoost(); // prioridade acima do normal só até aqui

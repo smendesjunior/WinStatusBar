@@ -4557,4 +4557,52 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>Atualize as listas de modelos da barra, do Codex e do suplemento do Office e ligue as IAs configuradas neste PC no seletor de modelos do Codex. A verificação também roda sozinha a cada 6 horas, com o encaminhador ligado.</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>pausado: sem internet</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>pausado: rede limitada</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>Teste automático</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>testando…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>primeiro teste em instantes</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>Pesquisar processos, inclusive em segundo plano</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>Nenhum processo com "{0}".</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>com janela</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>segundo plano</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Processo essencial do Windows: não pode ser finalizado por aqui.</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>Finalizar {0} ({1} processos)?</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>Finalizar {0}?</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>Encerramento forçado: alterações não salvas serão perdidas.</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>{0} processo(s) não puderam ser finalizados.</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>Sem permissão: processos do sistema ou de administrador só pelo Gerenciador de Tarefas como administrador.</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} processos</value>
+  </data>
 </root>

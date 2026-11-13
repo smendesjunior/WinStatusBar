@@ -4557,4 +4557,52 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S85396500014F78C9" xml:space="preserve">
     <value>Mettez à jour les listes de modèles de la barre, de Codex et du complément Office, et ajoutez les IA configurées sur ce PC au sélecteur de modèles de Codex. La vérification s'exécute aussi toute seule toutes les 6 heures, quand le relais est actif.</value>
   </data>
+  <data name="S9283756B75C6C0A0" xml:space="preserve">
+    <value>en pause : pas d'internet</value>
+  </data>
+  <data name="S59273E87E02FA926" xml:space="preserve">
+    <value>en pause : réseau limité</value>
+  </data>
+  <data name="S1D257FCACB4916B3" xml:space="preserve">
+    <value>Test automatique</value>
+  </data>
+  <data name="S1B5280F8FC42BD1C" xml:space="preserve">
+    <value>test en cours…</value>
+  </data>
+  <data name="S911769B83A2C9BA4" xml:space="preserve">
+    <value>premier test dans un instant</value>
+  </data>
+  <data name="SFB9919E52131FFEA" xml:space="preserve">
+    <value>Rechercher des processus, y compris en arrière-plan</value>
+  </data>
+  <data name="S0549418DA7671474" xml:space="preserve">
+    <value>Aucun processus avec « {0} ».</value>
+  </data>
+  <data name="SDB7F232F4FAF66DF" xml:space="preserve">
+    <value>avec fenêtre</value>
+  </data>
+  <data name="S41A6BED9764B421C" xml:space="preserve">
+    <value>arrière-plan</value>
+  </data>
+  <data name="S602A009112EBFA23" xml:space="preserve">
+    <value>Processus essentiel de Windows : impossible de l'arrêter d'ici.</value>
+  </data>
+  <data name="SC82A5CAACC6FA806" xml:space="preserve">
+    <value>Arrêter {0} ({1} processus) ?</value>
+  </data>
+  <data name="SF50A5037A0ECE212" xml:space="preserve">
+    <value>Arrêter {0} ?</value>
+  </data>
+  <data name="S609E9AB70EF78916" xml:space="preserve">
+    <value>Arrêt forcé : les modifications non enregistrées seront perdues.</value>
+  </data>
+  <data name="S2ED971F07BA55F0F" xml:space="preserve">
+    <value>{0} processus n'ont pas pu être arrêtés.</value>
+  </data>
+  <data name="S5BFF3F3BB7E38D5C" xml:space="preserve">
+    <value>Autorisation refusée : les processus système ou administrateur ne peuvent être arrêtés que depuis le Gestionnaire des tâches en administrateur.</value>
+  </data>
+  <data name="SD9294F083016B7C2" xml:space="preserve">
+    <value>{0} processus</value>
+  </data>
 </root>
