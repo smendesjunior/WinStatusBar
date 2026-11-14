@@ -37,6 +37,7 @@ public sealed partial class SettingsWindow
             s => s.AiReleaseSeconds, (s, v) => s.AiReleaseSeconds = v)));
         BuildCliConnections(accounts);
         AddCopilotCard(accounts);
+        AddAntigravityCard(accounts);
         foreach (var provider in AdditionalAiAccounts.Providers.Where(p => p.Endpoint is not null && p.Id != "gemini"))
             AddApiOnlyCard(accounts, provider);
 
@@ -174,6 +175,56 @@ public sealed partial class SettingsWindow
             if (!await ConfirmAsync("Sair do Copilot da barra?", "Apaga a sessão do Copilot guardada pela barra neste PC. O app Copilot do Windows e sua conta Microsoft não são alterados.", "Sair")) return;
             await CopilotWebSession.SignOutAsync(); Refresh(); card.SetNote("Sessão do Copilot da barra encerrada.");
         };
+        Refresh(); _accountRefreshers.Add(Refresh);
+        accounts.Children.Add(card.Root);
+    }
+
+    /// <summary>
+    /// Google Antigravity: login próprio do agy (CLI oficial do Google), separado do Gemini da barra. Mostra a conta, o
+    /// plano e o limite semanal de cada grupo de modelos (lidos da tela /usage do agy); "Entrar" abre o login oficial
+    /// num terminal e "Instalar" abre o winget. Os modelos aparecem no seletor do Gemini e no do Codex.
+    /// </summary>
+    private void AddAntigravityCard(StackPanel accounts)
+    {
+        var card = NewAccountCard("Google Antigravity", "gemini.svg", "https://antigravity.google/", "Site do Antigravity");
+        var (badge, setBadge) = Badge();
+        var quota = new TextBlock { FontSize = 13, Foreground = ThemeBrushes.Get("TextFillColorSecondaryBrush"), TextWrapping = TextWrapping.Wrap, MaxWidth = 300, TextAlignment = TextAlignment.Right };
+        var install = SmallButton("Instalar…", () => { AntigravityQuotaSession.OpenInstall(); card.SetNote("O winget abriu num terminal. Quando terminar, feche-o e clique em Entrar."); });
+        Button refresh = null!;
+        refresh = SmallButton("Atualizar agora", async () => { card.SetNote("Lendo a cota no agy…"); await AntigravityQuotaSession.RefreshAsync(); Refresh(); card.SetNote(""); });
+        card.Rows.Children.Add(AccountRow("", "Login no Antigravity (agy)", badge,
+            Help("Login próprio do Antigravity CLI, separado do Gemini da barra (pode ser a mesma conta Google). Os modelos dele aparecem no seletor do Gemini no chat e no seletor do Codex como \"Antigravity — …\"."), install));
+        card.Rows.Children.Add(AccountRow("", "Cota semanal", quota,
+            Help("Lida a cada 30 min da tela /usage do próprio agy, sem gastar cota. Os modelos de cada grupo dividem o mesmo limite."), refresh));
+
+        void Refresh()
+        {
+            bool installed = AntigravityQuotaSession.Installed;
+            var s = AntigravityQuotaSession.Current;
+            bool signed = installed && s?.SignedIn == true && (s.Account is not null || s.Groups.Count > 0);
+            card.Identity(signed ? s!.Account : null, signed ? s!.Plan : null,
+                !installed ? "Não instalado neste PC" : signed ? "Conta Google conectada no agy" : s?.SignedIn == false ? "Sem login no agy" : "Login ainda não conferido");
+            card.Action.Content = signed ? "Trocar de conta" : "Entrar";
+            card.Action.Visibility = installed ? Visibility.Visible : Visibility.Collapsed;
+            install.Visibility = installed ? Visibility.Collapsed : Visibility.Visible;
+            refresh.IsEnabled = installed && !AntigravityQuotaSession.Busy;
+            setBadge(signed, !installed ? "Não instalado" : signed ? "Conectado" : "Não conectado");
+            quota.Text = AntigravityQuotaSession.Busy ? "Lendo…"
+                : s is { SignedIn: true, Groups.Count: > 0 }
+                    ? string.Join("\n", s.Groups.Select(g => $"{g.Name}: {g.RemainingPercent:0.#} % restantes" + (g.Refresh is { } r ? $" · renova em {WinStatusBar.Core.Ai.Antigravity.AntigravityQuota.ShortRefresh(r)}" : "")))
+                      + $"\nLido às {s.Updated.LocalDateTime:HH:mm}"
+                    : installed ? "Ainda não lida" : "—";
+        }
+        card.Action.Click += (_, _) =>
+        {
+            AntigravityQuotaSession.OpenSignIn();
+            card.SetNote(card.Action.Content as string == "Entrar"
+                ? "O agy abriu num terminal: digite /login e Enter, entre pelo link do Google e depois feche o terminal. Clique em \"Atualizar agora\" para conferir."
+                : "O agy abriu num terminal: digite /logout e Enter, depois entre com a outra conta e feche o terminal. Clique em \"Atualizar agora\" para conferir.");
+        };
+        AntigravityQuotaSession.Changed += OnChanged;
+        Closed += (_, _) => AntigravityQuotaSession.Changed -= OnChanged;
+        void OnChanged() => DispatcherQueue.TryEnqueue(Refresh);
         Refresh(); _accountRefreshers.Add(Refresh);
         accounts.Children.Add(card.Root);
     }

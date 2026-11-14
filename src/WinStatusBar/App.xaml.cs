@@ -232,6 +232,7 @@ public partial class App : Application
             GoogleUsageSession.Install(_dispatcher!);
             GeminiWebSession.Install(_dispatcher!);
             MicrosoftCreditsSession.Install(_dispatcher!);
+            AntigravityQuotaSession.Install(_dispatcher!); // cota do Google Antigravity (tela /usage do agy, a cada 30 min)
         });
         DeferredStep("ponte do Codex", CodexBridgeHost.Start); // Claude, Gemini, Copilot e Qira no seletor de modelos do Codex
         DeferredStep("IAs no Codex", () =>
@@ -562,6 +563,7 @@ public partial class App : Application
             _codexIasWatch?.Stop();
             GoogleUsageSession.Stop();
             MicrosoftCreditsSession.Stop();
+            AntigravityQuotaSession.Stop();
             ApiResume?.Shutdown(); // só laço e timers; a continuação pela API segue rodando
         });
         foreach (var b in _bars.ToList()) ExitStep("barra", b.CloseBar);

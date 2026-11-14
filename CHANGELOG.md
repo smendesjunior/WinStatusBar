@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.15.0] - 2026-11-14 · compilação 20261114190753
+
+### Adicionado
+- Cota do Google Antigravity: o limite semanal restante de cada grupo de modelos (Gemini; Claude e GPT) aparece na linha do Gemini no menu de agentes e na dica das cotas do Gemini, com o tempo até renovar. É lido a cada 30 minutos da tela /usage do próprio agy, aberto sem janela; a leitura não gasta cota.
+- Cartão "Google Antigravity" em Configurações › IAs e contas: conta e plano do login do agy (separado do Gemini da barra), cota semanal, "Atualizar agora", "Entrar" e "Trocar de conta" (abrem o agy num terminal) e "Instalar…" (winget) quando o agy não está no PC.
+
 ## [1.14.0] - 2026-11-14 · compilação 20261114183948
 
 ### Adicionado

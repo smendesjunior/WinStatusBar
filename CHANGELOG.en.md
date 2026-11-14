@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.15.0] - 2026-11-14 · build 20261114190753
+
+### Added
+- Google Antigravity quota: the weekly limit left for each model group (Gemini; Claude and GPT) shows on Gemini's row in the agents menu and in Gemini's quota tooltip, with the time until it resets. It's read every 30 minutes from agy's own /usage screen, opened without a window; reading it doesn't use quota.
+- "Google Antigravity" card in Settings › AIs and accounts: the agy sign-in's account and plan (separate from the bar's Gemini), weekly quota, "Update now", "Sign in" and "Switch account" (open agy in a terminal) and "Install…" (winget) when agy isn't on the PC.
+
 ## [1.14.0] - 2026-11-14 · build 20261114183948
 
 ### Added

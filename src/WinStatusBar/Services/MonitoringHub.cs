@@ -91,6 +91,7 @@ public sealed class MonitoringHub : IDisposable
         Activity.Changed += (_, _) => QueueAgentRefresh();
         GoogleUsageSession.Changed += () => QueueAgentRefresh();
         MicrosoftCreditsSession.Changed += () => QueueAgentRefresh();
+        AntigravityQuotaSession.Changed += () => QueueAgentRefresh();
         QiraBridge.QuotaChanged += () => QueueAgentRefresh();
         Codex.QuotaChanged += (_, _) => QueueAgentRefresh();
         Claude.QuotaChanged += (_, _) => QueueAgentRefresh();
@@ -505,6 +506,10 @@ public sealed class MonitoringHub : IDisposable
         vm.GeminiQuotaTooltip = gFresh
             ? $"Gemini · plano {g!.Plan ?? "—"} — {(gRemaining ? "restante" : "usado")}\nUso atual: {vm.GeminiCurrent} (renova {g.CurrentReset ?? "—"})\nSemanal: {vm.GeminiWeekly} (renova {g.WeeklyReset ?? "—"})\nLido às {g.Updated.LocalDateTime:HH:mm} em gemini.google.com/usage"
             : "Gemini: entre na conta Google em Configurações › IAs e contas › Gemini para ver as cotas";
+        if (AntigravityQuotaSession.Fresh is { } agq)
+            vm.GeminiQuotaTooltip += "\n\nGoogle Antigravity" + (agq.Plan is { } agPlan ? $" · {agPlan}" : "") + $" — limite semanal {(gRemaining ? "restante" : "usado")}\n"
+                + string.Join("\n", agq.Groups.Select(x => $"{x.Name}: {Math.Round(gRemaining ? x.RemainingPercent : 100 - x.RemainingPercent):0} %" + (x.Refresh is { } rf ? $" (renova em {Core.Ai.Antigravity.AntigravityQuota.ShortRefresh(rf)})" : "")))
+                + $"\nLido às {agq.Updated.LocalDateTime:HH:mm} no agy (/usage)";
         App.Current.UpdateTrayTooltip(global::WinStatusBar.Services.Localization.F("WinStatusBar\n{0}: {1}\nCodex 5h {2} · 7d {3}\nClaude 5h {4} · 7d {5}", new object?[] {vm.AgentName,vm.AgentState,vm.Codex5h,vm.Codex7d,vm.Claude5h,vm.Claude7d}));
     }
 
@@ -720,6 +725,8 @@ public sealed class MonitoringHub : IDisposable
                     ? $"API: {(api!.Daily ? "" : "pico ")}{Core.Ai.AiStudioUsageText.Show(busiest.RpdUsed ?? 0)}/{Core.Ai.AiStudioUsageText.Show(busiest.RpdLimit)} pedidos {(api.Daily ? "hoje" : "por dia")}"
                     : "API " + (api?.Tier is { } tier ? tier : "nível gratuito"));
             }
+            // Google Antigravity (agy): limite semanal de cada grupo de modelos, lido da tela /usage do próprio agy.
+            if (AntigravityQuotaSession.Fresh is { } ag) meta.Add(Core.Ai.Antigravity.AntigravityQuota.MenuText(ag, remaining));
             if (!fresh) ringNote = "Cotas: entre no Google";
         }
         else if (id == "copilot")
