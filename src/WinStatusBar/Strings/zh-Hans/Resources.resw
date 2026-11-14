@@ -4605,4 +4605,10 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SD9294F083016B7C2" xml:space="preserve">
     <value>{0} 个进程</value>
   </data>
+  <data name="S4ADEB5E78E36C2A2" xml:space="preserve">
+    <value>内存面板中的应用</value>
+  </data>
+  <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
+    <value>像任务管理器一样分组列出打开的应用，并显示每个应用的内存和 CPU 使用率。</value>
+  </data>
 </root>

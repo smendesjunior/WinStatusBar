@@ -4605,4 +4605,10 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SD9294F083016B7C2" xml:space="preserve">
     <value>{0} processes</value>
   </data>
+  <data name="S4ADEB5E78E36C2A2" xml:space="preserve">
+    <value>Apps in the memory panel</value>
+  </data>
+  <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
+    <value>Lists open apps, grouped as in Task Manager, with each one's memory and CPU usage.</value>
+  </data>
 </root>

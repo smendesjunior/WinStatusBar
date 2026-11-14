@@ -12,7 +12,23 @@ try
     {
         case "--enable": SensorPermissionTask.EnableFromCurrentExecutable(); return 0;
         case "--disable": SensorPermissionTask.Disable(); return 0;
-        case "--worker": await CpuSensorPipe.RunWorkerAsync(CancellationToken.None); return 0;
+        case "--worker":
+        {
+            // Uso da rede por processo (eventos de rede do Windows), ao lado do sensor de temperatura. Uma cópia só:
+            // um segundo auxiliar aberto pelo agendador não cria outra sessão de rastreamento.
+            using var netSingleton = new Mutex(true, "WinStatusBar.NetUsageWorker." + SensorPermissionTask.CurrentSid, out bool netFirst);
+            NetworkTrace? trace = null;
+            Task net = Task.CompletedTask;
+            // A barra só confia no canal se o servidor for o auxiliar protegido (conferido do lado dela).
+            if (netFirst && SensorPermissionTask.IsAdministrator())
+            {
+                try { trace = new NetworkTrace(); trace.Start(); net = NetUsagePipe.RunServerAsync(trace.Read, CancellationToken.None); }
+                catch { trace?.Dispose(); trace = null; } // sem o rastreamento, o sensor de temperatura continua
+            }
+            try { await CpuSensorPipe.RunWorkerAsync(CancellationToken.None); }
+            finally { trace?.Dispose(); }
+            return 0;
+        }
         default: return 2;
     }
 }

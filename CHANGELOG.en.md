@@ -7,6 +7,18 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.17.0] - 2026-11-14 · build 20261114201248
+
+### Added
+- Network panel: an "Apps using the most network" list with the 5 apps receiving and sending the most right now (average of the last 3 s), refreshed every 2 s. The numbers come from Windows network events, read by the bar's sensor helper with administrator permission (the same one used for CPU temperature); the first time, the panel asks you to authorize or renew that permission.
+- CPU usage for each app in the apps list, summed over its processes (100% = all cores).
+
+### Changed
+- The open-apps list (with process search and "End task") moved from the CPU panel to the memory panel.
+
+### Fixed
+- Bar executor: when OneDrive has moved Desktop, Documents or Pictures, a file requested in the profile's Desktop folder went to a folder that doesn't show on screen. The path now goes to the real folder, and the AIs are given those folders' real paths.
+
 ## [1.16.1] - 2026-11-14 · build 20261114193154
 
 ### Fixed

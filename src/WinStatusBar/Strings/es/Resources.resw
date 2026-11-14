@@ -4605,4 +4605,10 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SD9294F083016B7C2" xml:space="preserve">
     <value>{0} procesos</value>
   </data>
+  <data name="S4ADEB5E78E36C2A2" xml:space="preserve">
+    <value>Aplicaciones en el panel de memoria</value>
+  </data>
+  <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
+    <value>Muestra las aplicaciones abiertas, agrupadas como en el Administrador de tareas, con la memoria y el uso de CPU de cada una.</value>
+  </data>
 </root>

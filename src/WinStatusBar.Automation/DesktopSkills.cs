@@ -300,8 +300,8 @@ internal sealed partial class DesktopRuntime
     // ------------------------------------------------------------------ arquivos e pastas
     private static DesktopActionResult FileOp(DesktopActionRequest r)
     {
-        string path = Environment.ExpandEnvironmentVariables(r.Path ?? throw new InvalidOperationException("Informe path."));
-        string? to = r.To is null ? null : Environment.ExpandEnvironmentVariables(r.To);
+        string path = WinStatusBar.Core.Ai.KnownFolderPath.Resolve(r.Path ?? throw new InvalidOperationException("Informe path."));
+        string? to = r.To is null ? null : WinStatusBar.Core.Ai.KnownFolderPath.Resolve(r.To);
         bool overwrite = r.Overwrite == true;
         if (r.Op is "write" or "append" or "move" or "rename" or "delete" && InUse(path) is { } user)
             return new($"O arquivo está aberto em outro programa ({user}); nada foi alterado. Salve/feche-o ou edite na instância aberta (office).",
@@ -464,7 +464,8 @@ internal sealed partial class DesktopRuntime
             case "info":
             {
                 var drives = DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => $"{d.Name} {d.AvailableFreeSpace / 1e9:N0}/{d.TotalSize / 1e9:N0} GB livres");
-                return new($"{Environment.OSVersion} · {Environment.MachineName} · usuário {Environment.UserName} · {Environment.ProcessorCount} núcleos\nDiscos: {string.Join("; ", drives)}");
+                return new($"{Environment.OSVersion} · {Environment.MachineName} · usuário {Environment.UserName} · {Environment.ProcessorCount} núcleos\nDiscos: {string.Join("; ", drives)}"
+                    + $"\nPastas reais: Área de Trabalho {Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)}; Documentos {Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}; Downloads {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")}");
             }
             case "volume_up": case "volume_down": case "mute":
             {
@@ -532,8 +533,8 @@ internal sealed partial class DesktopRuntime
     {
         string app = (r.Application ?? "word").ToLowerInvariant();
         string op = r.Op ?? "read";
-        string? path = r.Path is null ? null : Path.GetFullPath(Environment.ExpandEnvironmentVariables(r.Path));
-        string? to = r.To is null ? null : Path.GetFullPath(Environment.ExpandEnvironmentVariables(r.To));
+        string? path = r.Path is null ? null : Path.GetFullPath(WinStatusBar.Core.Ai.KnownFolderPath.Resolve(r.Path));
+        string? to = r.To is null ? null : Path.GetFullPath(WinStatusBar.Core.Ai.KnownFolderPath.Resolve(r.To));
         ValidOfficeOp(app, op); // antes de abrir qualquer programa: uma op errada não pode iniciar o Word à toa
         if (app.Contains("word"))
         {
@@ -650,7 +651,7 @@ internal sealed partial class DesktopRuntime
     /// <summary>Destino livre: sem overwrite, falha se existir; com overwrite, o existente vai para a Lixeira.</summary>
     private static string Free(string path, bool overwrite)
     {
-        path = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
+        path = Path.GetFullPath(WinStatusBar.Core.Ai.KnownFolderPath.Resolve(path));
         if (File.Exists(path))
         {
             if (!overwrite) throw new InvalidOperationException("Já existe: " + path + ". Use outro nome ou \"overwrite\":true (o existente vai para a Lixeira).");

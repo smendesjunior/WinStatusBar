@@ -7,6 +7,18 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.17.0] - 2026-11-14 · compilação 20261114201248
+
+### Adicionado
+- Painel de rede: lista "Aplicativos que mais usam a rede", com os 5 aplicativos que mais recebem e enviam agora (média dos últimos 3 s), atualizada a cada 2 s. Os números vêm dos eventos de rede do Windows, lidos pelo auxiliar de sensores com permissão de administrador (o mesmo da temperatura da CPU); na primeira vez, o painel pede para autorizar ou renovar essa permissão.
+- Uso da CPU de cada aplicativo na lista de aplicativos, somado dos processos dele (100% = todos os núcleos).
+
+### Alterado
+- A lista de aplicativos abertos (com a pesquisa de processos e "Finalizar tarefa") saiu do painel da CPU e foi para o painel da memória.
+
+### Corrigido
+- Executor da barra: com a Área de Trabalho, Documentos ou Imagens movidos pelo OneDrive, um arquivo pedido na pasta Desktop do perfil ia para uma pasta que não aparece na tela. Agora o caminho vai para a pasta real, e as IAs recebem os caminhos reais dessas pastas.
+
 ## [1.16.1] - 2026-11-14 · compilação 20261114193154
 
 ### Corrigido

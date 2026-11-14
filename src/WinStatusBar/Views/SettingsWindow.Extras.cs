@@ -43,7 +43,7 @@ public sealed partial class SettingsWindow
         DetailPanelsHost.Children.Add(Group(
             Toggle(global::WinStatusBar.Services.Localization.T("Abrir painel ao clicar"), global::WinStatusBar.Services.Localization.T("Clique em CPU, RAM, GPU ou rede para ver gráficos e detalhes. Desligado, a barra mostra só a dica ao passar o mouse."),
                 s => s.DetailPanels, (s, v) => s.DetailPanels = v),
-            Toggle(global::WinStatusBar.Services.Localization.T("Aplicativos no painel da CPU"), "Lista os aplicativos abertos, agrupados como no Gerenciador de Tarefas.", s => s.CpuPanelApps, (s, v) => s.CpuPanelApps = v),
+            Toggle(global::WinStatusBar.Services.Localization.T("Aplicativos no painel da memória"), "Lista os aplicativos abertos, agrupados como no Gerenciador de Tarefas, com a memória e o uso da CPU de cada um.", s => s.CpuPanelApps, (s, v) => s.CpuPanelApps = v),
             Toggle(global::WinStatusBar.Services.Localization.T("Permitir finalizar tarefas"), global::WinStatusBar.Services.Localization.T("Mostra o botão \"Finalizar tarefa\". O app recebe primeiro o pedido de fechar; o encerramento forçado só é oferecido se ele não responder."),
                 s => s.AllowEndTask, (s, v) => s.AllowEndTask = v)));
 

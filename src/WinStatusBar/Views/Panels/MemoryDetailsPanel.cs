@@ -31,11 +31,14 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
     private readonly Dictionary<string, TextBlock> _fields = new();
     private readonly Grid _specs = new();
     private bool _open, _disposed, _specsLoaded;
+    private readonly AppsSection _apps;
+    private int _ticks;
     public FrameworkElement Content { get; }
 
-    public MemoryDetailsPanel(MonitoringHub hub)
+    public MemoryDetailsPanel(MonitoringHub hub, WinStatusBar.Core.Settings.SettingsService settings)
     {
         _hub = hub;
+        _apps = new AppsSection(settings);
         var body = new StackPanel { Spacing = 4 };
         body.Children.Add(PanelKit.Header(global::WinStatusBar.Services.Localization.T("Memória"), _subtitle, _kind));
 
@@ -57,6 +60,8 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Confirmado"), global::WinStatusBar.Services.Localization.T("Em cache")));
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Paginável"), global::WinStatusBar.Services.Localization.T("Não paginável")));
         body.Children.Add(PanelKit.Summary(live, _specs));
+        // Aplicativos abertos, com memória e uso da CPU de cada um (antes ficavam no painel da CPU).
+        body.Children.Add(_apps.Root);
 
         Content = PanelKit.Body(body);
     }
@@ -74,14 +79,21 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
         if (!_specsLoaded) { _specsLoaded = true; _ = LoadSpecsAsync(); }
         _usedPercent.Foreground = PanelKit.Res("AccentTextFillColorPrimaryBrush");
         _hub.CpuSampled += Render;
+        _hub.CpuSampled += TickApps;
         Render();
+        _ticks = 0;
+        _apps.Start();
     }
+
+    private void TickApps() { if (_open && !_disposed) _apps.Tick(++_ticks); }
 
     public void Stop()
     {
         if (!_open) return;
         _open = false;
         _hub.CpuSampled -= Render;
+        _hub.CpuSampled -= TickApps;
+        _apps.Stop();
     }
 
     private void Render()
@@ -188,5 +200,5 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
         PanelKit.FillSpecs(_specs, rows);
     }
 
-    public void Dispose() { _disposed = true; Stop(); _pdh?.Dispose(); _pdh = null; }
+    public void Dispose() { _disposed = true; Stop(); _apps.Dispose(); _pdh?.Dispose(); _pdh = null; }
 }

@@ -26,7 +26,8 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
     private readonly Dictionary<string, TextBlock> _fields = new();
     private readonly Grid _specs = new();
     private string? _alias;
-    private int _ticks;
+    private int _ticks, _topTicks;
+    private readonly NetworkTopApps _top = new();
     private bool _open, _disposed;
     public FrameworkElement Content { get; }
 
@@ -126,6 +127,8 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Enviar")));
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Receber")));
         _main.Children.Add(PanelKit.Summary(live, _specs));
+        // Os 5 aplicativos que mais usam a rede agora (pelo auxiliar com permissão dos sensores).
+        _main.Children.Add(_top.Root);
 
         _speed.Root.Visibility = Visibility.Collapsed;
         _root.Children.Add(_main); _root.Children.Add(_speed.Root);
@@ -147,8 +150,11 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         StartBluetoothWatcher();
         _testButton.Visibility = _settings.Current.SpeedTestEnabled ? Visibility.Visible : Visibility.Collapsed;
         _hub.CpuSampled += Render;
+        _hub.CpuSampled += TickTop;
         AutoSpeedTest.Changed += OnAutoTestChanged;
         Render();
+        _topTicks = 0;
+        _ = _top.RefreshAsync();
     }
 
     public void Stop()
@@ -160,10 +166,13 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         if (watcher?.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop();
         _bluetoothDevices.Clear();
         _hub.CpuSampled -= Render;
+        _hub.CpuSampled -= TickTop;
         AutoSpeedTest.Changed -= OnAutoTestChanged;
         _speed.Cancel();
         ShowMain(true);
     }
+
+    private void TickTop() { if (_open && !_disposed) _top.Tick(++_topTicks); }
 
     private void Render()
     {

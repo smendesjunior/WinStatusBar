@@ -610,7 +610,7 @@ public sealed partial class BarWindow : Window
     {
         Attach(CpuModule, new CpuDetailsPanel(_hub, _settings), nameof(VM.CpuTooltip));
         Attach(BatteryModule, new BatteryDetailsPanel(_hub), nameof(VM.BatteryTooltip));
-        Attach(RamModule, new MemoryDetailsPanel(_hub), nameof(VM.RamTooltip));
+        Attach(RamModule, new MemoryDetailsPanel(_hub, _settings), nameof(VM.RamTooltip));
         Attach(GpuModule, new GpuDetailsPanel(_hub, _settings), nameof(VM.GpuTooltip));
         Attach(NetworkModule, new NetworkDetailsPanel(_hub, _settings), nameof(VM.NetTooltip));
         ApplyBarOptions();
