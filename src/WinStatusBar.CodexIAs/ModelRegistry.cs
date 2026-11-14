@@ -22,7 +22,7 @@ internal sealed class ModelRegistry
 
     public ModelRegistry()
     {
-        _fixed = [new ClaudeProvider(), new WebChatProvider(WebSite.Gemini), new WebChatProvider(WebSite.Copilot), new QiraProvider(), new LocalProvider()];
+        _fixed = [new ClaudeProvider(), new AntigravityProvider(), new WebChatProvider(WebSite.Gemini), new WebChatProvider(WebSite.Copilot), new QiraProvider(), new LocalProvider()];
         _apis = ApiProvider.All();
         _bySlug = Load().ToDictionary(m => m.Slug, StringComparer.Ordinal);
     }

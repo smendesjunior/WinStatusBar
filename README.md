@@ -30,7 +30,7 @@
 |---|---|
 | ⚡ **Commands straight from the bar** | Type what you need — "rename these files", "fill this Excel sheet", "install this app" — and the bar's executor does it on your PC with built-in, self-checking actions. |
 | 🪙 **Fewer tokens per task** | Ready-made actions return short, verified results, and the bar remembers the steps that already worked on your PC, so the AI plans less and spends less. Context, Web and Edit start the way you set them. |
-| 🔌 **Every AI inside Codex** | Claude Code, Gemini, Copilot, Lenovo Qira, your API keys and local models show up in Codex's model picker through a gateway that runs only on your PC. |
+| 🔌 **Every AI inside Codex** | Claude Code, Google Antigravity, Gemini, Copilot, Lenovo Qira, your API keys and local models show up in Codex's model picker through a gateway that runs only on your PC. |
 | 🔄 **Models always in sync** | One click re-reads every configured AI and updates the bar's chat and Codex's picker at once; new local Ollama models appear on their own. |
 | 📊 **Quotas and agents at a glance** | 5-hour and weekly limits, API spending and the task each agent is running right now. |
 | 🖥️ **Hardware panels** | CPU, GPU, RAM, network and battery panels with live charts, temperatures and End task. |
@@ -67,7 +67,7 @@ Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://githu
 
 ## Ask your AI from anywhere
 
-One box at the center of the bar talks to **Claude Code, Codex, Gemini, Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
+One box at the center of the bar talks to **Claude Code, Codex, Gemini (including Google Antigravity's models), Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
 
 <p align="center"><img src="docs/screenshots/chat.png" width="760" alt="Chat panel with the AI selector, project, model, context chip and the Context, Web and Edit toggles"></p>
 
@@ -84,7 +84,7 @@ Every step is verified before the next one, results come back as short text inst
 
 ## Codex, supercharged
 
-- **All your AIs in Codex's model picker** — Claude Code (with your account), Gemini and Copilot (with their site modes), Lenovo Qira, your API keys and local models, served by a local gateway that only listens on your PC. It keeps working with the bar closed and starts with Windows.
+- **All your AIs in Codex's model picker** — Claude Code (with your account), Google Antigravity (Gemini, Claude and GPT-OSS models from your Google account, read-only), Gemini and Copilot (with their site modes), Lenovo Qira, your API keys and local models, served by a local gateway that only listens on your PC. It keeps working with the bar closed and starts with Windows.
 - **Set up by itself** — the first time the bar finds Codex it links everything, with a backup of `config.toml`. One click undoes it.
 - **One-click model sync** — **Check and update models** re-reads every configured AI and updates the bar and Codex together, flags OpenAI models that look obsolete (they only leave with your confirmation) and brings new Ollama models in.
 - **Fix AI problems** — one button checks and repairs the gateway, Codex's config, Ollama and Qira, and tells you exactly what still needs a login.
@@ -162,4 +162,4 @@ See [CHANGELOG.en.md](CHANGELOG.en.md).
 
 ---
 
-<sub>© 2026 Sidney Junior. All rights reserved. Claude, Codex, ChatGPT, Gemini, Copilot, Qira, Ollama, Windows and other names belong to their respective owners; WinStatusBar is not affiliated with these companies.</sub>
+<sub>© 2026 Sidney Junior. All rights reserved. Claude, Codex, ChatGPT, Gemini, Antigravity, Copilot, Qira, Ollama, Windows and other names belong to their respective owners; WinStatusBar is not affiliated with these companies.</sub>

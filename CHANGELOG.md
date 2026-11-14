@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.14.0] - 2026-11-14 · compilação 20261114183948
+
+### Adicionado
+- Google Antigravity como IA, pelo CLI oficial (agy) com a sua conta Google. Os modelos liberados para a conta (hoje Gemini 3.8 Flash, Claude Sonnet 4.6, Claude Opus 4.6 e GPT-OSS 120B) são lidos do próprio agy, então os novos entram e os que saem da conta saem na verificação de modelos.
+  - No Codex: aparecem no seletor como "Antigravity — …". Respondem em texto e podem ler a pasta da conversa; não editam arquivos nem rodam comandos (quem executa as ações é o Codex, como nas outras IAs da barra).
+  - No chat da barra: aparecem no seletor de modelo do Gemini como "Antigravity — …". Sem o lápis, só leitura; com o lápis, editam arquivos, mas não rodam comandos; com o acesso amplo ao PC, tudo liberado. A conversa continua no mesmo chat do Antigravity.
+  - As permissões valem só para cada pedido e não mudam as configurações do agy.
+
 ## [1.13.3] - 2026-11-14 · compilação 20261114182431
 
 ### Corrigido

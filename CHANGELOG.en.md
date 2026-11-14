@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.14.0] - 2026-11-14 · build 20261114183948
+
+### Added
+- Google Antigravity as an AI, through the official CLI (agy) with your Google account. The models available to your account (today Gemini 3.8 Flash, Claude Sonnet 4.6, Claude Opus 4.6 and GPT-OSS 120B) are read from agy itself, so new ones show up and removed ones go away on the next model check.
+  - In Codex: they appear in the model picker as "Antigravity — …". They answer in text and can read the conversation's folder; they don't edit files or run commands (Codex runs the actions, as with the other bar AIs).
+  - In the bar's chat: they appear in Gemini's model picker as "Antigravity — …". Without the pencil they are read-only; with the pencil they can edit files but not run commands; with full PC access, everything is allowed. The conversation continues in the same Antigravity chat.
+  - Permissions apply per request only and never change agy's own settings.
+
 ## [1.13.3] - 2026-11-14 · build 20261114182431
 
 ### Fixed
