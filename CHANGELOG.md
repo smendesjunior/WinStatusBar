@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.18.0] - 2026-11-14 · compilação 20261114202511
+
+### Adicionado
+- Painel de rede: o botão "Hotspot móvel" abre um menu na própria barra, como em Configurações do Windows: ligar e desligar, de qual conexão compartilhar a Internet, nome, senha e banda da rede (com "Editar"), dispositivos conectados e o QR code para conectar pelo celular. O link para as Configurações do Windows continua no fim do menu.
+
 ## [1.17.0] - 2026-11-14 · compilação 20261114201248
 
 ### Adicionado

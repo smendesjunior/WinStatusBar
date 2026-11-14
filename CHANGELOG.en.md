@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.18.0] - 2026-11-14 · build 20261114202511
+
+### Added
+- Network panel: the "Mobile hotspot" button opens a menu right in the bar, like Windows Settings: turn it on and off, which connection to share, network name, password and band (with "Edit"), connected devices and the QR code to connect from a phone. The link to Windows Settings stays at the bottom of the menu.
+
 ## [1.17.0] - 2026-11-14 · build 20261114201248
 
 ### Added

@@ -16,7 +16,9 @@ internal static class ConnectionPicker
             }
             if (kind == "Hotspot móvel")
             {
-                await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:network-mobilehotspot"));
+                // Menu na própria barra (ligar, conexão, nome, senha, banda, QR); o link do Windows fica dentro dele.
+                WinStatusBar.Views.HotspotFlyout.Show(anchor, () => status(""));
+                await Task.CompletedTask;
                 return;
             }
 
