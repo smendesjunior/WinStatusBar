@@ -382,6 +382,7 @@ public sealed partial class BarWindow
         QiraChat => "Lenovo Qira",
         "auto" => L.T("Escolha por mim"),
         "copilot" => "Microsoft Copilot",
+        "antigravity" => "Google Antigravity",
         "claude" => "Claude Code", "codex" => "Codex", "gemini" => _settings.Current.GeminiAuth == "api" ? "Gemini · " + L.T("chave de API") : "Gemini · " + L.T("conta Google"), "local" => L.T("IA local"),
         "api" => string.IsNullOrWhiteSpace(_settings.Current.ApiName) ? L.T("API própria") : _settings.Current.ApiName,
         ClaudeChat => L.T("Claude (chat)"), ChatGpt => "ChatGPT", ChatGptWork => "ChatGPT Work", _ => key,
@@ -506,6 +507,7 @@ public sealed partial class BarWindow
         "local" => VM.LocalIcon,
         "gemini" => AgentLogo("gemini.svg"),
         "copilot" => AgentLogo("copilot.svg"),
+        "antigravity" => AgentLogo("gemini.svg"),
         "api" => AdditionalAiAccounts.Providers.FirstOrDefault(p => p.Resource == _settings.Current.ApiCredentialResource) is { } provider
             ? AgentLogo(provider.Id + ".svg")
             : _settings.Current.ApiBaseUrl.Contains("openai.com", StringComparison.OrdinalIgnoreCase) ? VM.CodexIcon : null,
@@ -937,6 +939,7 @@ public sealed partial class BarWindow
             }
             // Só IAs configuradas: Copilot com login feito na barra; IA local com servidor ativo (ou já escolhida).
             if (CopilotWebSession.SignedIn || current == "copilot") Add("copilot", "");
+            if (AntigravityQuotaSession.Installed && AntigravityQuotaSession.Current?.SignedIn != false || current == "antigravity") Add("antigravity", "");
             if (_hub.Local.ServerDisplay is not null || current == "local") Add("local", "");
             if (QiraAppBridge.IsInstalled && settings.QiraEnabled || current == QiraChat) Add(QiraChat, "");
             // Outras APIs configuradas (chave salva): uma linha por serviço, sem repetir o destino "API".
@@ -1785,6 +1788,7 @@ public sealed partial class BarWindow
             T.Gemini => _hub.ApiActivity.Begin(conv.Id, "gemini", "Gemini", model),
             T.Copilot => _hub.ApiActivity.Begin(conv.Id, "copilot", "Microsoft Copilot", model),
             T.Qira => _hub.ApiActivity.Begin(conv.Id, "qira", "Lenovo Qira", "híbrido"),
+            T.Antigravity => _hub.ApiActivity.Begin(conv.Id, "antigravity", "Google Antigravity", model),
             _ => null,
         };
         var started = DateTime.Now;

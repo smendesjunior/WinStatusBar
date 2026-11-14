@@ -209,6 +209,7 @@ public static class AiErrorExplainer
             AgentPrompt.Target.Gemini => ("Gemini", false),
             AgentPrompt.Target.Copilot => ("Copilot", false),
             AgentPrompt.Target.Qira => ("Qira", false),
+            AgentPrompt.Target.Antigravity => ("Antigravity", false),
             _ => ("IA", true),
         };
         string F(string pattern) => LocalizedText.F(pattern, new object?[] { name });
@@ -224,6 +225,7 @@ public static class AiErrorExplainer
         AgentPrompt.Target.Gemini => LocalizedText.T("Entre de novo com a conta Google ou confira a chave em Configurações › IAs e contas › Gemini."),
         AgentPrompt.Target.Copilot => LocalizedText.T("Entre de novo em Configurações › IAs e contas › Microsoft Copilot."),
         AgentPrompt.Target.Qira => LocalizedText.T("Abra o app do Qira e entre de novo na conta Lenovo."),
+        AgentPrompt.Target.Antigravity => LocalizedText.T("Entre de novo no Antigravity em Configurações › IAs e contas › Google Antigravity › Entrar."),
         AgentPrompt.Target.Local => LocalizedText.T("O servidor local pediu uma chave; confira a configuração dele."),
         _ => LocalizedText.T("Confira ou troque a chave em Configurações › IAs e contas."),
     };

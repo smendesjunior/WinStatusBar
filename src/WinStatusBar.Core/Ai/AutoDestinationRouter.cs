@@ -77,6 +77,7 @@ public static class AutoDestinationRouter
         AgentPrompt.Target.Codex => "Codex: agente com ferramentas; lê e altera arquivos e pastas do PC, programa e executa tarefas de vários passos. Cobrança: assinatura (cota do plano).",
         AgentPrompt.Target.Gemini => "Gemini: perguntas gerais, textos e resumos.",
         AgentPrompt.Target.Copilot => "Microsoft Copilot: conversa geral pela conta Microsoft; sem custo por pedido.",
+        AgentPrompt.Target.Antigravity => "Google Antigravity: Gemini, Claude e GPT-OSS pela conta Google, com limite semanal da conta; bom para programar e perguntas gerais.",
         AgentPrompt.Target.Qira => "Lenovo Qira (local + nuvem): assistente do PC com ferramentas e conectores próprios; demora mais para abrir e gasta créditos Qira. Escolha só quando o pedido citar o Qira ou depender de um recurso dele.",
         _ => "API configurada pela pessoa. Cobrança: paga por uso, a cada pedido.",
     };

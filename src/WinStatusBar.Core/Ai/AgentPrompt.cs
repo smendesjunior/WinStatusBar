@@ -18,7 +18,7 @@ namespace WinStatusBar.Core.Ai;
 /// </summary>
 public static class AgentPrompt
 {
-    public enum Target { Claude, Codex, Local, Api, Gemini, Copilot, Qira }
+    public enum Target { Claude, Codex, Local, Api, Gemini, Copilot, Qira, Antigravity }
 
     public sealed record ModelOption(string Id, string Label, IReadOnlyList<string> Efforts, string? DefaultEffort);
     public sealed record Catalog(IReadOnlyList<ModelOption> Models, string? AppModel, string? AppEffort, string? Error);
@@ -38,8 +38,8 @@ public static class AgentPrompt
     /// <summary>keep_alive enviado ao Ollama em cada pedido (configurável pela aplicação; padrão do Ollama se nulo).</summary>
     public static Func<string?>? OllamaKeepAlive { get; set; }
 
-    public static string Key(Target t) => t switch { Target.Claude => "claude", Target.Codex => "codex", Target.Local => "local", Target.Gemini => "gemini", Target.Copilot => "copilot", Target.Qira => "qira", _ => "api" };
-    public static Target? Parse(string? key) => key switch { "claude" => Target.Claude, "codex" => Target.Codex, "local" => Target.Local, "api" => Target.Api, "gemini" => Target.Gemini, "copilot" => Target.Copilot, "qira" => Target.Qira, _ => null };
+    public static string Key(Target t) => t switch { Target.Claude => "claude", Target.Codex => "codex", Target.Local => "local", Target.Gemini => "gemini", Target.Copilot => "copilot", Target.Qira => "qira", Target.Antigravity => "antigravity", _ => "api" };
+    public static Target? Parse(string? key) => key switch { "claude" => Target.Claude, "codex" => Target.Codex, "local" => Target.Local, "api" => Target.Api, "gemini" => Target.Gemini, "copilot" => Target.Copilot, "qira" => Target.Qira, "antigravity" => Target.Antigravity, _ => null };
 
     // ------------------------------------------------------------------ executáveis
     public static string? FindClaudeExecutable()
@@ -158,6 +158,7 @@ public static class AgentPrompt
                 Target.Gemini => await Gemini.GeminiCli.CatalogAsync(ct),
                 Target.Copilot => CopilotAppBridge.Catalog(),
                 Target.Qira => QiraBridge.Catalog(),
+                Target.Antigravity => await Antigravity.AntigravityCli.CatalogAsync(ct),
                 Target.Local => await LocalCatalogAsync(ct),
                 _ => await ApiCatalogAsync(api, ct, includeRefused),
             };
@@ -444,7 +445,7 @@ public static class AgentPrompt
     private static async Task<Result> RunOnceAsync(Target target, string prompt, string? model, string? effort, ApiConfig? api, Options options, Action<string> onText, CancellationToken ct)
     {
         string? delivered = null;
-        if (options.SystemPrompt is { Length: > 0 } fullSystem && target is Target.Gemini or Target.Copilot or Target.Qira)
+        if (options.SystemPrompt is { Length: > 0 } fullSystem && target is Target.Gemini or Target.Copilot or Target.Qira or Target.Antigravity)
         {
             // O retrato do PC muda a cada pedido: fica fora da comparação, senão as instruções seriam reenviadas sempre.
             int cut = fullSystem.IndexOf(DesktopAgentLoop.ContextMarker, StringComparison.Ordinal);
@@ -471,6 +472,7 @@ public static class AgentPrompt
             Target.Gemini => Gemini.GeminiCli.RunAsync(prompt, model, options, onText, ct),
             Target.Copilot => CopilotAppBridge.RunAsync(prompt, model, options, onText, ct),
             Target.Qira => QiraBridge.RunAsync(prompt, model, options, onText, ct),
+            Target.Antigravity => Antigravity.AntigravityCli.RunBarAsync(prompt, model, options, onText, ct),
             // Servidor local compatível com OpenAI (sem chave; o campo só preenche o cabeçalho exigido).
             Target.Local when _localOpenAiBase is { } local => RunApiAsync(new ApiConfig("openai", local, "local"), prompt, model, effort, options, onText, ct),
             Target.Local => RunOllamaAsync(prompt, model, effort, options, onText, ct),

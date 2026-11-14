@@ -215,6 +215,39 @@ public static class AntigravityCli
         }
     }
 
+    /// <summary>Padrão quando nada foi escolhido: o primeiro da lista do agy (hoje Gemini 3.8 Flash High).</summary>
+    public static async Task<AgentPrompt.Catalog> CatalogAsync(CancellationToken ct)
+    {
+        if (FindExecutable() is null)
+            return new([], null, null, LocalizedText.T("Antigravity (agy) não instalado. Instale em Configurações › IAs e contas › Google Antigravity."));
+        var models = await ModelsAsync(ct);
+        if (models is null) return new([], null, null, LocalizedText.T("O Antigravity (agy) não respondeu. Tente de novo em instantes."));
+        if (models.Count == 0) return new([], null, null, LocalizedText.T("O Antigravity está sem login. Entre em Configurações › IAs e contas › Google Antigravity."));
+        var options = models.Select(m => new AgentPrompt.ModelOption(m.Id, m.Label, [], null)).ToList();
+        return new(options, options[0].Id, null, null);
+    }
+
+    /// <summary>
+    /// Pedido do chat da barra: continua a conversa do agy (sessão "agy:&lt;id&gt;") ou começa uma com a conversa da
+    /// barra como contexto. Sem o lápis, só leitura; com o lápis, edita arquivos (sem comandos); com o acesso
+    /// completo, tudo liberado.
+    /// </summary>
+    public static async Task<AgentPrompt.Result> RunBarAsync(string prompt, string? model, AgentPrompt.Options o, Action<string> onText, CancellationToken ct)
+    {
+        string? conversation = o.ResumeSession is { } r && r.StartsWith(BarPrefix, StringComparison.Ordinal) ? r[BarPrefix.Length..] : null;
+        if (conversation is null) prompt = ConversationHandoff.WithTranscript(prompt, o.History);
+        if (o.Attachments.Count > 0) prompt += "\n\n" + LocalizedText.T("Anexos:") + "\n" + string.Join("\n", o.Attachments);
+        string workDir = o.WorkDir is { } wd && Directory.Exists(wd) ? wd : WorkFolder();
+        var deny = o.Unrestricted ? null : o.AllowEdits ? EditDeny : ReadOnlyDeny;
+        var dirs = (o.ExtraDirs ?? []).Concat(o.Attachments.Select(a => Directory.Exists(a) ? a : Path.GetDirectoryName(a) ?? ""))
+            .Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase);
+        // Modelo salvo de antes (opções "agy:…" do seletor do Gemini, na 1.14.0): o prefixo sai.
+        string? id = model is { } m && m.StartsWith(BarPrefix, StringComparison.Ordinal) ? m[BarPrefix.Length..] : model;
+        var run = await RunAsync(prompt, Arguments(id, null, conversation, deny, dirs), workDir, onText, ct);
+        string? session = run.Conversation is { Length: > 0 } c ? BarPrefix + c : o.ResumeSession;
+        return new(run.Text, session, run.Error);
+    }
+
     /// <summary>Erros conhecidos em português simples (o resto passa como veio).</summary>
     public static string? Friendly(string? error)
     {

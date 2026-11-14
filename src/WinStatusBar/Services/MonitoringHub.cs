@@ -725,9 +725,21 @@ public sealed class MonitoringHub : IDisposable
                     ? $"API: {(api!.Daily ? "" : "pico ")}{Core.Ai.AiStudioUsageText.Show(busiest.RpdUsed ?? 0)}/{Core.Ai.AiStudioUsageText.Show(busiest.RpdLimit)} pedidos {(api.Daily ? "hoje" : "por dia")}"
                     : "API " + (api?.Tier is { } tier ? tier : "nível gratuito"));
             }
-            // Google Antigravity (agy): limite semanal de cada grupo de modelos, lido da tela /usage do próprio agy.
-            if (AntigravityQuotaSession.Fresh is { } ag) meta.Add(Core.Ai.Antigravity.AntigravityQuota.MenuText(ag, remaining));
             if (!fresh) ringNote = "Cotas: entre no Google";
+        }
+        else if (id == "antigravity")
+        {
+            // Limite semanal de cada grupo de modelos (Gemini; Claude e GPT), lido da tela /usage do agy.
+            if (AntigravityQuotaSession.Fresh is { } ag)
+            {
+                var rings = ag.Groups.Take(2).Select(x => MakeRing(x.Name, 100 - x.RemainingPercent, remaining,
+                    x.Refresh is { } rf ? "renova em " + Core.Ai.Antigravity.AntigravityQuota.ShortRefresh(rf) : "semanal")).ToList();
+                r1 = rings.Count > 1 ? rings[0] : null;
+                r2 = rings.Count > 1 ? rings[1] : rings.FirstOrDefault();
+                if (ag.Groups.All(x => x.RemainingPercent <= 0)) exhausted = "Cota semanal esgotada";
+                if (ag.Plan is { } agPlan) meta.Add(agPlan);
+            }
+            else ringNote = AntigravityQuotaSession.Busy ? "Cota: lendo…" : "Cota: aguardando leitura";
         }
         else if (id == "copilot")
         {
@@ -789,6 +801,8 @@ public sealed class MonitoringHub : IDisposable
         }
         // Copilot: configurado quando há login no Copilot da barra.
         if (CopilotWebSession.SignedIn) list.Add(("copilot", "Microsoft Copilot", ExtraLogo("copilot")));
+        // Google Antigravity: agy instalado e com login (a cota diz se há login; sem leitura ainda, aparece).
+        if (AntigravityQuotaSession.Installed && AntigravityQuotaSession.Current?.SignedIn != false) list.Add(("antigravity", "Google Antigravity", ExtraLogo("gemini")));
         return _extraAis = list;
     }
 

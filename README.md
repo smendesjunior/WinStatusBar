@@ -67,7 +67,7 @@ Or download **`WinStatusBar-Setup.exe`** from the [latest release](https://githu
 
 ## Ask your AI from anywhere
 
-One box at the center of the bar talks to **Claude Code, Codex, Gemini (including Google Antigravity's models), Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
+One box at the center of the bar talks to **Claude Code, Codex, Gemini, Google Antigravity, Microsoft Copilot, Lenovo Qira, local models (Ollama)** or your own API key. The active window is attached as context, so you can ask about what is on screen without copying anything. Switch AI, model or reasoning level mid-conversation without losing the thread.
 
 <p align="center"><img src="docs/screenshots/chat.png" width="760" alt="Chat panel with the AI selector, project, model, context chip and the Context, Web and Edit toggles"></p>
 

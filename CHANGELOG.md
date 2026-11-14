@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.16.0] - 2026-11-14 · compilação 20261114191823
+
+### Alterado
+- Google Antigravity virou uma IA própria da barra: tem a sua linha "Google Antigravity" na escolha de IA do chat (antes os modelos ficavam dentro do seletor do Gemini) e a sua linha no menu de agentes, com um anel de limite semanal para cada grupo de modelos (Gemini; Claude e GPT), o tempo até renovar e o plano. A linha do Gemini volta a mostrar só as cotas do Gemini. Ele também entra na ordem das IAs em Configurações › Cotas e tarefas.
+
 ## [1.15.0] - 2026-11-14 · compilação 20261114190753
 
 ### Adicionado

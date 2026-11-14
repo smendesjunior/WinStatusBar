@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.16.0] - 2026-11-14 · build 20261114191823
+
+### Changed
+- Google Antigravity is now an AI of its own in the bar: it has its own "Google Antigravity" entry in the chat's AI picker (its models used to live inside Gemini's model picker) and its own row in the agents menu, with a weekly-limit ring for each model group (Gemini; Claude and GPT), the time until reset and the plan. Gemini's row shows only Gemini's quotas again. It also joins the AI order in Settings › Quotas and tasks.
+
 ## [1.15.0] - 2026-11-14 · build 20261114190753
 
 ### Added

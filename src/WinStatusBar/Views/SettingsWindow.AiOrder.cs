@@ -54,6 +54,7 @@ public sealed partial class SettingsWindow
             ["codex"] = ("Codex", "chatgpt-estatico.svg", "Cota 5h e 7d da assinatura"),
             ["claude"] = ("Claude Code", "", "Cota 5h e 7d da assinatura"),
             ["gemini"] = ("Gemini", "gemini.svg", "Uso atual e semanal do plano (conta Google)"),
+            ["antigravity"] = ("Google Antigravity", "gemini.svg", "Limite semanal por grupo de modelos (agy)"),
             ["copilot"] = ("Microsoft Copilot", "copilot.svg", "Créditos de IA da assinatura Microsoft"),
             ["qira"] = ("Lenovo Qira", "qira.svg", "Modo Híbrido · créditos da nuvem do Qira"),
             ["local"] = ("IA local", "ollama-estatico.svg", "Sem cota (roda no PC)"),

@@ -94,7 +94,7 @@ public sealed class AppSettings
     public List<string> AiOrder { get; set; } = new(DefaultAiOrder);
     /// <summary>IAs com módulo de cota na barra, na ordem de <see cref="AiOrder"/>.</summary>
     public List<string> BarQuotaServices { get; set; } = new() { "codex", "claude" };
-    public static readonly string[] DefaultAiOrder = ["codex", "claude", "gemini", "copilot", "local", "deepseek", "grok", "qira"];
+    public static readonly string[] DefaultAiOrder = ["codex", "claude", "gemini", "antigravity", "copilot", "local", "deepseek", "grok", "qira"];
     /// <summary>IAs que têm cota em porcentagem para mostrar na barra.</summary>
     public static readonly string[] QuotaCapable = ["codex", "claude", "gemini", "copilot", "qira"];
     /// <summary>Projeto do Google Cloud do login do Gemini CLI (contas Code Assist Standard/Enterprise). Vazio: não usa.</summary>

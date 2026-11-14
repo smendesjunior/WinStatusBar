@@ -110,7 +110,6 @@ public static class GeminiCli
             // Modos do seletor do site (ex.: "Rápido", "Pro"), lidos na última verificação de Configurações › Codex e modelos.
             var modes = new List<AgentPrompt.ModelOption> { new("app", "Modo escolhido no Gemini (conta Google)", [], null) };
             modes.AddRange(Codex.CodexIntegration.SiteModes("gemini").Select(m => new AgentPrompt.ModelOption(m.Id, m.Label, [], null)));
-            modes.AddRange(await AntigravityOptionsAsync(ct));
             return new(modes, "app", null, null);
         }
         string? key = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
@@ -130,41 +129,7 @@ public static class GeminiCli
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException) { }
         }
-        var catalog = Catalog();
-        return catalog with { Models = catalog.Models.Concat(await AntigravityOptionsAsync(ct)).ToList() };
-    }
-
-    /// <summary>
-    /// Modelos do Google Antigravity (agy) com a conta Google, no mesmo seletor do Gemini ("Antigravity — …"). Lidos do
-    /// próprio agy e guardados por 1 h; sem o agy instalado ou sem login, nada aparece.
-    /// </summary>
-    private static async Task<IEnumerable<AgentPrompt.ModelOption>> AntigravityOptionsAsync(CancellationToken ct)
-    {
-        IReadOnlyList<Antigravity.AntigravityCli.Model>? models;
-        try { models = await Antigravity.AntigravityCli.ModelsAsync(ct); }
-        catch (OperationCanceledException) { throw; }
-        catch { models = null; }
-        return (models ?? []).Select(m => new AgentPrompt.ModelOption(Antigravity.AntigravityCli.BarPrefix + m.Id, Antigravity.AntigravityCli.DisplayName(m), [], null));
-    }
-
-    /// <summary>
-    /// Pedido para um modelo do Antigravity: continua a conversa do agy (sessão "agy:&lt;id&gt;") ou começa uma com a
-    /// conversa da barra como contexto. Permissões como as do Gemini CLI: só leitura; com o lápis, edita arquivos (sem
-    /// comandos); com o acesso completo, tudo liberado.
-    /// </summary>
-    private static async Task<AgentPrompt.Result> RunAntigravityAsync(string prompt, string model, AgentPrompt.Options o, Action<string> onText, CancellationToken ct)
-    {
-        string? conversation = o.ResumeSession is { } r && r.StartsWith(Antigravity.AntigravityCli.BarPrefix, StringComparison.Ordinal)
-            ? r[Antigravity.AntigravityCli.BarPrefix.Length..] : null;
-        if (conversation is null) prompt = ConversationHandoff.WithTranscript(prompt, o.History);
-        if (o.Attachments.Count > 0) prompt += "\n\n" + LocalizedText.T("Anexos:") + "\n" + string.Join("\n", o.Attachments);
-        string workDir = o.WorkDir is { } wd && Directory.Exists(wd) ? wd : Antigravity.AntigravityCli.WorkFolder();
-        var deny = o.Unrestricted ? null : o.AllowEdits ? Antigravity.AntigravityCli.EditDeny : Antigravity.AntigravityCli.ReadOnlyDeny;
-        var dirs = (o.ExtraDirs ?? []).Concat(o.Attachments.Select(a => Directory.Exists(a) ? a : Path.GetDirectoryName(a) ?? "")).Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase);
-        var args = Antigravity.AntigravityCli.Arguments(model[Antigravity.AntigravityCli.BarPrefix.Length..], null, conversation, deny, dirs);
-        var run = await Antigravity.AntigravityCli.RunAsync(prompt, args, workDir, onText, ct);
-        string? session = run.Conversation is { Length: > 0 } c ? Antigravity.AntigravityCli.BarPrefix + c : o.ResumeSession;
-        return new(run.Text, session, run.Error);
+        return Catalog();
     }
 
     /// <summary>Filtra a resposta de /v1beta/models: só modelos Gemini de conversa (sem imagem, voz, embeddings…), mais novos primeiro.</summary>
@@ -249,8 +214,7 @@ public static class GeminiCli
 
     public static async Task<AgentPrompt.Result> RunAsync(string prompt, string? model, AgentPrompt.Options o, Action<string> onText, CancellationToken ct)
     {
-        if (model is { } m && m.StartsWith(Antigravity.AntigravityCli.BarPrefix, StringComparison.Ordinal)) return await RunAntigravityAsync(prompt, m, o, onText, ct);
-        // Sessão de uma conversa do Antigravity (troca de modelo no meio): o Gemini começa outra, com a conversa como contexto.
+        // Sessão de outra IA (ex.: Antigravity, "agy:…"): o Gemini começa outra conversa, com a conversa como contexto.
         if (o.ResumeSession?.StartsWith(Antigravity.AntigravityCli.BarPrefix, StringComparison.Ordinal) == true) o = o with { ResumeSession = null };
         if (UsesWeb) return await WebRunner!(prompt, model, o, onText, ct);
         if (Find() is not { } install) return new("", null, LocalizedText.T("Gemini CLI não encontrado neste PC"));
