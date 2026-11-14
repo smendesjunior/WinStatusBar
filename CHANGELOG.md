@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.16.1] - 2026-11-14 · compilação 20261114193154
+
+### Corrigido
+- Google Antigravity: um modelo escolhido que saiu da lista do agy (por exemplo, Claude e GPT-OSS, que deixam o plano Starter em 18/11/2026) volta sozinho para o modelo padrão no chat, em vez de falhar a cada envio.
+- Google Antigravity: o erro de modelo fora do plano aparece em português, com a orientação de escolher outro modelo.
+
 ## [1.16.0] - 2026-11-14 · compilação 20261114191823
 
 ### Alterado

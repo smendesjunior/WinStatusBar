@@ -254,6 +254,9 @@ public static class AntigravityCli
         if (string.IsNullOrEmpty(error)) return error;
         if (System.Text.RegularExpressions.Regex.IsMatch(error, @"not (logged|signed) in|unauthenticated|login required|please (log|sign) in", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             return "O Antigravity está sem login. Abra um terminal, rode \"agy\" e entre com a conta Google.";
+        // Modelo que saiu do plano (ex.: Claude e GPT-OSS deixam o plano Starter em 18/11/2026) ou que o agy não conhece.
+        if (System.Text.RegularExpressions.Regex.IsMatch(error, @"third.party model|model.{0,40}(not (available|supported|found|enabled)|no longer available|unavailable|not allowed|requires? (a )?(paid|pro|ultra))|(unknown|invalid|unsupported) model|upgrade (to|your plan)", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return "Esse modelo não faz mais parte do seu plano do Antigravity. Escolha outro modelo do Antigravity (os disponíveis são atualizados sozinhos). (" + error + ")";
         if (System.Text.RegularExpressions.Regex.IsMatch(error, @"quota|rate limit|resource.?exhausted|\b429\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             return "O Antigravity está sem cota agora para este modelo. Tente outro modelo ou mais tarde. (" + error + ")";
         return error;

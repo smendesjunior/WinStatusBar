@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.16.1] - 2026-11-14 · build 20261114193154
+
+### Fixed
+- Google Antigravity: a chosen model that dropped out of agy's list (e.g. Claude and GPT-OSS, which leave the Starter plan on 2026-11-18) now falls back to the default model in the chat instead of failing on every send.
+- Google Antigravity: the "model not in your plan" error is shown in plain Portuguese, with a hint to pick another model.
+
 ## [1.16.0] - 2026-11-14 · build 20261114191823
 
 ### Changed

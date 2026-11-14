@@ -67,6 +67,9 @@ public class AntigravityCliTests
         Assert.Contains("sem login", AntigravityCli.Friendly("Error: not logged in"));
         Assert.Contains("sem cota", AntigravityCli.Friendly("429 RESOURCE_EXHAUSTED"));
         Assert.Equal("outro", AntigravityCli.Friendly("outro"));
+        Assert.Contains("não faz mais parte do seu plano", AntigravityCli.Friendly("Third-party model access is not available on your current plan"));
+        Assert.Contains("não faz mais parte do seu plano", AntigravityCli.Friendly("model claude-sonnet-4-6 is not available"));
+        Assert.Contains("não faz mais parte do seu plano", AntigravityCli.Friendly("unknown model: gpt-oss-120b-medium"));
     }
 
     [Fact]
