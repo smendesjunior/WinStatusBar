@@ -176,6 +176,11 @@ public sealed class WebModePicker
 
     private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Itens do menu para o log: nome, descrição e marcas (x = escolhido, radio, submenu, bloqueado).</summary>
+    private static string Describe(IEnumerable<Item> items) => string.Join(", ", items.Select(i =>
+        $"\"{i.Label}\"" + (i.Description.Length > 0 ? $" ({i.Description})" : "")
+        + (i.Selected ? " [x]" : "") + (i.Radio ? "" : " [não-radio]") + (i.Submenu ? " >" : "") + (i.Disabled ? " [bloqueado]" : "")));
+
     /// <summary>Modelos já conhecidos do submenu <paramref name="parent"/> (da última leitura do menu).</summary>
     private HashSet<string> KnownChildren(string parent)
         => _known().Where(m => m.Path.Count == 2 && Same(m.Path[0], parent)).Select(m => m.Path[1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -249,15 +254,25 @@ public sealed class WebModePicker
     /// </summary>
     public async Task<(string? Error, IReadOnlyList<string>? Previous)> SelectAsync(IReadOnlyList<string> path, CancellationToken ct)
     {
-        if (path.Count == 0) return (null, null);
-        if (!await OpenAsync(ct)) return ($"Seletor de modo do {_label} não encontrado na página.", null);
+        var (_, error, previous) = await TrySelectAsync(path, ct);
+        return (error, previous);
+    }
+
+    /// <summary>Resultado da escolha de um modo. Paid e Disabled: a conta não pode usar o modo (sai das listas).</summary>
+    public enum Outcome { Ok, NoPicker, Missing, Disabled, Paid, NotConfirmed }
+
+    /// <summary>Como <see cref="SelectAsync"/>, dizendo também por que não deu (para a verificação tirar modos pagos).</summary>
+    public async Task<(Outcome Outcome, string? Error, IReadOnlyList<string>? Previous)> TrySelectAsync(IReadOnlyList<string> path, CancellationToken ct)
+    {
+        if (path.Count == 0) return (Outcome.Ok, null, null);
+        if (!await OpenAsync(ct)) return (Outcome.NoPicker, $"Seletor de modo do {_label} não encontrado na página.", null);
         var top = await ItemsAsync();
         IReadOnlyList<string>? previous = top.FirstOrDefault(i => i.Radio && i.Selected) is { } sel ? [sel.Label] : null;
         // Submenu renomeado com o modelo escolhido: é o modo atual (para devolver depois, ou já é o pedido).
         if (previous is null)
             foreach (var parent in _known().Where(m => m.Path.Count == 2).Select(m => m.Path[0]).Distinct(StringComparer.OrdinalIgnoreCase))
                 if (top.FirstOrDefault(i => i.Submenu && KnownChildren(parent).Contains(i.Label)) is { } renamed) { previous = [parent, renamed.Label]; break; }
-        if (path.Count == 2 && top.Any(i => i.Submenu && Same(i.Label, path[1]))) { await CloseAsync(); return (null, null); }
+        if (path.Count == 2 && top.Any(i => i.Submenu && Same(i.Label, path[1]))) { await CloseAsync(); return (Outcome.Ok, null, null); }
         Item? target;
         if (path.Count == 1) target = top.FirstOrDefault(i => i.Radio && Same(i.Label, path[0]));
         else
@@ -268,11 +283,12 @@ public sealed class WebModePicker
         }
         if (target is null)
         {
+            _log($"{_label}: modo \"{string.Join(" › ", path)}\" não encontrado; menu: {Describe(top)}");
             await CloseAsync();
-            return ($"O modo \"{string.Join(" › ", path)}\" não existe mais no {_label}. Na WinStatusBar, abra Configurações › Codex e modelos e clique em Verificar e atualizar.", null);
+            return (Outcome.Missing, $"O modo \"{string.Join(" › ", path)}\" não existe mais no {_label}. Na WinStatusBar, abra Configurações › Codex e modelos e clique em Verificar e atualizar.", null);
         }
-        if (target.Disabled) { await CloseAsync(); return ($"O modo \"{target.Label}\" está indisponível na sua conta do {_label}.", null); }
-        if (target.Selected) { await CloseAsync(); return (null, null); }
+        if (target.Disabled) { await CloseAsync(); return (Outcome.Disabled, $"O modo \"{target.Label}\" está indisponível na sua conta do {_label}.", null); }
+        if (target.Selected) { await CloseAsync(); return (Outcome.Ok, null, null); }
         // Os modelos de um submenu vêm depois do menu principal: procura de trás para frente.
         var visible = await ItemsAsync();
         int index = path.Count == 2 ? visible.FindLastIndex(i => i.Radio && Same(i.Label, target.Label)) : visible.FindIndex(i => i.Radio && Same(i.Label, target.Label));
@@ -282,7 +298,7 @@ public sealed class WebModePicker
         if (await DismissUpsellAsync())
         {
             await CloseAsync();
-            return ($"O modo \"{target.Label}\" exige assinatura no {_label} (o site ofereceu o plano pago; nada foi assinado). Escolha outro modo.", null);
+            return (Outcome.Paid, $"O modo \"{target.Label}\" exige assinatura no {_label} (o site ofereceu o plano pago; nada foi assinado). Escolha outro modo.", null);
         }
         await CloseAsync();
         // Confere relendo o menu: o modo pedido precisa aparecer marcado.
@@ -300,8 +316,8 @@ public sealed class WebModePicker
             await CloseAsync();
         }
         if (!confirmed) _log($"{_label}: conferência do modo \"{string.Join(" › ", path)}\" falhou; menu: {seen}");
-        if (!confirmed) return ($"Não foi possível escolher o modo \"{target.Label}\" no {_label}. Nada foi enviado.", previous);
+        if (!confirmed) return (Outcome.NotConfirmed, $"Não foi possível escolher o modo \"{target.Label}\" no {_label}. Nada foi enviado.", previous);
         _log($"{_label}: modo escolhido: {string.Join(" › ", path)}");
-        return (null, previous);
+        return (Outcome.Ok, null, previous);
     }
 }

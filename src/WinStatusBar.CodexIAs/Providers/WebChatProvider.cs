@@ -78,11 +78,13 @@ internal sealed class WebChatProvider : IProvider
             return Listing.SignIn($"sem login no {_site.Label} (entre na conta pela barra)");
         try
         {
-            var (found, problem, signIn) = await Ui.Run(() => DiscoverModesAsync(ct));
+            var (found, refused, problem, signIn) = await Ui.Run(() => DiscoverModesAsync(ct));
             if (signIn) return Listing.SignIn($"sem login no {_site.Label} (entre na conta pela barra)");
             if (problem is not null) return Listing.Fail(problem);
-            if (found.Count > 0) { _modes = found; SaveModes(found); }
-            return new(ToModels(found));
+            // Só os modos que a conta pode usar ficam guardados (a barra lê a mesma lista).
+            var usable = found.Where(m => !m.Disabled).ToList();
+            if (usable.Count > 0) { _modes = usable; SaveModes(usable); }
+            return new(ToModels(usable)) { Refused = refused };
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -215,8 +217,13 @@ internal sealed class WebChatProvider : IProvider
     private WebModePicker Picker(WebView2 web) => new(_site.Label, script => web.CoreWebView2.ExecuteScriptAsync(script),
         (method, json) => web.CoreWebView2.CallDevToolsProtocolMethodAsync(method, json), () => _modes ?? [], Log.Write, _site.Picker, _site.ModeItems);
 
-    /// <summary>Modos do seletor do site. Problem: a página não ficou pronta; SignIn: o site pediu login.</summary>
-    private async Task<(IReadOnlyList<Mode> Modes, string? Problem, bool SignIn)> DiscoverModesAsync(CancellationToken ct)
+    /// <summary>
+    /// Modos do seletor do site. Cada modo é escolhido uma vez, como no envio: o site mostra modos pagos como os outros e
+    /// só ao escolher abre a oferta de assinatura (fechada com "Agora não"; nada é assinado). Esses e os bloqueados voltam
+    /// com Disabled e o motivo em Refused. No fim, o modo que estava escolhido volta.
+    /// Problem: a página não ficou pronta; SignIn: o site pediu login.
+    /// </summary>
+    private async Task<(IReadOnlyList<Mode> Modes, IReadOnlyList<string> Refused, string? Problem, bool SignIn)> DiscoverModesAsync(CancellationToken ct)
     {
         await _gate.WaitAsync(ct);
         try
@@ -224,13 +231,46 @@ internal sealed class WebChatProvider : IProvider
             var web = await EnsureAsync();
             if (!(web.CoreWebView2.Source ?? "").StartsWith(_site.HomePrefix, StringComparison.OrdinalIgnoreCase)) await NavigateAndWaitAsync(web, _site.Home, ct);
             var (problem, signIn) = await WaitReadyCoreAsync(web, ct);
-            if (problem is not null) { Log.Write($"{_site.Label}: modos não lidos: {problem}"); return ([], problem, signIn); }
-            var (modes, _) = await Picker(web).ReadMenuAsync(ct);
-            if (modes.Count == 0) Log.Write($"{_site.Label}: seletor de modo não encontrado na página");
-            else Log.Write($"{_site.Label}: modos do site: {string.Join(", ", modes.Select(m => m.Id + (m.Disabled ? " (indisponível)" : "")))}");
-            return (modes, null, false);
+            if (problem is not null) { Log.Write($"{_site.Label}: modos não lidos: {problem}"); return ([], [], problem, signIn); }
+            var picker = Picker(web);
+            var (modes, selected) = await picker.ReadMenuAsync(ct);
+            if (modes.Count == 0) { Log.Write($"{_site.Label}: seletor de modo não encontrado na página"); return (modes, [], null, false); }
+            Log.Write($"{_site.Label}: modos do site: {string.Join(", ", modes.Select(m => m.Id + (m.Disabled ? " (indisponível)" : "")))}");
+            var (checkedModes, refused) = await ProbeModesAsync(modes, (path, token) => picker.TrySelectAsync(path, token), ct);
+            if (selected is not null) await picker.TrySelectAsync(selected, ct);
+            return (checkedModes, refused, null, false);
         }
         finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Escolhe cada modo uma vez. Pago (oferta de assinatura) ou bloqueado: Disabled, com "nome (motivo)" em Refused.
+    /// Outras falhas (menu que não respondeu) não tiram o modo: podem ser passageiras.
+    /// </summary>
+    internal static async Task<(List<Mode> Modes, List<string> Refused)> ProbeModesAsync(IReadOnlyList<Mode> modes,
+        Func<IReadOnlyList<string>, CancellationToken, Task<(WebModePicker.Outcome Outcome, string? Error, IReadOnlyList<string>? Previous)>> select,
+        CancellationToken ct)
+    {
+        var result = new List<Mode>();
+        var refused = new List<string>();
+        foreach (var mode in modes)
+        {
+            if (mode.Disabled) { result.Add(mode); refused.Add($"{mode.Label} (bloqueado na sua conta)"); continue; }
+            var (outcome, error, _) = await select(mode.Path, ct);
+            string? why = outcome switch
+            {
+                WebModePicker.Outcome.Paid => "exige assinatura do site",
+                WebModePicker.Outcome.Disabled => "bloqueado na sua conta",
+                _ => null,
+            };
+            if (why is not null) { result.Add(mode with { Disabled = true }); refused.Add($"{mode.Label} ({why})"); Log.Write($"Modo fora: {mode.Id} ({why})"); }
+            else
+            {
+                if (error is not null) Log.Write($"Modo mantido apesar da falha ao testar: {mode.Id} ({error})");
+                result.Add(mode);
+            }
+        }
+        return (result, refused);
     }
 
     // ---------------------------------------------------------------- conversa

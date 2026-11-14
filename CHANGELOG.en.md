@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.13.3] - 2026-11-14 · build 20261114182431
+
+### Fixed
+- Check and update models: Gemini and Copilot account modes are now tried one by one, and the ones that require a subscription on the site (e.g. Gemini's "Código e análise" / Gemini 4 Argon) are removed from the Codex picker and the bar's chat, with the reason in the refused list. Before, the paid mode stayed listed and only failed when sending. The subscription offer is always dismissed with "Not now", and the previously selected mode is restored at the end.
+- When a site mode can't be found while sending, the log records what the menu showed, for diagnosis.
+
 ## [1.13.2] - 2026-11-14 · build 20261114175709
 
 ### Fixed

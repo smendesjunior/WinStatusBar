@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.13.3] - 2026-11-14 · compilação 20261114182431
+
+### Corrigido
+- Verificar e atualizar modelos: os modos do Gemini e do Copilot pela conta agora são testados um a um, e os que exigem assinatura no site (por exemplo, "Código e análise", do Gemini 4 Argon) saem do seletor do Codex e do chat da barra, com o motivo na lista de recusados. Antes, o modo pago continuava na lista e só falhava ao enviar. A oferta de assinatura é sempre fechada com "Agora não", e o modo que estava escolhido no site volta no fim.
+- Quando um modo do site não é encontrado ao enviar, o log registra o que o menu mostrava, para diagnóstico.
+
 ## [1.13.2] - 2026-11-14 · compilação 20261114175709
 
 ### Corrigido
