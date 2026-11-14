@@ -18,7 +18,13 @@ namespace CodexIAs;
 /// </summary>
 internal sealed class Gateway : IDisposable
 {
+    /// <summary>Até aqui o pedido fica na memória e pode ser lido e regravado.</summary>
     private const int MaxBody = 64 * 1024 * 1024;
+    /// <summary>Pedidos maiores (conversas longas, cheias de imagens) vão para um arquivo temporário e seguem em fluxo, sem
+    /// regravar, para o destino dos modelos da conta. Acima disso, recusa.</summary>
+    private const long HugeBody = 2L * 1024 * 1024 * 1024;
+    /// <summary>Quanto do começo do pedido é lido para achar o modelo (o Codex manda "model" primeiro).</summary>
+    private const int SniffBytes = 1024 * 1024;
     private static readonly HashSet<string> Hop = new(StringComparer.OrdinalIgnoreCase)
         { "connection", "proxy-connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "host", "content-length" };
     private static readonly HttpClient Http = new(new SocketsHttpHandler
@@ -64,6 +70,8 @@ internal sealed class Gateway : IDisposable
 
     private sealed record Request(string Method, string Target, List<KeyValuePair<string, string>> Headers, byte[] Body)
     {
+        /// <summary>Corpo maior que <see cref="MaxBody"/>, num arquivo temporário apagado ao fechar (Body fica vazio).</summary>
+        public FileStream? Spool { get; init; }
         public string? Header(string name) => Headers.FirstOrDefault(h => h.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value;
         public string Path => Target.Split('?', 2)[0];
         public string Query => Target.IndexOf('?') is int q and >= 0 ? Target[q..] : "";
@@ -74,12 +82,12 @@ internal sealed class Gateway : IDisposable
         using var _ = client;
         client.NoDelay = true;
         var stream = client.GetStream();
+        Request? request = null;
         try
         {
-            Request? request;
             using (var reading = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token))
             {
-                reading.CancelAfter(TimeSpan.FromSeconds(60));
+                reading.CancelAfter(TimeSpan.FromSeconds(120));
                 request = await ReadAsync(stream, reading.Token);
             }
             if (request is null) { await BridgeServer.PlainAsync(stream, 400, "Pedido inválido"); return; }
@@ -87,6 +95,7 @@ internal sealed class Gateway : IDisposable
         }
         catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException or OperationCanceledException) { }
         catch (Exception ex) { Log.Write("Encaminhador: " + ex.GetType().Name + ": " + ex.Message); }
+        finally { request?.Spool?.Dispose(); }
     }
 
     /// <summary>Lê um pedido HTTP/1.1 (cabeçalhos até 64 KB, corpo pelo Content-Length até 64 MB).</summary>
@@ -121,7 +130,27 @@ internal sealed class Gateway : IDisposable
         var request = new Request(first[0].ToUpperInvariant(), first[1], headers, []);
         if (request.Header("Transfer-Encoding") is not null) return request with { Method = "CHUNKED" };
         long size = long.TryParse(request.Header("Content-Length"), out long cl) ? cl : 0;
-        if (size < 0 || size > MaxBody) return request with { Method = "TOOBIG" };
+        if (size < 0 || size > HugeBody) return request with { Method = "TOOBIG" };
+        int buffered = length - headerEnd - 4;
+        if (size > MaxBody)
+        {
+            var spool = new FileStream(Path.Combine(Path.GetTempPath(), "WinStatusBar-codex-" + Guid.NewGuid().ToString("N") + ".tmp"),
+                FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 1 << 20, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+            try
+            {
+                await spool.WriteAsync(buffer.AsMemory(headerEnd + 4, (int)Math.Min(size, buffered)), ct);
+                var part = new byte[1 << 20];
+                while (spool.Length < size)
+                {
+                    int n = await stream.ReadAsync(part.AsMemory(0, (int)Math.Min(part.Length, size - spool.Length)), ct);
+                    if (n == 0) { spool.Dispose(); return null; }
+                    await spool.WriteAsync(part.AsMemory(0, n), ct);
+                }
+                spool.Position = 0;
+                return request with { Spool = spool };
+            }
+            catch { spool.Dispose(); throw; }
+        }
         var body = new byte[size];
         int already = Math.Min((int)size, length - headerEnd - 4);
         Array.Copy(buffer, headerEnd + 4, body, 0, already);
@@ -170,7 +199,72 @@ internal sealed class Gateway : IDisposable
         catch { return null; }
     }
 
-    internal const string TooBigMessage = "Conversa grande demais para o encaminhador da WinStatusBar. Use /compact no Codex ou comece uma conversa nova.";
+    internal const string TooBigMessage = "Conversa grande demais para as IAs da barra (mais de 64 MB). Comece uma conversa nova no Codex ou use um modelo da sua conta.";
+
+    /// <summary>Modelo pedido, lido só do começo do JSON (o Codex manda "model" primeiro); null se não aparece nesse trecho.</summary>
+    internal static string? SniffModel(Stream source)
+    {
+        var buffer = new byte[SniffBytes];
+        int length = 0, n;
+        while (length < buffer.Length && (n = source.Read(buffer, length, buffer.Length - length)) > 0) length += n;
+        var reader = new System.Text.Json.Utf8JsonReader(buffer.AsSpan(0, length), isFinalBlock: length < buffer.Length, state: default);
+        try
+        {
+            if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.StartObject) return null;
+            while (reader.Read() && reader.TokenType == System.Text.Json.JsonTokenType.PropertyName)
+            {
+                bool isModel = reader.ValueTextEquals("model");
+                if (!reader.Read()) return null;
+                if (isModel) return reader.TokenType == System.Text.Json.JsonTokenType.String ? reader.GetString() : null;
+                if (reader.TokenType is System.Text.Json.JsonTokenType.StartObject or System.Text.Json.JsonTokenType.StartArray && !reader.TrySkip()) return null;
+            }
+        }
+        catch (System.Text.Json.JsonException) { }
+        return null;
+    }
+
+    /// <summary>Destino dos modelos da conta: para onde o Codex já ia (OpenAI ou Ollama).</summary>
+    private static (string Url, string Where) AccountUpstream(Request request, CodexIntegration.State state, string? rest)
+    {
+        string url;
+        if (state.Upstream is { Length: > 0 } upstream)
+            url = rest is not null ? upstream.TrimEnd('/') + rest + request.Query : new Uri(upstream).GetLeftPart(UriPartial.Authority) + request.Target;
+        else
+        {
+            string openAi = request.Header("chatgpt-account-id") is not null ? "https://chatgpt.com/backend-api/codex" : "https://api.openai.com/v1";
+            url = openAi + (rest ?? request.Path) + request.Query;
+        }
+        string where = state.Upstream is { } up && up.Contains("127.0.0.1:11434", StringComparison.Ordinal) ? "o Ollama" : "a OpenAI";
+        return (url, where);
+    }
+
+    /// <summary>
+    /// Pedido maior que <see cref="MaxBody"/> (no arquivo temporário ou, comprimido, na memória): só os modelos da conta o
+    /// recebem, byte a byte e em fluxo, como chegou. As IAs da barra precisam ler a conversa inteira e recusam.
+    /// </summary>
+    private async Task RouteHugeAsync(Request request, Stream raw, bool zstd, NetworkStream stream, Socket socket)
+    {
+        string? model;
+        raw.Position = 0;
+        try
+        {
+            if (zstd) { using var plain = new ZstdSharp.DecompressionStream(raw, leaveOpen: true); model = SniffModel(plain); }
+            else model = SniffModel(raw);
+        }
+        catch { model = null; }
+        raw.Position = 0;
+        long mb = raw.Length / (1024 * 1024);
+        if (model is null || model.StartsWith(CodexCatalog.Prefix, StringComparison.Ordinal) || model.StartsWith("winstatusbar-", StringComparison.Ordinal) || OpenAiKey.IsAlias(model))
+        {
+            Log.Write($"Pedido do Codex de {mb} MB para {(model is null ? "modelo não identificado" : "IA da barra")}: recusado (conversa grande demais)");
+            await BridgeServer.PlainAsync(stream, 413, TooBigMessage);
+            return;
+        }
+        var state = CodexIntegration.LoadState();
+        var (url, where) = AccountUpstream(request, state, Rest(request.Path, state.BasePath));
+        Log.Write($"Pedido grande do Codex ({mb} MB{(zstd ? " comprimido" : "")}) repassado em fluxo para {where}");
+        await ForwardAsync(request.Method, url, request.Headers, new StreamContent(raw, 1 << 20), stream, socket, where);
+    }
 
     private async Task RouteAsync(Request request, NetworkStream stream, Socket socket)
     {
@@ -199,17 +293,18 @@ internal sealed class Gateway : IDisposable
 
         byte[] decoded = request.Body;
         string encoding = (request.Header("Content-Encoding") ?? "identity").Trim().ToLowerInvariant();
+        if (encoding is not ("zstd" or "identity" or "")) { await BridgeServer.PlainAsync(stream, 415, "Unsupported Content-Encoding"); return; }
+        if (request.Spool is { } spool) { await RouteHugeAsync(request, spool, encoding == "zstd", stream, socket); return; }
         if (encoding == "zstd")
         {
             if (Unzstd(request.Body, out bool tooBig) is not { } plain)
             {
-                if (tooBig) Log.Write("Pedido do Codex maior que " + (MaxBody / (1024 * 1024)) + " MB descomprimido: recusado (conversa grande demais)");
-                await BridgeServer.PlainAsync(stream, tooBig ? 413 : 400, tooBig ? TooBigMessage : "Invalid compressed request");
+                if (tooBig) { await RouteHugeAsync(request, new MemoryStream(request.Body, writable: false), zstd: true, stream, socket); return; }
+                await BridgeServer.PlainAsync(stream, 400, "Invalid compressed request");
                 return;
             }
             decoded = plain;
         }
-        else if (encoding is not ("identity" or "")) { await BridgeServer.PlainAsync(stream, 415, "Unsupported Content-Encoding"); return; }
         JsonObject? payload = null;
         if (decoded.Length > 0)
         {
@@ -262,15 +357,7 @@ internal sealed class Gateway : IDisposable
         }
 
         // Modelos da conta e qualquer outro pedido: para onde o Codex já ia, sem mudança.
-        string url;
-        if (state.Upstream is { Length: > 0 } upstream)
-            url = rest is not null ? upstream.TrimEnd('/') + rest + request.Query : new Uri(upstream).GetLeftPart(UriPartial.Authority) + request.Target;
-        else
-        {
-            string openAi = request.Header("chatgpt-account-id") is not null ? "https://chatgpt.com/backend-api/codex" : "https://api.openai.com/v1";
-            url = openAi + (rest ?? request.Path) + request.Query;
-        }
-        string where = state.Upstream is { } up && up.Contains("127.0.0.1:11434", StringComparison.Ordinal) ? "o Ollama" : "a OpenAI";
+        var (url, where) = AccountUpstream(request, state, rest);
         // Conversa compactada antes por uma IA da barra: o resumo vira mensagem comum (a OpenAI recusaria o item marcado).
         // Só nesse caso o pedido é regravado, sem compressão; os demais seguem byte a byte como chegaram.
         if (payload is not null && CompactionV2.Unwrap(payload))
@@ -301,7 +388,11 @@ internal sealed class Gateway : IDisposable
     }
 
     /// <summary>Repassa o pedido e devolve a resposta em fluxo (eventos do streaming chegam ao Codex na hora).</summary>
-    private async Task ForwardAsync(string method, string url, IEnumerable<KeyValuePair<string, string>> headers, byte[] body,
+    private Task ForwardAsync(string method, string url, IEnumerable<KeyValuePair<string, string>> headers, byte[] body,
+        NetworkStream stream, Socket socket, string where)
+        => ForwardAsync(method, url, headers, body.Length > 0 || method is "POST" or "PUT" or "PATCH" ? new ByteArrayContent(body) : null, stream, socket, where);
+
+    private async Task ForwardAsync(string method, string url, IEnumerable<KeyValuePair<string, string>> headers, HttpContent? content,
         NetworkStream stream, Socket socket, string where)
     {
         using var cancel = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
@@ -323,7 +414,7 @@ internal sealed class Gateway : IDisposable
         try
         {
             using var message = new HttpRequestMessage(new HttpMethod(method), url);
-            if (body.Length > 0 || method is "POST" or "PUT" or "PATCH") message.Content = new ByteArrayContent(body);
+            message.Content = content;
             foreach (var (name, value) in headers)
             {
                 if (Hop.Contains(name)) continue;

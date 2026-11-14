@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.13.2] - 2026-11-14 · build 20261114175709
+
+### Fixed
+- Codex: very long conversations (over 64 MB, e.g. with many images) no longer fail with "413 Payload Too Large" at the bar's gateway, including /compact. With your account's models, large requests are streamed unchanged to OpenAI or Ollama; only the bar's AIs keep the 64 MB limit and ask you to start a new conversation.
+
 ## [1.13.1] - 2026-11-13 · build 20261113130704
 
 ### Fixed

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.13.2] - 2026-11-14 · compilação 20261114175709
+
+### Corrigido
+- Codex: conversas muito longas (mais de 64 MB, por exemplo com muitas imagens) deixam de falhar com "413 Payload Too Large" no encaminhador da barra, inclusive no /compact. Com os modelos da sua conta, o pedido grande segue em fluxo, sem mudança, para a OpenAI ou o Ollama; só as IAs da barra continuam limitadas a 64 MB e avisam para começar uma conversa nova.
+
 ## [1.13.1] - 2026-11-13 · compilação 20261113130704
 
 ### Corrigido

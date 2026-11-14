@@ -122,6 +122,24 @@ public class CodexIAsCompactionV2Tests
     }
 
     [Fact]
+    public void Modelo_de_pedido_enorme_e_lido_so_do_comeco()
+    {
+        // "model" primeiro e um input de 3 MB: achado sem ler o resto
+        var big = Encoding.UTF8.GetBytes("{\"model\":\"gpt-5.5\",\"input\":[{\"t\":\"" + new string('x', 3 * 1024 * 1024) + "\"}]}");
+        Assert.Equal("gpt-5.5", Gateway.SniffModel(new MemoryStream(big)));
+        // depois de campos pequenos também
+        Assert.Equal("codexias-x", Gateway.SniffModel(new MemoryStream(Encoding.UTF8.GetBytes("{\"stream\":true,\"tools\":[{\"a\":1}],\"model\":\"codexias-x\"}"))));
+        // depois de um campo enorme: desconhecido (o encaminhador recusa em vez de adivinhar)
+        var late = Encoding.UTF8.GetBytes("{\"input\":\"" + new string('x', 2 * 1024 * 1024) + "\",\"model\":\"gpt-5.5\"}");
+        Assert.Null(Gateway.SniffModel(new MemoryStream(late)));
+        Assert.Null(Gateway.SniffModel(new MemoryStream([1, 2, 3])));
+        // comprimido com zstd
+        using var compressor = new ZstdSharp.Compressor(1);
+        using var plain = new ZstdSharp.DecompressionStream(new MemoryStream(compressor.Wrap(big).ToArray()));
+        Assert.Equal("gpt-5.5", Gateway.SniffModel(plain));
+    }
+
+    [Fact]
     public void Nome_no_menu_comeca_pelo_modelo()
     {
         var gemini = new ApiProvider(new("gemini", "Google Gemini (API)", "openai", "https://x", "r"));
