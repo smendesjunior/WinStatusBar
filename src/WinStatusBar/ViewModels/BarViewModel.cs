@@ -280,6 +280,15 @@ public sealed class BarViewModel : ObservableObject
     public string QiraCreditsPercent { get => _qB; set => Set(ref _qB, value); }
     public string QiraQuotaTooltip { get => _qTip; set => Set(ref _qTip, value); }
     public Visibility QiraQuotaVisible { get => _qVisible; set => Set(ref _qVisible, value); }
+    private string _agL1 = "Gemini", _agV1 = "—", _agL2 = "Claude e GPT", _agV2 = "—", _agTip = "";
+    private Visibility _agVisible = Visibility.Collapsed;
+    /// <summary>Google Antigravity: limite semanal de cada grupo de modelos (tela /usage do agy).</summary>
+    public string AntigravityLabel1 { get => _agL1; set => Set(ref _agL1, value); }
+    public string AntigravityValue1 { get => _agV1; set => Set(ref _agV1, value); }
+    public string AntigravityLabel2 { get => _agL2; set => Set(ref _agL2, value); }
+    public string AntigravityValue2 { get => _agV2; set => Set(ref _agV2, value); }
+    public string AntigravityQuotaTooltip { get => _agTip; set => Set(ref _agTip, value); }
+    public Visibility AntigravityQuotaVisible { get => _agVisible; set => Set(ref _agVisible, value); }
     public string Codex7d { get => _c7; set => Set(ref _c7, value); }
     public string Claude5h { get => _a5; set => Set(ref _a5, value); }
     public string Claude7d { get => _a7; set => Set(ref _a7, value); }

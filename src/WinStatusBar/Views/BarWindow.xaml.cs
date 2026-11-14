@@ -707,6 +707,7 @@ public sealed partial class BarWindow : Window
         GeminiQuotaButton.Flyout = CreateExtraQuotaFlyout("gemini");
         CopilotQuotaButton.Flyout = CreateExtraQuotaFlyout("copilot");
         QiraQuotaButton.Flyout = CreateExtraQuotaFlyout("qira");
+        AntigravityQuotaButton.Flyout = CreateExtraQuotaFlyout("antigravity");
         ApplyQuotaOrder();
     }
 
@@ -779,6 +780,21 @@ public sealed partial class BarWindow : Window
                         : GoogleUsageSession.ApiError ?? "Lendo os limites da chave no Google AI Studio…", 12));
                 }
             }
+            else if (id == "antigravity")
+            {
+                var a = AntigravityQuotaSession.Current;
+                site = "";
+                host.Children.Add(new TextBlock { Text = "Google Antigravity" + (a?.Plan is { } p ? " · " + p : ""), FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                if (a is { SignedIn: true, Groups.Count: > 0 })
+                {
+                    foreach (var grp in a.Groups)
+                        host.Children.Add(Row(grp.Name + " · limite semanal", 100 - grp.RemainingPercent,
+                            string.Join(" · ", new[] { grp.Refresh is { } r ? "Renova em " + Core.Ai.Antigravity.AntigravityQuota.ShortRefresh(r) : "", grp.Models }.Where(t => t.Length > 0))));
+                    host.Children.Add(Views.Panels.PanelKit.Caption($"Conta Google: {a.Account ?? "conectada"} · lido às {a.Updated.LocalDateTime:HH:mm} na tela /usage do agy. Os modelos de cada grupo dividem o mesmo limite. Atualiza a cada 30 min.", 12));
+                }
+                else if (a is { SignedIn: false }) host.Children.Add(Views.Panels.PanelKit.Caption("O agy está sem login. Entre em Configurações › IAs e contas › Google Antigravity.", 12));
+                else host.Children.Add(Views.Panels.PanelKit.Caption(AntigravityQuotaSession.Busy ? "Lendo a cota no agy…" : "Cota ainda não lida. Clique em Atualizar agora.", 12));
+            }
             else if (id == "qira")
             {
                 var q = Core.Ai.QiraBridge.CurrentQuota;
@@ -808,7 +824,7 @@ public sealed partial class BarWindow : Window
             }
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
             var refresh = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Atualizar agora", FontSize = 12 });
-            refresh.Click += (_, _) => { if (id == "gemini") { GoogleUsageSession.ForceApi(); GoogleUsageSession.Refresh(); } else if (id == "qira") _ = QiraHubSession.RefreshQuotaAsync(); else MicrosoftCreditsSession.Refresh(); };
+            refresh.Click += (_, _) => { if (id == "gemini") { GoogleUsageSession.ForceApi(); GoogleUsageSession.Refresh(); } else if (id == "qira") _ = QiraHubSession.RefreshQuotaAsync(); else if (id == "antigravity") _ = AntigravityQuotaSession.RefreshAsync(); else MicrosoftCreditsSession.Refresh(); };
             var open = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Página oficial ↗", FontSize = 12 });
             open.Click += async (_, _) => await Windows.System.Launcher.LaunchUriAsync(new Uri(site));
             buttons.Children.Add(refresh); if (site.Length > 0) buttons.Children.Add(open);
@@ -822,15 +838,15 @@ public sealed partial class BarWindow : Window
         }
         void Changed() => DispatcherQueue.TryEnqueue(Build);
         return Views.Panels.PanelKit.CreateFlyout(host,
-            () => { Build(); if (id == "gemini") { GoogleUsageSession.Changed += Changed; GoogleUsageSession.BeginLive(); } else if (id == "qira") Core.Ai.QiraBridge.QuotaChanged += Changed; else MicrosoftCreditsSession.Changed += Changed; },
-            () => { if (id == "gemini") { GoogleUsageSession.Changed -= Changed; GoogleUsageSession.EndLive(); } else if (id == "qira") Core.Ai.QiraBridge.QuotaChanged -= Changed; else MicrosoftCreditsSession.Changed -= Changed; });
+            () => { Build(); if (id == "gemini") { GoogleUsageSession.Changed += Changed; GoogleUsageSession.BeginLive(); } else if (id == "qira") Core.Ai.QiraBridge.QuotaChanged += Changed; else if (id == "antigravity") AntigravityQuotaSession.Changed += Changed; else MicrosoftCreditsSession.Changed += Changed; },
+            () => { if (id == "gemini") { GoogleUsageSession.Changed -= Changed; GoogleUsageSession.EndLive(); } else if (id == "qira") Core.Ai.QiraBridge.QuotaChanged -= Changed; else if (id == "antigravity") AntigravityQuotaSession.Changed -= Changed; else MicrosoftCreditsSession.Changed -= Changed; });
     }
 
     /// <summary>Módulos de cota na barra: só os escolhidos nas Configurações, na ordem da lista "Ordem das IAs".</summary>
     private void ApplyQuotaOrder()
     {
         var s = _settings.Current;
-        var buttons = new Dictionary<string, Button> { ["codex"] = CodexQuotaButton, ["claude"] = ClaudeQuotaButton, ["gemini"] = GeminiQuotaButton, ["copilot"] = CopilotQuotaButton, ["qira"] = QiraQuotaButton };
+        var buttons = new Dictionary<string, Button> { ["codex"] = CodexQuotaButton, ["claude"] = ClaudeQuotaButton, ["gemini"] = GeminiQuotaButton, ["antigravity"] = AntigravityQuotaButton, ["copilot"] = CopilotQuotaButton, ["qira"] = QiraQuotaButton };
         var wanted = s.AiOrder.Where(k => s.BarQuotaServices.Contains(k) && buttons.ContainsKey(k)).Select(k => buttons[k]).ToList();
         if (QuotasModule.Children.OfType<Button>().SequenceEqual(wanted)) return;
         QuotasModule.Children.Clear();

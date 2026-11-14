@@ -96,7 +96,7 @@ public sealed class AppSettings
     public List<string> BarQuotaServices { get; set; } = new() { "codex", "claude" };
     public static readonly string[] DefaultAiOrder = ["codex", "claude", "gemini", "antigravity", "copilot", "local", "deepseek", "grok", "qira"];
     /// <summary>IAs que têm cota em porcentagem para mostrar na barra.</summary>
-    public static readonly string[] QuotaCapable = ["codex", "claude", "gemini", "copilot", "qira"];
+    public static readonly string[] QuotaCapable = ["codex", "claude", "gemini", "antigravity", "copilot", "qira"];
     /// <summary>Projeto do Google Cloud do login do Gemini CLI (contas Code Assist Standard/Enterprise). Vazio: não usa.</summary>
     public string GeminiCloudProject { get; set; } = string.Empty;
     /// <summary>Modelo e esforço escolhidos por destino (vazio = o configurado no app principal).</summary>

@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.19.0] - 2026-11-14 · build 20261114211049
+
+### Added
+- Google Antigravity quota in the bar: the "Quota in the bar" switch for Antigravity in Settings › AI order can now be turned on. The block shows the weekly limit of each model group (Gemini; Claude and GPT), read every 30 min from the agy /usage screen; clicking it opens the details with each group's reset time and a "Refresh now" button.
+
 ## [1.18.0] - 2026-11-14 · build 20261114202511
 
 ### Added

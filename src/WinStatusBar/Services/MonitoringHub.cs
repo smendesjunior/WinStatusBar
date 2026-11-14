@@ -487,6 +487,18 @@ public sealed class MonitoringHub : IDisposable
         vm.GeminiCurrent = gFresh ? GText(g!.CurrentPercent) : "—";
         vm.GeminiWeekly = gFresh ? GText(g!.WeeklyPercent) : "—";
         vm.GeminiQuotaVisible = g is { SignedIn: true } ? Visibility.Visible : Visibility.Collapsed;
+        var ag = AntigravityQuotaSession.Fresh;
+        string AgText(WinStatusBar.Core.Ai.Antigravity.AntigravityQuota.Group grp) => $"{Math.Round(gRemaining ? grp.RemainingPercent : 100 - grp.RemainingPercent):0} %";
+        vm.AntigravityLabel1 = ag is { Groups.Count: > 0 } ? ag.Groups[0].Name : "Gemini";
+        vm.AntigravityValue1 = ag is { Groups.Count: > 0 } ? AgText(ag.Groups[0]) : "—";
+        vm.AntigravityLabel2 = ag is { Groups.Count: > 1 } ? ag.Groups[1].Name : "Claude e GPT";
+        vm.AntigravityValue2 = ag is { Groups.Count: > 1 } ? AgText(ag.Groups[1]) : "—";
+        vm.AntigravityQuotaVisible = AntigravityQuotaSession.Installed && AntigravityQuotaSession.Current?.SignedIn != false ? Visibility.Visible : Visibility.Collapsed;
+        vm.AntigravityQuotaTooltip = ag is not null
+            ? $"Google Antigravity · limite semanal ({(gRemaining ? "restante" : "usado")})\n"
+              + string.Join("\n", ag.Groups.Select(grp => $"{grp.Name}: {AgText(grp)}" + (grp.Refresh is { } r ? $" · renova em {WinStatusBar.Core.Ai.Antigravity.AntigravityQuota.ShortRefresh(r)}" : "")))
+              + $"\nLido às {ag.Updated.LocalDateTime:HH:mm} na tela /usage do agy"
+            : "Google Antigravity: cota ainda não lida (tela /usage do agy, a cada 30 min)";
         var mc = MicrosoftCreditsSession.Current;
         bool mcFresh = mc is { SignedIn: true, Total: > 0 } && DateTimeOffset.Now - mc.Updated < TimeSpan.FromHours(12);
         vm.CopilotCredits = mcFresh ? $"{(gRemaining ? mc!.Remaining : mc!.Total - mc.Remaining)}/{mc.Total}" : "—";

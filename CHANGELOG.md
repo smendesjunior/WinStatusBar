@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.19.0] - 2026-11-14 · compilação 20261114211049
+
+### Adicionado
+- Cota do Google Antigravity na barra: em Configurações › Ordem das IAs, o interruptor "Cota na barra" do Antigravity agora pode ser ligado. O bloco mostra o limite semanal de cada grupo de modelos (Gemini; Claude e GPT), lido a cada 30 min da tela /usage do agy, e o clique abre os detalhes com a renovação de cada grupo e o botão "Atualizar agora".
+
 ## [1.18.0] - 2026-11-14 · compilação 20261114202511
 
 ### Adicionado

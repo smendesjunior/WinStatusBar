@@ -330,6 +330,25 @@
                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.GeminiWeekly, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
                     </Grid>
                     </Button>
+                    <Button x:Name="AntigravityQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.AntigravityQuotaVisible, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind VM.AntigravityQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Cotas do Google Antigravity">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Image Grid.RowSpan="2" services:ThemeIcon.MonoLogo="gemini" Width="17" Height="17" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{x:Bind VM.AntigravityLabel1, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind VM.AntigravityValue1, Mode=OneWay}" Style="{StaticResource BarTitleText}" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind VM.AntigravityLabel2, Mode=OneWay}" Style="{StaticResource BarValueText}" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind VM.AntigravityValue2, Mode=OneWay}" Style="{StaticResource BarValueText}" HorizontalAlignment="Right" />
+                    </Grid>
+                    </Button>
                     <Button x:Name="CopilotQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" Visibility="{x:Bind VM.CopilotQuotaVisible, Mode=OneWay}"
                             ToolTipService.ToolTip="{x:Bind VM.CopilotQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Créditos do Copilot">
                     <Grid ColumnSpacing="4">
