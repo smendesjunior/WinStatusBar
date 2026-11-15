@@ -4626,4 +4626,10 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S3CF8C682D70F4CCF" xml:space="preserve">
     <value>Activado, cada 10 minutos la barra da a los chats nuevos de ChatGPT (web, app de Windows y móvil) el título "DD/MM/AAAA - Tema - Asunto", generado por el modelo más ligero de su cuenta. Usa el inicio de sesión de Codex, el mismo de la cuota; no se guarda nada. Solo chats de los últimos 7 días y con al menos 3 minutos; los que ya tienen el formato se quedan como están.</value>
   </data>
+  <data name="SAEAD83E990361F0D" xml:space="preserve">
+    <value>Títulos de los chats de ChatGPT y Codex</value>
+  </data>
+  <data name="SC2878EC8122569E4" xml:space="preserve">
+    <value>Activado, cada 10 minutos la barra da a los chats nuevos de ChatGPT (web, app de Windows y móvil) y a las conversaciones locales de Codex (incluidas las de proyectos) el título "DD/MM/AAAA - Tema - Asunto", generado por el modelo más ligero de su cuenta. Usa el inicio de sesión de Codex, el mismo de la cuota; no se guarda nada. Solo chats de los últimos 7 días y con al menos 3 minutos; los que ya tienen el formato se quedan como están.</value>
+  </data>
 </root>

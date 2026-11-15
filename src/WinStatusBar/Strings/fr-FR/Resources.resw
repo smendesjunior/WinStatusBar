@@ -4626,4 +4626,10 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S3CF8C682D70F4CCF" xml:space="preserve">
     <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours ayant au moins 3 minutes ; celles déjà au format restent inchangées.</value>
   </data>
+  <data name="SAEAD83E990361F0D" xml:space="preserve">
+    <value>Titres des discussions ChatGPT et Codex</value>
+  </data>
+  <data name="SC2878EC8122569E4" xml:space="preserve">
+    <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours ayant au moins 3 minutes ; celles déjà au format restent inchangées.</value>
+  </data>
 </root>

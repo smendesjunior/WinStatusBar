@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.22.0] - 2026-11-15 · build 20261115233202
+
+### Added
+- Chat titles: the option in Settings › Models now also renames local Codex conversations (app and CLI, including project ones) to "DD/MM/YYYY - Topic - Subject" through Codex itself, without editing its files. Subagents, automated runs and bar conversations are left as they are.
+
 ## [1.21.0] - 2026-11-15 · build 20261115230714
 
 ### Added

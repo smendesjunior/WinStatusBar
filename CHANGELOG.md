@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.22.0] - 2026-11-15 · compilação 20261115233202
+
+### Adicionado
+- Títulos dos chats: a opção de Configurações › Modelos agora também renomeia as conversas locais do Codex (app e CLI, inclusive as de projetos) para "DD/MM/AAAA - Tema - Assunto", pelo próprio Codex, sem editar os arquivos dele. Subagentes, execuções automáticas e conversas da barra ficam como estão.
+
 ## [1.21.0] - 2026-11-15 · compilação 20261115230714
 
 ### Adicionado

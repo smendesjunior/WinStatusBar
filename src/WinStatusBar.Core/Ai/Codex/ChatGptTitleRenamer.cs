@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 namespace WinStatusBar.Core.Ai.Codex;
 
 /// <summary>
-/// Renomeia sozinho os chats do ChatGPT para "DD/MM/AAAA - Tema - Assunto". Usa o login do Codex (auth.json, o mesmo da
+/// Renomeia sozinho os chats do ChatGPT e as conversas locais do Codex para "DD/MM/AAAA - Tema - Assunto". Usa o login do Codex (auth.json, o mesmo da
 /// cota): lista as conversas recentes da conta, gera o título com o modelo mais leve da conta (endpoint do Codex, sem
 /// guardar nada) e grava pelo mesmo pedido que o site faz ao renomear. Endpoints internos do ChatGPT: se mudarem, a
 /// rodada falha em silêncio (só o registro) e nada é alterado.
@@ -89,9 +89,48 @@ public sealed class ChatGptTitleRenamer : IDisposable
                 _done.Add(id); renamed++; RenamedCount++;
                 _log($"Títulos do ChatGPT: «{title}» → «{newTitle}»");
             }
+            renamed += await RenameCodexAsync(auth, ct);
             return renamed;
         }
         finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Conversas locais do Codex (app e CLI, inclusive as de projetos): lista e renomeia pelo servidor oficial do Codex
+    /// (thread/list e thread/name/set), nunca editando os arquivos. Subagentes, exec e conversas da barra ficam de fora.
+    /// </summary>
+    private async Task<int> RenameCodexAsync(Auth auth, CancellationToken ct)
+    {
+        if (CodexAppServerClient.FindCodexExecutable() is null) return 0;
+        int renamed = 0;
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(5));
+            await using var rpc = await CodexComposerConnection.OpenAsync(timeout.Token);
+            var result = await rpc.CallAsync("thread/list", new JsonObject { ["archived"] = false, ["sortKey"] = "updated_at", ["limit"] = 40 }, timeout.Token);
+            if (!result.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) return 0;
+            var now = DateTimeOffset.UtcNow;
+            foreach (var item in data.EnumerateArray().ToList())
+            {
+                var info = CodexThreadInfo.FromThreadList(item);
+                string key = "codex:" + info.Id;
+                if (info.Id.Length == 0 || _done.Contains(key) || _failures.GetValueOrDefault(key) >= 3) continue;
+                if (!CodexQuotaStops.IsUserThread(info)) { _done.Add(key); continue; }
+                var created = Time(item, "createdAt");
+                if (!ShouldRename(info.Title, created, now)) { if (IsFormatted(info.Title)) _done.Add(key); continue; }
+                string excerpt = Str(item, "preview") is { } p ? (p.Length > 3000 ? p[..3000] : p) : "";
+                if (excerpt.Trim().Length < 5) continue;
+                string? subject = await GenerateAsync(auth, "user: " + excerpt, timeout.Token);
+                if (subject is null) { _failures[key] = _failures.GetValueOrDefault(key) + 1; continue; }
+                string newTitle = Compose(created!.Value, subject);
+                await rpc.CallAsync("thread/name/set", new JsonObject { ["threadId"] = info.Id, ["name"] = newTitle }, timeout.Token);
+                _done.Add(key); renamed++; RenamedCount++;
+                _log($"Títulos do Codex: «{info.Title}» → «{newTitle}»");
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception ex) { _log("Títulos do Codex: " + ex.Message); }
+        return renamed;
     }
 
     // ------------------------------------------------------------------ regras (testadas)
@@ -237,7 +276,11 @@ public sealed class ChatGptTitleRenamer : IDisposable
     private static DateTimeOffset? Time(JsonElement e, string name)
     {
         if (e.ValueKind != JsonValueKind.Object || !e.TryGetProperty(name, out var v)) return null;
-        if (v.ValueKind == JsonValueKind.Number) return DateTimeOffset.FromUnixTimeMilliseconds((long)(v.GetDouble() * 1000));
+        if (v.ValueKind == JsonValueKind.Number)
+        {
+            double n = v.GetDouble(); // segundos (ChatGPT, Codex) ou milissegundos
+            return DateTimeOffset.FromUnixTimeMilliseconds((long)(n > 1e11 ? n : n * 1000));
+        }
         return v.ValueKind == JsonValueKind.String && DateTimeOffset.TryParse(v.GetString(), System.Globalization.CultureInfo.InvariantCulture,
             System.Globalization.DateTimeStyles.AssumeUniversal, out var d) ? d : null;
     }

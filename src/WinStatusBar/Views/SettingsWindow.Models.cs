@@ -136,10 +136,10 @@ public sealed partial class SettingsWindow
                 s => s.CodexApiResumeEnabled, (s, v) => s.CodexApiResumeEnabled = v)));
 
         // ------------------------------------------------------------ títulos dos chats do ChatGPT
-        page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT")));
+        page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT e do Codex")));
         page.Children.Add(Group(
             Toggle(Localization.T("Renomear chats automaticamente"),
-                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão."),
+                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão."),
                 s => s.ChatGptAutoTitles, (s, v) => s.ChatGptAutoTitles = v)));
 
         // ------------------------------------------------------------ corrigir problemas
