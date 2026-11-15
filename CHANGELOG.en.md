@@ -7,6 +7,13 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.8] - 2026-11-15 · build 20261115151606
+
+### Fixed
+- Bar: a single text size across all modules. When space runs short, text shrinks evenly on both sides (previously only the right side shrank).
+- Bar: the same padding and icon-to-text spacing in every module, including the AI quotas.
+- CPU and GPU: the first line no longer mixes two text sizes; the battery's second line follows the other modules.
+
 ## [1.20.7] - 2026-11-15 · build 20261115150548
 
 ### Fixed

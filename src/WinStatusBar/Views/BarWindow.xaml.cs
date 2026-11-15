@@ -331,8 +331,25 @@ public sealed partial class BarWindow : Window
         foreach (var (key, module) in _modules) ApplyNativeTextScale(module, 1);
         // A largura mínima dos textos (StabilizeTextWidths) fica como está: zerá-la aqui, a cada 3 s, desfazia a estabilização.
         double left = 0, right = 0;
-        // Reduce empty spacing before reducing readability. All sizes remain native to the monitor DPI.
-        foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 5d, 9d, 34d), (5d, 4d, 7d, 30d), (4d, 3d, 6d, 26d) })
+        Button[] quotaButtons = [CodexQuotaButton, ClaudeQuotaButton, GeminiQuotaButton, AntigravityQuotaButton, CopilotQuotaButton, QiraQuotaButton];
+        // Largura de um lado: a tarefa conta 120 (ela estica e ocupa a sobra); módulos no "…" não contam.
+        double MeasureSide(bool leftSide)
+        {
+            double total = 8;
+            foreach (string key in s.ModuleOrder)
+            {
+                if (IsLeft(key) != leftSide || !_modules.TryGetValue(key, out var module) || s.HiddenModules.Contains(key) || _overflowed.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
+                double width;
+                if (key == "task") width = 120;
+                else { module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48)); width = module.DesiredSize.Width; }
+                total += width + _moduleGap + 1;
+            }
+            return total;
+        }
+        double MeasureRight() => MeasureSide(false);
+        // Padrão único (auditoria visual de 15/11/2026): o mesmo respiro em todos os módulos (sistema e cotas) e o
+        // mesmo espaço entre ícone e texto. Primeiro diminui os espaços vazios, depois o texto.
+        foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 6d, 8d, 34d), (5d, 5d, 6d, 30d), (4d, 4d, 5d, 26d) })
         {
             _moduleGap = gap;
             foreach (var grid in new[] { ModulesGrid, RightModulesGrid })
@@ -342,45 +359,26 @@ public sealed partial class BarWindow : Window
                 module.Padding = new Thickness(padding, 0, padding, 0);
                 if (module.Content is StackPanel content) content.Spacing = innerGap;
             }
+            foreach (var quota in quotaButtons)
+            {
+                quota.Padding = new Thickness(padding, 2, padding, 2);
+                // A grade tem 4 px entre colunas; o ícone ganha o resto para ficar a innerGap do texto, como nos outros módulos.
+                if (quota.Content is Grid g && g.Children.OfType<Image>().FirstOrDefault() is { } icon) icon.Margin = new Thickness(0, 0, Math.Max(0, innerGap - 4), 0);
+            }
             foreach (var button in new[] { ClipboardButton, TaskManagerButton, SettingsShortcutButton, StoreButton,
                 ExplorerShortcutButton, DocumentsShortcutButton, DownloadsShortcutButton, PersonalShortcutButton, MoreButton }) button.Width = shortcutWidth;
-            left = right = 8;
-            foreach (var key in s.ModuleOrder)
-            {
-                if (!_modules.TryGetValue(key, out var el) || s.HiddenModules.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
-                double width;
-                if (key == "task") width = 120;
-                else { el.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48)); width = el.DesiredSize.Width; }
-                if (IsLeft(key)) left += width + gap + 1; else right += width + gap + 1;
-            }
+            left = MeasureSide(true); right = MeasureSide(false);
             if (left <= side && right <= side) break;
         }
-        // Resize the actual text, never a bitmap of the group. Icons retain the common 17-DIP footprint.
-        if (right > side)
+        // Reduz o texto de verdade (nunca um bitmap) e por igual nos dois lados: a barra inteira com um só tamanho de letra.
+        if (left > side || right > side)
         {
-            for (double ratio = 0.95; ratio >= 0.69 && right > side; ratio -= 0.05)
+            for (double ratio = 0.95; ratio >= 0.69 && (left > side || right > side); ratio -= 0.05)
             {
-                foreach (var (key, module) in _modules) if (!IsLeft(key)) ApplyNativeTextScale(module, ratio);
+                foreach (var (_, module) in _modules) ApplyNativeTextScale(module, ratio);
                 foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
-                right = 8;
-                foreach (var key in s.ModuleOrder)
-                {
-                    if (IsLeft(key) || !_modules.TryGetValue(key, out var module) || s.HiddenModules.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
-                    module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-                    right += module.DesiredSize.Width + _moduleGap + 1;
-                }
+                left = MeasureSide(true); right = MeasureSide(false);
             }
-        }
-        double MeasureRight()
-        {
-            double total = 8;
-            foreach (string key in s.ModuleOrder)
-            {
-                if (IsLeft(key) || !_modules.TryGetValue(key, out var module) || s.HiddenModules.Contains(key) || _overflowed.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
-                module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-                total += module.DesiredSize.Width + _moduleGap + 1;
-            }
-            return total;
         }
         // Preserve Settings and More on the bar. Additional shortcuts remain usable in More on narrow screens.
         if (right > side)

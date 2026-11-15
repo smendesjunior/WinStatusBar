@@ -7,6 +7,13 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.8] - 2026-11-15 · compilação 20261115151606
+
+### Corrigido
+- Barra: um só tamanho de letra em todos os módulos. Quando falta espaço, o texto diminui por igual nos dois lados (antes só os da direita encolhiam).
+- Barra: mesmo respiro e mesmo espaço entre ícone e texto em todos os módulos, inclusive nas cotas de IA.
+- CPU e GPU: a primeira linha não mistura mais dois tamanhos de letra; a segunda linha da bateria segue o padrão dos outros módulos.
+
 ## [1.20.7] - 2026-11-15 · compilação 20261115150548
 
 ### Corrigido

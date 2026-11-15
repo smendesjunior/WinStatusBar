@@ -228,7 +228,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon Glyph="&#xEEA1;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
                         <StackPanel x:Name="CpuTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="CPU" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuUsage, Mode=OneWay}" Style="{StaticResource BarValueText}" /><TextBlock Text="{x:Bind VM.CpuTemperature, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind VM.CpuTemperatureSource, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="CPU" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuUsage, Mode=OneWay}" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuTemperature, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind VM.CpuTemperatureSource, Mode=OneWay}" Style="{StaticResource BarTitleText}" /></StackPanel>
                             <TextBlock Text="{x:Bind VM.CpuText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
                         </StackPanel>
                     </StackPanel>
@@ -250,7 +250,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon Glyph="&#xE950;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
                         <StackPanel x:Name="GpuTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="{x:Bind VM.GpuLabel, Mode=OneWay}" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.GpuTemperature, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="{x:Bind VM.GpuLabel, Mode=OneWay}" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.GpuTemperature, Mode=OneWay}" Style="{StaticResource BarTitleText}" /></StackPanel>
                             <TextBlock Text="{x:Bind VM.GpuText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
                         </StackPanel>
                     </StackPanel>
@@ -265,7 +265,7 @@
                         </StackPanel>
                         <StackPanel x:Name="BatteryTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
                             <TextBlock Text="{x:Bind VM.BatteryLine1, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
-                            <TextBlock Text="{x:Bind VM.BatteryLine2, Mode=OneWay}" Style="{StaticResource BarTitleText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Bind VM.BatteryLine2, Mode=OneWay}" Style="{StaticResource BarCaptionText}" />
                         </StackPanel>
                     </StackPanel>
                 </Button>
