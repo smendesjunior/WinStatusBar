@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.3] - 2026-11-15 · build 20261115140303
+
+### Fixed
+- Bar: text uses Segoe UI at regular weight, matching File Explorer, without jagged edges.
+
 ## [1.20.2] - 2026-11-15 · build 20261115133403
 
 ### Fixed

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.3] - 2026-11-15 · compilação 20261115140303
+
+### Corrigido
+- Barra: texto na fonte Segoe UI e no peso normal, iguais aos do Explorador, sem serrilhado.
+
 ## [1.20.2] - 2026-11-15 · compilação 20261115133403
 
 ### Corrigido

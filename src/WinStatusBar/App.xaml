@@ -10,7 +10,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Segoe UI Variable: títulos 12/16 epx; informações secundárias 11/15 epx. -->
-            <FontFamily x:Key="BarFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+            <!-- Mesma fonte e peso do Explorador (pedido de 15/11/2026): Segoe UI estática, sem serrilhado. -->
+            <FontFamily x:Key="BarFont">Segoe UI</FontFamily>
             <FontFamily x:Key="BarIconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
             <Style x:Key="BarTitleText" TargetType="TextBlock">
@@ -19,7 +20,7 @@
                 <!-- Peso do texto da barra (pedido de 12/11/2026: mais encorpado). Títulos e valores SemiBold
                      (valores em Medium pareciam finos ao lado dos títulos); a hierarquia vem do tamanho (12/11). Valor com nome: o peso numérico (450/500) aplicado por código
                      era recusado pelo WinUI (0x8000FFFF) e a barra ficava no Normal. -->
-                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontWeight" Value="Normal" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="TextWrapping" Value="NoWrap" />
@@ -28,7 +29,7 @@
             <Style x:Key="BarValueText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource BarFont}" />
                 <Setter Property="FontSize" Value="11" />
-                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontWeight" Value="Normal" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="TextWrapping" Value="NoWrap" />
