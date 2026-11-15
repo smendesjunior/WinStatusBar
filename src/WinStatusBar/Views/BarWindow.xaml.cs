@@ -322,7 +322,7 @@ public sealed partial class BarWindow : Window
         if (double.IsNaN(ScaleHost.Width) || ScaleHost.Width <= 0) return;
         var s = _settings.Current;
         double box = CommandHost.Visibility == Visibility.Visible ? CommandHost.Width + 6 : 0;
-        double side = Math.Max(1, (ScaleHost.Width - box) / 2);
+        double available = Math.Max(1, ScaleHost.Width - box);
         if (_overflowed.Count > 0) { _overflowed.Clear(); BuildColumns(); }
         foreach (var (key, button) in _shortcutOverflow) button.Visibility = ShortcutEnabled(key) ? Visibility.Visible : Visibility.Collapsed;
         _shortcutOverflow.Clear();
@@ -346,7 +346,6 @@ public sealed partial class BarWindow : Window
             }
             return total;
         }
-        double MeasureRight() => MeasureSide(false);
         // Padrão único (auditoria visual de 15/11/2026): o mesmo respiro em todos os módulos (sistema e cotas) e o
         // mesmo espaço entre ícone e texto. Primeiro diminui os espaços vazios, depois o texto.
         foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 6d, 8d, 34d), (5d, 5d, 6d, 30d), (4d, 4d, 5d, 26d) })
@@ -367,49 +366,51 @@ public sealed partial class BarWindow : Window
             }
             foreach (var button in new[] { ClipboardButton, TaskManagerButton, SettingsShortcutButton, StoreButton,
                 ExplorerShortcutButton, DocumentsShortcutButton, DownloadsShortcutButton, PersonalShortcutButton, MoreButton }) button.Width = shortcutWidth;
+            EqualizeQuotaWidths(quotaButtons);
             left = MeasureSide(true); right = MeasureSide(false);
-            if (left <= side && right <= side) break;
+            if (left + right <= available) break;
         }
         // Reduz o texto de verdade (nunca um bitmap) e por igual nos dois lados: a barra inteira com um só tamanho de letra.
-        if (left > side || right > side)
+        if (left + right > available)
         {
-            for (double ratio = 0.95; ratio >= 0.69 && (left > side || right > side); ratio -= 0.05)
+            for (double ratio = 0.95; ratio >= 0.69 && left + right > available; ratio -= 0.05)
             {
                 foreach (var (_, module) in _modules) ApplyNativeTextScale(module, ratio);
                 foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
+                EqualizeQuotaWidths(quotaButtons);
                 left = MeasureSide(true); right = MeasureSide(false);
             }
         }
-        // Preserve Settings and More on the bar. Additional shortcuts remain usable in More on narrow screens.
-        if (right > side)
+        // Pedido de 15/11/2026: todos os módulos e atalhos ficam visíveis 100% do tempo, nunca vão para o menu "…".
+        // Quando um lado não cabe na metade, a caixa da IA sai do centro e usa a sobra do outro lado (BarSpace.Allocate).
+        // A tarefa conta 120 para caber; havendo sobra do outro lado, ela pede a largura do texto inteiro (até 360).
+        double leftWanted = left;
+        if (_modules.TryGetValue("task", out var task) && task.Visibility == Visibility.Visible && IsLeft("task"))
         {
-            var buttons = ShortcutButtons();
-            foreach (string key in s.ShortcutOrder.AsEnumerable().Reverse().Where(k => k != "settings"))
-            {
-                if (right <= side) break;
-                if (!buttons.TryGetValue(key, out var button) || button.Visibility != Visibility.Visible) continue;
-                button.Visibility = Visibility.Collapsed;
-                _shortcutOverflow.Add((key, button));
-                right = MeasureRight();
-            }
+            task.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
+            leftWanted += Math.Clamp(task.DesiredSize.Width, 120, 360) - 120;
+            leftWanted = Math.Max(left, Math.Min(leftWanted, available - right));
         }
-        // Extremely narrow screens use the same More menu for details rather than painting outside the screen.
-        if (right > side)
-            foreach (string key in new[] { "gpu", "battery", "network", "cpu", "quotas", "agent" })
-            {
-                if (right <= side) break;
-                if (IsLeft(key) || s.HiddenModules.Contains(key) || !_modules.TryGetValue(key, out var module)) continue;
-                _overflowed.Add(key); module.Visibility = Visibility.Collapsed;
-                right = MeasureRight();
-            }
-        // O menu "…" é remontado ao abrir (OnMoreOpening) e pelo BuildColumns: não precisa ser refeito a cada medição.
-        if (_overflowed.Count > 0) BuildColumns();
-        var space = BarSpace.Allocate(ScaleHost.Width, box, left, right);
+        var space = BarSpace.Allocate(ScaleHost.Width, box, leftWanted, right);
         BarLayout.ColumnDefinitions[0].Width = new GridLength(space.Left);
         BarLayout.ColumnDefinitions[2].Width = new GridLength(space.Right);
         // Scroll only if a very small screen cannot fit the chosen modules even after spacing is compacted.
         ModulesGrid.Width = Math.Max(space.Left, left);
         RightModulesGrid.Width = Math.Max(space.Right, right);
+    }
+
+    /// <summary>Todos os blocos de cota com a mesma largura (a do maior), para o realce de seleção ficar igual.</summary>
+    private static void EqualizeQuotaWidths(Button[] quotas)
+    {
+        double max = 0;
+        foreach (var quota in quotas)
+        {
+            quota.MinWidth = 0;
+            if (quota.Visibility != Visibility.Visible) continue;
+            quota.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
+            max = Math.Max(max, quota.DesiredSize.Width);
+        }
+        foreach (var quota in quotas) quota.MinWidth = Math.Ceiling(max);
     }
 
     private Dictionary<string, Button> ShortcutButtons() => new()

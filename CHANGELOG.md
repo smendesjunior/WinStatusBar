@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.10] - 2026-11-15 · compilação 20261115170402
+
+### Corrigido
+- Barra: todos os módulos e atalhos ficam visíveis 100% do tempo; nada vai mais para o menu "…". Quando um lado precisa de mais espaço, a caixa "Pergunte à sua IA" se desloca para o lado que tem sobra em vez de esconder ferramentas, e a tarefa atual usa a largura que sobrar.
+- Cotas de IA: os blocos do Codex, Claude, Gemini e demais têm agora a mesma largura, e o realce ao passar o mouse fica igual em todos.
+
 ## [1.20.9] - 2026-11-15 · compilação 20261115152956
 
 ### Corrigido

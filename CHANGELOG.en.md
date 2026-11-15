@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.10] - 2026-11-15 · build 20261115170402
+
+### Fixed
+- Bar: every module and shortcut stays visible all the time; nothing is moved into the "…" menu anymore. When one side needs more room, the "Ask your AI" box shifts toward the side with spare space instead of hiding tools, and the current task uses any leftover width.
+- AI quotas: the Codex, Claude, Gemini and other quota blocks now have the same width, so their hover highlight is identical.
+
 ## [1.20.9] - 2026-11-15 · build 20261115152956
 
 ### Fixed
