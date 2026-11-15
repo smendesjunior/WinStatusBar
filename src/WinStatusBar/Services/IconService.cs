@@ -78,7 +78,7 @@ public static class IconService
         {
             // "unplated" = símbolo branco (tema escuro); "lightunplated" = símbolo preto (tema claro). Fundo transparente.
             string file = Path.Combine(root, "assets", dark ? "Square44x44Logo.targetsize-256_altform-unplated.png" : "Square44x44Logo.targetsize-256_altform-lightunplated.png");
-            if (File.Exists(file)) result = new BitmapImage(new Uri(file)) { DecodePixelWidth = 64, DecodePixelType = DecodePixelType.Physical };
+            if (File.Exists(file)) result = new BitmapImage(new Uri(file)) { DecodePixelWidth = LogoPixels(MonoLogoSize), DecodePixelType = DecodePixelType.Physical }; // reduzido pelo decodificador (alta qualidade), não pela GPU
         }
         Cache[key] = result;
         return result;
@@ -108,7 +108,7 @@ public static class IconService
     public static async Task<ImageSource?> MonoLogoAsync(string name, bool dark)
     {
         // Pixels no cache: com um monitor de escala maior, o logotipo é refeito nítido em vez de ampliado.
-        string key = $"mono|{name}|{dark}|{LogoPixels(BarLogoSize)}";
+        string key = $"mono|{name}|{dark}|{LogoPixels(MonoLogoSize)}";
         if (Cache.TryGetValue(key, out var c)) return c;
         ImageSource? result = null;
         byte v = dark ? (byte)0xFF : (byte)0x1B;
@@ -119,7 +119,7 @@ public static class IconService
                 var root = PackagePath("AnthropicPBC.Claude_fnn82j28hfe8t");
                 string? file = root is null ? null : new[] { "TrayIconTemplate@3x.png", "TrayIconTemplate@2x.png", "TrayIconTemplate.png" }
                     .Select(n => Path.Combine(root, "app", "resources", n)).FirstOrDefault(File.Exists);
-                if (file is not null) result = await TintAsync(file, v, v, v);
+                if (file is not null) result = await TintAsync(file, v, v, v, LogoPixels(MonoLogoSize));
             }
             else
             {
@@ -135,7 +135,7 @@ public static class IconService
                         writer.DetachStream();
                     }
                     stream.Seek(0);
-                    var source = LogoSvg(BarLogoSize);
+                    var source = LogoSvg(MonoLogoSize);
                     await source.SetSourceAsync(stream);
                     result = source;
                 }
@@ -148,6 +148,12 @@ public static class IconService
 
     /// <summary>Maior tamanho (DIPs) dos logotipos na barra: 17 nos módulos de cota e no agente, 20 na lista de tarefas.</summary>
     public const double BarLogoSize = 20;
+
+    /// <summary>
+    /// Tamanho exato (DIPs) dos logotipos monocromáticos e do Codex na barra. São gerados nesse tamanho, pixel a pixel:
+    /// gerar em 20 e mostrar em 17 deixava o logotipo borrado (auditoria de 15/11/2026).
+    /// </summary>
+    public const double MonoLogoSize = 17;
 
     /// <summary>
     /// Pixels para rasterizar um logotipo SVG exibido com <paramref name="dip"/> DIPs no monitor de maior escala.
@@ -171,7 +177,7 @@ public static class IconService
     }
 
     /// <summary>Recolore um glifo-modelo (preto + alfa) mantendo o canal alfa (saída pré-multiplicada).</summary>
-    private static async Task<WriteableBitmap> TintAsync(string file, byte r, byte g, byte b)
+    private static async Task<WriteableBitmap> TintAsync(string file, byte r, byte g, byte b, int targetPixels = 0)
     {
         var sf = await StorageFile.GetFileFromPathAsync(file);
         using var stream = await sf.OpenReadAsync();
@@ -202,10 +208,37 @@ public static class IconService
         for (int y = 0; y < glyphHeight; y++)
             Buffer.BlockCopy(px, ((top + y) * width + left) * 4,
                 normalized, ((offsetY + y) * size + offsetX) * 4, glyphWidth * 4);
+        if (targetPixels > 0 && targetPixels < size) { normalized = BoxResize(normalized, size, targetPixels); size = targetPixels; }
         var wb = new WriteableBitmap(size, size);
         using (var s = wb.PixelBuffer.AsStream()) s.Write(normalized, 0, normalized.Length);
         wb.Invalidate();
         return wb;
+    }
+
+    /// <summary>Reduz um quadrado BGRA pré-multiplicado pela média de área (sem serrilhado), para o tamanho exato de exibição.</summary>
+    private static byte[] BoxResize(byte[] src, int size, int target)
+    {
+        var dst = new byte[target * target * 4];
+        double k = (double)size / target;
+        for (int ty = 0; ty < target; ty++)
+            for (int tx = 0; tx < target; tx++)
+            {
+                double y0 = ty * k, y1 = y0 + k, x0 = tx * k, x1 = x0 + k;
+                double sb = 0, sg = 0, sr = 0, sa = 0, area = 0;
+                for (int y = (int)y0; y < Math.Min(size, (int)Math.Ceiling(y1)); y++)
+                {
+                    double wy = Math.Min(y + 1, y1) - Math.Max(y, y0);
+                    for (int x = (int)x0; x < Math.Min(size, (int)Math.Ceiling(x1)); x++)
+                    {
+                        double w = wy * (Math.Min(x + 1, x1) - Math.Max(x, x0));
+                        int i = (y * size + x) * 4;
+                        sb += src[i] * w; sg += src[i + 1] * w; sr += src[i + 2] * w; sa += src[i + 3] * w; area += w;
+                    }
+                }
+                int o = (ty * target + tx) * 4;
+                dst[o] = (byte)Math.Round(sb / area); dst[o + 1] = (byte)Math.Round(sg / area); dst[o + 2] = (byte)Math.Round(sr / area); dst[o + 3] = (byte)Math.Round(sa / area);
+            }
+        return dst;
     }
 
     public static void ClearThemeCache()

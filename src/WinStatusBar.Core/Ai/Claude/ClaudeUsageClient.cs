@@ -37,7 +37,10 @@ public sealed class ClaudeUsageClient : IDisposable
     private static readonly SemaphoreSlim RefreshGate = new(1, 1);
 
     public ClaudeUsageClient() : this(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
-        { Timeout = TimeSpan.FromSeconds(12) }, Path.Combine(ClaudeIntegrationInstaller.ClaudeConfigDir(), ".credentials.json"), allowRefresh: true) { }
+        { Timeout = TimeSpan.FromSeconds(12) }, Path.Combine(ClaudeIntegrationInstaller.ClaudeConfigDir(), ".credentials.json"), allowRefresh: false) { }
+    // Sem renovação pela barra (15/11/2026): o código de renovação do Claude é trocado a cada uso. Se a barra renovava,
+    // um Claude Code já aberto (com o código antigo na memória) tinha a renovação recusada e apagava o login do PC.
+    // A barra só lê o login; quem renova é o próprio Claude Code.
     internal ClaudeUsageClient(HttpClient http, string credentialsPath, bool allowRefresh = false)
     { _http = http; _credentialsPath = credentialsPath; _allowRefresh = allowRefresh; }
 

@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.9] - 2026-11-15 · compilação 20261115152956
+
+### Corrigido
+- Barra: logotipos do Codex, Claude, Gemini, Copilot e Qira gerados no tamanho exato em que aparecem, com redução de alta qualidade. Ficam nítidos, sem borrado nem serrilhado.
+- Claude: a barra não renova mais o login do Claude Code por conta própria. A renovação trocava o código de acesso e um Claude Code já aberto acabava apagando o login do PC. Agora só o Claude Code renova.
+
 ## [1.20.8] - 2026-11-15 · compilação 20261115151606
 
 ### Corrigido

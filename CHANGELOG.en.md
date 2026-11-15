@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.9] - 2026-11-15 · build 20261115152956
+
+### Fixed
+- Bar: Codex, Claude, Gemini, Copilot and Qira logos are rendered at their exact display size with high-quality downscaling, so they are sharp, without blur or jagged edges.
+- Claude: the bar no longer renews the Claude Code sign-in by itself. Renewing rotated the token, and a Claude Code process that was already open could end up wiping the sign-in. Only Claude Code renews it now.
+
 ## [1.20.8] - 2026-11-15 · build 20261115151606
 
 ### Fixed

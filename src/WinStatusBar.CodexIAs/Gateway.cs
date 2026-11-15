@@ -163,6 +163,20 @@ internal sealed class Gateway : IDisposable
         return request with { Body = body };
     }
 
+    /// <summary>Extensão Threadsmith do Chrome (ID fixo pela chave do manifest): única origem de navegador aceita.</summary>
+    internal const string ThreadsmithOrigin = "chrome-extension://gihoepdegmhnmkahjndjjkfafncbdohb";
+
+    /// <summary>
+    /// Origem aceita: programas do PC (sem Origin) em tudo; a extensão Threadsmith só em POST de respostas
+    /// para as IAs da barra (modelos "codexias-"), nunca comandos internos nem a conta do Codex.
+    /// </summary>
+    internal static bool OriginAllowed(string? origin, string method, string path)
+    {
+        if (origin is null) return true;
+        if (!string.Equals(origin, ThreadsmithOrigin, StringComparison.Ordinal)) return false;
+        return method == "POST" && !path.StartsWith("/codexias/", StringComparison.Ordinal);
+    }
+
     private static bool LocalHost(string? host)
     {
         if (string.IsNullOrEmpty(host)) return false;
@@ -276,7 +290,8 @@ internal sealed class Gateway : IDisposable
         if (string.Equals(request.Header("Upgrade"), "websocket", StringComparison.OrdinalIgnoreCase))
         { await BridgeServer.PlainAsync(stream, 426, "Use HTTP Responses streaming"); return; }
         // Só programas deste PC: páginas da internet (Origin) e nomes de outro computador (DNS rebinding) ficam de fora.
-        if (request.Header("Origin") is not null || !LocalHost(request.Header("Host")))
+        string? origin = request.Header("Origin");
+        if (!OriginAllowed(origin, request.Method, request.Path) || !LocalHost(request.Header("Host")))
         { await BridgeServer.PlainAsync(stream, 403, "Local application access only"); return; }
         if (request.Method == "CHUNKED") { await BridgeServer.PlainAsync(stream, 400, "Content-Length required"); return; }
         if (request.Method == "TOOBIG") { await BridgeServer.PlainAsync(stream, 413, TooBigMessage); return; }
@@ -294,6 +309,7 @@ internal sealed class Gateway : IDisposable
         byte[] decoded = request.Body;
         string encoding = (request.Header("Content-Encoding") ?? "identity").Trim().ToLowerInvariant();
         if (encoding is not ("zstd" or "identity" or "")) { await BridgeServer.PlainAsync(stream, 415, "Unsupported Content-Encoding"); return; }
+        if (origin is not null && (request.Spool is not null || encoding != "identity" && encoding != "")) { await BridgeServer.PlainAsync(stream, 403, "Local application access only"); return; }
         if (request.Spool is { } spool) { await RouteHugeAsync(request, spool, encoding == "zstd", stream, socket); return; }
         if (encoding == "zstd")
         {
@@ -314,6 +330,9 @@ internal sealed class Gateway : IDisposable
         string model = payload?["model"] is JsonValue v && v.TryGetValue<string>(out var m) ? m : "";
         var state = CodexIntegration.LoadState();
         string? rest = Rest(request.Path, state.BasePath);
+
+        if (origin is not null && !model.StartsWith(CodexCatalog.Prefix, StringComparison.Ordinal))
+        { await BridgeServer.PlainAsync(stream, 403, "Local application access only"); return; }
 
         if (model.StartsWith(CodexCatalog.Prefix, StringComparison.Ordinal))
         {

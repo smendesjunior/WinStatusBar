@@ -354,6 +354,18 @@ public class CodexIAsConfigTests
     }
 
     [Fact]
+    public void Gateway_aceita_so_programas_locais_e_a_extensao_Threadsmith()
+    {
+        Assert.True(Gateway.OriginAllowed(null, "POST", "/v1/responses"));
+        Assert.True(Gateway.OriginAllowed(null, "GET", "/codexias/modelos"));
+        Assert.True(Gateway.OriginAllowed(Gateway.ThreadsmithOrigin, "POST", "/v1/responses"));
+        Assert.False(Gateway.OriginAllowed(Gateway.ThreadsmithOrigin, "GET", "/codexias/modelos"));
+        Assert.False(Gateway.OriginAllowed(Gateway.ThreadsmithOrigin, "POST", "/codexias/qualquer"));
+        Assert.False(Gateway.OriginAllowed("https://chatgpt.com", "POST", "/v1/responses"));
+        Assert.False(Gateway.OriginAllowed("chrome-extension://outraextensaoqualquer", "POST", "/v1/responses"));
+    }
+
+    [Fact]
     public void Relatorio_vai_e_volta_igual()
     {
         var report = new CodexIntegration.Report(new DateTime(2026, 11, 8, 20, 0, 0), "1.3.0",
