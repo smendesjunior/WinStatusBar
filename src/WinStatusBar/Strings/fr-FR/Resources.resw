@@ -4611,4 +4611,10 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>Liste les applications ouvertes, regroupées comme dans le Gestionnaire des tâches, avec la mémoire et l'utilisation du processeur de chacune.</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>Cœur le plus rapide : {0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0} (cœur le plus rapide : {1})</value>
+  </data>
 </root>

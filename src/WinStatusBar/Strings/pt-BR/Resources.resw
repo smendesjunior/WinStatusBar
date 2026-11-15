@@ -4611,4 +4611,10 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>Lista os aplicativos abertos, agrupados como no Gerenciador de Tarefas, com a memória e o uso da CPU de cada um.</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>Núcleo mais rápido: {0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0} (núcleo mais rápido: {1})</value>
+  </data>
 </root>

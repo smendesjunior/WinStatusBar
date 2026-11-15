@@ -4611,4 +4611,10 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>開いているアプリをタスク マネージャーと同じようにまとめ、それぞれのメモリと CPU 使用率を表示します。</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>最速コア: {0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0}（最速コア: {1}）</value>
+  </data>
 </root>

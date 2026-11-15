@@ -4611,4 +4611,10 @@ Source: {0} · {1:HH:mm}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>Lists open apps, grouped as in Task Manager, with each one's memory and CPU usage.</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>Fastest core: {0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0} (fastest core: {1})</value>
+  </data>
 </root>

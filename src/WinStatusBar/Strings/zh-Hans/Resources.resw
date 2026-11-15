@@ -4611,4 +4611,10 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>像任务管理器一样分组列出打开的应用，并显示每个应用的内存和 CPU 使用率。</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>最快核心：{0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0}（最快核心：{1}）</value>
+  </data>
 </root>

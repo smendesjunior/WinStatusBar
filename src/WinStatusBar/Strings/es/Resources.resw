@@ -4611,4 +4611,10 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SE7E9B22B0B79AEBB" xml:space="preserve">
     <value>Muestra las aplicaciones abiertas, agrupadas como en el Administrador de tareas, con la memoria y el uso de CPU de cada una.</value>
   </data>
+  <data name="S3D86148847DCB4EB" xml:space="preserve">
+    <value>Núcleo más rápido: {0}</value>
+  </data>
+  <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
+    <value>{0} (núcleo más rápido: {1})</value>
+  </data>
 </root>

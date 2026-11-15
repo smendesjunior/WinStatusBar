@@ -229,7 +229,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon Glyph="&#xEEA1;" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
                         <StackPanel x:Name="CpuTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="CPU" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuTemperature, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind VM.CpuTemperatureSource, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="CPU" Style="{StaticResource BarTitleText}" /><TextBlock Text="{x:Bind VM.CpuUsage, Mode=OneWay}" Style="{StaticResource BarValueText}" /><TextBlock Text="{x:Bind VM.CpuTemperature, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind VM.CpuTemperatureSource, Mode=OneWay}" Style="{StaticResource BarValueText}" /></StackPanel>
                             <TextBlock Text="{x:Bind VM.CpuText, Mode=OneWay}" Style="{StaticResource BarValueText}" />
                         </StackPanel>
                     </StackPanel>

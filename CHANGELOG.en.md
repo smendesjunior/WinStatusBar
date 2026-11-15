@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.0] - 2026-11-14 · build 20261115000936
+
+### Added
+- CPU: the bar now also shows the fastest core's clock after the all-core average (the one Task Manager shows), e.g. "2.71 GHz / 4.63 GHz". It also appears in the tooltip and the CPU panel.
+
+### Changed
+- CPU: utilization (%) moved to the block title, before the temperature ("CPU · 57 % · 70 °C").
+
 ## [1.19.0] - 2026-11-14 · build 20261114211049
 
 ### Added

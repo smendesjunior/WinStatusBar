@@ -6,7 +6,7 @@ public interface ISystemMetricsProvider<out T> : IDisposable
     T Sample();
 }
 
-public sealed record CpuSample(double? UsagePercent, double? CurrentGHz, string ProcessorName, int LogicalProcessors, string Source);
+public sealed record CpuSample(double? UsagePercent, double? CurrentGHz, string ProcessorName, int LogicalProcessors, string Source, double? PeakCoreGHz = null);
 
 public sealed record RamSample(ulong TotalBytes, ulong AvailableBytes, ulong InstalledBytes, uint MemoryLoad)
 {

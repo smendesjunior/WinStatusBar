@@ -8,12 +8,15 @@ namespace WinStatusBar.Core.Metrics;
 /// Utilização: contador PDH "% Processor Utility" (mesma métrica do Gerenciador de Tarefas);
 /// se indisponível, cálculo próprio com GetSystemTimes.
 /// Frequência atual: "Processor Frequency" (nominal, MHz) × "% Processor Performance" / 100.
+/// Núcleo mais rápido: o mesmo cálculo por processador lógico, ficando com o maior (o Gerenciador de Tarefas só mostra a média).
 /// </summary>
 public sealed class CpuMetricsProvider : ISystemMetricsProvider<CpuSample>
 {
     private const string Utility = @"\Processor Information(_Total)\% Processor Utility";
     private const string Frequency = @"\Processor Information(_Total)\Processor Frequency";
     private const string Performance = @"\Processor Information(_Total)\% Processor Performance";
+    private const string CoreFrequency = @"\Processor Information(*)\Processor Frequency";
+    private const string CorePerformance = @"\Processor Information(*)\% Processor Performance";
 
     private readonly PdhQuery _pdh = new();
     private readonly string _name;
@@ -26,6 +29,8 @@ public sealed class CpuMetricsProvider : ISystemMetricsProvider<CpuSample>
         _pdh.AddCounter(Utility);
         _pdh.AddCounter(Frequency);
         _pdh.AddCounter(Performance);
+        _pdh.AddCounter(CoreFrequency);
+        _pdh.AddCounter(CorePerformance);
         _pdh.Collect();
         SampleSystemTimes();
     }
@@ -33,7 +38,7 @@ public sealed class CpuMetricsProvider : ISystemMetricsProvider<CpuSample>
     public CpuSample Sample()
     {
         double? fromTimes = SampleSystemTimes();
-        double? usage = null, ghz = null;
+        double? usage = null, ghz = null, peak = null;
         string source = "GetSystemTimes";
         if (_pdh.Collect())
         {
@@ -42,9 +47,26 @@ public sealed class CpuMetricsProvider : ISystemMetricsProvider<CpuSample>
             var mhz = _pdh.GetValue(Frequency);
             var perf = _pdh.GetValue(Performance, noCap: true);
             if (mhz is > 0 && perf is > 0) ghz = mhz.Value * perf.Value / 100.0 / 1000.0;
+            peak = ComputePeakGHz(_pdh.GetArray(CoreFrequency), _pdh.GetArray(CorePerformance), mhz);
         }
         usage ??= fromTimes;
-        return new CpuSample(usage, ghz, _name, Environment.ProcessorCount, source);
+        return new CpuSample(usage, ghz, _name, Environment.ProcessorCount, source, peak);
+    }
+
+    /// <summary>Maior frequência entre os processadores lógicos (ignora as instâncias "_Total").
+    /// Usa a frequência nominal de cada instância; sem ela, a nominal geral.</summary>
+    internal static double? ComputePeakGHz(IEnumerable<KeyValuePair<string, double>> frequencies, IEnumerable<KeyValuePair<string, double>> performances, double? fallbackMhz)
+    {
+        var nominal = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in frequencies) nominal[f.Key] = f.Value;
+        double best = 0;
+        foreach (var p in performances)
+        {
+            if (p.Key.Contains("_Total", StringComparison.OrdinalIgnoreCase) || p.Value <= 0) continue;
+            double mhz = nominal.TryGetValue(p.Key, out var n) && n > 0 ? n : fallbackMhz ?? 0;
+            best = Math.Max(best, mhz * p.Value / 100.0);
+        }
+        return best > 0 ? best / 1000.0 : null;
     }
 
     /// <summary>Uso = (kernel + user − idle) / (kernel + user) entre duas amostras. kernel já inclui idle.</summary>

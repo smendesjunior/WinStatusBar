@@ -200,6 +200,8 @@ public sealed class BarViewModel : ObservableObject
     private string _cpuTemperatureSource = "";
     public string CpuTemperatureSource { get => _cpuTemperatureSource; set => Set(ref _cpuTemperatureSource, value); }
     private string _cpuTemperature = "", _gpuTemperature = "";
+    private string _cpuUsage = "";
+    public string CpuUsage { get => _cpuUsage; set => Set(ref _cpuUsage, value); }
     public string CpuTemperature { get => _cpuTemperature; set => Set(ref _cpuTemperature, value); }
     public string GpuTemperature { get => _gpuTemperature; set => Set(ref _gpuTemperature, value); }
     public void UpdateTemperatures(TemperatureSample t, bool enabled)
@@ -305,9 +307,14 @@ public sealed class BarViewModel : ObservableObject
     // ---------- Atualizações ----------
     public void UpdateCpu(CpuSample s)
     {
-        CpuText = $"{Formatters.GHz(s.CurrentGHz)}  {Formatters.Percent(s.UsagePercent)}";
+        // Média / núcleo mais rápido; a utilização vai para o título, antes da temperatura.
+        CpuText = s.PeakCoreGHz is double pk
+            ? $"{Formatters.GHz(s.CurrentGHz)} / {Formatters.GHz(pk)}"
+            : Formatters.GHz(s.CurrentGHz);
+        CpuUsage = s.UsagePercent is null ? "" : $" · {Formatters.Percent(s.UsagePercent)}";
         CpuTooltip = global::WinStatusBar.Services.Localization.F("{0}\n{1} processadores lógicos\nUtilização: {2}\n", new object?[] {s.ProcessorName,s.LogicalProcessors,Formatters.Percent(s.UsagePercent)})
-                     + global::WinStatusBar.Services.Localization.F("Frequência atual: {0}\nFonte: {1}", new object?[] {Formatters.GHz(s.CurrentGHz),s.Source});
+                     + global::WinStatusBar.Services.Localization.F("Frequência atual: {0}\nFonte: {1}", new object?[] {Formatters.GHz(s.CurrentGHz),s.Source})
+                     + (s.PeakCoreGHz is null ? string.Empty : "\n" + global::WinStatusBar.Services.Localization.F("Núcleo mais rápido: {0}", new object?[] {Formatters.GHz(s.PeakCoreGHz)}));
     }
 
     public void UpdateRam(RamSample s)

@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.0] - 2026-11-14 · compilação 20261115000936
+
+### Adicionado
+- CPU: a barra mostra também o clock do núcleo mais rápido depois da média de todos os núcleos (a mesma que o Gerenciador de Tarefas exibe), por exemplo "2,71 GHz / 4,63 GHz". O valor também aparece na dica e no painel da CPU.
+
+### Alterado
+- CPU: a utilização (%) passou para o título do bloco, antes da temperatura ("CPU · 57 % · 70 °C").
+
 ## [1.19.0] - 2026-11-14 · compilação 20261114211049
 
 ### Adicionado

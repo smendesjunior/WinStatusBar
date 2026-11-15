@@ -15,6 +15,18 @@ public class MetricsTests
     }
 
     [Fact]
+    public void CpuPeak_TakesFastestLogicalProcessorAndIgnoresTotals()
+    {
+        var freq = new[] { KV("0,0", 2400), KV("0,5", 2400), KV("_Total", 2400), KV("0,_Total", 2400) };
+        var perf = new[] { KV("0,0", 50), KV("0,5", 198), KV("_Total", 250), KV("0,_Total", 250) };
+        Assert.Equal(4.752, CpuMetricsProvider.ComputePeakGHz(freq, perf, 2400)!.Value, 6);
+        Assert.Equal(1.2, CpuMetricsProvider.ComputePeakGHz([], [KV("0,1", 50)], 2400)!.Value, 6);
+        Assert.Null(CpuMetricsProvider.ComputePeakGHz([], [], 2400));
+    }
+
+    private static KeyValuePair<string, double> KV(string k, double v) => new(k, v);
+
+    [Fact]
     public void Ram_UsedIsTotalMinusAvailable()
     {
         var s = new RamSample(64UL << 30, 48UL << 30, 64UL << 30, 25);
