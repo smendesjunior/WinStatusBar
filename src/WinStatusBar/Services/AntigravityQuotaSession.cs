@@ -38,6 +38,8 @@ internal static class AntigravityQuotaSession
     public static void Stop() { _timer?.Stop(); _ui = null; }
 
     /// <summary>Lê agora (sem o agy instalado, não faz nada). Uma leitura por vez.</summary>
+    private static int _loginMisses;
+
     public static async Task RefreshAsync()
     {
         if (Busy || !Installed) return;
@@ -53,6 +55,16 @@ internal static class AntigravityQuotaSession
                 App.Log("Cota do Antigravity: " + error);
                 return;
             }
+            if (!read.SignedIn && Current?.SignedIn == true && _loginMisses < 1)
+            {
+                // Logo depois de acordar (rede ainda voltando), o agy diz "sem login" porque não renovou o acesso; a leitura
+                // seguinte vem normal. Mantém o login anterior e confere de novo em 2 min; só um segundo "sem login" seguido vale.
+                _loginMisses++;
+                App.Log("Cota do Antigravity: o agy disse \"sem login\" (provável rede voltando); confere de novo em 2 min");
+                _ = Task.Delay(TimeSpan.FromMinutes(2)).ContinueWith(_ => { if (_ui is { } q) q.TryEnqueue(() => _ = RefreshAsync()); else _ = RefreshAsync(); });
+                return;
+            }
+            _loginMisses = 0;
             Current = read;
             AntigravityQuota.Save(read);
             App.Log(read.SignedIn

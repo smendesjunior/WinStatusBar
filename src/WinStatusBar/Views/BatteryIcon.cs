@@ -44,10 +44,12 @@ public sealed class BatteryIcon : Grid
         }
         catch (Exception ex) { App.Log("Fonte de bateria do sistema: " + ex.Message); return false; }
     }
-    private const double Size = 17;
+    private const double Size = 15;
+    // O glifo da SysBatt tem 2560/2048 em de largura; sem isso o FontIcon (largura = FontSize) o deslocava ~2 px para a esquerda.
+    private const double GlyphWidth = Size * 2560 / 2048;
 
-    private readonly FontIcon _fill = new() { FontSize = Size };
-    private readonly FontIcon _outline = new() { FontSize = Size };
+    private readonly FontIcon _fill = new() { FontSize = Size, Width = GlyphWidth, HorizontalAlignment = HorizontalAlignment.Center };
+    private readonly FontIcon _outline = new() { FontSize = Size, Width = GlyphWidth, HorizontalAlignment = HorizontalAlignment.Center };
 
     public BatteryIcon()
     {

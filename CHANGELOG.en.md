@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.6] - 2026-11-15 · build 20261115145613
+
+### Fixed
+- Bar: text 1 px larger, smoother.
+- Battery: smaller icon and percentage, with the icon centered above the percentage.
+
 ## [1.20.5] - 2026-11-15 · build 20261115144013
 
 ### Fixed

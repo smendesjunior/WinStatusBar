@@ -261,7 +261,7 @@
                         <!-- Porcentagem abaixo do ícone, mesmo tamanho (pedido de 15/11/2026) -->
                         <StackPanel VerticalAlignment="Center" Spacing="1">
                             <local:BatteryIcon Plugged="{x:Bind VM.BatteryPlugged, Mode=OneWay}" Percent="{x:Bind VM.BatteryPercent, Mode=OneWay}" Charging="{x:Bind VM.BatteryCharging, Mode=OneWay}" Saver="{x:Bind VM.BatterySaver, Mode=OneWay}" HorizontalAlignment="Center" />
-                            <TextBlock Text="{x:Bind VM.BatteryText, Mode=OneWay}" FontFamily="{StaticResource BarFont}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" LineHeight="16" LineStackingStrategy="BlockLineHeight" />
+                            <TextBlock Text="{x:Bind VM.BatteryText, Mode=OneWay}" FontFamily="{StaticResource BarFont}" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" LineHeight="15" LineStackingStrategy="BlockLineHeight" />
                         </StackPanel>
                         <StackPanel x:Name="BatteryTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
                             <TextBlock Text="{x:Bind VM.BatteryLine1, Mode=OneWay}" Style="{StaticResource BarTitleText}" />

@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.6] - 2026-11-15 · compilação 20261115145613
+
+### Corrigido
+- Barra: texto 1 px maior, mais suave.
+- Bateria: ícone e porcentagem menores, com o ícone centralizado sobre a porcentagem.
+
 ## [1.20.5] - 2026-11-15 · compilação 20261115144013
 
 ### Corrigido
