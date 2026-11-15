@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.21.0] - 2026-11-15 · compilação 20261115230714
+
+### Adicionado
+- Títulos dos chats do ChatGPT: nova opção em Configurações › Modelos que, a cada 10 minutos, renomeia os chats novos do ChatGPT (site, app do Windows e celular) para "DD/MM/AAAA - Tema - Assunto". O título é gerado pelo modelo mais leve da sua conta, com o login do Codex que a barra já usa para a cota. Vem desligada.
+
 ## [1.20.10] - 2026-11-15 · compilação 20261115170402
 
 ### Corrigido

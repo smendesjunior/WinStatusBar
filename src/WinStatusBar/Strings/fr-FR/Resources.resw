@@ -4617,4 +4617,13 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
     <value>{0} (cœur le plus rapide : {1})</value>
   </data>
+  <data name="S95907832D7A1FBA8" xml:space="preserve">
+    <value>Titres des discussions ChatGPT</value>
+  </data>
+  <data name="S3999FCDAD1EDD776" xml:space="preserve">
+    <value>Renommer les discussions automatiquement</value>
+  </data>
+  <data name="S3CF8C682D70F4CCF" xml:space="preserve">
+    <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours ayant au moins 3 minutes ; celles déjà au format restent inchangées.</value>
+  </data>
 </root>

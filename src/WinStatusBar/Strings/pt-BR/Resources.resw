@@ -4617,4 +4617,13 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
     <value>{0} (núcleo mais rápido: {1})</value>
   </data>
+  <data name="S95907832D7A1FBA8" xml:space="preserve">
+    <value>Títulos dos chats do ChatGPT</value>
+  </data>
+  <data name="S3999FCDAD1EDD776" xml:space="preserve">
+    <value>Renomear chats automaticamente</value>
+  </data>
+  <data name="S3CF8C682D70F4CCF" xml:space="preserve">
+    <value>Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) o título "DD/MM/AAAA - Tema - Assunto", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão.</value>
+  </data>
 </root>

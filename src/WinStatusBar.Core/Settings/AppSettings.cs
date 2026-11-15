@@ -182,6 +182,8 @@ public sealed class AppSettings
     public bool CodexApiParallel { get; set; } = false;
     /// <summary>Continuar pela API ligado (padrão): a seção no menu da cota, o acompanhamento no painel de tarefas e o serviço.</summary>
     public bool CodexApiResumeEnabled { get; set; } = true;
+    /// <summary>Renomear sozinho os chats do ChatGPT para "DD/MM/AAAA - Tema - Assunto" (login do Codex). Desligado por padrão.</summary>
+    public bool ChatGptAutoTitles { get; set; } = false;
     /// <summary>Minutos entre consultas da conta Claude; 0 = tempo real (statusLine + consulta a cada minuto, respeitando Retry-After).</summary>
     public int ClaudeQuotaIntervalMin { get; set; } = 0;
     /// <summary>O usuário removeu a integração com o Claude Code: não reinstalar automaticamente.</summary>

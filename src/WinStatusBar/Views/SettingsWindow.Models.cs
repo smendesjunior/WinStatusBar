@@ -135,6 +135,13 @@ public sealed partial class SettingsWindow
                 Localization.T("Ligado (padrão), o menu da cota do Codex mostra as conversas paradas pela cota e o botão Continuar pela API, que retoma cada uma pela sua chave da OpenAI, fora do app do Codex. Desligado, a seção e o acompanhamento somem; continuações em andamento seguem até terminar."),
                 s => s.CodexApiResumeEnabled, (s, v) => s.CodexApiResumeEnabled = v)));
 
+        // ------------------------------------------------------------ títulos dos chats do ChatGPT
+        page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT")));
+        page.Children.Add(Group(
+            Toggle(Localization.T("Renomear chats automaticamente"),
+                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão."),
+                s => s.ChatGptAutoTitles, (s, v) => s.ChatGptAutoTitles = v)));
+
         // ------------------------------------------------------------ corrigir problemas
         var repairAll = BigButton("Corrigir problemas", accent: false);
         var redoAll = BigButton("Refazer todas as ligações", accent: false);

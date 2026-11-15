@@ -37,6 +37,7 @@ public partial class App : Application
     public MonitoringHub Hub { get; private set; } = null!;
     /// <summary>Continuar pela API (interno: o serviço é interno).</summary>
     internal CodexApiResumeService ApiResume { get; private set; } = null!;
+    internal Core.Ai.Codex.ChatGptTitleRenamer? ChatGptTitles { get; private set; }
     public IReadOnlyList<BarWindow> Bars => _bars;
 
     public App()
@@ -224,6 +225,14 @@ public partial class App : Application
             }
         }
         DeferredStep("continuação pela API", () => ApiResume.Start());
+        DeferredStep("títulos do ChatGPT", () =>
+        {
+            ChatGptTitles = new Core.Ai.Codex.ChatGptTitleRenamer(
+                () => Settings.Current.ChatGptAutoTitles,
+                () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now),
+                Log);
+            ChatGptTitles.Start();
+        });
         DeferredStep("métricas da OpenAI", StartApiUsageAutoRefresh);
         DeferredStep("sessões web", () =>
         {
@@ -565,6 +574,7 @@ public partial class App : Application
             MicrosoftCreditsSession.Stop();
             AntigravityQuotaSession.Stop();
             ApiResume?.Shutdown(); // só laço e timers; a continuação pela API segue rodando
+            ChatGptTitles?.Stop();
         });
         foreach (var b in _bars.ToList()) ExitStep("barra", b.CloseBar);
         _bars.Clear();

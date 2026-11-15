@@ -4617,4 +4617,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
     <value>{0}（最速コア: {1}）</value>
   </data>
+  <data name="S95907832D7A1FBA8" xml:space="preserve">
+    <value>ChatGPT のチャットのタイトル</value>
+  </data>
+  <data name="S3999FCDAD1EDD776" xml:space="preserve">
+    <value>チャットの名前を自動で変更</value>
+  </data>
+  <data name="S3CF8C682D70F4CCF" xml:space="preserve">
+    <value>オンにすると、バーは 10 分ごとに ChatGPT の新しいチャット (Web、Windows アプリ、モバイル) に、アカウントで最も軽いモデルが生成した「DD/MM/YYYY - テーマ - 件名」というタイトルを付けます。クォータと同じ Codex のログインを使い、何も保存しません。対象は過去 7 日以内で作成から 3 分以上たったチャットだけで、すでにこの形式のものは変更しません。</value>
+  </data>
 </root>

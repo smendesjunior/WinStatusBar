@@ -4617,4 +4617,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="SF9D9D2CCA8C379A9" xml:space="preserve">
     <value>{0}（最快核心：{1}）</value>
   </data>
+  <data name="S95907832D7A1FBA8" xml:space="preserve">
+    <value>ChatGPT 聊天标题</value>
+  </data>
+  <data name="S3999FCDAD1EDD776" xml:space="preserve">
+    <value>自动重命名聊天</value>
+  </data>
+  <data name="S3CF8C682D70F4CCF" xml:space="preserve">
+    <value>开启后，栏每 10 分钟为 ChatGPT 的新聊天（网页、Windows 应用和手机）设置标题“DD/MM/YYYY - 主题 - 事项”，由你账户中最轻量的模型生成。使用与配额相同的 Codex 登录，不保存任何内容。仅限最近 7 天内且已创建至少 3 分钟的聊天；已是此格式的聊天保持不变。</value>
+  </data>
 </root>
