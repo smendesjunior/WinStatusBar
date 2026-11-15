@@ -1,15 +1,16 @@
-﻿using System.Globalization;
-using System.Text;
-using System.Xml.Linq;
+﻿using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Storage.Streams;
+using Microsoft.UI.Xaml.Media;
 using WinStatusBar.Core.Metrics;
 
 namespace WinStatusBar.Views;
 
-/// <summary>Separate vector assets for each Windows battery state. No font glyphs or nested battery overlays.</summary>
+/// <summary>
+/// Mesmo ícone de bateria da bandeja do Windows 11 (pedido de 15/11/2026): a fonte do sistema "SysBatt Fluent Icons"
+/// (Sysbatt.ttf, do próprio Windows, não distribuída com o app), em duas camadas: contorno + preenchimento por nível.
+/// Sem a fonte (Windows 10), usa os glifos de bateria da Segoe Fluent Icons / MDL2.
+/// </summary>
 public sealed class BatteryIcon : Grid
 {
     public static readonly DependencyProperty PercentProperty = DependencyProperty.Register(nameof(Percent), typeof(int), typeof(BatteryIcon), new PropertyMetadata(-1, Changed));
@@ -22,63 +23,95 @@ public sealed class BatteryIcon : Grid
     public bool Charging { get => (bool)GetValue(ChargingProperty); set => SetValue(ChargingProperty, value); }
     public bool Plugged { get => (bool)GetValue(PluggedProperty); set => SetValue(PluggedProperty, value); }
     public bool Saver { get => (bool)GetValue(SaverProperty); set => SetValue(SaverProperty, value); }
-    // These states require an explicit hardware signal; a plugged-in/full battery alone is insufficient.
     public bool SmartCharging { get => (bool)GetValue(SmartChargingProperty); set => SetValue(SmartChargingProperty, value); }
     public bool SlowCharging { get => (bool)GetValue(SlowChargingProperty); set => SetValue(SlowChargingProperty, value); }
-    private readonly Image _image = new() { Width = 20, Height = 13 };
-    private int _revision;
-    private string _rendered = "";
-    private XamlRoot? _observedRoot;
-    private static readonly Dictionary<string, string> Assets = new();
+
+    private static readonly string SysBattPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"SystemResources\Windows.UI.ControlCenter\Assets\Sysbatt.ttf");
+    // Cópia local da fonte do sistema (feita ao abrir; nunca vai no instalador), lida por ms-appx como as demais fontes do app.
+    private static readonly bool HasSysBatt = CopySysBatt();
+    private static bool CopySysBatt()
+    {
+        try
+        {
+            if (!File.Exists(SysBattPath)) return false;
+            string local = Path.Combine(AppContext.BaseDirectory, "Assets", "SysBatt.ttf");
+            if (!File.Exists(local) || new FileInfo(local).Length != new FileInfo(SysBattPath).Length)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(local)!);
+                File.Copy(SysBattPath, local, true);
+            }
+            return true;
+        }
+        catch (Exception ex) { App.Log("Fonte de bateria do sistema: " + ex.Message); return false; }
+    }
+    private const double Size = 20;
+
+    private readonly FontIcon _fill = new() { FontSize = Size };
+    private readonly FontIcon _outline = new() { FontSize = Size };
 
     public BatteryIcon()
     {
-        Width = 20; Height = 13;
         IsHitTestVisible = false;
-        Children.Add(_image);
-        Loaded += (_, _) =>
-        {
-            _observedRoot = XamlRoot;
-            if (_observedRoot is not null) _observedRoot.Changed += RootChanged;
-            _ = DrawAsync();
-        };
-        Unloaded += (_, _) => { if (_observedRoot is not null) _observedRoot.Changed -= RootChanged; _observedRoot = null; };
-        ActualThemeChanged += (_, _) => _ = DrawAsync();
+        var family = HasSysBatt
+            ? new FontFamily("ms-appx:///Assets/SysBatt.ttf#SysBatt Fluent Icons")
+            : (FontFamily)Application.Current.Resources["BarIconFont"];
+        _fill.FontFamily = _outline.FontFamily = family;
+        if (HasSysBatt) Children.Add(_fill);
+        Children.Add(_outline);
+        ActualThemeChanged += (_, _) => Update();
+        Update();
     }
-    private void RootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => _ = DrawAsync();
-    private static void Changed(DependencyObject d, DependencyPropertyChangedEventArgs e) => _ = ((BatteryIcon)d).DrawAsync();
 
-    private async Task DrawAsync()
+    private static void Changed(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((BatteryIcon)d).Update();
+
+    /// <summary>Camadas da SysBatt: (contorno, preenchimento). Normal F8D0 + F8D1–F8DA (10 níveis);
+    /// carregando F8DB + F8DC–F8E3 (8); na tomada F8E4 + F8E5–F8EC (8); desconhecido F849.</summary>
+    public static (char Outline, char? Fill) SysBattGlyphs(BatteryVisualState state, int percent)
     {
-        if (!IsLoaded) return;
-        var state = BatteryVisualStates.Select(Percent, Charging, Plugged, Saver, SmartCharging, SlowCharging);
-        string theme = ActualTheme == ElementTheme.Dark ? "dark" : "light";
-        double scale = XamlRoot?.RasterizationScale ?? 1; double pixels = Math.Round(20 * scale), pixelsH = Math.Round(13 * scale);
-        string key = $"{state}-{theme}";
-        string signature = $"{key}:{Percent}:{pixels}";
-        if (_rendered == signature) return;
-        int revision = ++_revision;
-        try
+        int p = Math.Clamp(percent, 0, 100);
+        int Level(int steps) => Math.Clamp((int)Math.Ceiling(p * steps / 100.0), 1, steps) - 1;
+        return state switch
         {
-            if (!Assets.TryGetValue(key, out string? asset))
-                Assets[key] = asset = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "Battery", key + ".svg"));
-            var svg = XDocument.Parse(asset);
-            // Recorte 1:1 só da bateria (y 4–17): sem reescala fracionária, traços nítidos.
-            svg.Root!.SetAttributeValue("viewBox", "0 4 20 13"); svg.Root.SetAttributeValue("width", "20"); svg.Root.SetAttributeValue("height", "13");
-            var fill = svg.Descendants().FirstOrDefault(e => (string?)e.Attribute("id") == "charge");
-            fill?.SetAttributeValue("width", Math.Max(1.1, 12.8 * Math.Clamp(Percent, 0, 100) / 100.0).ToString("0.###", CultureInfo.InvariantCulture));
-            using var stream = new InMemoryRandomAccessStream();
-            using var writer = new DataWriter(stream);
-            writer.WriteBytes(Encoding.UTF8.GetBytes(svg.ToString(SaveOptions.DisableFormatting)));
-            await writer.StoreAsync();
-            stream.Seek(0);
-            var source = new SvgImageSource { RasterizePixelWidth = pixels, RasterizePixelHeight = pixelsH };
-            var status = await source.SetSourceAsync(stream);
-            if (status != SvgImageSourceLoadStatus.Success) throw new IOException("SVG de bateria inválido: " + key);
-            if (revision != _revision) return;
-            _image.Source = source;
-            _rendered = signature;
-        }
-        catch (Exception ex) { App.Log("Ícone de bateria: " + ex.Message); }
+            BatteryVisualState.Unknown => ('', null),
+            BatteryVisualState.Charging or BatteryVisualState.SmartCharging or BatteryVisualState.SlowCharging => ('', (char)(0xF8DC + Level(8))),
+            BatteryVisualState.Plugged or BatteryVisualState.SmartPaused => ('', (char)(0xF8E5 + Level(8))),
+            _ => ('', (char)(0xF8D1 + Level(10))),
+        };
     }
+
+    /// <summary>Glifo único da Segoe Fluent Icons (Windows 10): Battery0–10 E850, BatteryCharging0–10 E85B, BatterySaver0–10 E867.</summary>
+    public static char FallbackGlyph(BatteryVisualState state, int percent)
+    {
+        int level = Math.Clamp((int)Math.Round(Math.Clamp(percent, 0, 100) / 10.0), 0, 10);
+        return state switch
+        {
+            BatteryVisualState.Unknown => '',
+            BatteryVisualState.Charging or BatteryVisualState.SmartCharging or BatteryVisualState.SlowCharging
+                or BatteryVisualState.Plugged or BatteryVisualState.SmartPaused => (char)(0xE85B + level),
+            BatteryVisualState.EnergySaver => (char)(0xE867 + level),
+            _ => (char)(0xE850 + level),
+        };
+    }
+
+    private void Update()
+    {
+        var state = BatteryVisualStates.Select(Percent, Charging, Plugged, Saver, SmartCharging, SlowCharging);
+        if (!HasSysBatt) { _outline.Glyph = FallbackGlyph(state, Percent).ToString(); return; }
+        var (outline, fill) = SysBattGlyphs(state, Percent);
+        _outline.Glyph = outline.ToString();
+        _fill.Glyph = fill?.ToString() ?? "";
+        bool dark = ActualTheme == ElementTheme.Dark;
+        // Cores da bandeja: verde na tomada/carregando, vermelho crítico, amarelo na economia; senão a cor do texto.
+        SolidColorBrush? color = state switch
+        {
+            BatteryVisualState.Charging or BatteryVisualState.SmartCharging or BatteryVisualState.SlowCharging
+                or BatteryVisualState.Plugged or BatteryVisualState.SmartPaused => Brush(dark ? 0x9FD89F : 0x0F7B0F),
+            BatteryVisualState.Critical => Brush(dark ? 0xFF99A4 : 0xC42B1C),
+            BatteryVisualState.EnergySaver when Saver => Brush(dark ? 0xFCE100 : 0x9D5D00),
+            _ => null,
+        };
+        if (color is null) _fill.ClearValue(IconElement.ForegroundProperty); else _fill.Foreground = color;
+    }
+
+    private static SolidColorBrush Brush(int rgb) => new(ColorHelper.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb));
 }

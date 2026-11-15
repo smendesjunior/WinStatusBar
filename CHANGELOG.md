@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.4] - 2026-11-15 · compilação 20261115142841
+
+### Corrigido
+- Bateria: o ícone agora é o mesmo da bandeja do Windows 11 (fonte do sistema), nítido em todos os estados; verde na tomada, vermelho crítico.
+
 ## [1.20.3] - 2026-11-15 · compilação 20261115140303
 
 ### Corrigido

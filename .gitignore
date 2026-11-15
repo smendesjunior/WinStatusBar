@@ -34,3 +34,4 @@ recriar.json
 *.p12
 *.pem
 *.key
+src/WinStatusBar/Assets/SysBatt.ttf

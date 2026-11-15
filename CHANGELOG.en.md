@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.4] - 2026-11-15 · build 20261115142841
+
+### Fixed
+- Battery: the icon is now the same one as the Windows 11 tray (system font), sharp in every state; green when plugged in, red when critical.
+
 ## [1.20.3] - 2026-11-15 · build 20261115140303
 
 ### Fixed
