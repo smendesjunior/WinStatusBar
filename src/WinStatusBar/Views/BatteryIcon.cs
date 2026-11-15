@@ -44,7 +44,7 @@ public sealed class BatteryIcon : Grid
         }
         catch (Exception ex) { App.Log("Fonte de bateria do sistema: " + ex.Message); return false; }
     }
-    private const double Size = 20;
+    private const double Size = 17;
 
     private readonly FontIcon _fill = new() { FontSize = Size };
     private readonly FontIcon _outline = new() { FontSize = Size };
