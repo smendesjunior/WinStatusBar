@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.2] - 2026-11-15 · build 20261115133403
+
+### Fixed
+- Battery: the percentage now sits below the icon, at the same size.
+- Battery: the icon is drawn without rescaling, so every state is sharp.
+
 ## [1.20.1] - 2026-11-14 · build 20261115003743
 
 ### Fixed

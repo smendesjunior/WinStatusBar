@@ -25,7 +25,7 @@ public sealed class BatteryIcon : Grid
     // These states require an explicit hardware signal; a plugged-in/full battery alone is insufficient.
     public bool SmartCharging { get => (bool)GetValue(SmartChargingProperty); set => SetValue(SmartChargingProperty, value); }
     public bool SlowCharging { get => (bool)GetValue(SlowChargingProperty); set => SetValue(SlowChargingProperty, value); }
-    private readonly Image _image = new() { Width = 17, Height = 17 };
+    private readonly Image _image = new() { Width = 20, Height = 13 };
     private int _revision;
     private string _rendered = "";
     private XamlRoot? _observedRoot;
@@ -33,7 +33,7 @@ public sealed class BatteryIcon : Grid
 
     public BatteryIcon()
     {
-        Width = Height = 17;
+        Width = 20; Height = 13;
         IsHitTestVisible = false;
         Children.Add(_image);
         Loaded += (_, _) =>
@@ -53,7 +53,7 @@ public sealed class BatteryIcon : Grid
         if (!IsLoaded) return;
         var state = BatteryVisualStates.Select(Percent, Charging, Plugged, Saver, SmartCharging, SlowCharging);
         string theme = ActualTheme == ElementTheme.Dark ? "dark" : "light";
-        double pixels = Math.Ceiling(17 * (XamlRoot?.RasterizationScale ?? 1));
+        double scale = XamlRoot?.RasterizationScale ?? 1; double pixels = Math.Round(20 * scale), pixelsH = Math.Round(13 * scale);
         string key = $"{state}-{theme}";
         string signature = $"{key}:{Percent}:{pixels}";
         if (_rendered == signature) return;
@@ -63,6 +63,8 @@ public sealed class BatteryIcon : Grid
             if (!Assets.TryGetValue(key, out string? asset))
                 Assets[key] = asset = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "Battery", key + ".svg"));
             var svg = XDocument.Parse(asset);
+            // Recorte 1:1 só da bateria (y 4–17): sem reescala fracionária, traços nítidos.
+            svg.Root!.SetAttributeValue("viewBox", "0 4 20 13"); svg.Root.SetAttributeValue("width", "20"); svg.Root.SetAttributeValue("height", "13");
             var fill = svg.Descendants().FirstOrDefault(e => (string?)e.Attribute("id") == "charge");
             fill?.SetAttributeValue("width", Math.Max(1.1, 12.8 * Math.Clamp(Percent, 0, 100) / 100.0).ToString("0.###", CultureInfo.InvariantCulture));
             using var stream = new InMemoryRandomAccessStream();
@@ -70,7 +72,7 @@ public sealed class BatteryIcon : Grid
             writer.WriteBytes(Encoding.UTF8.GetBytes(svg.ToString(SaveOptions.DisableFormatting)));
             await writer.StoreAsync();
             stream.Seek(0);
-            var source = new SvgImageSource { RasterizePixelWidth = pixels, RasterizePixelHeight = pixels };
+            var source = new SvgImageSource { RasterizePixelWidth = pixels, RasterizePixelHeight = pixelsH };
             var status = await source.SetSourceAsync(stream);
             if (status != SvgImageSourceLoadStatus.Success) throw new IOException("SVG de bateria inválido: " + key);
             if (revision != _revision) return;

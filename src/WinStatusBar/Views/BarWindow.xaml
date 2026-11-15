@@ -258,9 +258,11 @@
 
                 <Button x:Name="BatteryModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da bateria" ToolTipService.ToolTip="{x:Bind VM.BatteryTooltip, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <local:BatteryIcon Plugged="{x:Bind VM.BatteryPlugged, Mode=OneWay}" Percent="{x:Bind VM.BatteryPercent, Mode=OneWay}" Charging="{x:Bind VM.BatteryCharging, Mode=OneWay}" Saver="{x:Bind VM.BatterySaver, Mode=OneWay}" VerticalAlignment="Center" />
-                        <!-- Porcentagem em destaque e o estado em duas linhas curtas, maiores (pedido de 08/11/2026) -->
-                        <TextBlock Text="{x:Bind VM.BatteryText, Mode=OneWay}" FontFamily="{StaticResource BarFont}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,0,1" />
+                        <!-- Porcentagem abaixo do ícone, mesmo tamanho (pedido de 15/11/2026) -->
+                        <StackPanel VerticalAlignment="Center" Spacing="1">
+                            <local:BatteryIcon Plugged="{x:Bind VM.BatteryPlugged, Mode=OneWay}" Percent="{x:Bind VM.BatteryPercent, Mode=OneWay}" Charging="{x:Bind VM.BatteryCharging, Mode=OneWay}" Saver="{x:Bind VM.BatterySaver, Mode=OneWay}" HorizontalAlignment="Center" />
+                            <TextBlock Text="{x:Bind VM.BatteryText, Mode=OneWay}" FontFamily="{StaticResource BarFont}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" LineHeight="16" LineStackingStrategy="BlockLineHeight" />
+                        </StackPanel>
                         <StackPanel x:Name="BatteryTextPanel" VerticalAlignment="Center" Margin="0,0,0,3">
                             <TextBlock Text="{x:Bind VM.BatteryLine1, Mode=OneWay}" Style="{StaticResource BarTitleText}" />
                             <TextBlock Text="{x:Bind VM.BatteryLine2, Mode=OneWay}" Style="{StaticResource BarTitleText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
