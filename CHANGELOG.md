@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.7] - 2026-11-15 · compilação 20261115150548
+
+### Corrigido
+- Antigravity: o cartão não mostra mais "Sem login no agy" logo depois de o PC acordar. O agy diz isso enquanto a rede volta; agora a barra mantém o login e confere de novo em 2 minutos.
+
 ## [1.20.6] - 2026-11-15 · compilação 20261115145613
 
 ### Corrigido
