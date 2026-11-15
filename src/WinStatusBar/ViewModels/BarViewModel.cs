@@ -242,7 +242,7 @@ public sealed class BarViewModel : ObservableObject
         {
             int minutes = Math.Max(1, (int)Math.Ceiling(t.TotalMinutes));
             string duration = minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} min" : $"{minutes} min";
-            BatteryTime = b.Charging ? $"≈ {duration} até 100%" : $"≈ {duration} restantes";
+            BatteryTime = b.Charging ? $"≈ {duration} até 100%" : $"≈ {duration}";
         }
         else BatteryTime = b.Charging || b.Plugged == false ? global::WinStatusBar.Services.Localization.T("Tempo indisponível") : BatteryStatus;
         BatteryTooltip = $"{BatteryStatus} · {BatteryText}\n{BatteryTime}";
@@ -252,7 +252,7 @@ public sealed class BarViewModel : ObservableObject
             : b.Charging ? (L("Carregando"), remaining is null ? L("tempo indisponível") : remaining + " " + L("até 100%"))
             : b.Percent == 100 && b.Plugged == true ? (L("Carga completa"), L("na tomada"))
             : b.Plugged == true ? (L("Conectada"), L("sem carregar"))
-            : b.Plugged == false ? (b.Saver ? L("Economia de bateria") : L("Na bateria"), remaining is null ? L("tempo indisponível") : remaining + " " + L("restantes"))
+            : b.Plugged == false ? (b.Saver ? L("Economia de bateria") : L("Na bateria"), remaining is null ? L("tempo indisponível") : remaining)
             : (L("Alimentação"), L("desconhecida"));
     }
 

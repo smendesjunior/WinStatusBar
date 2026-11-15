@@ -7,6 +7,13 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.20.1] - 2026-11-14 · build 20261115003743
+
+### Fixed
+- Bar: tighter spacing between blocks; right-side blocks now sit next to the "Ask your AI" box with the same gap as the left side, and shortcuts stay at the right edge.
+- Network: the Wi-Fi icon gets 2 px of extra room from the AI box.
+- Battery: the remaining time no longer says "remaining" (e.g. "≈ 26 min").
+
 ## [1.20.0] - 2026-11-14 · build 20261115000936
 
 ### Added

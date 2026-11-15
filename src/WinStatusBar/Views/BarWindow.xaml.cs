@@ -284,17 +284,19 @@ public sealed partial class BarWindow : Window
         int col = 0;
         bool first = true, elastic = false;
         int shownCount = 0;
-        if (!isLeft)
-        {
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            col++; elastic = true;
-        }
+        // Direita: os módulos ficam junto da caixa da IA (mesmo espaço da esquerda); a sobra vai para antes dos atalhos,
+        // que continuam na borda direita. Sem atalhos, a sobra fica no fim (coluna elástica final, abaixo).
         foreach (var key in keys)
         {
             var el = _modules[key];
             bool visible = !s.HiddenModules.Contains(key) && !_overflowed.Contains(key) && (key != "battery" || VM.BatteryAvailable);
             el.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
             if (!visible) { Grid.SetColumn(el, 0); continue; }
+            if (!isLeft && key == "shortcuts" && !elastic)
+            {
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                col++; elastic = true;
+            }
             // Sem separador logo depois do primeiro módulo da esquerda: a caixa da IA já tem contorno próprio.
             if (!first && !(key == "shortcuts" && !isLeft) && !(isLeft && shownCount == 1))
             {
@@ -319,7 +321,7 @@ public sealed partial class BarWindow : Window
     {
         if (double.IsNaN(ScaleHost.Width) || ScaleHost.Width <= 0) return;
         var s = _settings.Current;
-        double box = CommandHost.Visibility == Visibility.Visible ? CommandHost.Width + 16 : 0;
+        double box = CommandHost.Visibility == Visibility.Visible ? CommandHost.Width + 6 : 0;
         double side = Math.Max(1, (ScaleHost.Width - box) / 2);
         if (_overflowed.Count > 0) { _overflowed.Clear(); BuildColumns(); }
         foreach (var (key, button) in _shortcutOverflow) button.Visibility = ShortcutEnabled(key) ? Visibility.Visible : Visibility.Collapsed;
@@ -330,7 +332,7 @@ public sealed partial class BarWindow : Window
         // A largura mínima dos textos (StabilizeTextWidths) fica como está: zerá-la aqui, a cada 3 s, desfazia a estabilização.
         double left = 0, right = 0;
         // Reduce empty spacing before reducing readability. All sizes remain native to the monitor DPI.
-        foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (8d, 8d, 10d, 36d), (6d, 6d, 8d, 30d), (4d, 4d, 6d, 26d) })
+        foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 5d, 9d, 34d), (5d, 4d, 7d, 30d), (4d, 3d, 6d, 26d) })
         {
             _moduleGap = gap;
             foreach (var grid in new[] { ModulesGrid, RightModulesGrid })

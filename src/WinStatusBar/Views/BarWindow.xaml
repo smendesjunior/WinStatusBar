@@ -182,7 +182,6 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <!-- Círculo de atividade: gira sem porcentagem; com as etapas do plano, mostra o arco real e o número no centro. -->
                         <Grid Width="32" Height="32" VerticalAlignment="Center">
@@ -210,7 +209,7 @@
                 <Button x:Uid="Ua9f86281525d7f" x:Name="NetworkModule" Style="{StaticResource BarButton}" Padding="8,0" AutomationProperties.Name="Detalhes da rede" ToolTipService.ToolTip="{x:Bind VM.NetTooltip, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <!-- Tipo de conexão (Wi-Fi / cabo / banda larga móvel), mesmo tamanho dos ícones de CPU/RAM/GPU -->
-                        <FontIcon Glyph="{x:Bind VM.NetGlyph, Mode=OneWay}" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" />
+                        <FontIcon Glyph="{x:Bind VM.NetGlyph, Mode=OneWay}" Style="{StaticResource BarIcon}" FontSize="17" VerticalAlignment="Center" Margin="2,0,0,0" />
                         <StackPanel x:Name="NetTextPanel" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <FontIcon Glyph="&#xF0AD;" Style="{StaticResource BarIcon}" FontSize="9" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
@@ -438,7 +437,7 @@
                 </StackPanel>
             </Grid>
             </ScrollViewer>
-            <Grid x:Name="CommandHost" Grid.Column="1" VerticalAlignment="Center" Margin="8,0" />
+            <Grid x:Name="CommandHost" Grid.Column="1" VerticalAlignment="Center" Margin="3,0" />
             <ScrollViewer Grid.Column="2" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Center">
                 <Grid x:Name="RightModulesGrid" Height="48" Padding="0,0,8,0" ColumnSpacing="0" VerticalAlignment="Stretch" />
             </ScrollViewer>

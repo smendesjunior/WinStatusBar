@@ -7,6 +7,13 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.20.1] - 2026-11-14 · compilação 20261115003743
+
+### Corrigido
+- Barra: espaços menores entre os blocos; os blocos da direita agora ficam junto da caixa "Pergunte à sua IA", com o mesmo espaço da esquerda, e os atalhos continuam na borda direita.
+- Rede: o ícone do Wi-Fi ganhou 2 px de distância da caixa da IA.
+- Bateria: o tempo aparece sem a palavra "restantes" (ex.: "≈ 26 min").
+
 ## [1.20.0] - 2026-11-14 · compilação 20261115000936
 
 ### Adicionado
