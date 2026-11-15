@@ -52,6 +52,18 @@ public class ChatGptTitleRenamerTests
     }
 
     [Fact]
+    public void AutoTitlesOnByDefaultAndMigratedOnce()
+    {
+        Assert.True(new WinStatusBar.Core.Settings.AppSettings().ChatGptAutoTitles);
+        var old = new WinStatusBar.Core.Settings.AppSettings { SchemaVersion = 4, ChatGptAutoTitles = false };
+        old.Normalize();
+        Assert.True(old.ChatGptAutoTitles);
+        var chosen = new WinStatusBar.Core.Settings.AppSettings { SchemaVersion = 5, ChatGptAutoTitles = false };
+        chosen.Normalize();
+        Assert.False(chosen.ChatGptAutoTitles); // quem desligou depois continua desligado
+    }
+
+    [Fact]
     public void PicksLightestModel()
     {
         Assert.Equal("gpt-6-luna", ChatGptTitleRenamer.PickModel("""{"models":[{"slug":"gpt-6.1-sol"},{"slug":"gpt-6-luna"}]}""", null));

@@ -4632,4 +4632,25 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SC2878EC8122569E4" xml:space="preserve">
     <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours ayant au moins 3 minutes ; celles déjà au format restent inchangées.</value>
   </data>
+  <data name="S91EE8D369064C638" xml:space="preserve">
+    <value>Renommer maintenant</value>
+  </data>
+  <data name="S0FED7EA2E7D3D4AD" xml:space="preserve">
+    <value>Démarrage en cours ; réessayez dans quelques secondes.</value>
+  </data>
+  <data name="S1CDF34BCA270F9F4" xml:space="preserve">
+    <value>Renommage des discussions hors format…</value>
+  </data>
+  <data name="S22D688B71289B81C" xml:space="preserve">
+    <value>Aucune discussion n'avait besoin d'un nouveau titre.</value>
+  </data>
+  <data name="S48B411C6A2C3BBFD" xml:space="preserve">
+    <value>{0} discussion(s) renommée(s).</value>
+  </data>
+  <data name="SD78D776753879BD0" xml:space="preserve">
+    <value>Impossible de renommer : </value>
+  </data>
+  <data name="S42D0EEC050E5C949" xml:space="preserve">
+    <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours, ayant au moins 3 minutes et pas encore au format ; celles déjà au format ne sont jamais modifiées. « Renommer maintenant » lance un passage immédiatement.</value>
+  </data>
 </root>

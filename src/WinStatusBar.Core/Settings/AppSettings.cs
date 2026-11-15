@@ -182,8 +182,8 @@ public sealed class AppSettings
     public bool CodexApiParallel { get; set; } = false;
     /// <summary>Continuar pela API ligado (padrão): a seção no menu da cota, o acompanhamento no painel de tarefas e o serviço.</summary>
     public bool CodexApiResumeEnabled { get; set; } = true;
-    /// <summary>Renomear sozinho os chats do ChatGPT para "DD/MM/AAAA - Tema - Assunto" (login do Codex). Desligado por padrão.</summary>
-    public bool ChatGptAutoTitles { get; set; } = false;
+    /// <summary>Renomear sozinho os chats do ChatGPT e do Codex para "DD/MM/AAAA - Tema - Assunto" (login do Codex). Ligado por padrão.</summary>
+    public bool ChatGptAutoTitles { get; set; } = true;
     /// <summary>Minutos entre consultas da conta Claude; 0 = tempo real (statusLine + consulta a cada minuto, respeitando Retry-After).</summary>
     public int ClaudeQuotaIntervalMin { get; set; } = 0;
     /// <summary>O usuário removeu a integração com o Claude Code: não reinstalar automaticamente.</summary>
@@ -244,6 +244,9 @@ public sealed class AppSettings
         // Política do usuário (07/11/2026): acesso total a plugins e conectores de todas as IAs. Aplicada uma vez;
         // Editar e acesso amplo ao PC não mudam.
         if (SchemaVersion < 4) { ConnectorsFullAccess = true; SchemaVersion = 4; }
+        // Pedido do usuário (15/11/2026): títulos automáticos do ChatGPT e do Codex ligados em todas as instalações. Uma vez;
+        // quem desligar depois continua desligado.
+        if (SchemaVersion < 5) { ChatGptAutoTitles = true; SchemaVersion = 5; }
         CodexQuotaIntervalMin = Math.Clamp(CodexQuotaIntervalMin, 0, 120);
         ClaudeQuotaIntervalMin = Math.Clamp(ClaudeQuotaIntervalMin, 0, 120);
         ClipboardMaxImageMb = Math.Clamp(ClipboardMaxImageMb, 0, 1024);

@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.23.0] - 2026-11-15 · build 20261115234853
+
+### Added
+- ChatGPT and Codex chat titles: a "Rename now" button in Settings › Models runs a round right away.
+
+### Changed
+- Automatic renaming is now on in every installation, existing ones included (once; if you turn it off later it stays off). Chats already in the "DD/MM/YYYY - Topic - Subject" format are never changed.
+
 ## [1.22.0] - 2026-11-15 · build 20261115233202
 
 ### Added

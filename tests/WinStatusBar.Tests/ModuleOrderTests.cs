@@ -13,7 +13,7 @@ public class ModuleOrderTests
         settings.Normalize();
         Assert.Equal(new[] { "agent", "quotas", "task", "network", "cpu", "ram", "gpu", "battery", "shortcuts" }, settings.ModuleOrder);
         Assert.Contains("gpu", settings.HiddenModules);
-        Assert.Equal(4, settings.SchemaVersion); // v4: acesso total a conectores e plugins
+        Assert.Equal(5, settings.SchemaVersion); // v5: títulos automáticos do ChatGPT e do Codex
     }
 
     [Fact]

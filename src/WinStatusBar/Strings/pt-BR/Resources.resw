@@ -4632,4 +4632,25 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SC2878EC8122569E4" xml:space="preserve">
     <value>Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título "DD/MM/AAAA - Tema - Assunto", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão.</value>
   </data>
+  <data name="S91EE8D369064C638" xml:space="preserve">
+    <value>Renomear agora</value>
+  </data>
+  <data name="S0FED7EA2E7D3D4AD" xml:space="preserve">
+    <value>Ainda iniciando; tente em alguns segundos.</value>
+  </data>
+  <data name="S1CDF34BCA270F9F4" xml:space="preserve">
+    <value>Renomeando os chats fora do formato…</value>
+  </data>
+  <data name="S22D688B71289B81C" xml:space="preserve">
+    <value>Nenhum chat precisava de novo título.</value>
+  </data>
+  <data name="S48B411C6A2C3BBFD" xml:space="preserve">
+    <value>{0} chat(s) renomeado(s).</value>
+  </data>
+  <data name="SD78D776753879BD0" xml:space="preserve">
+    <value>Não foi possível renomear: </value>
+  </data>
+  <data name="S42D0EEC050E5C949" xml:space="preserve">
+    <value>Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título "DD/MM/AAAA - Tema - Assunto", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias, com pelo menos 3 minutos e ainda fora desse formato; os que já estão no formato nunca são alterados. "Renomear agora" faz uma rodada na hora.</value>
+  </data>
 </root>

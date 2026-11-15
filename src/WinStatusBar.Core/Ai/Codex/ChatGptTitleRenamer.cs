@@ -61,7 +61,7 @@ public sealed class ChatGptTitleRenamer : IDisposable
     /// <summary>Uma rodada: renomeia os chats recentes fora do formato. Devolve quantos renomeou.</summary>
     public async Task<int> RunOnceAsync(CancellationToken ct = default)
     {
-        if (!await _gate.WaitAsync(0, ct)) return 0;
+        await _gate.WaitAsync(ct); // "Renomear agora" durante uma rodada automática espera ela acabar
         try
         {
             LastRun = DateTimeOffset.Now;

@@ -139,8 +139,28 @@ public sealed partial class SettingsWindow
         page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT e do Codex")));
         page.Children.Add(Group(
             Toggle(Localization.T("Renomear chats automaticamente"),
-                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias e com pelo menos 3 minutos; os que já estão no formato ficam como estão."),
+                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias, com pelo menos 3 minutos e ainda fora desse formato; os que já estão no formato nunca são alterados. \"Renomear agora\" faz uma rodada na hora."),
                 s => s.ChatGptAutoTitles, (s, v) => s.ChatGptAutoTitles = v)));
+        var renameNow = BigButton("Renomear agora", accent: false);
+        var renameRing = new ProgressRing { IsActive = false, Width = 22, Height = 22, Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Center };
+        var renameStatus = new TextBlock { Style = (Style)Root.Resources["SettingHelp"], TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+        var renameRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Padding = new Thickness(16, 14, 16, 16) };
+        renameRow.Children.Add(renameNow); renameRow.Children.Add(renameRing); renameRow.Children.Add(renameStatus);
+        page.Children.Add(new Border { Style = (Style)Root.Resources["SettingsGroup"], Child = renameRow, Margin = new Thickness(0, 4, 0, 0) });
+        renameNow.Click += async (_, _) =>
+        {
+            if (((App)Application.Current).ChatGptTitles is not { } titles) { renameStatus.Text = Localization.T("Ainda iniciando; tente em alguns segundos."); return; }
+            renameNow.IsEnabled = false; renameRing.IsActive = true; renameRing.Visibility = Visibility.Visible;
+            renameStatus.Text = Localization.T("Renomeando os chats fora do formato…");
+            try
+            {
+                int n = await Task.Run(() => titles.RunOnceAsync());
+                renameStatus.Text = n == 0 ? Localization.T("Nenhum chat precisava de novo título.")
+                    : Localization.F("{0} chat(s) renomeado(s).", new object?[] { n });
+            }
+            catch (Exception ex) { renameStatus.Text = Localization.T("Não foi possível renomear: ") + ex.Message; }
+            finally { renameNow.IsEnabled = true; renameRing.IsActive = false; renameRing.Visibility = Visibility.Collapsed; }
+        };
 
         // ------------------------------------------------------------ corrigir problemas
         var repairAll = BigButton("Corrigir problemas", accent: false);
