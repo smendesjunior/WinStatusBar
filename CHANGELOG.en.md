@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.7] - 2026-11-16 · build 20261116102139
+
+### Fixed
+- Claude Code sign-in that kept disappearing: with Claude Code's access token expired, the bar's task tracking called Claude Code every few minutes, and each call tried to refresh the sign-in at the same time as the open Claude. The refresh failed and Claude Code removed the sign-in from the PC. The bar no longer calls Claude Code while the access token is expired and waits for Claude itself to refresh it.
+
 ## [2.0.6] - 2026-11-15 · build 20261116023730
 
 ### Fixed

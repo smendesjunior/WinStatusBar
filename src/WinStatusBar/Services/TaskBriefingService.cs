@@ -73,6 +73,8 @@ internal sealed class TaskBriefingService : IDisposable
     private static async Task<IReadOnlyList<ActivityStep>> InferAsync(AgentSession session, string prompt, CancellationToken ct)
     {
         var target = session.Kind == AgentKind.Claude ? AgentPrompt.Target.Claude : AgentPrompt.Target.Codex;
+        // Login do Claude Code vencido: não chama o CLI (a renovação concorrente apagava o login do PC).
+        if (target == AgentPrompt.Target.Claude && WinStatusBar.Core.Ai.Claude.ClaudeCredentials.NeedsRefresh()) return [];
         var catalog = await AgentPrompt.CatalogAsync(target, null, ct);
         var (model, effort) = InferredPlan.SimplestModel(catalog, target == AgentPrompt.Target.Codex ? CodexDescriptions() : null);
         var result = await AgentPrompt.RunAsync(target, prompt, model, effort, null,

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.7] - 2026-11-16 · compilação 20261116102139
+
+### Corrigido
+- Login do Claude Code que sumia sozinho: com o acesso do Claude Code vencido, o acompanhamento de tarefas da barra chamava o Claude Code a cada poucos minutos, e cada chamada tentava renovar o login ao mesmo tempo que o Claude aberto. A renovação falhava e o Claude Code apagava o login do PC. Agora a barra não chama o Claude Code enquanto o acesso estiver vencido e espera o próprio Claude renovar.
+
 ## [2.0.6] - 2026-11-15 · compilação 20261116023730
 
 ### Corrigido
