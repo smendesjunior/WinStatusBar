@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.2] - 2026-11-15 · compilação 20261116014801
+
+### Corrigido
+- Barra: a caixa "Pergunte à sua IA" fica fixa no centro exato da tela. Cada lado da barra se ajusta à sua metade (primeiro diminuem os espaços, depois o texto, por igual na barra inteira); a caixa só sai do centro se nem o menor tamanho de texto couber.
+
 ## [2.0.1] - 2026-11-15 · compilação 20261116014103
 
 ### Corrigido

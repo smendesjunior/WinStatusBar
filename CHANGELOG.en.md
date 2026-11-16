@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.2] - 2026-11-15 · build 20261116014801
+
+### Fixed
+- Bar: the "Ask your AI" box stays fixed in the exact center of the screen. Each side of the bar fits its own half (gaps shrink first, then the text, evenly across the whole bar); the box only moves off center if not even the smallest text size fits.
+
 ## [2.0.1] - 2026-11-15 · build 20261116014103
 
 ### Fixed

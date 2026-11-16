@@ -348,6 +348,10 @@ public sealed partial class BarWindow : Window
             }
             return total;
         }
+        // Pedido de 15/11/2026: a caixa da IA fica fixa no centro exato. Cada lado tem de caber na sua metade; só quando
+        // nem o texto no menor tamanho cabe a caixa sai do centro (BarSpace.Allocate).
+        double halfAvailable = available / 2;
+        bool Fits() => left <= halfAvailable && right <= halfAvailable;
         // Padrão único (auditoria visual de 15/11/2026): o mesmo respiro em todos os módulos (sistema e cotas) e o
         // mesmo espaço entre ícone e texto. Primeiro diminui os espaços vazios, depois o texto.
         foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 6d, 8d, 34d), (5d, 5d, 6d, 30d), (4d, 4d, 5d, 26d) })
@@ -371,12 +375,12 @@ public sealed partial class BarWindow : Window
             EqualizeQuotaWidths(quotaButtons);
             taskFloor = TaskFloor();
             left = MeasureSide(true); right = MeasureSide(false);
-            if (left + right <= available) break;
+            if (Fits()) break;
         }
         // Reduz o texto de verdade (nunca um bitmap) e por igual nos dois lados: a barra inteira com um só tamanho de letra.
-        if (left + right > available)
+        if (!Fits())
         {
-            for (double ratio = 0.95; ratio >= 0.69 && left + right > available; ratio -= 0.05)
+            for (double ratio = 0.95; ratio >= 0.69 && !Fits(); ratio -= 0.05)
             {
                 foreach (var (_, module) in _modules) ApplyNativeTextScale(module, ratio);
                 foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
