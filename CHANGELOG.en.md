@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.5] - 2026-11-15 · build 20261116021306
+
+### Fixed
+- Bar: the gray hover highlight has the same height on every block. Quota blocks were shorter than the network, CPU, RAM, GPU, battery and task blocks.
+
 ## [2.0.4] - 2026-11-15 · build 20261116020431
 
 ### Fixed

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="WinStatusBar.Views.BarWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -271,7 +271,8 @@
                 </Button>
 
                 <!-- G. Cotas de IA -->
-                <StackPanel x:Name="QuotasModule" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <!-- Stretch: o realce dos blocos de cota tem a mesma altura dos outros módulos (margem 4 em cima e embaixo, de BarButton). -->
+                <StackPanel x:Name="QuotasModule" Orientation="Horizontal" Spacing="4" VerticalAlignment="Stretch">
                     <Button x:Uid="Ucb79ceec0dd495" x:Name="CodexQuotaButton" Style="{StaticResource BarButton}" Padding="8,2" HorizontalContentAlignment="Stretch" Visibility="{x:Bind VM.CodexQuotaVisible, Mode=OneWay}"
                             ToolTipService.ToolTip="{x:Bind VM.CodexQuotaTooltip, Mode=OneWay}" AutomationProperties.Name="Cotas do Codex">
                     <Grid ColumnSpacing="4">

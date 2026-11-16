@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.5] - 2026-11-15 · compilação 20261116021306
+
+### Corrigido
+- Barra: o realce cinza ao passar o mouse tem a mesma altura em todos os blocos. Os blocos de cota eram mais baixos que os de rede, CPU, RAM, GPU, bateria e tarefa.
+
 ## [2.0.4] - 2026-11-15 · compilação 20261116020431
 
 ### Corrigido
