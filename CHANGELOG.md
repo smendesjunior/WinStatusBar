@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.23.1] - 2026-11-15 · compilação 20261116004237
+
+### Corrigido
+- Títulos dos chats: conversas antigas e fixadas fora do formato "DD/MM/AAAA - Tema - Assunto" agora também são renomeadas (antes só as dos últimos 7 dias e as mais recentes da lista). A rodada automática renomeia até 30 por vez; "Renomear agora" renomeia todas.
+- Conversas que começam só com um cumprimento e respostas do modelo sem o separador não ficam mais sem título.
+
 ## [1.23.0] - 2026-11-15 · compilação 20261115234853
 
 ### Adicionado

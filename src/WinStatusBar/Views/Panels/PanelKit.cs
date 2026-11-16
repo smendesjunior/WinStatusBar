@@ -70,16 +70,21 @@ internal static class PanelKit
     }
 
     /// <summary>Linha de leituras lado a lado (rótulo 12 secundário, valor 17 regular), registrando os valores em <paramref name="fields"/>.</summary>
-    public static StackPanel FieldRow(Dictionary<string, TextBlock> fields, params string[] labels)
+    /// A linha ocupa a largura da coluna em partes iguais e um valor longo quebra linha: antes era uma pilha horizontal
+    /// sem limite, e um valor longo (ex.: velocidade com o núcleo mais rápido) empurrava as especificações para fora.
+    public static Grid FieldRow(Dictionary<string, TextBlock> fields, params string[] labels)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
+        var row = new Grid { ColumnSpacing = 16 };
+        int col = 0;
         foreach (var label in labels)
         {
+            row.ColumnDefinitions.Add(new ColumnDefinition());
             var panel = new StackPanel();
             panel.Children.Add(Caption(label, 12));
-            var value = new TextBlock { Text = "—", FontSize = 17, LineHeight = 22 };
+            var value = new TextBlock { Text = "—", FontSize = 17, LineHeight = 22, TextWrapping = TextWrapping.Wrap };
             panel.Children.Add(value);
             fields[label] = value;
+            Grid.SetColumn(panel, col++);
             row.Children.Add(panel);
         }
         return row;
@@ -88,9 +93,11 @@ internal static class PanelKit
     /// <summary>Leituras ao vivo à esquerda e especificações à direita, como no Gerenciador de Tarefas.</summary>
     public static Grid Summary(FrameworkElement live, FrameworkElement specs)
     {
+        // Larguras fixas na proporção (leituras 3 : especificações 2): com a esquerda em Auto, um valor longo espremia a
+        // direita até quase zero, o texto quebrava letra a letra e o painel ficava alto, vazio e cortado.
         var grid = new Grid { ColumnSpacing = 20, Margin = new Thickness(0, 12, 0, 0) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
         Grid.SetColumn(specs, 1);
         grid.Children.Add(live); grid.Children.Add(specs);
         return grid;

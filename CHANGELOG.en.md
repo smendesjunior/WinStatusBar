@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.23.1] - 2026-11-15 · build 20261116004237
+
+### Fixed
+- Chat titles: older and pinned chats not in the "DD/MM/YYYY - Topic - Subject" format are now renamed too (before, only chats from the last 7 days near the top of the list were). Automatic rounds rename up to 30 at a time; "Rename now" renames all of them.
+- Chats that start with just a greeting, and model replies without the separator, no longer stay untitled.
+
 ## [1.23.0] - 2026-11-15 · build 20261115234853
 
 ### Added

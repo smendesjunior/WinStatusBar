@@ -4653,4 +4653,7 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="S42D0EEC050E5C949" xml:space="preserve">
     <value>Activado, cada 10 minutos la barra da a los chats nuevos de ChatGPT (web, app de Windows y móvil) y a las conversaciones locales de Codex (incluidas las de proyectos) el título "DD/MM/AAAA - Tema - Asunto", generado por el modelo más ligero de su cuenta. Usa el inicio de sesión de Codex, el mismo de la cuota; no se guarda nada. Solo chats de los últimos 7 días, con al menos 3 minutos y aún fuera de ese formato; los que ya tienen el formato nunca se modifican. "Renombrar ahora" hace una ronda en el momento.</value>
   </data>
+  <data name="SA39EDA1B8C2275BF" xml:space="preserve">
+    <value>Activado, cada 10 minutos la barra da a los chats nuevos de ChatGPT (web, app de Windows y móvil) y a las conversaciones locales de Codex (incluidas las de proyectos) el título "DD/MM/AAAA - Tema - Asunto", generado por el modelo más ligero de su cuenta. Usa el inicio de sesión de Codex, el mismo de la cuota; no se guarda nada. Entran todos los chats aún fuera de ese formato, nuevos y antiguos (también los fijados), con al menos 3 minutos; los que ya tienen el formato nunca se modifican. Cada ronda automática renombra hasta 30; "Renombrar ahora" los renombra todos en el momento.</value>
+  </data>
 </root>

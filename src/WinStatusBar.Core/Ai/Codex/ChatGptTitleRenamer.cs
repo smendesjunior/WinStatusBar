@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -47,7 +47,7 @@ public sealed class ChatGptTitleRenamer : IDisposable
             do
             {
                 if (_enabled() && !Presence.Away && !_blocked())
-                    try { await RunOnceAsync(ct); } catch (OperationCanceledException) { return; } catch (Exception ex) { _log("Títulos do ChatGPT: " + ex.Message); }
+                    try { await RunOnceAsync(ct, AutoRoundLimit); } catch (OperationCanceledException) { return; } catch (Exception ex) { _log("Títulos do ChatGPT: " + ex.Message); }
             }
             while (await SafeTick(timer, ct));
         }, ct);
@@ -58,74 +58,117 @@ public sealed class ChatGptTitleRenamer : IDisposable
     public void Stop() { try { _cts?.Cancel(); } catch { } _cts = null; }
     public void Dispose() => Stop();
 
-    /// <summary>Uma rodada: renomeia os chats recentes fora do formato. Devolve quantos renomeou.</summary>
-    public async Task<int> RunOnceAsync(CancellationToken ct = default)
+    /// <summary>Máximo de títulos gerados numa rodada automática; o resto fica para as próximas (o botão não tem limite).</summary>
+    public const int AutoRoundLimit = 30;
+
+    /// <summary>
+    /// Uma rodada: percorre todos os chats do ChatGPT e todas as conversas do Codex e renomeia os que estão fora do
+    /// formato, até <paramref name="maxRenames"/>. Devolve quantos renomeou.
+    /// </summary>
+    public async Task<int> RunOnceAsync(CancellationToken ct = default, int maxRenames = int.MaxValue)
     {
         await _gate.WaitAsync(ct); // "Renomear agora" durante uma rodada automática espera ela acabar
         try
         {
             LastRun = DateTimeOffset.Now;
             if (ReadAuth() is not { } auth) return 0;
-            using var list = await SendAsync(auth, HttpMethod.Get, $"{Api}/conversations?offset=0&limit=20&order=updated", null, ct);
-            if (list is null) return 0;
-            int renamed = 0;
-            var now = DateTimeOffset.UtcNow;
-            foreach (var item in list.RootElement.TryGetProperty("items", out var items) ? items.EnumerateArray().ToList() : [])
-            {
-                string? id = Str(item, "id"), title = Str(item, "title");
-                if (id is null || _done.Contains(id) || _failures.GetValueOrDefault(id) >= 3) continue;
-                var created = Time(item, "create_time");
-                if (!ShouldRename(title, created, now)) { if (IsFormatted(title)) _done.Add(id); continue; }
-
-                using var conv = await SendAsync(auth, HttpMethod.Get, $"{Api}/conversation/{id}", null, ct);
-                string excerpt = conv is null ? "" : Excerpt(conv.RootElement);
-                if (excerpt.Length < 20) continue; // conversa ainda vazia: tenta na próxima rodada
-                string? subject = await GenerateAsync(auth, excerpt, ct);
-                if (subject is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
-                string newTitle = Compose(created!.Value, subject);
-                var body = new JsonObject { ["title"] = newTitle }.ToJsonString();
-                using var ok = await SendAsync(auth, HttpMethod.Patch, $"{Api}/conversation/{id}", body, ct);
-                if (ok is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
-                _done.Add(id); renamed++; RenamedCount++;
-                _log($"Títulos do ChatGPT: «{title}» → «{newTitle}»");
-            }
-            renamed += await RenameCodexAsync(auth, ct);
+            int budget = maxRenames;
+            int renamed = await RenameChatGptAsync(auth, () => budget, () => budget--, ct);
+            renamed += await RenameCodexAsync(auth, () => budget, () => budget--, ct);
             return renamed;
         }
         finally { _gate.Release(); }
     }
 
-    /// <summary>
-    /// Conversas locais do Codex (app e CLI, inclusive as de projetos): lista e renomeia pelo servidor oficial do Codex
-    /// (thread/list e thread/name/set), nunca editando os arquivos. Subagentes, exec e conversas da barra ficam de fora.
-    /// </summary>
-    private async Task<int> RenameCodexAsync(Auth auth, CancellationToken ct)
+    private async Task<int> RenameChatGptAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
     {
-        if (CodexAppServerClient.FindCodexExecutable() is null) return 0;
+        int renamed = 0;
+        var now = DateTimeOffset.UtcNow;
+        var pending = new List<(string Id, string? Title, DateTimeOffset Created)>();
+        for (int page = 0, offset = 0; page < 50; page++)
+        {
+            using var list = await SendAsync(auth, HttpMethod.Get, $"{Api}/conversations?offset={offset}&limit=100&order=updated", null, ct);
+            if (list is null || !list.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array) break;
+            int count = 0;
+            foreach (var item in items.EnumerateArray())
+            {
+                count++;
+                string? id = Str(item, "id"), title = Str(item, "title");
+                if (id is null || _done.Contains(id) || _failures.GetValueOrDefault(id) >= 3) continue;
+                var created = Time(item, "create_time");
+                if (IsFormatted(title)) { _done.Add(id); continue; }
+                if (ShouldRename(title, created, now)) pending.Add((id, title, created!.Value));
+            }
+            offset += count;
+            if (count < 100) break;
+        }
+        foreach (var (id, title, created) in pending)
+        {
+            if (left() <= 0) break;
+            using var conv = await SendAsync(auth, HttpMethod.Get, $"{Api}/conversation/{id}", null, ct);
+            string excerpt = conv is null ? "" : Excerpt(conv.RootElement);
+            if (excerpt.Length < 20) continue; // conversa ainda vazia: tenta na próxima rodada
+            spend();
+            string? subject = await GenerateAsync(auth, excerpt, ct);
+            if (subject is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
+            string newTitle = Compose(created, subject);
+            using var ok = await SendAsync(auth, HttpMethod.Patch, $"{Api}/conversation/{id}", new JsonObject { ["title"] = newTitle }.ToJsonString(), ct);
+            if (ok is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
+            _done.Add(id); renamed++; RenamedCount++;
+            _log($"Títulos do ChatGPT: «{title}» → «{newTitle}»");
+        }
+        return renamed;
+    }
+
+    /// <summary>
+    /// Conversas locais do Codex (app e CLI, inclusive as de projetos e as fixadas): lista e renomeia pelo servidor
+    /// oficial do Codex (thread/list e thread/name/set), nunca editando os arquivos. Subagentes, exec e conversas da
+    /// barra ficam de fora.
+    /// </summary>
+    private async Task<int> RenameCodexAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
+    {
+        if (left() <= 0 || CodexAppServerClient.FindCodexExecutable() is null) return 0;
         int renamed = 0;
         try
         {
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(5));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(30));
             await using var rpc = await CodexComposerConnection.OpenAsync(timeout.Token);
-            var result = await rpc.CallAsync("thread/list", new JsonObject { ["archived"] = false, ["sortKey"] = "updated_at", ["limit"] = 40 }, timeout.Token);
-            if (!result.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) return 0;
             var now = DateTimeOffset.UtcNow;
-            foreach (var item in data.EnumerateArray().ToList())
+            var pending = new List<(string Id, string? Title, DateTimeOffset Created, string Excerpt)>();
+            string? cursor = null;
+            for (int page = 0; page < 40; page++)
             {
-                var info = CodexThreadInfo.FromThreadList(item);
-                string key = "codex:" + info.Id;
-                if (info.Id.Length == 0 || _done.Contains(key) || _failures.GetValueOrDefault(key) >= 3) continue;
-                if (!CodexQuotaStops.IsUserThread(info)) { _done.Add(key); continue; }
-                var created = Time(item, "createdAt");
-                if (!ShouldRename(info.Title, created, now)) { if (IsFormatted(info.Title)) _done.Add(key); continue; }
-                string excerpt = Str(item, "preview") is { } p ? (p.Length > 3000 ? p[..3000] : p) : "";
-                if (excerpt.Trim().Length < 5) continue;
-                string? subject = await GenerateAsync(auth, "user: " + excerpt, timeout.Token);
+                var request = new JsonObject { ["archived"] = false, ["sortKey"] = "updated_at", ["limit"] = 50 };
+                if (cursor is not null) request["cursor"] = cursor;
+                var result = await rpc.CallAsync("thread/list", request, timeout.Token);
+                if (!result.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) break;
+                foreach (var item in data.EnumerateArray())
+                {
+                    var info = CodexThreadInfo.FromThreadList(item);
+                    string key = "codex:" + info.Id;
+                    if (info.Id.Length == 0 || _done.Contains(key) || _failures.GetValueOrDefault(key) >= 3) continue;
+                    if (!CodexQuotaStops.IsUserThread(info) || IsFormatted(info.Title)) { _done.Add(key); continue; }
+                    var created = Time(item, "createdAt");
+                    if (!ShouldRename(info.Title, created, now)) continue;
+                    string excerpt = Str(item, "preview") is { } p ? (p.Length > 3000 ? p[..3000] : p) : "";
+                    // Conversa que começa com "oi": o nome dado pelo Codex basta para o título.
+                    if (excerpt.Trim().Length + (info.Title?.Length ?? 0) >= 2) pending.Add((info.Id, info.Title, created!.Value, excerpt));
+                }
+                cursor = Str(result, "nextCursor");
+                if (string.IsNullOrEmpty(cursor)) break;
+            }
+            foreach (var (id, title, created, excerpt) in pending)
+            {
+                if (left() <= 0) break;
+                string key = "codex:" + id;
+                spend();
+                // O nome que o Codex deu entra junto: ajuda quando o início da conversa é só a lista de arquivos anexados.
+                string? subject = await GenerateAsync(auth, (title is { Length: > 0 } ? "título atual: " + title + "\n" : "") + "user: " + excerpt, timeout.Token);
                 if (subject is null) { _failures[key] = _failures.GetValueOrDefault(key) + 1; continue; }
-                string newTitle = Compose(created!.Value, subject);
-                await rpc.CallAsync("thread/name/set", new JsonObject { ["threadId"] = info.Id, ["name"] = newTitle }, timeout.Token);
+                string newTitle = Compose(created, subject);
+                await rpc.CallAsync("thread/name/set", new JsonObject { ["threadId"] = id, ["name"] = newTitle }, timeout.Token);
                 _done.Add(key); renamed++; RenamedCount++;
-                _log($"Títulos do Codex: «{info.Title}» → «{newTitle}»");
+                _log($"Títulos do Codex: «{title}» → «{newTitle}»");
             }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
@@ -140,11 +183,11 @@ public sealed class ChatGptTitleRenamer : IDisposable
     public static bool IsFormatted(string? title) => title is not null && Formatted.IsMatch(title.Trim());
 
     /// <summary>
-    /// Fora do formato, criado nos últimos 7 dias e com pelo menos 3 minutos (o ChatGPT dá o título dele logo depois da
-    /// primeira resposta; antes disso, o nosso seria trocado).
+    /// Fora do formato e com pelo menos 3 minutos (o ChatGPT dá o título dele logo depois da primeira resposta; antes
+    /// disso, o nosso seria trocado). Qualquer idade: as antigas também entram.
     /// </summary>
     public static bool ShouldRename(string? title, DateTimeOffset? created, DateTimeOffset now) =>
-        !IsFormatted(title) && created is { } c && now - c >= TimeSpan.FromMinutes(3) && now - c <= TimeSpan.FromDays(7);
+        !IsFormatted(title) && created is { } c && now - c >= TimeSpan.FromMinutes(3);
 
     public static string Compose(DateTimeOffset createdUtc, string subject) =>
         createdUtc.ToLocalTime().ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture) + " - " + subject;
@@ -267,7 +310,11 @@ public sealed class ChatGptTitleRenamer : IDisposable
             if (!line.StartsWith("data: ", StringComparison.Ordinal) || !line.Contains("output_text.delta", StringComparison.Ordinal)) continue;
             try { using var d = JsonDocument.Parse(line[6..]); if (Str(d.RootElement, "delta") is { } delta) sb.Append(delta); } catch { }
         }
-        return CleanSubject(sb.ToString());
+        if (CleanSubject(sb.ToString()) is { } subject) return subject;
+        // Resposta sem "Tema - Assunto" (às vezes vem só o assunto): vira "Conversa - <resposta>".
+        string? fallback = CleanSubject("Conversa - " + sb.ToString().Trim().Split('\n')[0]);
+        if (fallback is null) _log($"Títulos: resposta do modelo sem título utilizável («{(sb.Length > 60 ? sb.ToString()[..60] : sb.ToString())}»)");
+        return fallback;
     }
 
     private static string? Str(JsonElement e, string name) =>

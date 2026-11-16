@@ -4653,4 +4653,7 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="S42D0EEC050E5C949" xml:space="preserve">
     <value>Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título "DD/MM/AAAA - Tema - Assunto", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias, com pelo menos 3 minutos e ainda fora desse formato; os que já estão no formato nunca são alterados. "Renomear agora" faz uma rodada na hora.</value>
   </data>
+  <data name="SA39EDA1B8C2275BF" xml:space="preserve">
+    <value>Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título "DD/MM/AAAA - Tema - Assunto", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Entram todos os chats ainda fora desse formato, novos e antigos (inclusive fixados), com pelo menos 3 minutos; os que já estão no formato nunca são alterados. Cada rodada automática renomeia até 30; "Renomear agora" renomeia todos na hora.</value>
+  </data>
 </root>

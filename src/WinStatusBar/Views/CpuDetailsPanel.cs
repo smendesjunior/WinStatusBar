@@ -38,7 +38,8 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
         body.Children.Add(_chart.Root);
 
         var live = new StackPanel { Spacing = 8 };
-        live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Utilização"), global::WinStatusBar.Services.Localization.T("Velocidade"), global::WinStatusBar.Services.Localization.T("Temperatura")));
+        live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Utilização"), global::WinStatusBar.Services.Localization.T("Temperatura")));
+        live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Velocidade"))); // linha inteira: traz o núcleo mais rápido
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Processos"), global::WinStatusBar.Services.Localization.T("Threads"), global::WinStatusBar.Services.Localization.T("Identificadores")));
         live.Children.Add(PanelKit.FieldRow(_fields, global::WinStatusBar.Services.Localization.T("Tempo de atividade")));
         body.Children.Add(PanelKit.Summary(live, _specs));

@@ -139,7 +139,7 @@ public sealed partial class SettingsWindow
         page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT e do Codex")));
         page.Children.Add(Group(
             Toggle(Localization.T("Renomear chats automaticamente"),
-                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Só chats dos últimos 7 dias, com pelo menos 3 minutos e ainda fora desse formato; os que já estão no formato nunca são alterados. \"Renomear agora\" faz uma rodada na hora."),
+                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Entram todos os chats ainda fora desse formato, novos e antigos (inclusive fixados), com pelo menos 3 minutos; os que já estão no formato nunca são alterados. Cada rodada automática renomeia até 30; \"Renomear agora\" renomeia todos na hora."),
                 s => s.ChatGptAutoTitles, (s, v) => s.ChatGptAutoTitles = v)));
         var renameNow = BigButton("Renomear agora", accent: false);
         var renameRing = new ProgressRing { IsActive = false, Width = 22, Height = 22, Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Center };

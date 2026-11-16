@@ -20,7 +20,7 @@ public class ChatGptTitleRenamerTests
     {
         Assert.True(ChatGptTitleRenamer.ShouldRename("New chat", Now.AddMinutes(-10), Now));
         Assert.False(ChatGptTitleRenamer.ShouldRename("New chat", Now.AddMinutes(-1), Now));   // ChatGPT ainda vai dar o título dele
-        Assert.False(ChatGptTitleRenamer.ShouldRename("New chat", Now.AddDays(-8), Now));      // antigos ficam como estão
+        Assert.True(ChatGptTitleRenamer.ShouldRename("Analisar processo", Now.AddDays(-200), Now)); // antigas também entram
         Assert.False(ChatGptTitleRenamer.ShouldRename("15/11/2026 - A - B", Now.AddHours(-1), Now));
         Assert.False(ChatGptTitleRenamer.ShouldRename("New chat", null, Now));
     }
