@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.6] - 2026-11-15 · build 20261116023730
+
+### Fixed
+- GPU, memory, network and battery panels open fully filled on click. The slow parts (GPU driver and DirectX details, memory modules, network adapter, apps using the most network and memory, battery details and history) are now read in the background 15 s after the bar opens and every 10 minutes; on open, the panel shows the last result and refreshes behind it.
+
 ## [2.0.5] - 2026-11-15 · build 20261116021306
 
 ### Fixed

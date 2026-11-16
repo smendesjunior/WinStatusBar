@@ -1,4 +1,4 @@
-using System.Management;
+﻿using System.Management;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -70,12 +70,7 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
     {
         if (_disposed || _open) return;
         _open = true;
-        if (_pdh is null)
-        {
-            _pdh = new PdhQuery();
-            foreach (var c in new[] { Committed, Limit, Paged, NonPaged, Modified, Free }.Concat(Standby)) _pdh.AddCounter(c);
-            _pdh.Collect();
-        }
+        EnsurePdh();
         if (!_specsLoaded) { _specsLoaded = true; _ = LoadSpecsAsync(); }
         _usedPercent.Foreground = PanelKit.Res("AccentTextFillColorPrimaryBrush");
         _hub.CpuSampled += Render;
@@ -96,9 +91,27 @@ internal sealed class MemoryDetailsPanel : IDetailsPanel
         _apps.Stop();
     }
 
+    private bool _warming;
+    public void Prewarm()
+    {
+        if (_open || _disposed) return;
+        EnsurePdh();
+        if (!_specsLoaded) { _specsLoaded = true; _ = LoadSpecsAsync(); }
+        _warming = true; try { Render(); } finally { _warming = false; }
+        _apps.Prewarm();
+    }
+
+    private void EnsurePdh()
+    {
+        if (_pdh is not null) return;
+        _pdh = new PdhQuery();
+        foreach (var c in new[] { Committed, Limit, Paged, NonPaged, Modified, Free }.Concat(Standby)) _pdh.AddCounter(c);
+        _pdh.Collect();
+    }
+
     private void Render()
     {
-        if (!_open || _disposed || _hub.LastRam is not { } ram) return;
+        if (!(_open || _warming) || _disposed || _hub.LastRam is not { } ram) return;
         try
         {
             double total = ram.TotalBytes, used = ram.TotalBytes - ram.AvailableBytes;

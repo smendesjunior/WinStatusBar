@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using WinStatusBar.Services;
@@ -65,6 +65,9 @@ internal sealed class AppsSection
     }
 
     public void Stop() => _open = false;
+
+    /// <summary>Painel fechado: uma leitura dos processos guarda a base da CPU, então a 1ª lista ao abrir já traz o uso.</summary>
+    public void Prewarm() { if (Enabled && !_open) _ = RefreshAppsAsync(); }
 
     /// <summary>Chamado a cada amostra (1 s): a lista se refaz a cada 5.</summary>
     public void Tick(int ticks) { if (_open && Enabled && ticks % 5 == 0) _ = RefreshAppsAsync(); }

@@ -144,7 +144,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
     public void Start()
     {
         if (_disposed || _open) return;
-        _open = true; _ticks = 0; _alias = null;
+        _open = true; _ticks = 0; // mantém o adaptador e os detalhes já lidos: aparecem na hora e se atualizam em seguida
         _ = RefreshWifiButtonAsync();
         _ = RefreshHotspotButtonAsync();
         StartBluetoothWatcher();
@@ -174,9 +174,18 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
 
     private void TickTop() { if (_open && !_disposed) _top.Tick(++_topTicks); }
 
+    private bool _warming;
+    public void Prewarm()
+    {
+        if (_open || _disposed) return;
+        _warming = true; _ticks = 4; // o Render do aquecimento sempre relê os detalhes do adaptador
+        try { Render(); } finally { _warming = false; }
+        _ = _top.RefreshAsync();
+    }
+
     private void Render()
     {
-        if (!_open || _disposed || _hub.LastNetwork is not { } net) return;
+        if (!(_open || _warming) || _disposed || _hub.LastNetwork is not { } net) return;
         try
         {
             double up = net.UploadBytesPerSec ?? 0, down = net.DownloadBytesPerSec ?? 0;

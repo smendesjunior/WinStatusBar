@@ -240,6 +240,15 @@ public partial class App : Application
         var preview = new Window { Title = "WinStatusBar · painel " + which, Content = host };
         preview.AppWindow.Resize(new Windows.Graphics.SizeInt32(900, 1400));
         preview.Closed += (_, _) => { panel.Dispose(); Exit(); };
+        if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_PREWARM") == "1")
+        {
+            // Como na barra: pré-carga com o painel fechado; abre 12 s depois (a captura mostra o que aparece no clique).
+            panel.Prewarm();
+            var later = _dispatcher.CreateTimer(); later.Interval = TimeSpan.FromSeconds(12); later.IsRepeating = false;
+            later.Tick += (_, _) => { preview.Activate(); panel.Start(); };
+            later.Start();
+            return;
+        }
         preview.Activate(); panel.Start();
     }
 #endif

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.6] - 2026-11-15 · compilação 20261116023730
+
+### Corrigido
+- Painéis de GPU, memória, rede e bateria abrem com tudo preenchido no clique. O que demorava (dados do driver e do DirectX da GPU, pentes de memória, adaptador de rede, aplicativos que mais usam a rede e a memória, detalhes e histórico da bateria) passa a ser lido em segundo plano 15 s depois de a barra abrir e a cada 10 minutos; ao abrir, o painel mostra o último resultado e atualiza por trás.
+
 ## [2.0.5] - 2026-11-15 · compilação 20261116021306
 
 ### Corrigido

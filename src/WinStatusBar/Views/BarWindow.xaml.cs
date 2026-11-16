@@ -654,11 +654,30 @@ public sealed partial class BarWindow : Window
 
     private readonly Dictionary<Button, (Flyout Flyout, string TipPath)> _panels = new();
 
+    private readonly List<IDetailsPanel> _detailPanels = new();
+    private DispatcherQueueTimer? _prewarmTimer;
+
     private void Attach(Button module, IDetailsPanel panel, string tipPath)
     {
         var flyout = PanelKit.CreateFlyout(panel.Content, panel.Start, panel.Stop);
         _panels[module] = (flyout, tipPath);
-        Closed += (_, _) => { flyout.Hide(); panel.Dispose(); };
+        _detailPanels.Add(panel);
+        Closed += (_, _) => { _prewarmTimer?.Stop(); flyout.Hide(); panel.Dispose(); };
+        if (_prewarmTimer is null)
+        {
+            // Pedido de 15/11/2026: os painéis abrem com tudo preenchido. 15 s depois da abertura da barra (sem disputar
+            // a primeira pintura) e a cada 10 min, cada painel lê com antecedência o que demora; nunca com a tela apagada.
+            _prewarmTimer = DispatcherQueue.CreateTimer();
+            _prewarmTimer.Interval = TimeSpan.FromSeconds(15);
+            _prewarmTimer.Tick += (timer, _) =>
+            {
+                timer.Interval = TimeSpan.FromMinutes(10);
+                if (WinStatusBar.Core.Presence.Away) return;
+                foreach (var p in _detailPanels)
+                    try { p.Prewarm(); } catch (Exception ex) { App.Log("Pré-carga do painel: " + ex.Message); }
+            };
+            _prewarmTimer.Start();
+        }
     }
 
     /// <summary>Opções da barra: painéis ao clicar (ou só a dica) e quais botões de atalho aparecem.</summary>

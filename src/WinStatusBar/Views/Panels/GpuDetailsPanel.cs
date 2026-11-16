@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using WinStatusBar.Core.Metrics;
 using WinStatusBar.Core.Settings;
@@ -99,9 +99,16 @@ internal sealed class GpuDetailsPanel : IDetailsPanel
         _hub.ResampleGpuNow();
     }
 
+    private bool _warming;
+    public void Prewarm()
+    {
+        if (_open || _disposed) return;
+        _warming = true; try { FillAdapters(); Render(); } finally { _warming = false; }
+    }
+
     private void Render()
     {
-        if (!_open || _disposed) return;
+        if (!(_open || _warming) || _disposed) return;
         try
         {
             var gpu = _hub.LastGpu;

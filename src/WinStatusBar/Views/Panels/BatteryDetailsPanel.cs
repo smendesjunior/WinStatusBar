@@ -49,6 +49,15 @@ internal sealed class BatteryDetailsPanel : IDetailsPanel
         if (!_loading && DateTime.UtcNow - _loaded > TimeSpan.FromMinutes(5)) _ = LoadAsync();
     }
 
+    /// <summary>Detalhes da bateria (WMI), modos de energia e o relatório do powercfg, lidos antes do clique.</summary>
+    public void Prewarm()
+    {
+        if (_open || _disposed) return;
+        if (!_loading && DateTime.UtcNow - _loaded > TimeSpan.FromMinutes(5)) _ = LoadAsync();
+        _ = _power.RefreshAsync();
+        _history.Render();
+    }
+
     private async Task LoadAsync()
     {
         _loading = true;

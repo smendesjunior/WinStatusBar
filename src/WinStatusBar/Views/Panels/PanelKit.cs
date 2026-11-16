@@ -192,6 +192,11 @@ internal interface IDetailsPanel : IDisposable
     FrameworkElement Content { get; }
     void Start();
     void Stop();
+    /// <summary>
+    /// Pré-carrega em segundo plano o que demora (especificações, listas de aplicativos, relatórios), com o painel
+    /// fechado: o clique mostra tudo na hora e só atualiza por trás. Chamado depois da abertura da barra e a cada 10 min.
+    /// </summary>
+    void Prewarm() { }
 }
 
 /// <summary>Série de um <see cref="AreaChart"/>: valores (mais antigo primeiro), escala máxima e estilo.</summary>
