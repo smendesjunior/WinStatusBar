@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.23.2] - 2026-11-15 · build 20261116005844
+
+### Fixed
+- CPU, GPU, memory, network and battery panels: the specifications on the right show in full again. A long value on the left (such as the speed with the fastest core) squeezed that column, its text wrapped letter by letter and the panel became tall, empty and clipped. Both columns now have fixed widths in a 3:2 ratio and text only wraps between words. CPU speed fits on one line: "3.14 GHz (peak: 3.93 GHz)".
+
 ## [1.23.1] - 2026-11-15 · build 20261116004237
 
 ### Fixed

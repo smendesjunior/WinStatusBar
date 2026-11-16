@@ -114,8 +114,9 @@ internal static class PanelKit
         foreach (var (label, value) in rows)
         {
             host.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            var l = Caption(label + ":", 12); l.TextWrapping = TextWrapping.Wrap; l.MaxWidth = 150;
-            var v = new TextBlock { Text = value, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+            // Rótulo longo quebra entre palavras ("Processadores / lógicos:") e deixa espaço ao valor ("Habilitado").
+            var l = Caption(label + ":", 12); l.TextWrapping = TextWrapping.WrapWholeWords; l.MaxWidth = 105;
+            var v = new TextBlock { Text = value, FontSize = 12, TextWrapping = TextWrapping.WrapWholeWords }; // nunca parte uma palavra
             Grid.SetRow(l, r); Grid.SetRow(v, r); Grid.SetColumn(v, 1);
             host.Children.Add(l); host.Children.Add(v);
             r++;

@@ -4656,4 +4656,7 @@ Fuente: {0} · {1:HH:mm}</value>
   <data name="SA39EDA1B8C2275BF" xml:space="preserve">
     <value>Activado, cada 10 minutos la barra da a los chats nuevos de ChatGPT (web, app de Windows y móvil) y a las conversaciones locales de Codex (incluidas las de proyectos) el título "DD/MM/AAAA - Tema - Asunto", generado por el modelo más ligero de su cuenta. Usa el inicio de sesión de Codex, el mismo de la cuota; no se guarda nada. Entran todos los chats aún fuera de ese formato, nuevos y antiguos (también los fijados), con al menos 3 minutos; los que ya tienen el formato nunca se modifican. Cada ronda automática renombra hasta 30; "Renombrar ahora" los renombra todos en el momento.</value>
   </data>
+  <data name="SF761708E8C232E38" xml:space="preserve">
+    <value>{0} (pico: {1})</value>
+  </data>
 </root>

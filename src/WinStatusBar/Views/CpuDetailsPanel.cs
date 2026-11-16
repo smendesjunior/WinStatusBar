@@ -81,7 +81,7 @@ internal sealed class CpuDetailsPanel : IDetailsPanel
             _name.Text = cpu?.ProcessorName ?? global::WinStatusBar.Services.Localization.T("Processador");
             _fields[global::WinStatusBar.Services.Localization.T("Utilização")].Text = cpu?.UsagePercent is double u ? $"{u:0}%" : "—";
             _fields[global::WinStatusBar.Services.Localization.T("Velocidade")].Text = cpu?.CurrentGHz is double g
-                ? (cpu.PeakCoreGHz is double pk ? global::WinStatusBar.Services.Localization.F("{0} (núcleo mais rápido: {1})", new object?[] {$"{g:0.00} GHz", $"{pk:0.00} GHz"}) : $"{g:0.00} GHz")
+                ? (cpu.PeakCoreGHz is double pk ? global::WinStatusBar.Services.Localization.F("{0} (pico: {1})",new object?[] {$"{g:0.00} GHz", $"{pk:0.00} GHz"}) : $"{g:0.00} GHz") // número e unidade nunca se separam na quebra de linha
                 : "—";
             _fields[global::WinStatusBar.Services.Localization.T("Temperatura")].Text = _hub.LastTemperature?.Cpu is double t ? $"{t:0} °C" : "—";
             var up = TimeSpan.FromMilliseconds(Environment.TickCount64);

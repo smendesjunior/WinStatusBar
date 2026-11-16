@@ -1,4 +1,4 @@
-using Microsoft.UI;
+﻿using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Dispatching;
@@ -332,7 +332,9 @@ public sealed partial class BarWindow : Window
         // A largura mínima dos textos (StabilizeTextWidths) fica como está: zerá-la aqui, a cada 3 s, desfazia a estabilização.
         double left = 0, right = 0;
         Button[] quotaButtons = [CodexQuotaButton, ClaudeQuotaButton, GeminiQuotaButton, AntigravityQuotaButton, CopilotQuotaButton, QiraQuotaButton];
-        // Largura de um lado: a tarefa conta 120 (ela estica e ocupa a sobra); módulos no "…" não contam.
+        // Pedido de 15/11/2026: a tarefa (progresso) é sempre o maior bloco da barra. Ela conta a largura do maior módulo
+        // visível mais 24 (no mínimo 120) e ainda estica para ocupar a sobra; módulos no "…" não contam.
+        double taskFloor = 120;
         double MeasureSide(bool leftSide)
         {
             double total = 8;
@@ -340,7 +342,7 @@ public sealed partial class BarWindow : Window
             {
                 if (IsLeft(key) != leftSide || !_modules.TryGetValue(key, out var module) || s.HiddenModules.Contains(key) || _overflowed.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
                 double width;
-                if (key == "task") width = 120;
+                if (key == "task") width = taskFloor;
                 else { module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48)); width = module.DesiredSize.Width; }
                 total += width + _moduleGap + 1;
             }
@@ -367,6 +369,7 @@ public sealed partial class BarWindow : Window
             foreach (var button in new[] { ClipboardButton, TaskManagerButton, SettingsShortcutButton, StoreButton,
                 ExplorerShortcutButton, DocumentsShortcutButton, DownloadsShortcutButton, PersonalShortcutButton, MoreButton }) button.Width = shortcutWidth;
             EqualizeQuotaWidths(quotaButtons);
+            taskFloor = TaskFloor();
             left = MeasureSide(true); right = MeasureSide(false);
             if (left + right <= available) break;
         }
@@ -378,6 +381,7 @@ public sealed partial class BarWindow : Window
                 foreach (var (_, module) in _modules) ApplyNativeTextScale(module, ratio);
                 foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
                 EqualizeQuotaWidths(quotaButtons);
+                taskFloor = TaskFloor();
                 left = MeasureSide(true); right = MeasureSide(false);
             }
         }
@@ -388,7 +392,7 @@ public sealed partial class BarWindow : Window
         if (_modules.TryGetValue("task", out var task) && task.Visibility == Visibility.Visible && IsLeft("task"))
         {
             task.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-            leftWanted += Math.Clamp(task.DesiredSize.Width, 120, 360) - 120;
+            leftWanted += Math.Clamp(task.DesiredSize.Width, taskFloor, Math.Max(taskFloor, 360)) - taskFloor;
             leftWanted = Math.Max(left, Math.Min(leftWanted, available - right));
         }
         var space = BarSpace.Allocate(ScaleHost.Width, box, leftWanted, right);
@@ -399,9 +403,31 @@ public sealed partial class BarWindow : Window
         RightModulesGrid.Width = Math.Max(space.Right, right);
     }
 
-    /// <summary>Todos os blocos de cota com a mesma largura (a do maior), para o realce de seleção ficar igual.</summary>
+    /// <summary>Largura mínima da tarefa: a do maior módulo visível (fora atalhos) mais 24, no mínimo 120.</summary>
+    private double TaskFloor()
+    {
+        var s = _settings.Current;
+        double max = 0;
+        foreach (var (key, module) in _modules)
+        {
+            if (key is "task" or "shortcuts" || module.Visibility != Visibility.Visible || s.HiddenModules.Contains(key)) continue;
+            module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
+            // O módulo de cotas é um grupo: o bloco que conta é uma cota só (todas têm a mesma largura).
+            double w = key == "quotas" ? new[] { CodexQuotaButton, ClaudeQuotaButton, GeminiQuotaButton, AntigravityQuotaButton, CopilotQuotaButton, QiraQuotaButton }
+                .Where(b => b.Visibility == Visibility.Visible).Select(b => b.MinWidth).DefaultIfEmpty(0).Max() : module.DesiredSize.Width;
+            max = Math.Max(max, w);
+        }
+        return Math.Max(120, Math.Ceiling(max) + 24);
+    }
+
+    /// <summary>
+    /// Todos os blocos de cota com a mesma largura (a do maior), para o realce de seleção ficar igual. O conteúdo fica
+    /// alinhado à esquerda: rótulo e porcentagem lado a lado, e a folga vai para o fim do bloco (antes ela abria um vão
+    /// entre "Codex 5h" e "90 %").
+    /// </summary>
     private static void EqualizeQuotaWidths(Button[] quotas)
     {
+        foreach (var quota in quotas) quota.HorizontalContentAlignment = HorizontalAlignment.Left;
         double max = 0;
         foreach (var quota in quotas)
         {

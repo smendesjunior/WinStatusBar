@@ -4656,4 +4656,7 @@ Source : {0} · {1:HH:mm}</value>
   <data name="SA39EDA1B8C2275BF" xml:space="preserve">
     <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Toutes les discussions pas encore au format sont concernées, récentes et anciennes (épinglées comprises), dès 3 minutes ; celles déjà au format ne sont jamais modifiées. Chaque passage automatique en renomme jusqu'à 30 ; « Renommer maintenant » les renomme toutes immédiatement.</value>
   </data>
+  <data name="SF761708E8C232E38" xml:space="preserve">
+    <value>{0} (pic : {1})</value>
+  </data>
 </root>

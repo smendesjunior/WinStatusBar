@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.23.2] - 2026-11-15 · compilação 20261116005844
+
+### Corrigido
+- Painéis de CPU, GPU, memória, rede e bateria: as especificações à direita voltaram a aparecer inteiras. Um valor longo à esquerda (como a velocidade com o núcleo mais rápido) espremia essa coluna, o texto quebrava letra por letra e o painel ficava alto, vazio e cortado. Agora as duas colunas têm largura fixa na proporção 3:2 e os textos só quebram entre palavras. A velocidade da CPU fica numa linha: "3,14 GHz (pico: 3,93 GHz)".
+
 ## [1.23.1] - 2026-11-15 · compilação 20261116004237
 
 ### Corrigido

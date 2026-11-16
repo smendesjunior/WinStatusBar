@@ -74,7 +74,7 @@ public partial class App : Application
             Exit();
             return;
         }
-        if (!created)
+        if (!created && Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_CPU_PANEL") != "1") // a conferência do painel roda ao lado da barra
         {
             if (EventWaitHandle.TryOpenExisting("WinStatusBar.Show." + suffix, out var ev)) { ev.Set(); ev.Dispose(); }
             Exit();
@@ -82,6 +82,7 @@ public partial class App : Application
         }
 
 #if DEBUG
+        if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_CPU_PANEL") == "1") { VerifyCpuPanel(); return; }
         if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_SYSTEM_PANEL") == "1")
         {
             _dispatcher = DispatcherQueue.GetForCurrentThread();
@@ -210,6 +211,30 @@ public partial class App : Application
     /// cotas do Google, Gemini, créditos da Microsoft), ponte e encaminhador do Codex, vigia do Claude Code e atalho
     /// global. Antes ficavam na frente da primeira pintura.
     /// </summary>
+#if DEBUG
+    /// <summary>Conferência visual do painel da CPU (PanelKit): o painel numa janela, com as leituras reais.</summary>
+    private void VerifyCpuPanel()
+    {
+            _dispatcher = DispatcherQueue.GetForCurrentThread();
+            Settings.Load();
+            Localization.Initialize(Settings.Current.Language);
+            UpdateTheme();
+            Hub = new MonitoringHub(_dispatcher, Settings);
+            Hub.ApplySettings(); Hub.Start();
+            var cpu = new Views.CpuDetailsPanel(Hub, Settings);
+            var host = new Microsoft.UI.Xaml.Controls.Border
+            {
+                Padding = new Thickness(16), Child = cpu.Content,
+                RequestedTheme = IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light,
+                Background = ThemeBrushes.Get("SolidBackgroundFillColorBaseBrush"),
+            };
+            var preview = new Window { Title = "WinStatusBar · painel da CPU", Content = host };
+            preview.AppWindow.Resize(new Windows.Graphics.SizeInt32(900, 1150));
+            preview.Closed += (_, _) => { cpu.Dispose(); Exit(); };
+            preview.Activate(); cpu.Start();
+                }
+#endif
+
     private void StartDeferredServices()
     {
         if (_exiting) return;

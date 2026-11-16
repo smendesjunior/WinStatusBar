@@ -22,7 +22,7 @@ internal sealed class GpuDetailsPanel : IDetailsPanel
     private readonly AreaChart _dedicated = new(36, compact: true), _shared = new(36, compact: true);
     private readonly TextBlock _dedicatedValue = AreaChart.Text(secondary: true, size: 12), _sharedValue = AreaChart.Text(secondary: true, size: 12);
     private readonly Dictionary<string, TextBlock> _fields = new();
-    private readonly StackPanel _dedicatedField;
+    private readonly Grid _dedicatedField;
     private readonly Grid _specs = new();
     private long _specsFor;
     private bool _open, _disposed, _filling;
