@@ -4659,4 +4659,13 @@ Fonte: {0} · {1:HH:mm}</value>
   <data name="SF761708E8C232E38" xml:space="preserve">
     <value>{0} (pico: {1})</value>
   </data>
+  <data name="SCD96FBDA5E00D191" xml:space="preserve">
+    <value>A chave não listou nenhum modelo.</value>
+  </data>
+  <data name="SCCC2065A061C661F" xml:space="preserve">
+    <value>A consulta exige uma chave administrativa da Anthropic (sk-ant-admin…), criada em console.anthropic.com › Settings › Admin keys.</value>
+  </data>
+  <data name="SBE38AC1368B86933" xml:space="preserve">
+    <value>Consulta à Anthropic indisponível (HTTP {0}).</value>
+  </data>
 </root>

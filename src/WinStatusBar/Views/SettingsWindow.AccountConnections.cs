@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -194,6 +194,91 @@ public sealed partial class SettingsWindow
         return (root, Set);
     }
 
+    /// <summary>
+    /// Linha de uma chave (conversa ou administrativa) no cartão da conta: selo de estado, caixa de senha com a chave
+    /// salva em bolinhas (nunca exibida em texto), Salvar/Atualizar (confere a chave antes de gravar) e Remover.
+    /// </summary>
+    private (Grid Root, Action Refresh) KeyEditorRow(ProviderApiKeys.Provider p, bool admin, string envKey)
+    {
+        var (badge, setBadge) = Badge();
+        var help = Help("");
+        var box = new PasswordBox { Width = 320, PasswordRevealMode = PasswordRevealMode.Hidden, FontSize = 13,
+            PlaceholderText = admin ? (p.Id == "anthropic" ? "Cole a chave administrativa (sk-ant-admin…)" : "Cole a chave administrativa (sk-admin-…)")
+                                    : (p.Id == "anthropic" ? "Cole a chave da API (sk-ant-…)" : "Cole a chave da API (sk-…)") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, admin ? "Chave administrativa" : "Chave de API");
+        var save = new Button { FontSize = 12, Padding = new Thickness(10, 4, 10, 5), IsEnabled = false };
+        var remove = new Button { Content = "Remover", FontSize = 12, Padding = new Thickness(10, 4, 10, 5) };
+        var get = new HyperlinkButton { Content = admin ? "Criar chave administrativa" : "Criar chave", FontSize = 12, NavigateUri = new Uri(admin ? p.AdminKeysUrl : p.KeysUrl) };
+        string label = admin ? "Chave administrativa (uso e gastos)" : "Chave de API (conversa)";
+        var row = AccountRow("", label, badge, help, save, remove);
+        var bar = row.Children.OfType<StackPanel>().First(b => Grid.GetRow(b) == 1);
+        bar.Children.Insert(0, box); bar.Children.Add(get);
+        box.VerticalAlignment = save.VerticalAlignment = remove.VerticalAlignment = get.VerticalAlignment = VerticalAlignment.Center;
+        string? Stored() => admin ? ProviderApiKeys.AdminKey(p) : ProviderApiKeys.ChatKey(S, p);
+        bool busy = false;
+        void Refresh()
+        {
+            if (busy) return;
+            string? stored = Stored();
+            bool has = stored is not null;
+            // A chave salva aparece só como bolinhas; digitar por cima troca a chave.
+            box.Password = stored ?? "";
+            save.Content = has ? "Atualizar" : "Salvar";
+            save.IsEnabled = false; remove.IsEnabled = has;
+            bool env = !admin && Environment.GetEnvironmentVariable(envKey) is { Length: > 0 };
+            setBadge(has || env, has ? "Configurada" : env ? "Pela variável" : "Não configurada");
+            help.Text = admin
+                ? (has ? (p.Id == "anthropic" ? "Usada só para ler uso e gastos no menu Claude API das cotas." : "Usada só para ler uso e gastos no menu OpenAI API das cotas.")
+                       : (p.Id == "anthropic" ? "Opcional: para ver tokens e gastos da Claude API no menu de cotas do Claude. É diferente da chave de conversa."
+                                               : "Opcional: alternativa ao login da OpenAI para ver uso e gastos. É diferente da chave de conversa."))
+                : (has ? $"Em uso no seletor da barra como \"{ProviderApiKeys.Entry(S, p)?.Name ?? p.Name}\" (modelo {ProviderApiKeys.Entry(S, p)?.DefaultModel})."
+                       : env ? $"{envKey} definida neste PC (usada pelo CLI). Salve uma chave aqui para conversar pela barra."
+                             : $"Salve uma chave para conversar com \"{p.Name}\" pela barra.");
+        }
+        box.PasswordChanged += (_, _) => save.IsEnabled = !busy && !string.IsNullOrWhiteSpace(box.Password) && box.Password.Trim() != Stored();
+        save.Click += async (_, _) =>
+        {
+            string key = box.Password.Trim();
+            if (key.Length == 0) return;
+            busy = true; save.IsEnabled = remove.IsEnabled = box.IsEnabled = false;
+            help.Text = "Conferindo a chave…";
+            string? error;
+            try
+            {
+                if (admin)
+                {
+                    error = await ProviderApiKeys.VerifyAdminKeyAsync(p, key, CancellationToken.None);
+                    if (error is null) ProviderApiKeys.SaveAdminKey(p, key);
+                }
+                else
+                {
+                    var (catalog, err) = await ProviderApiKeys.VerifyChatKeyAsync(p, key, CancellationToken.None);
+                    error = err;
+                    if (catalog is not null) { ProviderApiKeys.SaveChatKey(S, p, key, catalog); _app.Settings.Save(); _app.ApplySettings(); }
+                }
+            }
+            catch (Exception ex) { error = ex.Message; }
+            busy = false; box.IsEnabled = true;
+            Refresh();
+            if (error is not null) { box.Password = key; save.IsEnabled = true; help.Text = "Chave não salva: " + error; }
+            else help.Text = "Chave conferida e salva neste PC (Cofre do Windows). " + help.Text;
+        };
+        remove.Click += async (_, _) =>
+        {
+            if (!await ConfirmAsync(admin ? "Remover a chave administrativa?" : $"Remover a chave de \"{p.Name}\"?",
+                admin ? "A barra deixa de ler uso e gastos por esta chave. A chave continua válida no site até você revogá-la lá."
+                      : $"\"{p.Name}\" sai do seletor de IA da barra. A chave continua válida no site até você revogá-la lá.", "Remover")) return;
+            try
+            {
+                if (admin) ProviderApiKeys.RemoveAdminKey(p);
+                else { ProviderApiKeys.RemoveChatKey(S, p); _app.Settings.Save(); _app.ApplySettings(); }
+                Refresh(); help.Text = "Chave removida deste PC. " + help.Text;
+            }
+            catch (Exception ex) { help.Text = "Não foi possível remover: " + ex.Message; }
+        };
+        return (row, Refresh);
+    }
+
     private static Button SmallButton(string label, Action click)
     {
         var b = new Button { Content = label, FontSize = 12, Padding = new Thickness(10, 4, 10, 5) };
@@ -216,10 +301,12 @@ public sealed partial class SettingsWindow
         // Logo do Claude: o ícone oficial do app instalado (o SVG animado aparecia como um ponto).
         if (id == "claude") _ = SetClaudeLogoAsync(card.Logo);
         var plan = new TextBlock { FontSize = 13, Foreground = ThemeBrushes.Get("TextFillColorSecondaryBrush") };
-        var (keyBadge, setKey) = Badge();
-        var keyHelp = Help("");
         card.Rows.Children.Add(AccountRow("\uE8C7", "Assinatura", plan));
-        card.Rows.Children.Add(AccountRow("\uE192", "Chave de API", keyBadge, keyHelp));
+        // 2.0.0: as duas chaves do servi\u00E7o no pr\u00F3prio cart\u00E3o, com caixa em bolinhas, Salvar/Atualizar e Remover.
+        var provider = id == "codex" ? ProviderApiKeys.OpenAi : ProviderApiKeys.Anthropic;
+        var chatRow = KeyEditorRow(provider, admin: false, envKey);
+        var adminRow = KeyEditorRow(provider, admin: true, envKey);
+        card.Rows.Children.Add(chatRow.Root); card.Rows.Children.Add(adminRow.Root);
         if (id == "codex")
         {
             // Saldo, gráficos e faturamento da API OpenAI (antes na página "API e faturamento").
@@ -234,21 +321,7 @@ public sealed partial class SettingsWindow
             else card.Identity(null, null, "Não conectado");
             plan.Text = signedIn ? state.Plan ?? "Plano não informado" : "—";
             card.Action.Content = signedIn ? "Sair" : "Entrar";
-            // Todas as chaves/conexões que a barra conhece para este serviço, não só a variável de ambiente.
-            var found = new List<string>();
-            if (state.HasApiKey) found.Add($"{envKey} (variável ou credenciais do CLI)");
-            if (id == "codex")
-            {
-                if (OpenAiDashboardView.Enabled) found.Add("painel de faturamento conectado (login OpenAI)");
-                if (ApiKeyStore.Get("WinStatusBar.OpenAiBilling") is not null) found.Add("chave administrativa salva na barra");
-                if (S.ApiBaseUrl.Contains("openai.com", StringComparison.OrdinalIgnoreCase) && AdditionalAiAccounts.ActiveKey(S) is not null) found.Add("chave de conversa na API própria");
-            }
-            else if (S.ApiKind == "anthropic" && AdditionalAiAccounts.ActiveKey(S) is not null) found.Add("chave de conversa na API própria (Anthropic)");
-            bool key = found.Count > 0;
-            setKey(key, key ? "Configurada" : "Não configurada");
-            keyHelp.Text = key ? "Em uso: " + string.Join("; ", found) + "."
-                : id == "codex" ? "Nenhuma chave nem login de faturamento. Configure em \"Uso e gastos da API OpenAI\" abaixo, ou defina OPENAI_API_KEY."
-                : "Nenhuma chave. Defina ANTHROPIC_API_KEY ou configure a Anthropic em \"Outra IA por chave (API própria)\", mais abaixo nesta página.";
+            chatRow.Refresh(); adminRow.Refresh();
             card.SetNote(signedIn ? "" : "Nenhuma sessão encontrada neste PC. Clique em Entrar para fazer login pelo CLI oficial.");
         }
         card.Action.Click += async (_, _) =>

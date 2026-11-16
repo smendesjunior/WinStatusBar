@@ -7,6 +7,17 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.0] - 2026-11-15 · compilação 20261116013255
+
+### Adicionado
+- Chaves de API no próprio cartão de cada conta (Configurações › IAs e contas): o Claude Code e o Codex ganham a chave de conversa e a chave administrativa, cada uma com a caixa mostrando a chave salva em bolinhas e os botões Salvar/Atualizar (a chave é conferida antes de gravar) e Remover.
+- Claude API: com a chave de conversa da Anthropic salva, "Claude API" aparece no seletor de IA da barra, como a "OpenAI API".
+- Menu de cotas do Claude: nova coluna "Claude API", com tokens e gastos dos últimos 30 dias pelos relatórios oficiais da Anthropic (exige a chave administrativa). Só aparece com uma chave da Anthropic configurada.
+
+### Alterado
+- A chave administrativa da OpenAI saiu de "Uso e gastos da API OpenAI" e foi para o cartão do Codex.
+- Barra: cada bloco de cota tem só a largura do próprio texto, e o bloco da tarefa em andamento é sempre o maior.
+
 ## [1.23.3] - 2026-11-15 · compilação 20261116012340
 
 ### Corrigido

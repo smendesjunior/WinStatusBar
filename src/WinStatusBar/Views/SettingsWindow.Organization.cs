@@ -107,13 +107,7 @@ public sealed partial class SettingsWindow
             Toggle("Gráfico de tokens", "Separa tokens de entrada e saída. Passe o mouse sobre o gráfico para ver os valores por dia.", s => s.ApiShowTokens, (s,v) => s.ApiShowTokens = v),
             Toggle("Gráfico de gastos", "Valores em dólares, no período e na organização consultados. Custo zero não significa ausência de uso.", s => s.ApiShowCosts, (s,v) => s.ApiShowCosts = v),
             Toggle("Gráfico de requisições", "Quantidade diária de solicitações registradas pela conta.", s => s.ApiShowRequests, (s,v) => s.ApiShowRequests = v)));
-        var key = new PasswordBox { PlaceholderText = "Chave administrativa (opcional)" };
-        var feedback = Help(ApiKeyStore.Get("WinStatusBar.OpenAiBilling") is null ? "Nenhuma chave administrativa salva." : "Chave administrativa salva neste PC.");
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        buttons.Children.Add(ActionButton("Salvar", () => { if (string.IsNullOrWhiteSpace(key.Password)) return; try { ApiKeyStore.Set(key.Password, "WinStatusBar.OpenAiBilling"); key.Password = ""; feedback.Text = "Chave administrativa salva."; } catch { feedback.Text = "Não foi possível salvar a chave."; } }));
-        buttons.Children.Add(ActionButton("Remover", () => { ApiKeyStore.Set(null, "WinStatusBar.OpenAiBilling"); feedback.Text = "Chave administrativa removida."; }));
-        var credentials = new StackPanel { Spacing = 6 }; credentials.Children.Add(key); credentials.Children.Add(buttons); credentials.Children.Add(feedback);
-        _openAiBillingPanel.Children.Add(Group(Row(Localization.T("Chave de administrador da OpenAI (opcional)"), "Alternativa ao login: requer chave administrativa da organização. É diferente da chave de conversa e não informa saldo de créditos. Fica no Cofre do Windows; não é sincronizada.", credentials)));
+        // 2.0.0: a chave administrativa da OpenAI fica no cartão do Codex, junto da chave de conversa (KeyEditorRow).
         BuildModelsPage();
         BuildAboutPage();
 

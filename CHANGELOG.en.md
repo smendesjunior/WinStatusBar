@@ -7,6 +7,17 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.0] - 2026-11-15 · build 20261116013255
+
+### Added
+- API keys right on each account card (Settings › AIs and accounts): Claude Code and Codex get a chat key and an admin key, each with a box showing the saved key as dots plus Save/Update (the key is checked before saving) and Remove buttons.
+- Claude API: with an Anthropic chat key saved, "Claude API" shows up in the bar's AI picker, like "OpenAI API".
+- Claude quota menu: a new "Claude API" column with tokens and spend for the last 30 days from Anthropic's official reports (requires the admin key). It only shows once an Anthropic key is configured.
+
+### Changed
+- The OpenAI admin key moved from "OpenAI API usage and spend" to the Codex card.
+- Bar: each quota block is only as wide as its own text, and the running-task block is always the widest.
+
 ## [1.23.3] - 2026-11-15 · build 20261116012340
 
 ### Fixed

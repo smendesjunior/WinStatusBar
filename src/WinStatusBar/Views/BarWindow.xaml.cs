@@ -412,31 +412,21 @@ public sealed partial class BarWindow : Window
         {
             if (key is "task" or "shortcuts" || module.Visibility != Visibility.Visible || s.HiddenModules.Contains(key)) continue;
             module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-            // O módulo de cotas é um grupo: o bloco que conta é uma cota só (todas têm a mesma largura).
+            // O módulo de cotas é um grupo: o bloco que conta é a maior cota sozinha.
             double w = key == "quotas" ? new[] { CodexQuotaButton, ClaudeQuotaButton, GeminiQuotaButton, AntigravityQuotaButton, CopilotQuotaButton, QiraQuotaButton }
-                .Where(b => b.Visibility == Visibility.Visible).Select(b => b.MinWidth).DefaultIfEmpty(0).Max() : module.DesiredSize.Width;
+                .Where(b => b.Visibility == Visibility.Visible).Select(b => { b.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48)); return b.DesiredSize.Width; }).DefaultIfEmpty(0).Max() : module.DesiredSize.Width;
             max = Math.Max(max, w);
         }
         return Math.Max(120, Math.Ceiling(max) + 24);
     }
 
     /// <summary>
-    /// Todos os blocos de cota com a mesma largura (a do maior), para o realce de seleção ficar igual. O conteúdo fica
-    /// alinhado à esquerda: rótulo e porcentagem lado a lado, e a folga vai para o fim do bloco (antes ela abria um vão
-    /// entre "Codex 5h" e "90 %").
+    /// Blocos de cota com a largura do próprio conteúdo (pedido de 15/11/2026: sem espaço sobrando; antes todos ficavam
+    /// com a largura do maior). Rótulo e porcentagem lado a lado. O bloco da tarefa é sempre maior que eles (TaskFloor).
     /// </summary>
     private static void EqualizeQuotaWidths(Button[] quotas)
     {
-        foreach (var quota in quotas) quota.HorizontalContentAlignment = HorizontalAlignment.Left;
-        double max = 0;
-        foreach (var quota in quotas)
-        {
-            quota.MinWidth = 0;
-            if (quota.Visibility != Visibility.Visible) continue;
-            quota.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-            max = Math.Max(max, quota.DesiredSize.Width);
-        }
-        foreach (var quota in quotas) quota.MinWidth = Math.Ceiling(max);
+        foreach (var quota in quotas) { quota.HorizontalContentAlignment = HorizontalAlignment.Left; quota.MinWidth = 0; }
     }
 
     private Dictionary<string, Button> ShortcutButtons() => new()
@@ -943,9 +933,13 @@ public sealed partial class BarWindow : Window
             var monitor = CurrentMonitor();
             double width = monitor is null ? 900 : (monitor.Work.Right - monitor.Work.Left) * 96.0 / monitor.Dpi;
             UIElement body;
-            if (kind == Core.Ai.AgentKind.Codex && _settings.Current.ApiUsageVisible)
+            // Coluna da API ao lado das cotas da assinatura: OpenAI API no Codex; Claude API no Claude (2.0.0), só com
+            // uma chave da Anthropic configurada no cartão Claude Code.
+            FrameworkElement? apiColumn = kind == Core.Ai.AgentKind.Codex && _settings.Current.ApiUsageVisible ? ApiUsageView.Build()
+                : kind == Core.Ai.AgentKind.Claude && ClaudeApiUsageView.Configured(_settings.Current) ? ClaudeApiUsageView.Build() : null;
+            string apiName = kind == Core.Ai.AgentKind.Codex ? "OpenAI API" : "Claude API";
+            if (apiColumn is { } api)
             {
-                var api = ApiUsageView.Build();
                 if (width >= 850)
                 {
                     var columns = new Grid { ColumnSpacing = columnSpacing, RequestedTheme = Root.RequestedTheme };
@@ -963,8 +957,8 @@ public sealed partial class BarWindow : Window
                     resume = new ContentControl { Content = Resume() };
                     var codexPage = new StackPanel { Spacing = 12 };
                     codexPage.Children.Add(quota); codexPage.Children.Add(resume);
-                    sections.Items.Add(new PivotItem { Header = "Codex", Content = codexPage });
-                    sections.Items.Add(new PivotItem { Header = "OpenAI API", Content = api });
+                    sections.Items.Add(new PivotItem { Header = kind == Core.Ai.AgentKind.Codex ? "Codex" : "Claude", Content = codexPage });
+                    sections.Items.Add(new PivotItem { Header = apiName, Content = api });
                     flyout.Content = sections;
                     timer.Start();
                     return;
