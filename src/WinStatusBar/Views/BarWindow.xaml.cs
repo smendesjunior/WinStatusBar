@@ -342,7 +342,7 @@ public sealed partial class BarWindow : Window
             {
                 if (IsLeft(key) != leftSide || !_modules.TryGetValue(key, out var module) || s.HiddenModules.Contains(key) || _overflowed.Contains(key) || key == "battery" && !VM.BatteryAvailable) continue;
                 double width;
-                if (key == "task") width = taskFloor;
+                if (key == "task") width = 120; // para caber, a tarefa conta 120; o "maior bloco" vem depois, só com espaço sobrando
                 else { module.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48)); width = module.DesiredSize.Width; }
                 total += width + _moduleGap + 1;
             }
@@ -388,12 +388,16 @@ public sealed partial class BarWindow : Window
         // Pedido de 15/11/2026: todos os módulos e atalhos ficam visíveis 100% do tempo, nunca vão para o menu "…".
         // Quando um lado não cabe na metade, a caixa da IA sai do centro e usa a sobra do outro lado (BarSpace.Allocate).
         // A tarefa conta 120 para caber; havendo sobra do outro lado, ela pede a largura do texto inteiro (até 360).
+        // A tarefa pede o maior bloco da barra (TaskFloor) ou o texto inteiro (até 360), mas só dentro da metade esquerda:
+        // pedido de 15/11/2026, a caixa da IA continua no centro exato sempre que os dois lados cabem nas metades.
         double leftWanted = left;
         if (_modules.TryGetValue("task", out var task) && task.Visibility == Visibility.Visible && IsLeft("task"))
         {
             task.Measure(new Windows.Foundation.Size(double.PositiveInfinity, 48));
-            leftWanted += Math.Clamp(task.DesiredSize.Width, taskFloor, Math.Max(taskFloor, 360)) - taskFloor;
-            leftWanted = Math.Max(left, Math.Min(leftWanted, available - right));
+            double want = left - 120 + Math.Clamp(task.DesiredSize.Width, taskFloor, Math.Max(taskFloor, 360));
+            double half = available / 2;
+            double room = left <= half && right <= half ? half : available - right;
+            leftWanted = Math.Max(left, Math.Min(want, room));
         }
         var space = BarSpace.Allocate(ScaleHost.Width, box, leftWanted, right);
         BarLayout.ColumnDefinitions[0].Width = new GridLength(space.Left);

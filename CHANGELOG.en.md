@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.1] - 2026-11-15 · build 20261116014103
+
+### Fixed
+- Bar: the "Ask your AI" box is back in the exact center. The task block is still the widest, but only with the room left in the left half; the box only moves off center when a side really doesn't fit.
+
 ## [2.0.0] - 2026-11-15 · build 20261116013255
 
 ### Added

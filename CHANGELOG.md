@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.1] - 2026-11-15 · compilação 20261116014103
+
+### Corrigido
+- Barra: a caixa "Pergunte à sua IA" voltou ao centro exato. O bloco da tarefa continua o maior, mas só com o espaço que sobra na metade esquerda; a caixa só sai do centro quando um lado realmente não cabe.
+
 ## [2.0.0] - 2026-11-15 · compilação 20261116013255
 
 ### Adicionado
