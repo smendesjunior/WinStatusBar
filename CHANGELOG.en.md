@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.4] - 2026-11-15 · build 20261116020431
+
+### Fixed
+- Bar: the font size stays fixed. It is computed once for the screen (width and scale), the language and the visible blocks, with headroom for changing numbers, and only recomputed when one of those changes. Before, it was recomputed every 3 seconds and the text kept changing size on its own. If some text grows beyond the headroom, the font drops one step and stays there, without cutting any information.
+
 ## [2.0.3] - 2026-11-15 · build 20261116015747
 
 ### Added

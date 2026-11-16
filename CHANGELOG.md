@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.4] - 2026-11-15 · compilação 20261116020431
+
+### Corrigido
+- Barra: o tamanho da letra fica fixo. Ele é calculado uma vez para a tela (largura e escala), o idioma e os blocos visíveis, com folga para os números variarem, e só é refeito quando um desses muda. Antes era recalculado a cada 3 segundos e a letra trocava de tamanho sozinha. Se algum texto crescer além da folga, a letra diminui um degrau e fica assim, sem cortar informação.
+
 ## [2.0.3] - 2026-11-15 · compilação 20261116015747
 
 ### Adicionado

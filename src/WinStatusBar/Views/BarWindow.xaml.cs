@@ -317,6 +317,9 @@ public sealed partial class BarWindow : Window
     }
 
     /// <summary>Todos os módulos habilitados permanecem visíveis. Compacta antes de reduzir cada lateral.</summary>
+    private string? _textLayoutKey;
+    private int _textStep;
+
     private void UpdateOverflow()
     {
         if (double.IsNaN(ScaleHost.Width) || ScaleHost.Width <= 0) return;
@@ -351,11 +354,17 @@ public sealed partial class BarWindow : Window
         // Pedido de 15/11/2026: a caixa da IA fica fixa no centro exato. Cada lado tem de caber na sua metade; só quando
         // nem o texto no menor tamanho cabe a caixa sai do centro (BarSpace.Allocate).
         double halfAvailable = available / 2;
-        bool Fits() => left <= halfAvailable && right <= halfAvailable;
-        // Padrão único (auditoria visual de 15/11/2026): o mesmo respiro em todos os módulos (sistema e cotas) e o
-        // mesmo espaço entre ícone e texto. Primeiro diminui os espaços vazios, depois o texto.
-        foreach (var (gap, padding, innerGap, shortcutWidth) in new[] { (6d, 6d, 8d, 34d), (5d, 5d, 6d, 30d), (4d, 4d, 5d, 26d) })
+        bool Fits(double margin) => left <= halfAvailable * margin && right <= halfAvailable * margin;
+        // Degraus, do maior para o menor: primeiro diminuem os espaços (3 níveis), depois o texto da barra inteira.
+        // Padrão único (auditoria visual de 15/11/2026): o mesmo respiro em todos os módulos e entre ícone e texto.
+        (double Gap, double Padding, double InnerGap, double Shortcut, double Ratio)[] steps =
+        [
+            (6, 6, 8, 34, 1), (5, 5, 6, 30, 1), (4, 4, 5, 26, 1),
+            (4, 4, 5, 26, 0.95), (4, 4, 5, 26, 0.90), (4, 4, 5, 26, 0.85), (4, 4, 5, 26, 0.80), (4, 4, 5, 26, 0.75), (4, 4, 5, 26, 0.70),
+        ];
+        void Apply(int i)
         {
+            var (gap, padding, innerGap, shortcutWidth, ratio) = steps[i];
             _moduleGap = gap;
             foreach (var grid in new[] { ModulesGrid, RightModulesGrid })
                 foreach (var separator in grid.Children.OfType<Rectangle>()) separator.Margin = new Thickness(gap / 2, 0, gap / 2, 0);
@@ -372,24 +381,26 @@ public sealed partial class BarWindow : Window
             }
             foreach (var button in new[] { ClipboardButton, TaskManagerButton, SettingsShortcutButton, StoreButton,
                 ExplorerShortcutButton, DocumentsShortcutButton, DownloadsShortcutButton, PersonalShortcutButton, MoreButton }) button.Width = shortcutWidth;
-            EqualizeQuotaWidths(quotaButtons);
-            taskFloor = TaskFloor();
-            left = MeasureSide(true); right = MeasureSide(false);
-            if (Fits()) break;
-        }
-        // Reduz o texto de verdade (nunca um bitmap) e por igual nos dois lados: a barra inteira com um só tamanho de letra.
-        if (!Fits())
-        {
-            for (double ratio = 0.95; ratio >= 0.69 && !Fits(); ratio -= 0.05)
+            if (ratio < 1)
             {
                 foreach (var (_, module) in _modules) ApplyNativeTextScale(module, ratio);
                 foreach (var panel in new[] { NetTextPanel, CpuTextPanel, RamTextPanel, GpuTextPanel, BatteryTextPanel }) panel.MinWidth = 0;
-                EqualizeQuotaWidths(quotaButtons);
-                taskFloor = TaskFloor();
-                left = MeasureSide(true); right = MeasureSide(false);
             }
+            EqualizeQuotaWidths(quotaButtons);
+            taskFloor = TaskFloor();
+            left = MeasureSide(true); right = MeasureSide(false);
         }
-        // Pedido de 15/11/2026: todos os módulos e atalhos ficam visíveis 100% do tempo, nunca vão para o menu "…".
+        // Pedido de 15/11/2026: tamanho de fonte FIXO, calculado para a tela (largura, escala), o idioma e os blocos
+        // visíveis, com 4% de folga para os números variarem. Antes era recalculado a cada 3 s e a letra trocava de tamanho
+        // sozinha. Com a mesma tela, o degrau só desce (nunca volta a subir) se algo crescer além da folga: nada é cortado.
+        string layoutKey = string.Join("|", Math.Round(ScaleHost.Width), Math.Round(box), s.Language,
+            string.Join(",", s.ModuleOrder.Where(k => !s.HiddenModules.Contains(k) && (k != "battery" || VM.BatteryAvailable))),
+            string.Join(",", quotaButtons.Where(q => q.Visibility == Visibility.Visible).Select(q => q.Name)));
+        bool fresh = layoutKey != _textLayoutKey;
+        int step = fresh ? 0 : _textStep;
+        Apply(step);
+        while (!Fits(fresh ? 0.96 : 1) && step < steps.Length - 1) Apply(++step);
+        _textLayoutKey = layoutKey; _textStep = step;        // Pedido de 15/11/2026: todos os módulos e atalhos ficam visíveis 100% do tempo, nunca vão para o menu "…".
         // Quando um lado não cabe na metade, a caixa da IA sai do centro e usa a sobra do outro lado (BarSpace.Allocate).
         // A tarefa conta 120 para caber; havendo sobra do outro lado, ela pede a largura do texto inteiro (até 360).
         // A tarefa pede o maior bloco da barra (TaskFloor) ou o texto inteiro (até 360), mas só dentro da metade esquerda:
