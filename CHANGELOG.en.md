@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.3] - 2026-11-15 · build 20261116015747
+
+### Added
+- Task panel: the Claude row shows the Claude API next to the plan ("API used US$ …", like the OpenAI API on the Codex row), read in the background from Anthropic's reports. It only shows once an Anthropic key is saved on the Claude Code card.
+
 ## [2.0.2] - 2026-11-15 · build 20261116014801
 
 ### Fixed

@@ -706,6 +706,8 @@ public sealed class MonitoringHub : IDisposable
             meta.Add("API " + (snap.Balance is { } balance ? "US$ " + balance.ToString("N2", pt) : "saldo n/d"));
             meta.Add("usado US$ " + snap.Days.Sum(d => d.Cost).ToString("N2", pt));
         }
+        else if (kind == AgentKind.Claude && Views.ClaudeApiUsageView.OverviewMeta(_settings.Current, _settings.Current.ApiUsageRefreshMinutes) is { } claudeApi)
+            meta.Add(claudeApi); // Claude API (2.0.x): gastos dos relatórios da Anthropic, como a OpenAI API no Codex
         else if (account.HasApiKey) meta.Add("API: chave configurada");
         return pill with { Ring1 = r1, Ring2 = r2, Meta = string.Join(" · ", meta), RingNote = r1 is null && r2 is null ? "Cota: aguardando dados" : "" };
     }

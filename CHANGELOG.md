@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.3] - 2026-11-15 · compilação 20261116015747
+
+### Adicionado
+- Painel de tarefas: a linha do Claude mostra a Claude API ao lado do plano ("API usado US$ …", como a OpenAI API na linha do Codex), lida em segundo plano dos relatórios da Anthropic. Só aparece com uma chave da Anthropic salva no cartão Claude Code.
+
 ## [2.0.2] - 2026-11-15 · compilação 20261116014801
 
 ### Corrigido

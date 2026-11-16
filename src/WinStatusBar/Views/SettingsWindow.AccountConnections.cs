@@ -259,6 +259,7 @@ public sealed partial class SettingsWindow
             }
             catch (Exception ex) { error = ex.Message; }
             busy = false; box.IsEnabled = true;
+            if (p.Id == "anthropic") ClaudeApiUsageView.KeysChanged();
             Refresh();
             if (error is not null) { box.Password = key; save.IsEnabled = true; help.Text = "Chave não salva: " + error; }
             else help.Text = "Chave conferida e salva neste PC (Cofre do Windows). " + help.Text;
@@ -272,6 +273,7 @@ public sealed partial class SettingsWindow
             {
                 if (admin) ProviderApiKeys.RemoveAdminKey(p);
                 else { ProviderApiKeys.RemoveChatKey(S, p); _app.Settings.Save(); _app.ApplySettings(); }
+                if (p.Id == "anthropic") ClaudeApiUsageView.KeysChanged();
                 Refresh(); help.Text = "Chave removida deste PC. " + help.Text;
             }
             catch (Exception ex) { help.Text = "Não foi possível remover: " + ex.Message; }
