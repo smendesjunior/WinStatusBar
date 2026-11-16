@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [1.23.3] - 2026-11-15 · compilação 20261116012340
+
+### Corrigido
+- Painéis de Wi-Fi, CPU, memória, GPU e bateria: nenhuma linha quebra mais em duas e nenhum texto é encurtado. Cada painel fica com a largura que os textos pedem (no mínimo a de antes), sem espaço vazio sobrando. Os rótulos das leituras não aparecem mais repetidos.
+- Barra: o bloco da tarefa em andamento é sempre o maior da barra, e nos blocos de cota o nome e a porcentagem ficam lado a lado (a folga vai para o fim do bloco).
+
 ## [1.23.2] - 2026-11-15 · compilação 20261116005844
 
 ### Corrigido

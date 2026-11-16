@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [1.23.3] - 2026-11-15 · build 20261116012340
+
+### Fixed
+- Wi-Fi, CPU, memory, GPU and battery panels: no line wraps into two anymore and no text is shortened. Each panel takes the width its text needs (at least the previous width), with no leftover empty space. Reading labels no longer appear twice.
+- Bar: the running-task block is always the widest one, and quota blocks keep the name and percentage side by side (the slack goes to the end of the block).
+
 ## [1.23.2] - 2026-11-15 · build 20261116005844
 
 ### Fixed

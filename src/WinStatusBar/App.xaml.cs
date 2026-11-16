@@ -74,7 +74,7 @@ public partial class App : Application
             Exit();
             return;
         }
-        if (!created && Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_CPU_PANEL") != "1") // a conferência do painel roda ao lado da barra
+        if (!created && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_PANEL"))) // a conferência do painel roda ao lado da barra
         {
             if (EventWaitHandle.TryOpenExisting("WinStatusBar.Show." + suffix, out var ev)) { ev.Set(); ev.Dispose(); }
             Exit();
@@ -82,7 +82,7 @@ public partial class App : Application
         }
 
 #if DEBUG
-        if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_CPU_PANEL") == "1") { VerifyCpuPanel(); return; }
+        if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_PANEL") is { Length: > 0 } verifyPanel) { VerifyPanel(verifyPanel); return; }
         if (Environment.GetEnvironmentVariable("WINSTATUSBAR_VERIFY_SYSTEM_PANEL") == "1")
         {
             _dispatcher = DispatcherQueue.GetForCurrentThread();
@@ -93,6 +93,8 @@ public partial class App : Application
             var host = new Microsoft.UI.Xaml.Controls.Border
             {
                 Padding = new Thickness(16), Child = panel.Content,
+            // Largura natural do painel, como no menu da barra (sem esticar até a janela).
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
                 RequestedTheme = IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light,
                 Background = ThemeBrushes.Get("SolidBackgroundFillColorBaseBrush"),
             };
@@ -206,34 +208,47 @@ public partial class App : Application
         }
     }
 
+#if DEBUG
+    /// <summary>
+    /// Conferência visual dos painéis (PanelKit): WINSTATUSBAR_VERIFY_PANEL = cpu, gpu, rede, ram ou bateria abre o painel numa janela,
+    /// com as leituras reais, ao lado da barra instalada.
+    /// </summary>
+    private void VerifyPanel(string which)
+    {
+        _dispatcher = DispatcherQueue.GetForCurrentThread();
+        Settings.Load();
+        Localization.Initialize(Settings.Current.Language);
+        UpdateTheme();
+        Hub = new MonitoringHub(_dispatcher, Settings);
+        Hub.ApplySettings(); Hub.Start();
+        Views.Panels.IDetailsPanel panel = which switch
+        {
+            "gpu" => new Views.Panels.GpuDetailsPanel(Hub, Settings),
+            "rede" => new Views.Panels.NetworkDetailsPanel(Hub, Settings),
+            "ram" => new Views.Panels.MemoryDetailsPanel(Hub, Settings),
+            "bateria" => new Views.Panels.BatteryDetailsPanel(Hub),
+            _ => new Views.CpuDetailsPanel(Hub, Settings),
+        };
+        var host = new Microsoft.UI.Xaml.Controls.Border
+        {
+            Padding = new Thickness(16), Child = panel.Content,
+            // Largura natural do painel, como no menu da barra (sem esticar até a janela).
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+            RequestedTheme = IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light,
+            Background = ThemeBrushes.Get("SolidBackgroundFillColorBaseBrush"),
+        };
+        var preview = new Window { Title = "WinStatusBar · painel " + which, Content = host };
+        preview.AppWindow.Resize(new Windows.Graphics.SizeInt32(900, 1400));
+        preview.Closed += (_, _) => { panel.Dispose(); Exit(); };
+        preview.Activate(); panel.Start();
+    }
+#endif
+
     /// <summary>
     /// Serviços ligados logo depois de a barra aparecer: continuação pela API, sessões web ocultas (Copilot, Qira,
     /// cotas do Google, Gemini, créditos da Microsoft), ponte e encaminhador do Codex, vigia do Claude Code e atalho
     /// global. Antes ficavam na frente da primeira pintura.
     /// </summary>
-#if DEBUG
-    /// <summary>Conferência visual do painel da CPU (PanelKit): o painel numa janela, com as leituras reais.</summary>
-    private void VerifyCpuPanel()
-    {
-            _dispatcher = DispatcherQueue.GetForCurrentThread();
-            Settings.Load();
-            Localization.Initialize(Settings.Current.Language);
-            UpdateTheme();
-            Hub = new MonitoringHub(_dispatcher, Settings);
-            Hub.ApplySettings(); Hub.Start();
-            var cpu = new Views.CpuDetailsPanel(Hub, Settings);
-            var host = new Microsoft.UI.Xaml.Controls.Border
-            {
-                Padding = new Thickness(16), Child = cpu.Content,
-                RequestedTheme = IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light,
-                Background = ThemeBrushes.Get("SolidBackgroundFillColorBaseBrush"),
-            };
-            var preview = new Window { Title = "WinStatusBar · painel da CPU", Content = host };
-            preview.AppWindow.Resize(new Windows.Graphics.SizeInt32(900, 1150));
-            preview.Closed += (_, _) => { cpu.Dispose(); Exit(); };
-            preview.Activate(); cpu.Start();
-                }
-#endif
 
     private void StartDeferredServices()
     {

@@ -60,7 +60,7 @@ internal static class PanelKit
     /// <summary>Corpo rolável com a largura padrão e margens iguais (a barra de rolagem do WinUI sobrepõe o conteúdo).</summary>
     public static ScrollViewer Body(StackPanel body)
     {
-        body.Width = Width;
+        body.Width = Width; // FitToSummary alarga só o necessário para leituras e especificações caberem numa linha
         return new ScrollViewer
         {
             Content = body, MaxHeight = 650,
@@ -80,9 +80,10 @@ internal static class PanelKit
         {
             row.ColumnDefinitions.Add(new ColumnDefinition());
             var panel = new StackPanel();
-            panel.Children.Add(Caption(label, 12));
-            var value = new TextBlock { Text = "—", FontSize = 17, LineHeight = 22, TextWrapping = TextWrapping.Wrap };
-            panel.Children.Add(value);
+            // Pedido de 15/11/2026: nenhuma linha quebrada nos painéis (o painel cresce; "…" só passando de 760).
+            var caption = Caption(label, 12); caption.TextWrapping = TextWrapping.NoWrap; caption.TextTrimming = TextTrimming.CharacterEllipsis;
+            var value = new TextBlock { Text = "—", FontSize = 17, LineHeight = 22, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
+            panel.Children.Add(caption); panel.Children.Add(value);
             fields[label] = value;
             Grid.SetColumn(panel, col++);
             row.Children.Add(panel);
@@ -93,20 +94,37 @@ internal static class PanelKit
     /// <summary>Leituras ao vivo à esquerda e especificações à direita, como no Gerenciador de Tarefas.</summary>
     public static Grid Summary(FrameworkElement live, FrameworkElement specs)
     {
-        // Larguras fixas na proporção (leituras 3 : especificações 2): com a esquerda em Auto, um valor longo espremia a
-        // direita até quase zero, o texto quebrava letra a letra e o painel ficava alto, vazio e cortado.
+        // Leituras com a largura do que mostram; as especificações ficam com todo o resto. Proporção fixa não servia: o Wi-Fi e a GPU têm poucas leituras e muitas
+        // especificações longas (SSID, IPv6, local físico), e a CPU o contrário.
         var grid = new Grid { ColumnSpacing = 20, Margin = new Thickness(0, 12, 0, 0) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         Grid.SetColumn(specs, 1);
         grid.Children.Add(live); grid.Children.Add(specs);
         return grid;
     }
 
+    /// <summary>
+    /// Pedido de 15/11/2026: nenhuma linha quebrada, nenhum texto encurtado e nenhum espaço vazio sobrando. O painel
+    /// fica com a largura natural de leituras + especificações (cada texto numa linha), no mínimo 480 e no máximo 760;
+    /// gráficos e listas acompanham essa largura. Medir o painel inteiro não serve: gráficos pedem toda a largura dada.
+    /// </summary>
+    public static void FitToSummary(FrameworkElement specsHost)
+    {
+        if (specsHost.Parent is not Grid summary || summary.Parent is not StackPanel body) return;
+        summary.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        double needed = summary.DesiredSize.Width + body.Padding.Left + body.Padding.Right;
+        body.Width = Math.Clamp(Math.Ceiling(needed), Width, MaxPanelWidth);
+    }
+
+    public const double MaxPanelWidth = 760;
+    private static void FitOnLoaded(object sender, RoutedEventArgs e) => FitToSummary((FrameworkElement)sender);
+
     /// <summary>Especificações "Rótulo:  valor" com a coluna de rótulos alinhada pelo maior texto.</summary>
     public static void FillSpecs(Grid host, IEnumerable<(string Label, string Value)> rows)
     {
         host.Children.Clear(); host.RowDefinitions.Clear(); host.ColumnDefinitions.Clear();
+        host.Loaded -= FitOnLoaded; host.Loaded += FitOnLoaded;
         host.ColumnSpacing = 10; host.RowSpacing = 3;
         host.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         host.ColumnDefinitions.Add(new ColumnDefinition());
@@ -114,13 +132,16 @@ internal static class PanelKit
         foreach (var (label, value) in rows)
         {
             host.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            // Rótulo longo quebra entre palavras ("Processadores / lógicos:") e deixa espaço ao valor ("Habilitado").
-            var l = Caption(label + ":", 12); l.TextWrapping = TextWrapping.WrapWholeWords; l.MaxWidth = 105;
-            var v = new TextBlock { Text = value, FontSize = 12, TextWrapping = TextWrapping.WrapWholeWords }; // nunca parte uma palavra
+            // Pedido de 15/11/2026: nenhuma linha quebrada. Rótulo inteiro numa linha; valor numa linha, com "…" se não
+            // couber e o texto completo na dica ao passar o mouse.
+            var l = Caption(label + ":", 12); l.TextWrapping = TextWrapping.NoWrap;
+            var v = new TextBlock { Text = value, FontSize = 12, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
+            ToolTipService.SetToolTip(v, value);
             Grid.SetRow(l, r); Grid.SetRow(v, r); Grid.SetColumn(v, 1);
             host.Children.Add(l); host.Children.Add(v);
             r++;
         }
+        FitToSummary(host); // já na tela (especificações atualizadas): ajusta agora; senão, no Loaded
     }
 
     /// <summary>Flyout padrão dos painéis: Desktop Acrylic, margens iguais de 16 px e largura sem limite do WinUI (456 px).</summary>
@@ -141,7 +162,7 @@ internal static class PanelKit
         style.Setters.Add(new Setter(FlyoutPresenter.BorderBrushProperty, Res("SurfaceStrokeColorDefaultBrush")));
         style.Setters.Add(new Setter(FlyoutPresenter.BorderThicknessProperty, new Thickness(1)));
         style.Setters.Add(new Setter(FlyoutPresenter.IsDefaultShadowEnabledProperty, true));
-        style.Setters.Add(new Setter(FlyoutPresenter.MaxWidthProperty, Width + 48));
+        style.Setters.Add(new Setter(FlyoutPresenter.MaxWidthProperty, MaxPanelWidth + 48));
         style.Setters.Add(new Setter(ScrollViewer.HorizontalScrollModeProperty, ScrollMode.Disabled));
         style.Setters.Add(new Setter(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Disabled));
         flyout.FlyoutPresenterStyle = style;
