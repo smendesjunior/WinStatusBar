@@ -76,7 +76,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         {
             connections.ColumnDefinitions.Add(new ColumnDefinition());
             var label = links[i];
-            var button = PanelKit.Small(new Button { Content = label, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(8, 5, 8, 5) });
+            var button = PanelKit.Small(new Button { Content = label, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch, MinWidth = 0, Padding = new Thickness(8, 5, 8, 5) });
             {
                 var content = new Grid { ColumnSpacing = 6 };
                 content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -88,7 +88,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
                     Glyph = label switch { "Wi-Fi" => "\uE701", "Bluetooth" => "\uE702", _ => "\uEC15" },
                     VerticalAlignment = VerticalAlignment.Center,
                 };
-                var name = new TextBlock { Text = label, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 130, VerticalAlignment = VerticalAlignment.Center };
+                var name = new TextBlock { Text = label, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(name, 1);
                 content.Children.Add(icon); content.Children.Add(name);
                 if (label is "Wi-Fi" or "Bluetooth")
@@ -109,6 +109,8 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             };
             Grid.SetColumn(button, i); connections.Children.Add(button);
         }
+        // Largura fixa = largura real do painel: as três colunas ficam iguais e o Hotspot não sai pela direita.
+        _main.SizeChanged += (_, e) => { if (e.NewSize.Width > 0 && Math.Abs(connections.Width - e.NewSize.Width) > 0.5) connections.Width = e.NewSize.Width; };
         connections.Visibility = settings.Current.NetworkConnectionsVisible ? Visibility.Visible : Visibility.Collapsed;
         _main.Children.Add(connections);
         _main.Children.Add(connectionStatus);

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.9] - 2026-11-17 · compilação 20261117130015
+
+### Corrigido
+- Painel de rede: os botões Wi-Fi, Bluetooth e Hotspot ficam do mesmo tamanho e o Hotspot não é mais cortado na borda.
+
 ## [2.0.8] - 2026-11-17 · compilação 20261117025853
 
 ### Corrigido

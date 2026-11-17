@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.9] - 2026-11-17 · build 20261117130015
+
+### Fixed
+- Network panel: the Wi-Fi, Bluetooth and Hotspot buttons now have the same width and Hotspot is no longer cut off at the edge.
+
 ## [2.0.8] - 2026-11-17 · build 20261117025853
 
 ### Fixed
