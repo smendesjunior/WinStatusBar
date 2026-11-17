@@ -6,12 +6,9 @@ using System.Text.Json.Nodes;
 namespace CodexIAs;
 
 /// <summary>
-/// Modelos novos da OpenAI no seletor do Codex, sem edição manual. O catálogo do Codex (model_catalog_json) foi copiado
-/// uma vez da conta pelo "ollama launch" e não muda sozinho; o próprio Codex traz a lista de modelos que conhece
-/// ("codex debug models --bundled") e se atualiza sozinho. Quando aparece nessa lista um modelo que nunca esteve lá
-/// (ex.: gpt-6.2-sol), ele entra no catálogo, junto com a opção "OpenAI — minha API" dele (pela chave da API).
-/// Entradas que já existiam não são trocadas (elas vêm da conta, com prioridade e nível padrão próprios); só as que o
-/// app acrescentou saem quando o modelo some da lista do Codex.
+/// Modelos atuais da conta OpenAI no seletor personalizado, consultados diretamente no serviço da conta.
+/// Entradas existentes são preservadas; modelos novos entram com os metadados oficiais.
+/// Falhas de rede ou autenticação não substituem a lista por um catálogo antigo embutido.
 /// </summary>
 public static partial class OpenAiCatalog
 {
@@ -56,28 +53,38 @@ public static partial class OpenAiCatalog
         return null;
     }
 
-    /// <summary>Lista de modelos que o Codex instalado conhece ("codex debug models --bundled"); null se não deu.</summary>
+    private static readonly HttpClient AccountHttp = new() { Timeout = TimeSpan.FromSeconds(45) };
+
+    /// <summary>Consulta o catálogo atual da conta, sem ler nem alterar o catálogo personalizado.
+    /// Mantém o nome do método para compatibilidade; não usa mais a lista embutida no executável.</summary>
     public static async Task<JsonArray?> BundledAsync(CancellationToken ct)
     {
-        string? exe = FindCodex();
-        if (exe is null) { Log.Write("OpenAI: Codex não encontrado para ler a lista de modelos"); return null; }
-        bool viaCmd = exe.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase);
-        var psi = new ProcessStartInfo(viaCmd ? Path.Combine(Environment.SystemDirectory, "cmd.exe") : exe)
-        {
-            RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8, WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        };
-        if (viaCmd) { psi.ArgumentList.Add("/d"); psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(exe); }
-        foreach (var a in new[] { "debug", "models", "--bundled" }) psi.ArgumentList.Add(a);
         try
         {
-            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            limit.CancelAfter(TimeSpan.FromSeconds(60));
-            // No fim do prazo o codex é encerrado (antes ficava rodando sem dono).
-            if (await WinStatusBar.Core.Ai.Codex.CodexModelLevels.OutputAsync(psi, limit.Token) is not { } output) return null;
-            return JsonNode.Parse(output)?["models"] as JsonArray;
+            var auth = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(Paths.CodexHome, "auth.json"), ct));
+            string? token = auth?["tokens"]?["access_token"]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(token)) return null;
+            using var request = new HttpRequestMessage(HttpMethod.Get,
+                "https://chatgpt.com/backend-api/codex/models?client_version=0.169.0");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            if (auth?["tokens"]?["account_id"]?.GetValue<string>() is { } account)
+                request.Headers.TryAddWithoutValidation("ChatGPT-Account-Id", account);
+            using var response = await AccountHttp.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                Log.Write($"OpenAI: consulta de modelos da conta falhou: HTTP {(int)response.StatusCode}; catálogo preservado.");
+                return null;
+            }
+            var models = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct))?["models"] as JsonArray;
+            return models is { Count: > 0 } && models.All(m => m?["slug"] is JsonValue)
+                && models.Any(m => m?["visibility"]?.GetValue<string>() == "list") ? models : null;
         }
-        catch (Exception ex) { Log.Write("OpenAI: lista de modelos do Codex falhou: " + ex.Message); return null; }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception ex)
+        {
+            Log.Write("OpenAI: consulta de modelos indisponível (" + ex.GetType().Name + "); catálogo preservado.");
+            return null;
+        }
     }
 
     private static string SlugOf(JsonNode? n) => CodexCatalog.SlugOf(n);
@@ -127,6 +134,7 @@ public static partial class OpenAiCatalog
     /// </summary>
     public static bool MergeInto(JsonArray list, JsonArray bundled, ref State? state, Changes? changes = null, bool removeObsolete = false)
     {
+        if (bundled.Count == 0) return false;
         changes ??= new Changes();
         var listed = bundled.Where(m => m?["visibility"]?.GetValue<string>() == "list" && SlugOf(m).Length > 0).ToList();
         var listedSlugs = listed.Select(SlugOf).ToHashSet(StringComparer.Ordinal);
@@ -154,8 +162,7 @@ public static partial class OpenAiCatalog
 
         if (state is null)
         {
-            state = new State { Conhecidos = listedSlugs.Union(present).OrderBy(s => s, StringComparer.Ordinal).ToList() };
-            return changed;
+            state = new State { Conhecidos = present.OrderBy(s => s, StringComparer.Ordinal).ToList() };
         }
         var known = state.Conhecidos.ToHashSet(StringComparer.Ordinal);
 
@@ -176,7 +183,7 @@ public static partial class OpenAiCatalog
         // "not supported when using Codex with a ChatGPT account"). Só entra modelo de geração igual ou mais nova que a
         // mais nova da conta (ex.: gpt-6.2-sol, gpt-7); sem número de versão no nome, entra.
         var newest = list.Select(SlugOf).Where(s => !s.StartsWith(ApiPrefix, StringComparison.Ordinal)).Select(VersionOf).Where(v => v is not null).Max();
-        foreach (var model in listed.Where(m => !known.Contains(SlugOf(m)) && !present.Contains(SlugOf(m))))
+        foreach (var model in listed.Where(m => !present.Contains(SlugOf(m))))
         {
             string slug = SlugOf(model);
             if (VersionOf(slug) is { } version && newest is not null && version < newest)

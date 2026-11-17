@@ -136,7 +136,7 @@ internal sealed class ModelRegistry
         var bundled = await OpenAiCatalog.BundledAsync(ct);
         OpenAiCatalog.HasApiKey = OpenAiKey.Get() is not null;
         var changes = new OpenAiCatalog.Changes();
-        string? warning = bundled is null ? "a lista de modelos do Codex instalado não foi lida; os modelos da OpenAI não foram conferidos" : null;
+        string? warning = bundled is null ? "a lista atual da conta OpenAI não foi lida; o catálogo personalizado foi preservado" : null;
 
         // Modelos do Ollama (com o Codex usando o Ollama): novos entram, apagados saem.
         JsonObject? routing = null;

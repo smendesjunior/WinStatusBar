@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.1] - 2026-11-17 · compilação 20261117235214
+
+### Corrigido
+- O seletor personalizado do Codex consulta os modelos atuais da conta OpenAI, preservando entradas e configurações existentes. Falhas de rede não removem modelos; novos modelos entram também na primeira sincronização.
+
 ## [2.1.0] - 2026-11-17 · compilação 20261117145423
 
 ### Adicionado

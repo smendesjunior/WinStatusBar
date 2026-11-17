@@ -163,6 +163,33 @@ public class CodexIAsOpenAiTests
     }
 
     [Fact]
+    public void Catalogo_atual_acrescenta_62_sem_mudar_configuracoes_personalizadas()
+    {
+        OpenAiCatalog.State? state = null;
+        var list = Catalog(("gpt-6.1-sol", 0), ("codexias-local", 20));
+        list[0]!["default_reasoning_level"] = "high";
+        list[1]!["context_window"] = 2000000;
+        var before = list.Select(n => n!.ToJsonString()).ToArray();
+        var remote = Bundled(("gpt-6.2-sol", 1, "list", false), ("gpt-6.2-astra", 2, "list", false));
+        Assert.True(OpenAiCatalog.MergeInto(list, remote, ref state));
+        Assert.All(before, json => Assert.Contains(list, n => n!.ToJsonString() == json));
+        Assert.Contains("gpt-6.2-sol", Slugs(list));
+        Assert.Contains("gpt-6.2-astra", Slugs(list));
+        var stable = list.ToJsonString();
+        Assert.False(OpenAiCatalog.MergeInto(list, new JsonArray(), ref state, removeObsolete: true));
+        Assert.Equal(stable, list.ToJsonString());
+    }
+
+    [Fact]
+    public void Modelo_conhecido_que_volta_a_conta_reaparece_no_catalogo()
+    {
+        OpenAiCatalog.State? state = new() { Conhecidos = ["gpt-6.2-sol"] };
+        var list = Catalog(("gpt-6.1-sol", 0));
+        Assert.True(OpenAiCatalog.MergeInto(list, Bundled(("gpt-6.2-sol", 1, "list", false)), ref state));
+        Assert.Contains("gpt-6.2-sol", Slugs(list));
+    }
+
+    [Fact]
     public void Modelo_novo_entra_com_a_opcao_da_minha_API_e_nao_mexe_nas_entradas_da_conta()
     {
         OpenAiCatalog.State? state = new() { Conhecidos = ["gpt-6.1-sol", "gpt-5.5", "phi4"] };
@@ -720,7 +747,6 @@ public class CodexIAsRobustnessTests
     }
 
     [Theory]
-    [InlineData("src/WinStatusBar.CodexIAs/OpenAiCatalog.cs", "public static async Task<JsonArray?> BundledAsync(CancellationToken ct)")]
     [InlineData("src/WinStatusBar.Core/Ai/Codex/CodexModelLevels.cs", "public static async Task<int> RefreshNowAsync(CancellationToken ct)")]
     public void Lista_de_modelos_do_Codex_usa_a_leitura_que_encerra_no_prazo(string file, string signature) =>
         Assert.Contains("OutputAsync(psi, ", ApiResumeSourceTests.Body(RepoSource.Read(file.Split('/')), signature));

@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.1] - 2026-11-17 · build 20261117235214
+
+### Fixed
+- Refresh the custom Codex model picker from the current account catalog while preserving existing entries and settings. Network failures keep models intact; new models are added on the first sync as well.
+
 ## [2.1.0] - 2026-11-17 · build 20261117145423
 
 ### Added
