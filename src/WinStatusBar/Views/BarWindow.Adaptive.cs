@@ -319,23 +319,28 @@ public sealed partial class BarWindow
         AgentModule.RequestedTheme = appTheme;
         CommandHost.RequestedTheme = appTheme;
         if (sample.Brightness is not { Count: > 0 } blocks || Root.XamlRoot is null || !GetWindowRect(_hwnd, out var win)) return;
+        // Uma cor só para a barra inteira (pedido de 16/11/2026): mede o papel de parede sob cada parte com texto e escolhe
+        // branco ou preto pelo maior contraste no PIOR ponto. Folga de 15% para manter a cor atual e não piscar.
         double scale = Root.XamlRoot.RasterizationScale;
-        foreach (var el in ContrastRegions())
+        var regions = ContrastRegions().Where(e => e.Visibility == Visibility.Visible && e.ActualWidth > 0).ToList();
+        var under = new List<double>();
+        foreach (var el in regions)
         {
-            if (el.Visibility != Visibility.Visible || el.ActualWidth <= 0) continue;
             var t = el.TransformToVisual(Root);
             var a = t.TransformPoint(new Windows.Foundation.Point(0, 0));
             var b = t.TransformPoint(new Windows.Foundation.Point(el.ActualWidth, 0));
             int left = win.Left + (int)(a.X * scale), right = win.Left + (int)(b.X * scale);
-            var under = blocks.Where(k => k.X >= left - 32 && k.X <= right + 32).ToList();
-            if (under.Count == 0) continue;
-            bool? current = el.RequestedTheme switch { ElementTheme.Light => true, ElementTheme.Dark => false, _ => global == ElementTheme.Light };
-            var theme = AdaptiveLogic.DarkTextFor(under.Average(k => k.Luminance), current) switch
-            {
-                true => ElementTheme.Light, false => ElementTheme.Dark, null => ElementTheme.Default,
-            };
-            if (el.RequestedTheme != theme) el.RequestedTheme = theme;
+            under.AddRange(blocks.Where(k => k.X >= left - 32 && k.X <= right + 32).Select(k => k.Luminance));
         }
+        if (under.Count == 0) return;
+        double worstForWhite = under.Min(l => 1.05 / (l + .05)), worstForBlack = under.Min(l => (l + .05) / .05);
+        bool currentDarkText = regions.FirstOrDefault()?.RequestedTheme switch
+        { ElementTheme.Light => true, ElementTheme.Dark => false, _ => global == ElementTheme.Light };
+        bool darkText = currentDarkText
+            ? worstForBlack * 1.15 >= worstForWhite
+            : worstForBlack > worstForWhite * 1.15;
+        var theme = darkText ? ElementTheme.Light : ElementTheme.Dark;
+        foreach (var el in regions) if (el.RequestedTheme != theme) el.RequestedTheme = theme;
     }
 
     /// <summary>Barra com cor ou material: tudo volta a seguir o tema da barra inteira.</summary>

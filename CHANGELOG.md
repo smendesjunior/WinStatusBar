@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.8] - 2026-11-17 · compilação 20261117025853
+
+### Corrigido
+- Cota do Claude parada: quando o login do Claude Code vence, a barra pede a renovação ao próprio Claude Code (`claude auth status`) e volta a consultar.
+- Barra transparente com uma cor de texto só: mede o papel de parede atrás de todas as partes e escolhe branco ou preto pelo melhor contraste no ponto mais difícil.
+
 ## [2.0.7] - 2026-11-16 · compilação 20261116102139
 
 ### Corrigido

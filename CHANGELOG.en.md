@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.8] - 2026-11-17 · build 20261117025853
+
+### Fixed
+- Claude quota stuck: when the Claude Code login expires, the bar asks Claude Code itself to renew it (`claude auth status`) and queries again.
+- Transparent bar uses a single text color: it measures the wallpaper behind every part and picks white or black by the best contrast at the hardest spot.
+
 ## [2.0.7] - 2026-11-16 · build 20261116102139
 
 ### Fixed

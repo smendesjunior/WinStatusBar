@@ -60,10 +60,19 @@ public sealed class ClaudeUsageClient : IDisposable
             if (oauth.TryGetProperty("expiresAt", out var expiry) && expiry.TryGetInt64(out long epoch)
                 && epoch <= DateTimeOffset.UtcNow.AddMinutes(2).ToUnixTimeMilliseconds())
             {
-                if (!_allowRefresh) return new(null, global::WinStatusBar.Core.LocalizedText.T("O login do Claude Code expirou. Abra o Claude Code para renovar a sessão."), interval);
+                if (!_allowRefresh)
+                {
+                    // O próprio Claude Code renova (com a trava dele): "claude auth status" grava o login novo no arquivo.
+                    string? fresh = await RenewWithCliAsync(ct);
+                    if (fresh is null) return new(null, global::WinStatusBar.Core.LocalizedText.T("O login do Claude Code expirou. Abra o Claude Code para renovar a sessão."), interval);
+                    token = fresh;
+                }
+                else
+                {
                 var (renewed, refreshError) = await RefreshAsync(ct);
                 if (renewed is null) return new(null, refreshError, interval);
                 token = renewed;
+                }
             }
             var response = await QueryAsync(token, ct);
             // Login recusado antes do vencimento (revogado/rotacionado): uma única tentativa de renovação.
@@ -98,6 +107,36 @@ public sealed class ClaudeUsageClient : IDisposable
         { return new(null, global::WinStatusBar.Core.LocalizedText.T("A consulta ao Claude demorou demais. O app tentará novamente automaticamente."), interval); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException)
         { return new(null, global::WinStatusBar.Core.LocalizedText.T("Não foi possível consultar as cotas do Claude. Verifique a conexão e o login no Claude Code."), interval); }
+    }
+
+    /// <summary>Executa "claude auth status" (oculto, até 45 s) e relê o arquivo; devolve o token se agora estiver válido.</summary>
+    private async Task<string?> RenewWithCliAsync(CancellationToken ct)
+    {
+        if (_credentialsPath != Path.Combine(ClaudeIntegrationInstaller.ClaudeConfigDir(), ".credentials.json")) return null; // testes
+        string? exe = WinStatusBar.Core.Ai.AgentPrompt.FindClaudeExecutable();
+        if (exe is null) return null;
+        await RefreshGate.WaitAsync(ct);
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardOutput = true, RedirectStandardError = true };
+            psi.ArgumentList.Add("auth"); psi.ArgumentList.Add("status");
+            using var p = System.Diagnostics.Process.Start(psi);
+            if (p is null) return null;
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(45));
+            try { await p.WaitForExitAsync(timeout.Token); }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested) { try { p.Kill(true); } catch { } return null; }
+            using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(_credentialsPath, ct));
+            if (doc.RootElement.TryGetProperty("claudeAiOauth", out var o)
+                && o.TryGetProperty("expiresAt", out var e) && e.TryGetInt64(out long ms)
+                && ms > DateTimeOffset.UtcNow.AddMinutes(2).ToUnixTimeMilliseconds()
+                && o.TryGetProperty("accessToken", out var a) && a.GetString() is { Length: > 0 } t)
+                return t;
+            return null;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or JsonException or InvalidOperationException) { return null; }
+        finally { RefreshGate.Release(); }
     }
 
     private async Task<HttpResponseMessage> QueryAsync(string token, CancellationToken ct)
