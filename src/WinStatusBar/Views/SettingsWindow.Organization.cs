@@ -63,6 +63,8 @@ public sealed partial class SettingsWindow
         NetworkRows.Children.Add(Divider());
         NetworkRows.Children.Add(Toggle(Localization.T("Wi-Fi, Bluetooth e hotspot no painel de rede"), "Mostra Wi-Fi, Bluetooth e Hotspot móvel no painel da barra. Wi-Fi e Bluetooth abrem listas junto aos botões, para conectar ou parear; o hotspot é configurado no Windows.", s => s.NetworkConnectionsVisible, (s,v) => s.NetworkConnectionsVisible = v));
         NetworkRows.Children.Add(Divider());
+        NetworkRows.Children.Add(Toggle("Manter hotspot sempre ligado", "Liga o hotspot móvel do Windows ao entrar no PC e religa em até 30 segundos sempre que ele desligar (inclusive pela economia de energia quando não há dispositivos). Desligar o hotspot pela barra desativa esta opção.", s => s.KeepHotspotOn, (s,v) => { s.KeepHotspotOn = v; if (v) _ = Services.HotspotKeeper.CheckAsync(); }));
+        NetworkRows.Children.Add(Divider());
         NetworkRows.Children.Add(Toggle("Teste de velocidade", "Mostra o teste no painel da rede e mede sozinho a cada 10 minutos (teste leve, cerca de 16 MB; pausa em rede limitada, como celular ou plano de dados). Usa servidores da Cloudflare.", s => s.SpeedTestEnabled, (s,v) => s.SpeedTestEnabled = v));
 
         // Conectar agora: os mesmos seletores do painel de rede, num cartão só.

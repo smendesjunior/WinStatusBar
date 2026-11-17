@@ -306,6 +306,7 @@ public partial class App : Application
             _codexIasWatch.Start();
         });
         DeferredStep("teste automático de velocidade", () => AutoSpeedTest.Start(Settings, _dispatcher!));
+        DeferredStep("hotspot sempre ligado", () => HotspotKeeper.Start(Settings, _dispatcher!));
         DeferredStep("Claude Code", StartClaudeIntegrationWatch);
         DeferredStep("atalho da barra de comando", StartCommandHotkey);
         StartupTimeline.EndBoost(); // prioridade acima do normal só até aqui

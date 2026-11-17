@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.0] - 2026-11-17 · build 20261117145423
+
+### Added
+- Settings › Network › "Keep hotspot always on": turns on the Windows mobile hotspot at sign-in and turns it back on within 30 seconds whenever it goes off. Turning the hotspot off from the bar disables the option.
+
 ## [2.0.10] - 2026-11-17 · build 20261117134344
 
 ### Changed

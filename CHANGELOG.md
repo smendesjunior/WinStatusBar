@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.0] - 2026-11-17 · compilação 20261117145423
+
+### Adicionado
+- Configurações › Rede › "Manter hotspot sempre ligado": liga o hotspot móvel do Windows ao entrar no PC e religa em até 30 segundos sempre que ele desligar. Desligar o hotspot pela barra desativa a opção.
+
 ## [2.0.10] - 2026-11-17 · compilação 20261117134344
 
 ### Alterado

@@ -61,6 +61,8 @@ public sealed class AppSettings
     public bool AllowEndTask { get; set; } = true;
     /// <summary>Teste de velocidade no painel de rede (usa os servidores públicos da Cloudflare só quando clicado).</summary>
     public bool SpeedTestEnabled { get; set; } = true;
+    /// <summary>Religa o hotspot móvel do Windows sempre que ele desligar (no logon e quando o Windows o desliga sozinho).</summary>
+    public bool KeepHotspotOn { get; set; }
     /// <summary>Botões de atalho à direita da barra.</summary>
     public bool ShortcutClipboard { get; set; } = true;
     public bool ShortcutTaskManager { get; set; } = true;

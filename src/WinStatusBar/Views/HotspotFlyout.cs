@@ -145,6 +145,7 @@ internal static class HotspotFlyout
             if (loading || manager is null) return;
             toggle.IsEnabled = false;
             status.Text = toggle.IsOn ? "Ligando…" : "Desligando…";
+            if (!toggle.IsOn) HotspotKeeper.TurnedOffByUser();
             try
             {
                 var result = toggle.IsOn ? await manager.StartTetheringAsync() : await manager.StopTetheringAsync();
