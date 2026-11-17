@@ -33,7 +33,9 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
 
     private readonly WinStatusBar.Core.Settings.SettingsService _settings;
     private Button _testButton = null!;
-    private readonly Button _ethernetButton = new() { Content = "Ethernet · conectada", FontSize = 12, HorizontalAlignment = HorizontalAlignment.Left, Visibility = Visibility.Collapsed };
+    private readonly Button _ethernetButton = new() { Content = "Ethernet · desconectada", FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, IsEnabled = false };
+    private Style _accentStyle = null!;
+    private Grid _topRow = null!;
     private Button? _wifiButton;
     private TextBlock? _wifiLabel;
     private bool _wifiRefreshing;
@@ -54,20 +56,26 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         header.ColumnDefinitions.Add(new ColumnDefinition());
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var titles = new StackPanel(); titles.Children.Add(_title); titles.Children.Add(_subtitle);
-        var testButton = PanelKit.Small(new Button { FontSize = 12, Padding = new Thickness(10, 4, 10, 5), VerticalAlignment = VerticalAlignment.Top });
-        var testContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var testButton = PanelKit.Small(new Button { FontSize = 12, Padding = new Thickness(10, 4, 10, 5), HorizontalAlignment = HorizontalAlignment.Stretch });
+        var testContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
         testContent.Children.Add(new FontIcon { Glyph = "", FontSize = 13 });
         testContent.Children.Add(new TextBlock { Text = global::WinStatusBar.Services.Localization.T("Teste de velocidade") });
         testButton.Content = testContent;
         testButton.Click += (_, _) => ShowMain(false);
         _testButton = testButton;
-        Grid.SetColumn(testButton, 1);
-        header.Children.Add(titles); header.Children.Add(testButton);
+        header.Children.Add(titles);
         _main.Children.Add(header);
-        _ethernetButton.Style = ((Button)Microsoft.UI.Xaml.Markup.XamlReader.Load("<Button xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Style='{StaticResource AccentButtonStyle}' />")).Style;
+        _accentStyle = ((Button)Microsoft.UI.Xaml.Markup.XamlReader.Load("<Button xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Style='{StaticResource AccentButtonStyle}' />")).Style;
+        PanelKit.Small(_ethernetButton);
+        _ethernetButton.Padding = new Thickness(8, 5, 8, 5);
         _ethernetButton.Click += async (_, _) => await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:network-ethernet"));
         ToolTipService.SetToolTip(_ethernetButton, "Conexão por cabo ativa · abrir configurações de Ethernet");
-        _main.Children.Add(_ethernetButton);
+        // Linha 1: Ethernet + Teste de velocidade; linha 2: Wi-Fi, Bluetooth, Hotspot. Colunas iguais em cada linha.
+        _topRow = new Grid { ColumnSpacing = 8, Margin = new Thickness(0, 8, 0, 0) };
+        _topRow.ColumnDefinitions.Add(new ColumnDefinition()); _topRow.ColumnDefinitions.Add(new ColumnDefinition());
+        Grid.SetColumn(testButton, 1);
+        _topRow.Children.Add(_ethernetButton); _topRow.Children.Add(testButton);
+        _main.Children.Add(_topRow);
         var connections = new Grid { ColumnSpacing = 8, Margin = new Thickness(0, 8, 0, 0) };
         var connectionStatus = PanelKit.Caption("", 11);
         connectionStatus.Visibility = Visibility.Collapsed;
@@ -110,7 +118,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             Grid.SetColumn(button, i); connections.Children.Add(button);
         }
         // Largura fixa = largura real do painel: as três colunas ficam iguais e o Hotspot não sai pela direita.
-        _main.SizeChanged += (_, e) => { if (e.NewSize.Width > 0 && Math.Abs(connections.Width - e.NewSize.Width) > 0.5) connections.Width = e.NewSize.Width; };
+        _main.SizeChanged += (_, e) => { if (e.NewSize.Width > 0 && Math.Abs(connections.Width - e.NewSize.Width) > 0.5) { connections.Width = e.NewSize.Width; _topRow.Width = e.NewSize.Width; } };
         connections.Visibility = settings.Current.NetworkConnectionsVisible ? Visibility.Visible : Visibility.Collapsed;
         _main.Children.Add(connections);
         _main.Children.Add(connectionStatus);
@@ -151,6 +159,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
         _ = RefreshHotspotButtonAsync();
         StartBluetoothWatcher();
         _testButton.Visibility = _settings.Current.SpeedTestEnabled ? Visibility.Visible : Visibility.Collapsed;
+        Grid.SetColumnSpan(_ethernetButton, _settings.Current.SpeedTestEnabled ? 1 : 2);
         _hub.CpuSampled += Render;
         _hub.CpuSampled += TickTop;
         AutoSpeedTest.Changed += OnAutoTestChanged;
@@ -200,8 +209,13 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             // Adaptador ativo (Wi-Fi tem prioridade, como o ícone da barra); detalhes a cada 5 s ou quando muda.
             var active = net.AllInterfaces.Where(n => net.ActiveInterfaces.Contains(n.Alias)).OrderByDescending(n => n.Type == 71).ThenByDescending(n => n.Type == 6).FirstOrDefault();
             var ethernet = net.AllInterfaces.FirstOrDefault(n => n.Type == 6 && net.ActiveInterfaces.Contains(n.Alias));
-            _ethernetButton.Visibility = ethernet is not null ? Visibility.Visible : Visibility.Collapsed;
-            _ethernetButton.Content = (ethernet?.Alias ?? "Ethernet") + " · conectada";
+            bool cabled = ethernet is not null;
+            if (_ethernetButton.IsEnabled != cabled || _ethernetButton.Style is null == cabled)
+            {
+                _ethernetButton.IsEnabled = cabled;
+                _ethernetButton.Style = cabled ? _accentStyle : null;
+            }
+            _ethernetButton.Content = cabled ? ethernet!.Alias + " · conectada" : "Ethernet · desconectada";
             string? alias = active?.Alias;
             if (alias != _alias || ++_ticks % 5 == 0) { _alias = alias; _ = LoadDetailsAsync(alias); _ = RefreshWifiButtonAsync(); _ = RefreshHotspotButtonAsync(); }
         }
@@ -218,7 +232,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             if (!_open || _disposed) return;
             _wifiLabel.Text = connected?.Name ?? "Wi-Fi";
             ToolTipService.SetToolTip(_wifiButton, connected is null ? "Escolher rede Wi-Fi" : connected.Name + " · conectado · escolher rede");
-            if (connected is not null) _wifiButton.Style = _ethernetButton.Style;
+            if (connected is not null) _wifiButton.Style = _accentStyle;
             else _wifiButton.ClearValue(FrameworkElement.StyleProperty);
         }
         catch (Exception ex) { App.Log("Estado Wi-Fi: " + ex.Message); _wifiLabel.Text = "Wi-Fi"; _wifiButton.ClearValue(FrameworkElement.StyleProperty); }
@@ -236,7 +250,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             if (!_open || _disposed) return;
             _hotspotLabel.Text = HotspotState.Label(state);
             ToolTipService.SetToolTip(_hotspotButton, HotspotState.Tooltip(state));
-            if (state is { On: true }) _hotspotButton.Style = _ethernetButton.Style;
+            if (state is { On: true }) _hotspotButton.Style = _accentStyle;
             else _hotspotButton.ClearValue(FrameworkElement.StyleProperty);
         }
         catch (Exception ex) { App.Log("Estado do hotspot: " + ex.Message); }
@@ -274,7 +288,7 @@ internal sealed class NetworkDetailsPanel : IDetailsPanel
             .Distinct(StringComparer.CurrentCultureIgnoreCase).OrderBy(n => n).ToArray();
         _bluetoothLabel.Text = names.Length == 0 ? "Bluetooth" : names[0] + (names.Length > 1 ? $" +{names.Length - 1}" : "");
         ToolTipService.SetToolTip(_bluetoothButton, names.Length == 0 ? "Escolher dispositivo Bluetooth" : "Bluetooth · conectado: " + string.Join(", ", names));
-        if (names.Length > 0) _bluetoothButton.Style = _ethernetButton.Style;
+        if (names.Length > 0) _bluetoothButton.Style = _accentStyle;
         else _bluetoothButton.ClearValue(FrameworkElement.StyleProperty);
     }
 

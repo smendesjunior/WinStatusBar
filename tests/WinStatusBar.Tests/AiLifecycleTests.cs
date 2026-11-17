@@ -122,7 +122,7 @@ public class SmallUiRequestsTests
         Assert.Contains("1 dispositivo conectado", Services.HotspotState.Tooltip(new(true, 1, 8)));
         // Ligado: o mesmo destaque (azul) do Wi-Fi e do Bluetooth conectados.
         string panel = RepoSource.Read("src", "WinStatusBar", "Views", "Panels", "NetworkDetailsPanel.cs");
-        Assert.Contains("if (state is { On: true }) _hotspotButton.Style = _ethernetButton.Style;", panel);
+        Assert.Contains("if (state is { On: true }) _hotspotButton.Style = _accentStyle;", panel);
     }
 
     [Theory]

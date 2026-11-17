@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.0.10] - 2026-11-17 · build 20261117134344
+
+### Changed
+- Network panel: buttons in two equal-width rows (Ethernet and Speed test; Wi-Fi, Bluetooth and Hotspot). The Ethernet button is always shown and disabled when no cable is connected.
+
 ## [2.0.9] - 2026-11-17 · build 20261117130015
 
 ### Fixed

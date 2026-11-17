@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.0.10] - 2026-11-17 · compilação 20261117134344
+
+### Alterado
+- Painel de rede: botões em duas linhas de largura igual (Ethernet e Teste de velocidade; Wi-Fi, Bluetooth e Hotspot). O botão Ethernet fica sempre visível e desativado sem cabo conectado.
+
 ## [2.0.9] - 2026-11-17 · compilação 20261117130015
 
 ### Corrigido
