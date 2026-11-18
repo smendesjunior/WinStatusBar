@@ -158,7 +158,7 @@ internal sealed class ModelRegistry
         int account = 0, api = 0;
         try
         {
-            updated = CodexCatalog.Sync(models, bundled, changes, removeObsolete, list =>
+            updated = CodexCatalog.Sync(models, bundled, changes, removeObsolete: true, list =>
             {
                 if (routing is not null && installed is not null) (ollamaAdded, ollamaRemoved) = OllamaCatalog.MergeInto(list, routing, installed);
                 foreach (var n in list.Where(n => n?["visibility"]?.GetValue<string>() != "hide"))

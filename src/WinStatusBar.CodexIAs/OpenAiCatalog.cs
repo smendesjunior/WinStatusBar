@@ -137,6 +137,7 @@ public static partial class OpenAiCatalog
         if (bundled.Count == 0) return false;
         changes ??= new Changes();
         var listed = bundled.Where(m => m?["visibility"]?.GetValue<string>() == "list" && SlugOf(m).Length > 0).ToList();
+        if (listed.Count == 0) return false;
         var listedSlugs = listed.Select(SlugOf).ToHashSet(StringComparer.Ordinal);
         var present = list.Select(SlugOf).ToHashSet(StringComparer.Ordinal);
         bool changed = false;
@@ -145,7 +146,7 @@ public static partial class OpenAiCatalog
         // nomes de modelo da OpenAI (gpt-6…, o3, codex-…); modelos do Ollama ("gpt-oss:20b") têm ":" e ficam de fora.
         // Sem a lista do Codex (vazia), nada é apontado.
         var added = state?.Adicionados.ToHashSet(StringComparer.Ordinal) ?? [];
-        for (int i = listedSlugs.Count == 0 ? -1 : list.Count - 1; i >= 0; i--)
+        for (int i = list.Count - 1; i >= 0; i--)
         {
             string slug = SlugOf(list[i]);
             if (!AccountModel().IsMatch(slug) || added.Contains(slug)
@@ -179,18 +180,9 @@ public static partial class OpenAiCatalog
             Log.Write($"OpenAI: modelo retirado do seletor (não está mais no Codex): {gone}");
         }
 
-        // A lista do Codex também traz modelos antigos que a OpenAI não libera para contas do ChatGPT (ex.: gpt-5.5:
-        // "not supported when using Codex with a ChatGPT account"). Só entra modelo de geração igual ou mais nova que a
-        // mais nova da conta (ex.: gpt-6.2-sol, gpt-7); sem número de versão no nome, entra.
-        var newest = list.Select(SlugOf).Where(s => !s.StartsWith(ApiPrefix, StringComparison.Ordinal)).Select(VersionOf).Where(v => v is not null).Max();
         foreach (var model in listed.Where(m => !present.Contains(SlugOf(m))))
         {
             string slug = SlugOf(model);
-            if (VersionOf(slug) is { } version && newest is not null && version < newest)
-            {
-                Log.Write($"OpenAI: {slug} ficou de fora (geração mais antiga que a da conta; a OpenAI costuma não liberá-la para contas do ChatGPT)");
-                continue;
-            }
             int priority = PriorityOf(model);
             // Antes do primeiro modelo da OpenAI com prioridade maior (as entradas da barra e da API ficam onde estão).
             int at = list.Select((n, i) => (n, i)).Where(x => !SlugOf(x.n).StartsWith(CodexCatalog.Prefix, StringComparison.Ordinal)
@@ -210,19 +202,7 @@ public static partial class OpenAiCatalog
     /// <summary>Chave da API OpenAI do encaminhador cadastrada (só então a opção "minha API" de um modelo novo entra).</summary>
     public static bool HasApiKey { get; set; } = true;
 
-    /// <summary>
-    /// Lista de modelos da OpenAI para um catálogo novo (PC sem catálogo próprio): a da conta, que o Codex guarda em
-    /// models_cache.json; sem ela, a lista do Codex instalado.
-    /// </summary>
-    public static async Task<JsonArray> InitialModelsAsync(CancellationToken ct)
-    {
-        try
-        {
-            string cache = Path.Combine(Paths.CodexHome, "models_cache.json");
-            if (File.Exists(cache) && JsonNode.Parse(await File.ReadAllTextAsync(cache, ct))?["models"] is JsonArray account && account.Count > 0)
-                return (JsonArray)account.DeepClone();
-        }
-        catch { }
-        return await BundledAsync(ct) ?? [];
-    }
+    /// <summary>Catálogo para uma nova integração, obtido da conta ativa.</summary>
+    public static async Task<JsonArray> InitialModelsAsync(CancellationToken ct) =>
+        await BundledAsync(ct) ?? [];
 }

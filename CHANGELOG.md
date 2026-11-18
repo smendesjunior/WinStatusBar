@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.3] - 2026-11-18 · compilação 20261118191725
+
+### Corrigido
+- A verificação dos modelos remove as opções da conta anterior quando a conta ativa informa seu catálogo.
+
 ## [2.1.2] - 2026-11-18 · compilação 20261118165058
 
 ### Corrigido

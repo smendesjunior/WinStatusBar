@@ -151,15 +151,14 @@ public class CodexIAsOpenAiTests
     private static List<string> Slugs(JsonArray list) => list.Select(n => n!["slug"]!.GetValue<string>()).ToList();
 
     [Fact]
-    public void Primeira_vez_so_registra_o_que_existe_sem_acrescentar_modelos_antigos()
+    public void Catalogo_atual_substitui_modelos_da_conta_anterior_sem_heuristica_de_versao()
     {
         OpenAiCatalog.State? state = null;
-        var list = Catalog(("gpt-6.1-sol", 0), ("phi4", -7));
-        Assert.False(OpenAiCatalog.MergeInto(list, Bundled(("gpt-6.1-sol", 2, "list", true), ("gpt-5.5", 13, "list", true)), ref state));
-        Assert.Equal(["gpt-6.1-sol", "phi4"], Slugs(list));
-        Assert.NotNull(state);
-        Assert.Contains("gpt-5.5", state!.Conhecidos);
-        Assert.Empty(state.Adicionados);
+        var list = Catalog(("gpt-6.2-sol", 0), ("phi4", -7));
+        var account = Bundled(("gpt-5.5", 13, "list", false));
+        Assert.True(OpenAiCatalog.MergeInto(list, account, ref state, removeObsolete: true));
+        Assert.Equal(["phi4", "gpt-5.5"], Slugs(list));
+        Assert.False(OpenAiCatalog.MergeInto(list, account, ref state, removeObsolete: true));
     }
 
     [Fact]
@@ -246,6 +245,17 @@ public class CodexIAsOpenAiTests
     }
 
     [Fact]
+    public void Resposta_sem_modelos_visiveis_preserva_modelo_adicionado()
+    {
+        OpenAiCatalog.State? state = new() { Adicionados = ["gpt-6.1-sol"] };
+        var list = Catalog(("gpt-6.1-sol", 0));
+        var resposta = Bundled(("gpt-6.1-sol", 0, "hide", false));
+        Assert.False(OpenAiCatalog.MergeInto(list, resposta, ref state, removeObsolete: true));
+        Assert.Single(list);
+        Assert.Single(state!.Adicionados);
+    }
+
+    [Fact]
     public void Modelo_sem_API_nao_ganha_opcao_da_minha_API()
     {
         OpenAiCatalog.State? state = new() { Conhecidos = ["gpt-6.1-sol"] };
@@ -255,13 +265,13 @@ public class CodexIAsOpenAiTests
     }
 
     [Fact]
-    public void Modelo_de_geracao_mais_antiga_que_a_da_conta_nao_entra()
+    public void Modelo_mais_antigo_listado_pela_conta_tambem_entra()
     {
         OpenAiCatalog.State? state = new() { Conhecidos = ["gpt-6.1-sol"] };
         var list = Catalog(("gpt-6.1-sol", 0), ("gpt-5.6-luna", 8));
         var bundled = Bundled(("gpt-6.1-sol", 2, "list", true), ("gpt-5.5", 13, "list", true), ("gpt-6.1-nova", 3, "list", true), ("gpt-7", 1, "list", true));
         Assert.True(OpenAiCatalog.MergeInto(list, bundled, ref state));
-        Assert.DoesNotContain("gpt-5.5", Slugs(list));
+        Assert.Contains("gpt-5.5", Slugs(list));
         Assert.Contains("gpt-6.1-nova", Slugs(list)); // mesma geração da mais nova da conta
         Assert.Contains("gpt-7", Slugs(list));
         Assert.Contains("gpt-5.5", state!.Conhecidos); // registrado: não é avaliado de novo

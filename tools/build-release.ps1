@@ -3,7 +3,8 @@
 #   (sem opções)     entrega em Instalador (este PC se atualiza por lá) e publica no GitHub (código + Release).
 #   -SandboxTest     só gera tools\sandbox\teste\WinStatusBar-Setup.exe para testar no Windows Sandbox (sem Instalador e sem GitHub).
 #   -KeepIntermediates mantém artifacts, bin e obj.
-param([switch]$KeepIntermediates, [switch]$SandboxTest)
+param([switch]$KeepIntermediates, [switch]$SandboxTest, [string]$OutputDirectory)
+if ($SandboxTest -and $OutputDirectory) { throw 'Use -SandboxTest ou -OutputDirectory.' }
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $dotnet = 'C:\Program Files\dotnet\dotnet.exe'
@@ -22,7 +23,7 @@ New-Item -ItemType Directory -Force $app, $col, $inst | Out-Null
 Write-Host "== WinStatusBar $version (compilação $updateBuild)"
 $utf8 = New-Object Text.UTF8Encoding $false
 
-if (-not $SandboxTest) {
+if (-not $SandboxTest -and -not $OutputDirectory) {
     # Versão já publicada? Confere ANTES de mexer nos CHANGELOGs e de entregar em Instalador (que este PC instala).
     $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
     $remoteTag = @(& git -C $root ls-remote --tags origin "refs/tags/v$version" 2>&1); $lsCode = $LASTEXITCODE
@@ -36,7 +37,7 @@ if (-not $SandboxTest) {
 # A compilação entra no CHANGELOG antes do publish (o app leva o CHANGELOG.md para Configurações › Atualizações).
 # Só na publicação real (a versão acabou de ser conferida como nova); aceita o marcador BUILD ou o número de um build
 # anterior desta mesma versão que não chegou a ser publicado. O teste do Sandbox não mexe nos CHANGELOGs.
-foreach ($name in $(if ($SandboxTest) { @() } else { 'CHANGELOG.md', 'CHANGELOG.en.md' })) {
+foreach ($name in $(if ($SandboxTest -or $OutputDirectory) { @() } else { 'CHANGELOG.md', 'CHANGELOG.en.md' })) {
     $file = Join-Path $root $name
     if (-not (Test-Path -LiteralPath $file)) { continue }
     $text = [IO.File]::ReadAllText($file)
@@ -93,7 +94,17 @@ $appSize = (Get-ChildItem $app -Recurse | Measure-Object Length -Sum).Sum
 Write-Host ("Aplicativo: {0} ({1:N1} MB)" -f $app, ($appSize / 1MB))
 if ($setup.Length -lt 50MB) { throw "Instalador pequeno demais ($($setup.Length) bytes): o pacote do app não entrou." }
 
-if ($SandboxTest) {
+if ($OutputDirectory) {
+    New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
+    $target = Join-Path $OutputDirectory "WinStatusBar-$version-Setup.exe"
+    Copy-Item -LiteralPath $setup.FullName -Destination $target
+    $sourceHash = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash
+    if ((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $sourceHash) {
+        throw 'A cópia do instalador não passou na verificação SHA-256.'
+    }
+    Write-Host "Instalador: $target"
+    Write-Host "SHA-256: $sourceHash"
+} elseif ($SandboxTest) {
     # Teste no Windows Sandbox: compilação anterior à da Release, para provar a atualização silenciosa pelo GitHub.
     $testDir = Join-Path $root 'tools\sandbox\teste'
     Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction SilentlyContinue
