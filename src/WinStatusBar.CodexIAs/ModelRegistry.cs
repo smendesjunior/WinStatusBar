@@ -133,6 +133,9 @@ internal sealed class ModelRegistry
         var extra = new List<CodexIntegration.ServiceReport>();
         if (!CodexIntegration.LoadState().Ligado)
             return (new(false, false, [], [], [], [], CodexConfig.CodexFound ? null : "Codex não encontrado neste PC"), extra);
+        if (File.Exists(CodexConfig.ConfigFile) && CodexConfig.UsesCodexLb(await File.ReadAllTextAsync(CodexConfig.ConfigFile, ct)))
+            return (new(false, false, [], [], [], [], "Catálogo gerenciado pelo Codex-LB."), extra);
+
         var bundled = await OpenAiCatalog.BundledAsync(ct);
         OpenAiCatalog.HasApiKey = OpenAiKey.Get() is not null;
         var changes = new OpenAiCatalog.Changes();

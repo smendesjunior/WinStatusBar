@@ -12,6 +12,7 @@ public static class CodexIntegration
 {
     /// <summary>Porta do encaminhador do Codex.</summary>
     public const int GatewayPort = 11435;
+    public const string CodexLbProvider = "codex-lb";
     public const string ExeName = "WinStatusBar.CodexIAs.exe";
     /// <summary>Cabeçalho dos comandos internos do encaminhador (/codexias/…): navegadores não o enviam sem permissão.</summary>
     public const string CommandHeader = "X-WinStatusBar";

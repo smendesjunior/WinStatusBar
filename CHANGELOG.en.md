@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.2] - 2026-11-18 · build 20261118165058
+
+### Fixed
+- Repair preserves the Codex model catalog when Codex-LB is the active provider.
+
 ## [2.1.1] - 2026-11-17 · build 20261117235214
 
 ### Fixed

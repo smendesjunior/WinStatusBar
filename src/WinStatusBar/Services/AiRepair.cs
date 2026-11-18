@@ -286,6 +286,7 @@ internal static class AiRepair
         string cfgFile = Path.Combine(CodexAppServerClient.CodexHome(), "config.toml");
         string top = File.Exists(cfgFile) ? File.ReadAllText(cfgFile).Split("\n[", 2)[0] : "";
         string? baseUrl = TomlValue(top, "openai_base_url"), catalog = TomlValue(top, "model_catalog_json");
+        bool preserveCatalog = TomlValue(top, "model_provider") == CodexIntegration.CodexLbProvider;
         bool pointsToGateway = baseUrl is not null && Regex.IsMatch(baseUrl, @"^https?://(127\.0\.0\.1|localhost):11435(/|$)", RegexOptions.IgnoreCase);
         if (!state.Ligado && !pointsToGateway)
             return ([new(area, Outcome.Skipped, "As IAs da barra estão desligadas no Codex (ligue em Configurações › Codex e modelos, se quiser).")], false);
@@ -313,16 +314,20 @@ internal static class AiRepair
             await Task.Delay(800, ct);
         }
         if (!pointsToGateway) problems.Add("o config.toml do Codex não apontava mais para o encaminhador (outro programa o alterou, como um novo \"ollama launch\")");
-        if (catalog is null || !File.Exists(catalog)) problems.Add("o catálogo de modelos do Codex não foi encontrado");
-        else if (!File.ReadAllText(catalog).Contains("\"codexias-", StringComparison.Ordinal)) problems.Add("as IAs da barra tinham sumido do seletor do Codex");
+        if (!preserveCatalog)
+        {
+            if (catalog is null || !File.Exists(catalog)) problems.Add("o catálogo de modelos do Codex não foi encontrado");
+            else if (!File.ReadAllText(catalog).Contains("\"codexias-", StringComparison.Ordinal)) problems.Add("as IAs da barra tinham sumido do seletor do Codex");
+        }
+        string catalogStatus = preserveCatalog ? "catálogo do Codex-LB preservado" : "seletor do Codex conferido";
         if (!RunEntryPresent()) problems.Add("o início com o Windows tinha sumido");
-        if (problems.Count == 0 && !force) return ([new(area, Outcome.Ok, "Encaminhador respondendo (porta 11435); config.toml, seletor do Codex e início com o Windows em ordem.")], false);
+        if (problems.Count == 0 && !force) return ([new(area, Outcome.Ok, $"Encaminhador respondendo (porta 11435); config.toml e início com o Windows em ordem. {catalogStatus}.")], false);
 
         progress(force ? "Refazendo a ligação com o Codex (config.toml com cópia, encaminhador e modelos)…" : "Corrigindo a ligação com o Codex…");
         var result = await CodexIasComponent.RunAsync(["--ligar"], ct);
         bool ok = result.Ok && await CodexIasComponent.GatewayOnlineAsync();
         string what = problems.Count > 0 ? string.Join("; ", problems) : "ligação refeita";
-        return ([ok ? new(area, Outcome.Fixed, char.ToUpper(what[0]) + what[1..] + ". Ligação refeita: config.toml, encaminhador e modelos.")
+        return ([ok ? new(area, Outcome.Fixed, char.ToUpper(what[0]) + what[1..] + $". Ligação refeita: config.toml e encaminhador. {catalogStatus}.")
                     : new(area, Outcome.Failed, char.ToUpper(what[0]) + what[1..] + ". A ligação não foi refeita: " + result.Mensagem, "codex-ligar")], true);
     }
 

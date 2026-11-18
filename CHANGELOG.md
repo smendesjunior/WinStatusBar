@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.2] - 2026-11-18 · compilação 20261118165058
+
+### Corrigido
+- O reparo preserva o catálogo do Codex quando o Codex-LB é o provedor ativo.
+
 ## [2.1.1] - 2026-11-17 · compilação 20261117235214
 
 ### Corrigido

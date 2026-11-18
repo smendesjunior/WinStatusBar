@@ -300,6 +300,15 @@ public class CodexIAsOpenAiTests
 
 public class CodexIAsConfigTests
 {
+    [Theory]
+    [InlineData("model_provider = \"codex-lb\"", true)]
+    [InlineData("model_provider = 'codex-lb' # local proxy", true)]
+    [InlineData("model_provider = \"openai\"", false)]
+    [InlineData("[profiles.example]\nmodel_provider = \"codex-lb\"", false)]
+    [InlineData("# model_provider = \"codex-lb\"", false)]
+    public void Preserva_catalogo_apenas_para_o_provedor_codex_lb(string config, bool expected)
+        => Assert.Equal(expected, CodexConfig.UsesCodexLb(config));
+
     private const string Toml = "model = \"gpt-6.1-sol\"\r\nopenai_base_url = \"http://127.0.0.1:11434/api/codex/v1\"\r\n\r\n[profiles.x]\r\nopenai_base_url = \"https://outro\"\r\n";
 
     [Fact]

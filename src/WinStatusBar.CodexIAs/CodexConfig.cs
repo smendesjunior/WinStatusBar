@@ -32,6 +32,8 @@ internal static partial class CodexConfig
     public static State Load() => CodexIntegration.LoadState();
     public static void Save(State state) => CodexIntegration.SaveState(state);
 
+    internal static bool UsesCodexLb(string toml) => Get(toml, "model_provider") == CodexIntegration.CodexLbProvider;
+
     // ------------------------------------------------------------------ TOML (só chaves de nível superior)
     [GeneratedRegex(@"^\s*\[")] private static partial Regex TableLine();
 
@@ -186,8 +188,9 @@ internal static partial class CodexConfig
             toml = Set(toml, "openai_base_url", GatewayBase + "/v1");
         }
 
-        if (!state.Ligado) { state.CatalogoAnterior = catalog; state.CatalogoCriado = false; }
-        if (catalog is null || !File.Exists(catalog))
+        bool preserveCatalog = UsesCodexLb(toml);
+        if (!preserveCatalog && !state.Ligado) { state.CatalogoAnterior = catalog; state.CatalogoCriado = false; }
+        if (!preserveCatalog && (catalog is null || !File.Exists(catalog)))
         {
             // Sem catálogo próprio, o Codex usa o da conta; para as IAs da barra entrarem no seletor, ele passa a usar um
             // arquivo, começando pelos mesmos modelos da conta.
@@ -210,7 +213,7 @@ internal static partial class CodexConfig
             WriteConfig(toml);
         }
         // Opções "minha API" guardadas ao desligar voltam (o encaminhador está de volta).
-        if (state.MinhaApiGuardadas is { Count: > 0 } saved && CodexCatalog.CatalogPath() is { } path && File.Exists(path))
+        if (!preserveCatalog && state.MinhaApiGuardadas is { Count: > 0 } saved && CodexCatalog.CatalogPath() is { } path && File.Exists(path))
         {
             try
             {
@@ -224,7 +227,7 @@ internal static partial class CodexConfig
             }
             catch (Exception ex) { Log.Write("Ligar: opções da minha API não voltaram: " + ex.Message); }
         }
-        state.MinhaApiGuardadas = null;
+        if (!preserveCatalog) state.MinhaApiGuardadas = null;
         state.Ligado = true;
         state.LigadoEm = DateTime.Now;
         state.Copia = copy ?? state.Copia;
