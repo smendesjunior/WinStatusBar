@@ -7,6 +7,10 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.4] - 2026-11-18 · compilação 20261118225104
+
+- O seletor informa quando exibe o último catálogo disponível após uma falha de consulta.
+
 ## [2.1.3] - 2026-11-18 · compilação 20261118191725
 
 ### Corrigido

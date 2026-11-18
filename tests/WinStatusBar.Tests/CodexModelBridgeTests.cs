@@ -29,6 +29,17 @@ public class CodexModelBridgeTests
     };
 
     [Fact]
+    public void Catalogo_anterior_indica_falha_e_consulta_bem_sucedida_limpa_aviso()
+    {
+        var atual = new AgentPrompt.Catalog([new("teste", "Teste", [], null)], "teste", null, null);
+        var falha = new AgentPrompt.Catalog([], null, null, "indisponível");
+        var anterior = falha.PreservarSeIndisponivel(atual);
+        Assert.True(anterior.UltimoDisponivel);
+        Assert.Equal("teste", Assert.Single(anterior.Models).Id);
+        Assert.False(falha.PreservarSeIndisponivel(null).UltimoDisponivel);
+        Assert.False(atual.PreservarSeIndisponivel(anterior).UltimoDisponivel);
+    }
+    [Fact]
     public void ConversationKeepsOnlyPersonAndAnswers()
     {
         var c = CodexModelBridge.ReadConversation(Payload("winstatusbar-qira"));

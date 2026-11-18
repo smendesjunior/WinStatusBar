@@ -21,7 +21,14 @@ public static class AgentPrompt
     public enum Target { Claude, Codex, Local, Api, Gemini, Copilot, Qira, Antigravity }
 
     public sealed record ModelOption(string Id, string Label, IReadOnlyList<string> Efforts, string? DefaultEffort);
-    public sealed record Catalog(IReadOnlyList<ModelOption> Models, string? AppModel, string? AppEffort, string? Error);
+    public sealed record Catalog(IReadOnlyList<ModelOption> Models, string? AppModel, string? AppEffort, string? Error)
+    {
+        public bool UltimoDisponivel { get; init; }
+
+        public Catalog PreservarSeIndisponivel(Catalog? anterior) =>
+            Error is not null && Models.Count == 0 && anterior is { Models.Count: > 0 }
+                ? anterior with { Error = Error, UltimoDisponivel = true } : this;
+    }
     public sealed record ApiConfig(string Kind, string BaseUrl, string? Key);
     public sealed record Result(string Text, string? SessionId, string? Error)
     {

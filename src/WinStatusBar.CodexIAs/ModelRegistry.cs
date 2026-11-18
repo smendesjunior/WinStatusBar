@@ -89,7 +89,8 @@ internal sealed class ModelRegistry
                 foreach (var m in now) next[m.Slug] = m;
                 var beforeSlugs = before.Select(m => m.Slug).ToHashSet(StringComparer.Ordinal);
                 var nowSlugs = now.Select(m => m.Slug).ToHashSet(StringComparer.Ordinal);
-                var report = new CodexIntegration.ServiceReport(provider.Label, now.Count, listing.Issue, listing.Failed,
+                var motivo = listing.Failed && before.Count > 0 ? $"Exibindo o último catálogo disponível. {listing.Issue}".TrimEnd() : listing.Issue;
+                var report = new CodexIntegration.ServiceReport(provider.Label, now.Count, motivo, listing.Failed,
                     first ? [] : now.Where(m => !beforeSlugs.Contains(m.Slug)).Select(m => m.DisplayName).ToList(),
                     before.Where(m => !nowSlugs.Contains(m.Slug)).Select(m => m.DisplayName).ToList(),
                     provider.Name, listing.NeedsLogin ? provider.Name : null)
@@ -172,7 +173,7 @@ internal sealed class ModelRegistry
         }
         catch (Exception ex) { warning = "seletor do Codex não atualizado: " + ex.Message; }
 
-        extra.Add(new("OpenAI (conta do Codex)", account, bundled is null ? "a lista do Codex instalado não foi lida agora" : null, bundled is null,
+        extra.Add(new("OpenAI (conta do Codex)", account, bundled is null ? (account > 0 ? "Exibindo o último catálogo disponível. A consulta à conta falhou." : "Catálogo da conta indisponível.") : null, bundled is null,
             changes.Novos, changes.Sairam.Concat(changes.ObsoletosRemovidos).ToList(), "openai"));
         extra.Add(new("OpenAI — minha API", api, OpenAiCatalog.HasApiKey ? (api == 0 ? "nenhuma opção da API no seletor" : null) : "sem chave da API OpenAI cadastrada neste PC",
             false, [], [], "openai-api"));

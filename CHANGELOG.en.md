@@ -7,6 +7,10 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.4] - 2026-11-18 · build 20261118225104
+
+- The model picker identifies the last available catalog after a refresh fails.
+
 ## [2.1.3] - 2026-11-18 · build 20261118191725
 
 ### Fixed

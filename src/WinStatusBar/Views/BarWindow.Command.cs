@@ -406,6 +406,7 @@ public sealed partial class BarWindow
         var api = t == T.Api ? ApiConfig() : null;
         c = await Task.Run(() => AgentPrompt.CatalogAsync(t, api, CancellationToken.None));
         if (t == T.Api && !string.IsNullOrEmpty(_settings.Current.ApiDefaultModel)) c = c with { AppModel = _settings.Current.ApiDefaultModel };
+        if (t != T.Api) c = c.PreservarSeIndisponivel(_catalogs.GetValueOrDefault(t));
         _catalogs[t] = c;
         return c;
     }
@@ -1204,6 +1205,7 @@ public sealed partial class BarWindow
         var note = PanelKit.Caption(L.T("Este modelo não tem níveis de esforço."), 11);
         note.HorizontalAlignment = HorizontalAlignment.Center;
         panel.Children.Add(note);
+        if (c.UltimoDisponivel) panel.Children.Add(PanelKit.Caption(L.T("Exibindo o último catálogo disponível."), 11));
         if (c.Error is { } err) panel.Children.Add(PanelKit.Caption(AiErrorExplainer.Explain(t, err).Message, 11));
 
         IReadOnlyList<string> efforts = [];
