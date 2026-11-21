@@ -60,8 +60,8 @@ public sealed partial class SettingsWindow
             Toggle("Estimar progresso quando não houver plano", "Mostra ~% no círculo usando etapas observadas, como leitura, edição e testes. É uma aproximação de baixa confiança; não avança pelo tempo. Um plano explícito sempre tem prioridade.", s => s.EstimateProgressWithoutPlan, (s, v) => s.EstimateProgressWithoutPlan = v),
             Toggle("Resumo automático do andamento", "Gera uma síntese da tarefa selecionada em chamadas separadas à IA. Usa a autenticação e as cotas existentes; não altera a conversa original.",
                 s => s.TaskBriefingEnabled, (s,v) => s.TaskBriefingEnabled = v),
-            Choice("Intervalo mínimo entre resumos", "Só gera outro resumo se houver mudanças. Intervalos maiores reduzem chamadas à IA.",
-                [("15 segundos",15), ("30 segundos",30), ("1 minuto",60), ("2 minutos",120), ("5 minutos",300)],
+            Choice("Intervalo mínimo entre resumos", "Deduz de novo só quando a conversa mudou e ficou parada, até 12 vezes por conversa. Intervalos maiores reduzem chamadas à IA.",
+                [("5 minutos",300), ("10 minutos",600), ("15 minutos",900), ("30 minutos",1800)],
                 s => s.TaskBriefingIntervalSeconds, (s,v) => s.TaskBriefingIntervalSeconds = v),
         })
         {

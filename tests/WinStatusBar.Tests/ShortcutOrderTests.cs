@@ -20,7 +20,7 @@ public class ShortcutOrderTests
     public void DraggedOrderAndSummaryPreferencesSurviveRealSerializer()
     {
         var settings = new AppSettings { ShortcutOrder = ["documents", "clipboard", "store"],
-            ShortcutDownloads = false, TaskBriefingEnabled = false, TaskBriefingIntervalSeconds = 120 };
+            ShortcutDownloads = false, TaskBriefingEnabled = false, TaskBriefingIntervalSeconds = 600 };
         settings.Normalize();
         string json = JsonSerializer.Serialize(settings, AppSettingsContext.Default.AppSettings);
         var restored = JsonSerializer.Deserialize(json, AppSettingsContext.Default.AppSettings)!;
@@ -28,7 +28,7 @@ public class ShortcutOrderTests
         Assert.Equal(settings.ShortcutOrder, restored.ShortcutOrder);
         Assert.False(restored.ShortcutDownloads);
         Assert.False(restored.TaskBriefingEnabled);
-        Assert.Equal(120, restored.TaskBriefingIntervalSeconds);
+        Assert.Equal(600, restored.TaskBriefingIntervalSeconds);
     }
 
     [Fact]

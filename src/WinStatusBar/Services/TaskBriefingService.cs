@@ -30,9 +30,11 @@ internal sealed class TaskBriefingService : IDisposable
         public IReadOnlyList<ActivityStep> Inferred = [];
         public string Fingerprint = "";
         public DateTimeOffset Attempt;
+        public DateTimeOffset LastChange = DateTimeOffset.UtcNow;
+        public int Calls;
         public bool Loaded;
     }
-    private sealed record Saved(List<ActivityStep> Steps, string Fingerprint, DateTimeOffset? UpdatedAt);
+    private sealed record Saved(List<ActivityStep> Steps, string Fingerprint, DateTimeOffset? UpdatedAt, int Calls = 0);
     private static string CacheFile(string id) => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "WinStatusBar", "TaskBriefings", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(id))) + ".plan.json");
     private readonly Func<AgentSession?> _session;
@@ -78,7 +80,9 @@ internal sealed class TaskBriefingService : IDisposable
         var catalog = await AgentPrompt.CatalogAsync(target, null, ct);
         var (model, effort) = InferredPlan.SimplestModel(catalog, target == AgentPrompt.Target.Codex ? CodexDescriptions() : null);
         var result = await AgentPrompt.RunAsync(target, prompt, model, effort, null,
-            new AgentPrompt.Options([], false, false, null, [], Ephemeral: true), _ => { }, ct);
+            new AgentPrompt.Options([], false, false, null, [], Ephemeral: true)
+            { BaseInstructions = target == AgentPrompt.Target.Codex ? InferredPlan.BaseInstructions : null }, _ => { }, ct);
+        App.Log($"Acompanhamento: roteiro por {model ?? "padrão"} ({effort ?? "-"})");
         if (result.Error is not null) App.Log($"Acompanhamento: roteiro por {model ?? "padrão"} falhou: {result.Error}");
         return result.Error is null ? InferredPlan.Parse(StripThinking(result.Text)) : [];
     }
@@ -140,7 +144,7 @@ internal sealed class TaskBriefingService : IDisposable
             try
             {
                 if (File.Exists(CacheFile(id)) && JsonSerializer.Deserialize<Saved>(File.ReadAllText(CacheFile(id))) is { } saved)
-                { entry.Inferred = saved.Steps; entry.Fingerprint = saved.Fingerprint; entry.UpdatedAt = saved.UpdatedAt; }
+                { entry.Inferred = saved.Steps; entry.Fingerprint = saved.Fingerprint; entry.UpdatedAt = saved.UpdatedAt; entry.Calls = saved.Calls; }
             }
             catch (Exception ex) { App.Log("Cache de acompanhamento: " + ex.Message); }
         }
@@ -154,6 +158,7 @@ internal sealed class TaskBriefingService : IDisposable
             entry.Path = fileInfo?.FullName;
             entry.Length = fileInfo is { Exists: true } ? fileInfo.Length : 0;
             entry.WriteTime = fileInfo is { Exists: true } ? fileInfo.LastWriteTimeUtc : default;
+            entry.LastChange = DateTimeOffset.UtcNow;
         }
         var digest = entry.Digest;
         if (!digest.HasTranscript)
@@ -184,8 +189,11 @@ internal sealed class TaskBriefingService : IDisposable
             : paused ? Localization.T("A IA não registrou etapas; a dedução fica parada enquanto a cota do Codex estiver esgotada.")
             : "A IA não registrou etapas; montando o roteiro…";
         _current = new(id, "", waiting, entry.UpdatedAt) { Steps = entry.Inferred, Inferred = entry.Inferred.Count > 0, StartedAt = digest.StartedAt };
-        if (!allowed || paused || !changed || DateTimeOffset.UtcNow - entry.Attempt < TimeSpan.FromSeconds(Math.Max(20, _interval()))) return;
+        // Modo econômico: primeira dedução logo; depois, só com a conversa parada, 5 min entre chamadas e até 12 por conversa.
+        if (!allowed || paused || !InferredPlan.ShouldInfer(DateTimeOffset.UtcNow, changed, entry.Inferred.Count > 0, entry.Calls,
+                entry.Attempt, entry.LastChange, session.State.IsActive(), _interval())) return;
         entry.Attempt = DateTimeOffset.UtcNow;
+        entry.Calls++;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
         timeout.CancelAfter(TimeSpan.FromSeconds(180));
         var steps = await InferAsync(session, InferredPlan.Prompt(evidence, digest.Partial, entry.Inferred), timeout.Token);
@@ -202,7 +210,7 @@ internal sealed class TaskBriefingService : IDisposable
         {
             string file = CacheFile(id);
             Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-            File.WriteAllText(file + ".tmp", JsonSerializer.Serialize(new Saved(steps.ToList(), fingerprint, entry.UpdatedAt)));
+            File.WriteAllText(file + ".tmp", JsonSerializer.Serialize(new Saved(steps.ToList(), fingerprint, entry.UpdatedAt, entry.Calls)));
             File.Move(file + ".tmp", file, true);
         }
         catch (Exception ex) { App.Log("Salvar acompanhamento: " + ex.Message); }

@@ -7,6 +7,15 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.6] - 2026-11-21 · build 20261121140123
+
+### Fixed
+- Task tracking uses much less Codex quota when the conversation has no recorded plan:
+  - the plan is inferred by the light model (GPT-6-Luna) instead of the default model, whose description says "Fast";
+  - the first inference runs right away; later ones wait for the conversation to settle (60 s without changes or the turn ended), at least 5 minutes apart and at most 12 per conversation;
+  - the call uses short base instructions instead of Codex's coding instructions.
+- The minimum interval between summaries now ranges from 5 to 30 minutes. Lower saved values become 5 minutes.
+
 ## [2.1.5] - 2026-11-21 · build 20261121033326
 
 ### Fixed

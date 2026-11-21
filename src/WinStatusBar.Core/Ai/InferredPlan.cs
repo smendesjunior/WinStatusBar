@@ -10,7 +10,10 @@ public static partial class InferredPlan
 {
     public const int MaxSteps = 10;
 
-    private static readonly string[] LightWords = ["haiku", "mini", "nano", "luna", "fast", "faster", "fastest", "affordable"];
+    /// <summary>Famílias leves pelo nome do modelo. Vêm antes da descrição: o Sol se descreve como "Fast, go-to model…".</summary>
+    private static readonly string[] LightNames = ["haiku", "mini", "nano", "luna", "lite", "flash"];
+    /// <summary>Só na descrição e só se nenhum nome servir. "fast" sozinho não basta (o modelo padrão também é "fast").</summary>
+    private static readonly string[] LightDescriptions = ["affordable", "cheap", "cheapest", "lightweight", "easier", "simpler"];
 
     /// <summary>A palavra inteira, sem letra ou número colado: "mini" vale em "gpt-5-mini" e não em "gemini-2.5-pro".</summary>
     internal static bool HasWord(string text, string word)
@@ -30,11 +33,48 @@ public static partial class InferredPlan
     /// </summary>
     public static (string? Model, string? Effort) SimplestModel(AgentPrompt.Catalog catalog, IReadOnlyDictionary<string, string>? descriptions = null)
     {
-        static bool Light(string s) => LightWords.Any(w => HasWord(s, w));
-        var option = catalog.Models.FirstOrDefault(m => Light(m.Id) || Light(m.Label) || descriptions?.GetValueOrDefault(m.Id) is { } d && Light(d));
+        static bool LightName(string s) => LightNames.Any(w => HasWord(s, w));
+        static bool LightText(string s) => LightDescriptions.Any(w => HasWord(s, w));
+        var option = catalog.Models.FirstOrDefault(m => LightName(m.Id) || LightName(m.Label))
+            ?? catalog.Models.FirstOrDefault(m => descriptions?.GetValueOrDefault(m.Id) is { } d && LightText(d));
         if (option is null) return (catalog.AppModel, catalog.AppModel is null ? null : "low");
         string? effort = option.Efforts.FirstOrDefault(e => e is "none" or "minimal") ?? option.Efforts.FirstOrDefault(e => e == "low") ?? option.Efforts.FirstOrDefault();
         return (option.Id, effort);
+    }
+
+    /// <summary>
+    /// Instruções-base curtas para a chamada do roteiro no Codex, no lugar das instruções de programação do CLI
+    /// (medido em 21/11/2026: cerca de 3,4 mil tokens a menos por chamada).
+    /// </summary>
+    public const string BaseInstructions =
+        "Você monta roteiros curtos de etapas a partir de uma conversa. Responda somente com o texto pedido, " +
+        "sem usar ferramentas e sem ler ou alterar arquivos.";
+
+    // ------------------------------------------------------------------ quando deduzir (modo econômico, 21/11/2026)
+    /// <summary>Intervalo mínimo entre deduções da mesma conversa.</summary>
+    public static readonly TimeSpan MinInterval = TimeSpan.FromMinutes(5);
+    /// <summary>Conversa sem mudanças no transcript há este tempo conta como parada.</summary>
+    public static readonly TimeSpan QuietTime = TimeSpan.FromSeconds(60);
+    /// <summary>Conversa que nunca para: uma atualização a cada este tempo, para o donut não congelar.</summary>
+    public static readonly TimeSpan BusyRefresh = TimeSpan.FromMinutes(15);
+    /// <summary>Máximo de deduções por conversa.</summary>
+    public const int MaxCallsPerConversation = 12;
+
+    /// <summary>
+    /// Pode deduzir agora? A primeira dedução sai logo (o donut precisa de etapas). As seguintes exigem o intervalo
+    /// mínimo e que a conversa tenha parado (60 s sem mudanças ou turno encerrado); se ela nunca parar, uma a cada 15 min.
+    /// Nunca mais de <see cref="MaxCallsPerConversation"/> por conversa.
+    /// </summary>
+    public static bool ShouldInfer(DateTimeOffset now, bool changed, bool hasSteps, int calls, DateTimeOffset lastAttempt,
+        DateTimeOffset lastChange, bool active, int intervalSeconds = 0)
+    {
+        if (!changed || calls >= MaxCallsPerConversation) return false;
+        var gap = now - lastAttempt;
+        if (!hasSteps) return gap >= TimeSpan.FromSeconds(60); // primeira (ou falhou): uma tentativa por minuto
+        var min = TimeSpan.FromSeconds(Math.Max(MinInterval.TotalSeconds, intervalSeconds));
+        if (gap < min) return false;
+        bool settled = !active || now - lastChange >= QuietTime;
+        return settled || gap >= BusyRefresh;
     }
 
     public static string Prompt(string evidence, bool partial, IReadOnlyList<ActivityStep>? previous = null) =>

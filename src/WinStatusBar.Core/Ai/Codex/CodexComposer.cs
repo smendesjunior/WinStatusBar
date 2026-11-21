@@ -67,6 +67,7 @@ public static class CodexComposer
                 ["sandbox"] = options.Unrestricted ? "danger-full-access" : options.AllowEdits ? "workspace-write" : "read-only", ["config"] = config };
             // Instruções do executor como desenvolvedor: o app Codex mostra só o pedido do usuário no histórico.
             if (options.SystemPrompt is { Length: > 0 } system) settings["developerInstructions"] = system;
+            if (options.BaseInstructions is { Length: > 0 } baseText) settings["baseInstructions"] = baseText;
             if (session is not null) settings["threadId"] = session;
             else settings["ephemeral"] = options.Ephemeral;
             var opened = await rpc.CallAsync(session is null ? "thread/start" : "thread/resume", settings, ct);

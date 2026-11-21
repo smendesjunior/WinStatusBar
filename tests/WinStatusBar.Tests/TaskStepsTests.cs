@@ -94,6 +94,60 @@ public class TaskStepsTests
         Assert.Equal("x-small", InferredPlan.SimplestModel(described, new Dictionary<string, string> { ["x-small"] = "Fast and affordable model" }).Model);
     }
 
+    [Fact] public void SimplestModelIgnoresFastInTheDefaultModelDescription()
+    {
+        // Catálogo real do Codex em 21/11/2026: o Sol vem primeiro e se descreve como "Fast"; antes ele era escolhido.
+        string[] efforts = ["low", "medium", "high"];
+        var codex = new AgentPrompt.Catalog([new("gpt-6.2-sol", "GPT-6.2-Sol", efforts, "medium"), new("gpt-6.2-astra", "GPT-6.2-Astra", efforts, "medium"),
+            new("gpt-6.1-terra", "GPT-6.1 Terra", efforts, "medium"), new("gpt-6-luna", "GPT-6-Luna", efforts, "medium"),
+            new("gpt-5.6-luna", "GPT-5.6-Luna", efforts, "medium")], "gpt-6.2-sol", "medium", null);
+        var descriptions = new Dictionary<string, string>
+        {
+            ["gpt-6.2-sol"] = "Fast, go-to model for coding and everyday work.",
+            ["gpt-6.1-terra"] = "Efficient model that excels at visual understanding and computer use.",
+            ["gpt-6-luna"] = "Fast and affordable model for easier tasks.",
+            ["gpt-5.6-luna"] = "Legacy fast model for simpler tasks.",
+        };
+        Assert.Equal(("gpt-6-luna", "low"), InferredPlan.SimplestModel(codex, descriptions));
+        var onlyFast = new AgentPrompt.Catalog([new("x-default", "Default", efforts, null)], "x-default", null, null);
+        Assert.Equal("x-default", InferredPlan.SimplestModel(onlyFast, new Dictionary<string, string> { ["x-default"] = "Fast model" }).Model);
+    }
+
+    [Fact] public void InferenceScheduleIsEconomical()
+    {
+        var t0 = new DateTimeOffset(2026, 11, 21, 12, 0, 0, TimeSpan.Zero);
+        // Primeira dedução: logo, mesmo com a conversa em andamento.
+        Assert.True(InferredPlan.ShouldInfer(t0, true, false, 0, default, t0, true));
+        // Nada mudou: nunca.
+        Assert.False(InferredPlan.ShouldInfer(t0.AddHours(1), false, true, 1, t0, t0, false));
+        // Com etapas: menos de 5 min desde a última, não; mesmo parada.
+        Assert.False(InferredPlan.ShouldInfer(t0.AddMinutes(4), true, true, 1, t0, t0, false));
+        // 5 min e conversa mudando agora (ativa): espera ela parar.
+        Assert.False(InferredPlan.ShouldInfer(t0.AddMinutes(6), true, true, 1, t0, t0.AddMinutes(6).AddSeconds(-10), true));
+        // 5 min e parada há 60 s, ou turno encerrado: deduz.
+        Assert.True(InferredPlan.ShouldInfer(t0.AddMinutes(6), true, true, 1, t0, t0.AddMinutes(5), true));
+        Assert.True(InferredPlan.ShouldInfer(t0.AddMinutes(6), true, true, 1, t0, t0.AddMinutes(6), false));
+        // Nunca para: uma a cada 15 min.
+        Assert.True(InferredPlan.ShouldInfer(t0.AddMinutes(15), true, true, 1, t0, t0.AddMinutes(15), true));
+        // Limite por conversa.
+        Assert.False(InferredPlan.ShouldInfer(t0.AddHours(2), true, true, InferredPlan.MaxCallsPerConversation, t0, t0, false));
+        // Intervalo configurado maior que 5 min vale.
+        Assert.False(InferredPlan.ShouldInfer(t0.AddMinutes(8), true, true, 1, t0, t0, false, 600));
+        // Pior caso em 1 hora de conversa sempre ativa, verificando a cada segundo: no máximo 5 chamadas (1 + 4 de 15 min).
+        int calls = 0; var last = default(DateTimeOffset); bool steps = false;
+        for (var now = t0; now < t0.AddHours(1); now = now.AddSeconds(1))
+            if (InferredPlan.ShouldInfer(now, true, steps, calls, last, now, true)) { calls++; last = now; steps = true; }
+        Assert.InRange(calls, 1, 5);
+    }
+
+    [Fact] public void CodexBriefingCallUsesShortBaseInstructions()
+    {
+        string service = RepoSource.Read("src", "WinStatusBar", "Services", "TaskBriefingService.cs");
+        Assert.Contains("BaseInstructions = target == AgentPrompt.Target.Codex ? InferredPlan.BaseInstructions : null", service);
+        string composer = RepoSource.Read("src", "WinStatusBar.Core", "Ai", "Codex", "CodexComposer.cs");
+        Assert.Contains("settings[\"baseInstructions\"] = baseText", composer);
+    }
+
     [Fact] public void UpdatePromptCarriesThePreviousStepsForIncrementalUpdates()
     {
         string prompt = InferredPlan.Prompt("Pedido: x", false, [new("Ler o código", "completed"), new("Compilar", "pending")]);

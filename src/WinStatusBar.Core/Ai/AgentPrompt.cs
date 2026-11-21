@@ -427,6 +427,8 @@ public static class AgentPrompt
         public string? SystemPrompt { get; init; }
         /// <summary>Regras de permissão liberadas pela pessoa (ex.: "mcp__claude_ai_Google_Drive"), passadas em --allowedTools.</summary>
         public IReadOnlyList<string> AllowedTools { get; init; } = [];
+        /// <summary>Codex: troca as instruções-base do CLI (chamadas auxiliares curtas, como o roteiro do acompanhamento).</summary>
+        public string? BaseInstructions { get; init; }
         public static readonly Options None = new([], false, false, null, []);
     }
 

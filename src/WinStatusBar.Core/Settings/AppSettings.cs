@@ -88,7 +88,7 @@ public sealed class AppSettings
     // Barra de comando da IA
     public bool CommandBar { get; set; } = true;
     public bool TaskBriefingEnabled { get; set; } = true;
-    public int TaskBriefingIntervalSeconds { get; set; } = 30;
+    public int TaskBriefingIntervalSeconds { get; set; } = 300;
     /// <summary>Destino escolhido no balão: "claude", "codex", "local" ou "api" (vazio = segue o agente da barra).</summary>
     public string CommandTarget { get; set; } = string.Empty;
     /// <summary>Autenticação do Gemini nas conversas da barra: "login" (conta Google do CLI) ou "api" (chave do AI Studio).</summary>
@@ -236,7 +236,8 @@ public sealed class AppSettings
         ApiUsageRefreshMinutes = Math.Clamp(ApiUsageRefreshMinutes, 1, 60);
         BatteryHistoryDays = BatteryHistoryDays == 7 ? 7 : 1;
         Scale = Math.Clamp(Scale, 0.8, 1.5);
-        TaskBriefingIntervalSeconds = Math.Clamp(TaskBriefingIntervalSeconds, 15, 300);
+        // Mínimo de 5 min desde 21/11/2026 (valores antigos de 15 s a 2 min sobem para 5 min).
+        TaskBriefingIntervalSeconds = Math.Clamp(TaskBriefingIntervalSeconds, 300, 1800);
         TintOpacity = Math.Clamp(TintOpacity, 0, 1);
         MetricsIntervalMs = Math.Clamp(MetricsIntervalMs, 500, 10000);
         GpuIntervalMs = Math.Clamp(GpuIntervalMs, 1000, 10000);

@@ -7,6 +7,15 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.6] - 2026-11-21 · compilação 20261121140123
+
+### Corrigido
+- O acompanhamento de tarefa gasta bem menos cota do Codex quando a conversa não registra plano:
+  - o roteiro é deduzido pelo modelo leve (GPT-6-Luna), não mais pelo modelo padrão, que se descreve como "Fast";
+  - a primeira dedução sai logo; as seguintes esperam a conversa parar (60 s sem mudanças ou turno encerrado), com no mínimo 5 minutos entre elas e no máximo 12 por conversa;
+  - a chamada usa instruções curtas no lugar das instruções de programação do Codex.
+- O intervalo mínimo entre resumos agora vai de 5 a 30 minutos. Valores menores salvos antes passam para 5 minutos.
+
 ## [2.1.5] - 2026-11-21 · compilação 20261121033326
 
 ### Corrigido
