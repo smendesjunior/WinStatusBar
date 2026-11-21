@@ -4653,10 +4653,13 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S42D0EEC050E5C949" xml:space="preserve">
     <value>开启后，栏每 10 分钟为 ChatGPT 的新聊天（网页、Windows 应用和手机）以及 Codex 的本地对话（包括项目中的对话）设置标题“DD/MM/YYYY - 主题 - 事项”，由你账户中最轻量的模型生成。使用与配额相同的 Codex 登录，不保存任何内容。仅限最近 7 天内、已创建至少 3 分钟且尚未采用此格式的聊天；已是此格式的聊天绝不会更改。“立即重命名”会立即执行一轮。</value>
   </data>
-  <data name="SA39EDA1B8C2275BF" xml:space="preserve">
-    <value>开启后，栏每 10 分钟为 ChatGPT 的新聊天（网页、Windows 应用和手机）以及 Codex 的本地对话（包括项目中的对话）设置标题“DD/MM/YYYY - 主题 - 事项”，由你账户中最轻量的模型生成。使用与配额相同的 Codex 登录，不保存任何内容。所有尚未采用此格式的聊天（新旧均包括，含已置顶的）在创建至少 3 分钟后都会处理；已是此格式的聊天绝不会更改。每轮自动处理最多重命名 30 个；“立即重命名”会立即全部重命名。</value>
+  <data name="S9344CE45A4DE4EE0" xml:space="preserve">
+    <value>状态栏每小时最多处理 5 个尚未采用“日/月/年 - 主题 - 标题”格式的 ChatGPT 和 Codex 对话。向服务发送请求时会留出间隔，触发限流后会结束本轮处理。“立即重命名”也遵循相同限制。</value>
   </data>
   <data name="SF761708E8C232E38" xml:space="preserve">
     <value>{0}（峰值：{1}）</value>
+  </data>
+  <data name="S1CFBB40B5F2FFA02" xml:space="preserve">
+    <value>下次尝试时间不早于 {0:g}。</value>
   </data>
 </root>

@@ -4653,10 +4653,13 @@ Source : {0} · {1:HH:mm}</value>
   <data name="S42D0EEC050E5C949" xml:space="preserve">
     <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Seulement les discussions des 7 derniers jours, ayant au moins 3 minutes et pas encore au format ; celles déjà au format ne sont jamais modifiées. « Renommer maintenant » lance un passage immédiatement.</value>
   </data>
-  <data name="SA39EDA1B8C2275BF" xml:space="preserve">
-    <value>Activé, toutes les 10 minutes la barre donne aux nouvelles discussions ChatGPT (web, app Windows et mobile) et aux conversations locales de Codex (y compris celles des projets) le titre « JJ/MM/AAAA - Thème - Sujet », généré par le modèle le plus léger de votre compte. Utilise la connexion de Codex, la même que pour le quota ; rien n'est conservé. Toutes les discussions pas encore au format sont concernées, récentes et anciennes (épinglées comprises), dès 3 minutes ; celles déjà au format ne sont jamais modifiées. Chaque passage automatique en renomme jusqu'à 30 ; « Renommer maintenant » les renomme toutes immédiatement.</value>
+  <data name="S9344CE45A4DE4EE0" xml:space="preserve">
+    <value>Chaque heure, la barre traite jusqu’à 5 conversations ChatGPT et Codex qui ont encore besoin d’un titre au format « JJ/MM/AAAA - Thème - Sujet ». Les requêtes au service sont espacées. Le traitement s’arrête si le service limite les requêtes. « Renommer maintenant » applique les mêmes limites.</value>
   </data>
   <data name="SF761708E8C232E38" xml:space="preserve">
     <value>{0} (pic : {1})</value>
+  </data>
+  <data name="S1CFBB40B5F2FFA02" xml:space="preserve">
+    <value>Prochaine tentative à partir de {0:g}.</value>
   </data>
 </root>

@@ -7,6 +7,11 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.9] - 2026-11-21 · compilação 20261121164149
+
+### Corrigido
+- O renomeador automático roda a cada hora, processa até cinco conversas por rodada e espaça os pedidos ao serviço. Ao receber HTTP 429, encerra a rodada e aguarda antes de tentar novamente.
+
 ## [2.1.8] - 2026-11-21 · compilação 20261121143015
 
 ### Corrigido

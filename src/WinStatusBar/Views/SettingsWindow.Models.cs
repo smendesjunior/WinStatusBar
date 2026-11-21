@@ -139,7 +139,7 @@ public sealed partial class SettingsWindow
         page.Children.Add(GroupTitle(Localization.T("Títulos dos chats do ChatGPT e do Codex")));
         page.Children.Add(Group(
             Toggle(Localization.T("Renomear chats automaticamente"),
-                Localization.T("Ligado, a cada 10 minutos a barra dá aos chats novos do ChatGPT (site, app do Windows e celular) e às conversas locais do Codex (inclusive as de projetos) o título \"DD/MM/AAAA - Tema - Assunto\", gerado pelo modelo mais leve da sua conta. Usa o login do Codex, o mesmo da cota; nada é guardado. Entram todos os chats ainda fora desse formato, novos e antigos (inclusive fixados), com pelo menos 3 minutos; os que já estão no formato nunca são alterados. Cada rodada automática renomeia até 30; \"Renomear agora\" renomeia todos na hora."),
+                Localization.T("A cada hora, a barra processa até 5 conversas do ChatGPT e do Codex que ainda precisam de um título no formato \"DD/MM/AAAA - Tema - Assunto\". Os pedidos ao serviço são espaçados. Se o serviço limitar as consultas, a rodada é interrompida. \"Renomear agora\" segue os mesmos limites."),
                 s => s.ChatGptAutoTitles, (s, v) => s.ChatGptAutoTitles = v)));
         var renameNow = BigButton("Renomear agora", accent: false);
         var renameRing = new ProgressRing { IsActive = false, Width = 22, Height = 22, Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Center };
@@ -155,8 +155,11 @@ public sealed partial class SettingsWindow
             try
             {
                 int n = await Task.Run(() => titles.RunOnceAsync());
-                renameStatus.Text = n == 0 ? Localization.T("Nenhum chat precisava de novo título.")
-                    : Localization.F("{0} chat(s) renomeado(s).", new object?[] { n });
+                var retryAt = titles.RetryAtUtc;
+                string count = Localization.F("{0} chat(s) renomeado(s).", new object?[] { n });
+                renameStatus.Text = retryAt > DateTimeOffset.UtcNow
+                    ? $"{count} {Localization.F("Próxima tentativa a partir de {0:g}.", retryAt.ToLocalTime())}"
+                    : count;
             }
             catch (Exception ex) { renameStatus.Text = Localization.T("Não foi possível renomear: ") + ex.Message; }
             finally { renameNow.IsEnabled = true; renameRing.IsActive = false; renameRing.Visibility = Visibility.Collapsed; }

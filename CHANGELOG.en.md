@@ -7,6 +7,11 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.9] - 2026-11-21 · build 20261121164149
+
+### Fixed
+- Automatic title updates now run hourly, process up to five conversations per round, and space out service requests. HTTP 429 ends the current round and postpones further attempts.
+
 ## [2.1.8] - 2026-11-21 · build 20261121143015
 
 ### Fixed

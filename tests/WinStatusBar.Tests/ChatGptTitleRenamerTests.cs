@@ -6,6 +6,27 @@ namespace WinStatusBar.Tests;
 
 public class ChatGptTitleRenamerTests
 {
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 4)]
+    [InlineData(4, 4)]
+    public void RateLimitWaitIncreasesUpToFourHours(int attempt, int hours)
+    {
+        Assert.Equal(Now.AddHours(hours), ChatGptTitleRenamer.RateLimitRetryAt(Now, null, attempt));
+    }
+
+    [Fact]
+    public void RateLimitWaitHonorsLongerServerDelayAndDate()
+    {
+        Assert.Equal(Now.AddHours(3), ChatGptTitleRenamer.RateLimitRetryAt(
+            Now, new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromHours(3)), 1));
+        Assert.Equal(Now.AddHours(7), ChatGptTitleRenamer.RateLimitRetryAt(
+            Now, new System.Net.Http.Headers.RetryConditionHeaderValue(Now.AddHours(7)), 1));
+        Assert.Equal(Now.AddHours(1), ChatGptTitleRenamer.RateLimitRetryAt(
+            Now, new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(30)), 1));
+    }
+
     private static readonly DateTimeOffset Now = new(2026, 11, 15, 22, 0, 0, TimeSpan.Zero);
 
     [Theory]

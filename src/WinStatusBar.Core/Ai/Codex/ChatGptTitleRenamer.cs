@@ -15,7 +15,9 @@ namespace WinStatusBar.Core.Ai.Codex;
 /// </summary>
 public sealed class ChatGptTitleRenamer : IDisposable
 {
-    public static readonly TimeSpan Interval = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan Interval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan RequestSpacing = TimeSpan.FromSeconds(5);
+    private const int RoundLimit = 5;
     private const string Api = "https://chatgpt.com/backend-api";
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
 
@@ -24,8 +26,13 @@ public sealed class ChatGptTitleRenamer : IDisposable
     private readonly Action<string> _log;
     private readonly HashSet<string> _done = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _failures = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, DateTimeOffset> _deferredReads = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private CancellationTokenSource? _cts;
+    private DateTimeOffset _nextRequestUtc;
+    private int _consecutiveRateLimits;
+
+    private sealed class RenameRateLimitedException : Exception { }
 
     /// <param name="enabled">Opção ligada nas Configurações.</param>
     /// <param name="blocked">Cota do Codex esgotada: a rodada espera.</param>
@@ -34,6 +41,7 @@ public sealed class ChatGptTitleRenamer : IDisposable
 
     public int RenamedCount { get; private set; }
     public DateTimeOffset? LastRun { get; private set; }
+    public DateTimeOffset RetryAtUtc { get; private set; }
 
     public void Start()
     {
@@ -42,14 +50,12 @@ public sealed class ChatGptTitleRenamer : IDisposable
         var ct = _cts.Token;
         _ = Task.Run(async () =>
         {
-            try { await Task.Delay(TimeSpan.FromMinutes(1), ct); } catch { return; }
             using var timer = new PeriodicTimer(Interval);
-            do
+            while (await SafeTick(timer, ct))
             {
                 if (_enabled() && !Presence.Away && !_blocked())
-                    try { await RunOnceAsync(ct, AutoRoundLimit); } catch (OperationCanceledException) { return; } catch (Exception ex) { _log("Títulos do ChatGPT: " + ex.Message); }
+                    try { await RunOnceAsync(ct); } catch (OperationCanceledException) { return; } catch (Exception ex) { _log("Títulos do ChatGPT: " + ex.Message); }
             }
-            while (await SafeTick(timer, ct));
         }, ct);
     }
 
@@ -58,31 +64,33 @@ public sealed class ChatGptTitleRenamer : IDisposable
     public void Stop() { try { _cts?.Cancel(); } catch { } _cts = null; }
     public void Dispose() => Stop();
 
-    /// <summary>Máximo de títulos gerados numa rodada automática; o resto fica para as próximas (o botão não tem limite).</summary>
-    public const int AutoRoundLimit = 30;
-
-    /// <summary>
-    /// Uma rodada: percorre todos os chats do ChatGPT e todas as conversas do Codex e renomeia os que estão fora do
-    /// formato, até <paramref name="maxRenames"/>. Devolve quantos renomeou.
-    /// </summary>
-    public async Task<int> RunOnceAsync(CancellationToken ct = default, int maxRenames = int.MaxValue)
+    /// <summary>Processa até cinco conversas por rodada, compartilhadas entre ChatGPT e Codex.</summary>
+    public async Task<int> RunOnceAsync(CancellationToken ct = default)
     {
-        await _gate.WaitAsync(ct); // "Renomear agora" durante uma rodada automática espera ela acabar
+        await _gate.WaitAsync(ct);
         try
         {
+            if (DateTimeOffset.UtcNow < RetryAtUtc || ReadAuth() is not { } auth) return 0;
             LastRun = DateTimeOffset.Now;
-            if (ReadAuth() is not { } auth) return 0;
-            int budget = maxRenames;
-            int renamed = await RenameChatGptAsync(auth, () => budget, () => budget--, ct);
-            renamed += await RenameCodexAsync(auth, () => budget, () => budget--, ct);
-            return renamed;
+            int initialCount = RenamedCount;
+            int budget = RoundLimit;
+            try
+            {
+                await RenameChatGptAsync(auth, () => budget, () => budget--, ct);
+                await RenameCodexAsync(auth, () => budget, () => budget--, ct);
+                _consecutiveRateLimits = 0;
+            }
+            catch (RenameRateLimitedException)
+            {
+                _log($"Títulos do ChatGPT: rodada interrompida por HTTP 429. Próxima tentativa a partir de {RetryAtUtc.ToLocalTime():g}.");
+            }
+            return RenamedCount - initialCount;
         }
         finally { _gate.Release(); }
     }
 
-    private async Task<int> RenameChatGptAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
+    private async Task RenameChatGptAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
     {
-        int renamed = 0;
         var now = DateTimeOffset.UtcNow;
         var pending = new List<(string Id, string? Title, DateTimeOffset Created)>();
         for (int page = 0, offset = 0; page < 50; page++)
@@ -97,6 +105,8 @@ public sealed class ChatGptTitleRenamer : IDisposable
                 if (id is null || _done.Contains(id) || _failures.GetValueOrDefault(id) >= 3) continue;
                 var created = Time(item, "create_time");
                 if (IsFormatted(title)) { _done.Add(id); continue; }
+                if (_deferredReads.GetValueOrDefault(id) > now) continue;
+                _deferredReads.Remove(id);
                 if (ShouldRename(title, created, now)) pending.Add((id, title, created!.Value));
             }
             offset += count;
@@ -105,19 +115,23 @@ public sealed class ChatGptTitleRenamer : IDisposable
         foreach (var (id, title, created) in pending)
         {
             if (left() <= 0) break;
+            spend();
             using var conv = await SendAsync(auth, HttpMethod.Get, $"{Api}/conversation/{id}", null, ct);
             string excerpt = conv is null ? "" : Excerpt(conv.RootElement);
-            if (excerpt.Length < 20) continue; // conversa ainda vazia: tenta na próxima rodada
-            spend();
+            if (excerpt.Length < 20)
+            {
+                // Deixa as outras conversas avançarem e volta à leitura em um dia.
+                _deferredReads[id] = now.AddDays(1);
+                continue;
+            }
             string? subject = await GenerateAsync(auth, excerpt, ct);
             if (subject is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
             string newTitle = Compose(created, subject);
             using var ok = await SendAsync(auth, HttpMethod.Patch, $"{Api}/conversation/{id}", new JsonObject { ["title"] = newTitle }.ToJsonString(), ct);
             if (ok is null) { _failures[id] = _failures.GetValueOrDefault(id) + 1; continue; }
-            _done.Add(id); renamed++; RenamedCount++;
+            _done.Add(id); RenamedCount++;
             _log($"Títulos do ChatGPT: «{title}» → «{newTitle}»");
         }
-        return renamed;
     }
 
     /// <summary>
@@ -125,10 +139,9 @@ public sealed class ChatGptTitleRenamer : IDisposable
     /// oficial do Codex (thread/list e thread/name/set), nunca editando os arquivos. Subagentes, exec e conversas da
     /// barra ficam de fora.
     /// </summary>
-    private async Task<int> RenameCodexAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
+    private async Task RenameCodexAsync(Auth auth, Func<int> left, Action spend, CancellationToken ct)
     {
-        if (left() <= 0 || CodexAppServerClient.FindCodexExecutable() is null) return 0;
-        int renamed = 0;
+        if (left() <= 0 || CodexAppServerClient.FindCodexExecutable() is null) return;
         try
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(30));
@@ -167,13 +180,12 @@ public sealed class ChatGptTitleRenamer : IDisposable
                 if (subject is null) { _failures[key] = _failures.GetValueOrDefault(key) + 1; continue; }
                 string newTitle = Compose(created, subject);
                 await rpc.CallAsync("thread/name/set", new JsonObject { ["threadId"] = id, ["name"] = newTitle }, timeout.Token);
-                _done.Add(key); renamed++; RenamedCount++;
+                _done.Add(key); RenamedCount++;
                 _log($"Títulos do Codex: «{title}» → «{newTitle}»");
             }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-        catch (Exception ex) { _log("Títulos do Codex: " + ex.Message); }
-        return renamed;
+        catch (Exception ex) when (ex is not RenameRateLimitedException) { _log("Títulos do Codex: " + ex.Message); }
     }
 
     // ------------------------------------------------------------------ regras (testadas)
@@ -261,10 +273,30 @@ public sealed class ChatGptTitleRenamer : IDisposable
         catch { return null; }
     }
 
+    internal static DateTimeOffset RateLimitRetryAt(DateTimeOffset now, RetryConditionHeaderValue? retryAfter, int consecutiveRateLimits)
+    {
+        var serverDeadline = retryAfter?.Date ?? now + (retryAfter?.Delta ?? TimeSpan.Zero);
+        var fallbackDeadline = now + TimeSpan.FromHours(1 << Math.Clamp(consecutiveRateLimits - 1, 0, 2));
+        return serverDeadline > fallbackDeadline ? serverDeadline : fallbackDeadline;
+    }
+
+    private async Task<HttpResponseMessage> SendPacedAsync(HttpRequestMessage request, HttpCompletionOption completion, CancellationToken ct)
+    {
+        var delay = _nextRequestUtc - DateTimeOffset.UtcNow;
+        if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
+        _nextRequestUtc = DateTimeOffset.UtcNow + RequestSpacing;
+        var response = await Http.SendAsync(request, completion, ct);
+        if (response.StatusCode != HttpStatusCode.TooManyRequests) return response;
+
+        using (response)
+            RetryAtUtc = RateLimitRetryAt(DateTimeOffset.UtcNow, response.Headers.RetryAfter, ++_consecutiveRateLimits);
+        throw new RenameRateLimitedException();
+    }
+
     private async Task<JsonDocument?> SendAsync(Auth auth, HttpMethod method, string url, string? json, CancellationToken ct)
     {
         using var req = Request(auth, method, url, json);
-        using var resp = await Http.SendAsync(req, ct);
+        using var resp = await SendPacedAsync(req, HttpCompletionOption.ResponseContentRead, ct);
         if (!resp.IsSuccessStatusCode)
         {
             _log($"Títulos do ChatGPT: {method} {new Uri(url).AbsolutePath} → HTTP {(int)resp.StatusCode}"
@@ -301,7 +333,7 @@ public sealed class ChatGptTitleRenamer : IDisposable
             }),
         };
         using var req = Request(auth, HttpMethod.Post, $"{Api}/codex/responses", body.ToJsonString());
-        using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        using var resp = await SendPacedAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         if (!resp.IsSuccessStatusCode) { _log($"Títulos do ChatGPT: título com {auth.Model} → HTTP {(int)resp.StatusCode}"); return null; }
         var sb = new StringBuilder();
         using var reader = new StreamReader(await resp.Content.ReadAsStreamAsync(ct));
