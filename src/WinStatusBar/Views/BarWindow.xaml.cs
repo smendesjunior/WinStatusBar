@@ -875,14 +875,22 @@ public sealed partial class BarWindow : Window
                     host.Children.Add(Row("Créditos de IA", 100.0 * (c.Total - c.Remaining) / c.Total, $"{c.Remaining} de {c.Total} créditos restantes · recarregados no início de cada mês"));
                     host.Children.Add(Views.Panels.PanelKit.Caption($"Lido às {c.Updated.LocalDateTime:HH:mm} em account.microsoft.com, com o login do Copilot da barra. Atualiza a cada 5 min.", 12));
                 }
+                else if (c is { SignedIn: false })
+                    host.Children.Add(Views.Panels.PanelKit.Caption("A página de créditos da Microsoft pediu para entrar na conta (às vezes com o código do autenticador), mesmo com o Copilot conectado. Clique em Entrar uma vez; depois a leitura volta sozinha.", 12));
                 else host.Children.Add(Views.Panels.PanelKit.Caption("Créditos ainda não lidos. Entre no Copilot em Configurações › IAs e contas › Microsoft Copilot.", 12));
             }
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
             var refresh = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Atualizar agora", FontSize = 12 });
             refresh.Click += (_, _) => { if (id == "gemini") { GoogleUsageSession.ForceApi(); GoogleUsageSession.Refresh(); } else if (id == "qira") _ = QiraHubSession.RefreshQuotaAsync(); else if (id == "antigravity") _ = AntigravityQuotaSession.RefreshAsync(); else MicrosoftCreditsSession.Refresh(); };
+            Button? signIn = null;
+            if (id == "copilot" && MicrosoftCreditsSession.Current is { SignedIn: false })
+            {
+                signIn = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Entrar", FontSize = 12 });
+                signIn.Click += (_, _) => MicrosoftCreditsSession.ShowSignIn();
+            }
             var open = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Página oficial ↗", FontSize = 12 });
             open.Click += async (_, _) => await Windows.System.Launcher.LaunchUriAsync(new Uri(site));
-            buttons.Children.Add(refresh); if (site.Length > 0) buttons.Children.Add(open);
+            if (signIn is not null) buttons.Children.Add(signIn); buttons.Children.Add(refresh); if (site.Length > 0) buttons.Children.Add(open);
             if (id == "gemini" && ApiKeyStore.Get(AdditionalAiAccounts.Gemini.Resource) is not null)
             {
                 var limits = WinStatusBar.Views.Panels.PanelKit.Small(new Button { Content = "Limites da API ↗", FontSize = 12 });

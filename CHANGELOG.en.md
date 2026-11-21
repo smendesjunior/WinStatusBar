@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.8] - 2026-11-21 · build 20261121143015
+
+### Fixed
+- Copilot credits on PCs where Copilot is signed in: the reading gave up after 5 s on the Microsoft sign-in page, before the automatic redirect finished. It now waits up to 25 s and only treats it as signed out when the page asks for a password, code or account.
+- When the credits page asks to sign in again, the Copilot panel shows a notice and a Sign in button that opens the page to sign in once. Before, there was no way to do this from the bar.
+
 ## [2.1.7] - 2026-11-21 · build 20261121141458
 
 ### Fixed

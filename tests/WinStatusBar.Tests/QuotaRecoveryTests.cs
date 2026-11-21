@@ -53,3 +53,15 @@ public class QuotaRecoveryTests
         Assert.True(MicrosoftCreditsText.ShouldRefresh(true, now.AddMinutes(-6), now, TimeSpan.FromMinutes(5), hasProfile: true));
     }
 }
+
+public class CopilotSignInPageTests
+{
+    [Theory]
+    [InlineData("s@outlook.com\nDigite o código gerado pelo aplicativo autenticador\nCódigo\nAvançar", true)]
+    [InlineData("Entrar\nE-mail, telefone ou Skype\nAvançar", true)]
+    [InlineData("Enter your password\nSign in", true)]
+    [InlineData("", false)]
+    [InlineData("Aguarde\nRedirecionando…", false)]
+    public void TellsARealSignInPromptFromASilentRedirect(string text, bool asks)
+        => Assert.Equal(asks, WinStatusBar.Core.Ai.MicrosoftCreditsText.AsksForSignIn(text));
+}

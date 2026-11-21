@@ -31,4 +31,8 @@ public static class MicrosoftCreditsText
             false => hasProfile && (updated is null || now - updated >= TimeSpan.FromMinutes(30)),
             null => hasProfile,
         };
+
+    /// <summary>A página de login da Microsoft pede ação da pessoa (senha, código, conta), e não só redireciona.</summary>
+    public static bool AsksForSignIn(string text)
+        => Regex.IsMatch(text, @"digite (o código|sua senha|a senha)|insira (o código|sua senha)|enter (the code|your password|password)|código gerado|authenticator app|aplicativo autenticador|escolha uma conta|pick an account|entrar com (a|sua) conta|^\s*(entrar|sign in)\s*$|e-mail, telefone ou skype|email, phone, or skype", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 }

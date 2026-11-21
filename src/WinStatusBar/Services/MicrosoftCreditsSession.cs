@@ -166,7 +166,10 @@ internal static class MicrosoftCreditsSession
                 string raw = await web.CoreWebView2.ExecuteScriptAsync("document.body ? document.body.innerText : ''");
                 text = JsonSerializer.Deserialize<string>(raw) ?? "";
                 if (Regex.IsMatch(text, @"\d+\s*/\s*\d+\s*(créditos|credits)|(Gerenciar|Manage)\s*:", RegexOptions.IgnoreCase)) break;
-                if (web.CoreWebView2.Source.Contains("login.", StringComparison.OrdinalIgnoreCase) && i > 10) break;
+                // Na página de login: o redirecionamento silencioso (conta já conectada no Copilot) pode levar mais de 5 s;
+                // só desiste quando a página pede de fato senha, código ou conta, ou depois de 25 s.
+                if (web.CoreWebView2.Source.Contains("login.", StringComparison.OrdinalIgnoreCase)
+                    && (i > 50 || i > 6 && WinStatusBar.Core.Ai.MicrosoftCreditsText.AsksForSignIn(text))) break;
             }
             // Os créditos ficam na página "Gerenciar" da assinatura, num bloco recolhido: abre a página e expande o bloco.
             string? plan = WinStatusBar.Core.Ai.MicrosoftCreditsText.Parse(text)?.Plan;

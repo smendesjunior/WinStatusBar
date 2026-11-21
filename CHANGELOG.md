@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.8] - 2026-11-21 · compilação 20261121143015
+
+### Corrigido
+- Créditos do Copilot em PCs com o Copilot conectado: a leitura desistia depois de 5 s na página de login da Microsoft, antes de o redirecionamento automático terminar. Agora espera até 25 s e só considera "sem login" quando a página pede senha, código ou conta.
+- Quando a página de créditos pede login de novo, o painel do Copilot mostra o aviso e o botão Entrar, que abre a página para entrar uma vez. Antes não havia como fazer esse login pela barra.
+
 ## [2.1.7] - 2026-11-21 · compilação 20261121141458
 
 ### Corrigido
