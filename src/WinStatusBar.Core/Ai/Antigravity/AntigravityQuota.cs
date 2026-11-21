@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -31,6 +31,14 @@ public static class AntigravityQuota
     {
         try { Directory.CreateDirectory(Path.GetDirectoryName(CacheFile)!); File.WriteAllText(CacheFile, JsonSerializer.Serialize(snapshot)); } catch { }
     }
+
+    /// <summary>Com login: a cada 30 min (o limite é semanal). Sem login: a cada 3 min, para reconhecer logo o login
+    /// feito no agy (antes só relia em 30 min e a leitura "sem login" sobrevivia ao reinício).</summary>
+    public static TimeSpan RefreshInterval(Snapshot? snapshot)
+        => snapshot is { SignedIn: false } ? TimeSpan.FromMinutes(3) : TimeSpan.FromMinutes(30);
+
+    public static bool IsDue(Snapshot? snapshot, DateTimeOffset now)
+        => snapshot is null || now - snapshot.Updated >= RefreshInterval(snapshot);
 
     // ---------------------------------------------------------------- texto da tela
     private static readonly Regex Csi = new(@"\x1b\[[0-9;?<>=]*[ -/]*[@-~]", RegexOptions.Compiled);

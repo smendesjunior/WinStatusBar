@@ -7,6 +7,13 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.7] - 2026-11-21 · build 20261121141458
+
+### Fixed
+- Claude quota stuck for almost an hour: after a rate limit (HTTP 429) the wait doubled up to 60 min and survived restarting the bar. It now stays between 5 and 15 min.
+- Copilot quota: when Microsoft asked to sign in again (for example, with an authenticator code), the bar stopped checking for good. It now retries every 30 min and recovers on its own after signing in.
+- Antigravity sign-in not recognized: after a "signed out" reading the bar only checked again 30 min later, even after a restart. It now checks every 3 min, always silently, without opening browser tabs.
+
 ## [2.1.6] - 2026-11-21 · build 20261121140123
 
 ### Fixed

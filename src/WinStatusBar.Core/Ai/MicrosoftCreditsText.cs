@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace WinStatusBar.Core.Ai;
 
@@ -18,4 +18,17 @@ public static class MicrosoftCreditsText
         return new(m.Success ? int.Parse(m.Groups[1].Value) : null, m.Success ? int.Parse(m.Groups[2].Value) : null,
             m.Success && used.Success ? int.Parse(used.Groups[1].Value) : null, plan);
     }
+
+    /// <summary>
+    /// Nova leitura dos créditos? Com login: quando a última venceu o intervalo. Sem login mas com o perfil do navegador
+    /// gravado: a cada 30 min, para voltar sozinha depois que a pessoa entra de novo (a Microsoft às vezes pede o código
+    /// do autenticador e, antes, a barra parava de tentar para sempre).
+    /// </summary>
+    public static bool ShouldRefresh(bool? signedIn, DateTimeOffset? updated, DateTimeOffset now, TimeSpan interval, bool hasProfile)
+        => signedIn switch
+        {
+            true => updated is null || now - updated >= interval,
+            false => hasProfile && (updated is null || now - updated >= TimeSpan.FromMinutes(30)),
+            null => hasProfile,
+        };
 }

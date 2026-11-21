@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using WinStatusBar.Core.Ai.Antigravity;
 
@@ -18,21 +18,21 @@ internal static class AntigravityQuotaSession
 
     private static DispatcherQueue? _ui;
     private static DispatcherQueueTimer? _timer;
-    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(30);
 
     public static void Install(DispatcherQueue ui)
     {
         _ui = ui;
         _timer = ui.CreateTimer();
-        _timer.Interval = Interval;
-        // Com a tela apagada ou a sessão bloqueada não lê; ao voltar, lê se a última leitura venceu.
-        _timer.Tick += (_, _) => { if (!Core.Presence.Away) _ = RefreshAsync(); };
+        _timer.Interval = TimeSpan.FromMinutes(1);
+        // Com a tela apagada ou a sessão bloqueada não lê; ao voltar, lê se a última leitura venceu (30 min com login,
+        // 3 min sem login). A leitura é sempre silenciosa (agy sem navegador, console invisível).
+        _timer.Tick += (_, _) => { if (!Core.Presence.Away && AntigravityQuota.IsDue(Current, DateTimeOffset.Now)) _ = RefreshAsync(); };
         Core.Presence.Changed += away =>
         {
-            if (!away) _ui?.TryEnqueue(() => { if (Current is null || DateTimeOffset.Now - Current.Updated >= Interval) _ = RefreshAsync(); });
+            if (!away) _ui?.TryEnqueue(() => { if (AntigravityQuota.IsDue(Current, DateTimeOffset.Now)) _ = RefreshAsync(); });
         };
         _timer.Start();
-        if (Installed && (Current is null || DateTimeOffset.Now - Current.Updated >= Interval)) _ = RefreshAsync();
+        if (Installed && AntigravityQuota.IsDue(Current, DateTimeOffset.Now)) _ = RefreshAsync();
     }
 
     public static void Stop() { _timer?.Stop(); _ui = null; }

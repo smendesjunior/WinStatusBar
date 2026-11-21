@@ -7,6 +7,13 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.7] - 2026-11-21 · compilação 20261121141458
+
+### Corrigido
+- Cota do Claude parada por quase uma hora: depois de um bloqueio de consultas (HTTP 429), a espera dobrava até 60 min e continuava depois de reabrir a barra. Agora fica entre 5 e 15 min.
+- Cota do Copilot: quando a Microsoft pede para entrar de novo (por exemplo, com o código do autenticador), a barra parava de consultar para sempre. Agora tenta de novo a cada 30 min e volta sozinha depois do login.
+- Login do Antigravity não reconhecido: com a leitura "sem login", a barra só conferia de novo em 30 min, inclusive depois de reiniciar. Agora confere a cada 3 min, sempre em silêncio, sem abrir abas.
+
 ## [2.1.6] - 2026-11-21 · compilação 20261121140123
 
 ### Corrigido

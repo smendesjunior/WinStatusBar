@@ -35,11 +35,25 @@ public sealed class ClaudeCodeProvider : IAiQuotaProvider, IAgentActivityProvide
             if (NextQueryFile is { } f && File.Exists(f) && long.TryParse(File.ReadAllText(f), out var s))
             {
                 var next = DateTimeOffset.FromUnixTimeSeconds(s);
-                if (next > _time.GetUtcNow()) { NextQuotaQuery = next; _rateLimited = true; _consecutiveLimits = 1; }
+                var now = _time.GetUtcNow();
+                // Esperas longas gravadas por versões antigas (até 60 min) não seguram a cota parada depois de reabrir.
+                if (next > now + MaxRateLimitWait) next = now + MaxRateLimitWait;
+                if (next > now) { NextQuotaQuery = next; _rateLimited = true; _consecutiveLimits = 1; }
             }
         }
         catch { }
     }
+    /// <summary>Espera máxima depois de um HTTP 429. Antes dobrava até 60 min e a cota ficava parada por quase uma hora
+    /// mesmo com o serviço já liberado.</summary>
+    internal static readonly TimeSpan MaxRateLimitWait = TimeSpan.FromMinutes(15);
+
+    internal static TimeSpan RateLimitWait(int consecutiveLimits, TimeSpan retryAfter)
+    {
+        var backoff = TimeSpan.FromMinutes(5 * Math.Max(1, consecutiveLimits));
+        var wait = retryAfter > backoff ? retryAfter : backoff;
+        return wait > MaxRateLimitWait ? MaxRateLimitWait : wait;
+    }
+
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     public DateTimeOffset? LastQuotaQuery { get; private set; }
     public DateTimeOffset NextQuotaQuery { get; private set; }
@@ -75,10 +89,9 @@ public sealed class ClaudeCodeProvider : IAiQuotaProvider, IAgentActivityProvide
             _rateLimited = result.RateLimited;
             if (result.RateLimited)
             {
-                // Bloqueio do serviço (HTTP 429): respeita o Retry-After e dobra a espera a cada bloqueio seguido (5 → 10 → 20 … até 60 min).
+                // Bloqueio do serviço (HTTP 429): espera 5 → 10 → 15 min (no máximo 15, mesmo com Retry-After maior).
                 _consecutiveLimits++;
-                var backoff = TimeSpan.FromMinutes(Math.Min(60, 5 * Math.Pow(2, _consecutiveLimits - 1)));
-                NextQuotaQuery = _time.GetUtcNow() + (result.RetryDelay > backoff ? result.RetryDelay : backoff);
+                NextQuotaQuery = _time.GetUtcNow() + RateLimitWait(_consecutiveLimits, result.RetryDelay);
                 SaveNextQuery(); // reabrir a barra não fura o bloqueio
             }
             else

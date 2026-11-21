@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -46,17 +46,20 @@ internal static class MicrosoftCreditsSession
         _timer = ui.CreateTimer();
         _timer.Interval = TimeSpan.FromMinutes(5);
         // Com a tela apagada ou a sessão bloqueada não abre o navegador oculto; ao acender, lê se a última leitura venceu.
-        _timer.Tick += (_, _) => { if (Current?.SignedIn == true && !Core.Presence.Away) Refresh(); };
+        _timer.Tick += (_, _) => { if (!Core.Presence.Away && Due(TimeSpan.Zero)) Refresh(); };
         Core.Presence.Changed += away =>
         {
-            if (!away) _ui?.TryEnqueue(() => { if (Current?.SignedIn == true && DateTimeOffset.Now - Current.Updated >= _interval) Refresh(); });
+            if (!away) _ui?.TryEnqueue(() => { if (Due(_interval)) Refresh(); });
         };
         _timer.Interval = _interval;
         _timer.Start();
         // Primeira leitura ao iniciar: com sessão gravada (cookies no perfil) mesmo sem leitura anterior.
-        bool profile = Directory.Exists(Path.Combine(Folder, "Profile"));
-        if (Current?.SignedIn == true ? DateTimeOffset.Now - Current.Updated > TimeSpan.FromMinutes(5) : profile) Refresh();
+        if (Due(TimeSpan.FromMinutes(5))) Refresh();
     }
+
+    private static bool Due(TimeSpan interval)
+        => WinStatusBar.Core.Ai.MicrosoftCreditsText.ShouldRefresh(Current?.SignedIn, Current?.Updated, DateTimeOffset.Now, interval,
+            Directory.Exists(Path.Combine(Folder, "Profile")));
 
     /// <summary>Saída da barra: para o timer e não abre mais a janela oculta (recriada depois do Exit, ela mantinha o processo vivo).</summary>
     public static void Stop() { _timer?.Stop(); _ui = null; }
