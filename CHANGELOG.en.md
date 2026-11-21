@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.5] - 2026-11-21 · build 20261121033326
+
+### Fixed
+- Antigravity quota checks no longer open sign-in tabs in the background. Manual sign-in remains available.
+- Keeping the mobile hotspot on disables the Windows idle timeout to prevent repeated shutdowns and restarts.
+
 ## [2.1.4] - 2026-11-18 · build 20261118225104
 
 - The model picker identifies the last available catalog after a refresh fails.

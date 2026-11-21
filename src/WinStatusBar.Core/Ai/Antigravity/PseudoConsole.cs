@@ -1,3 +1,4 @@
+using System.Collections;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -55,7 +56,8 @@ public sealed class PseudoConsole : IDisposable
     }
 
     /// <summary>Inicia <paramref name="commandLine"/> em <paramref name="workDir"/> num console de <paramref name="columns"/> × <paramref name="rows"/>.</summary>
-    public static PseudoConsole Start(string commandLine, string workDir, short columns = 160, short rows = 50)
+    public static PseudoConsole Start(string commandLine, string workDir, short columns = 160, short rows = 50,
+        IReadOnlyDictionary<string, string>? environmentOverrides = null)
     {
         if (!CreatePipe(out var inRead, out var inWrite, IntPtr.Zero, 0)) throw new Win32Exception();
         if (!CreatePipe(out var outRead, out var outWrite, IntPtr.Zero, 0)) { inRead.Dispose(); inWrite.Dispose(); throw new Win32Exception(); }
@@ -65,6 +67,7 @@ public sealed class PseudoConsole : IDisposable
         if (hr != 0) { inWrite.Dispose(); outRead.Dispose(); throw new Win32Exception(hr); }
 
         IntPtr attributes = IntPtr.Zero;
+        IntPtr environment = IntPtr.Zero;
         try
         {
             IntPtr size = IntPtr.Zero;
@@ -75,8 +78,18 @@ public sealed class PseudoConsole : IDisposable
                 throw new Win32Exception();
             var startup = new StartupInfoEx { lpAttributeList = attributes };
             startup.StartupInfo.cb = Marshal.SizeOf<StartupInfoEx>();
-            if (!CreateProcessW(null, new StringBuilder(commandLine), IntPtr.Zero, IntPtr.Zero, false, EXTENDED_STARTUPINFO_PRESENT,
-                    IntPtr.Zero, workDir, ref startup, out var info))
+            if (environmentOverrides is not null)
+            {
+                var variables = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                    variables[(string)entry.Key] = (string)entry.Value!;
+                foreach (var entry in environmentOverrides)
+                    variables[entry.Key] = entry.Value;
+                string block = string.Join('\0', variables.Select(entry => $"{entry.Key}={entry.Value}")) + "\0";
+                environment = Marshal.StringToHGlobalUni(block);
+            }
+            if (!CreateProcessW(null, new StringBuilder(commandLine), IntPtr.Zero, IntPtr.Zero, false,
+                    EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT, environment, workDir, ref startup, out var info))
                 throw new Win32Exception();
             CloseHandle(info.hThread);
             return new PseudoConsole(console, info.hProcess,
@@ -90,6 +103,7 @@ public sealed class PseudoConsole : IDisposable
         }
         finally
         {
+            if (environment != IntPtr.Zero) Marshal.FreeHGlobal(environment);
             if (attributes != IntPtr.Zero) { DeleteProcThreadAttributeList(attributes); Marshal.FreeHGlobal(attributes); }
         }
     }
@@ -107,6 +121,7 @@ public sealed class PseudoConsole : IDisposable
 
     // ---------------------------------------------------------------- Win32
     private const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
+    private const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
     private const int PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = 0x00020016;
 
     [StructLayout(LayoutKind.Sequential)] private struct Coord { public short X; public short Y; }

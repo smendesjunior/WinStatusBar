@@ -129,7 +129,11 @@ public static class AntigravityQuota
     {
         string work = AntigravityCli.WorkFolder();
         var clock = Stopwatch.StartNew();
-        using var console = PseudoConsole.Start($"\"{exe}\"", work);
+        // O modo sem navegador mantém o terminal interativo necessário para /usage.
+        using var console = PseudoConsole.Start($"\"{exe}\"", work, environmentOverrides: new Dictionary<string, string>
+        {
+            ["AGY_CLI_INTERACTIVE_HEADLESS"] = "1"
+        });
         bool trusted = false, asked = false;
         try
         {
@@ -140,10 +144,10 @@ public static class AntigravityQuota
                 Thread.Sleep(300);
                 string text = Clean(console.Output);
                 if (!trusted && text.Contains("Do you trust the contents of this project", StringComparison.OrdinalIgnoreCase)
-                    && text.Contains(work.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase) | text.Contains(work, StringComparison.OrdinalIgnoreCase))
+                    && (text.Contains(work.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase) || text.Contains(work, StringComparison.OrdinalIgnoreCase)))
                 { console.Write("\r"); trusted = true; continue; }
+                if (AsksForLogin(text)) return SignedOut();
                 if (text.Contains("for shortcuts", StringComparison.OrdinalIgnoreCase)) break;
-                if (AsksForLogin(text)) return new(null, null, [], DateTimeOffset.Now, SignedIn: false, Error: "o Antigravity está sem login");
                 if (console.HasExited) return Fail("o agy fechou antes de abrir", text);
                 if (clock.Elapsed > TimeSpan.FromSeconds(30)) return Fail("o agy não abriu em 30 s", text);
             }
@@ -161,6 +165,7 @@ public static class AntigravityQuota
                 ct.ThrowIfCancellationRequested();
                 Thread.Sleep(500);
                 string now = console.Output;
+                if (now.Length > panelFrom && AsksForLogin(Clean(now[panelFrom..]))) return SignedOut();
                 if (now.Length > panelFrom && Clean(now[panelFrom..]).Contains("Refreshes in", StringComparison.OrdinalIgnoreCase))
                 {
                     stable = now == last ? stable + 1 : 0;
@@ -174,10 +179,16 @@ public static class AntigravityQuota
         finally
         {
             // Fecha o painel e sai; o Dispose encerra o processo se ainda estiver aberto.
-            if (asked) { console.Write("\x1b"); Thread.Sleep(300); }
-            console.Write("/exit\r");
-            Thread.Sleep(500);
+            if (asked)
+            {
+                console.Write("\x1b");
+                Thread.Sleep(300);
+                console.Write("/exit\r");
+                Thread.Sleep(500);
+            }
         }
+
+        static Snapshot SignedOut() => new(null, null, [], DateTimeOffset.Now, SignedIn: false, Error: "o Antigravity está sem login");
 
         static Snapshot Fail(string why, string text)
         {

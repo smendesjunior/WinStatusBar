@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.5] - 2026-11-21 · compilação 20261121033326
+
+### Corrigido
+- A consulta de cota do Antigravity não abre abas de login em segundo plano. O botão Entrar continua disponível.
+- A opção de manter o hotspot ligado desativa a suspensão por inatividade do Windows para evitar desligamentos e reativações periódicos.
+
 ## [2.1.4] - 2026-11-18 · compilação 20261118225104
 
 - O seletor informa quando exibe o último catálogo disponível após uma falha de consulta.
