@@ -51,6 +51,7 @@ public sealed class ClaudeUsageClient : IDisposable
         {
             if (!File.Exists(_credentialsPath)) return new(null, global::WinStatusBar.Core.LocalizedText.T("Entre na sua conta pelo Claude Code para consultar as cotas."), interval);
             using var credentials = JsonDocument.Parse(await File.ReadAllTextAsync(_credentialsPath, ct));
+            // Login apagado pelo Claude Code (accessToken e refreshToken vazios): não chama "claude auth status" a cada 5 min.
             if (!credentials.RootElement.TryGetProperty("claudeAiOauth", out var oauth)
                 || !oauth.TryGetProperty("accessToken", out var access) || access.ValueKind != JsonValueKind.String
                 || string.IsNullOrWhiteSpace(access.GetString()))
@@ -62,6 +63,8 @@ public sealed class ClaudeUsageClient : IDisposable
             {
                 if (!_allowRefresh)
                 {
+                    if (!oauth.TryGetProperty("refreshToken", out var rt) || rt.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(rt.GetString()))
+                        return new(null, global::WinStatusBar.Core.LocalizedText.T("O login do Claude Code não está disponível. Entre novamente na sua conta."), interval);
                     // O próprio Claude Code renova (com a trava dele): "claude auth status" grava o login novo no arquivo.
                     string? fresh = await RenewWithCliAsync(ct);
                     if (fresh is null) return new(null, global::WinStatusBar.Core.LocalizedText.T("O login do Claude Code expirou. Abra o Claude Code para renovar a sessão."), interval);
@@ -123,10 +126,10 @@ public sealed class ClaudeUsageClient : IDisposable
             psi.ArgumentList.Add("auth"); psi.ArgumentList.Add("status");
             using var p = System.Diagnostics.Process.Start(psi);
             if (p is null) return null;
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            timeout.CancelAfter(TimeSpan.FromSeconds(45));
-            try { await p.WaitForExitAsync(timeout.Token); }
-            catch (OperationCanceledException) when (!ct.IsCancellationRequested) { try { p.Kill(true); } catch { } return null; }
+            // Nunca Kill: matar o Claude Code no meio da renovação perde o login novo e ele depois apaga o login do PC.
+            // Passado o tempo, a barra só para de esperar; o Claude termina e grava sozinho, e a próxima consulta lê o arquivo.
+            await ClaudeCredentials.LetExitAsync(p, TimeSpan.FromSeconds(90));
+            if (!p.HasExited) return null;
             using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(_credentialsPath, ct));
             if (doc.RootElement.TryGetProperty("claudeAiOauth", out var o)
                 && o.TryGetProperty("expiresAt", out var e) && e.TryGetInt64(out long ms)

@@ -47,6 +47,12 @@ public static class ClaudeModelList
         await Refreshing.WaitAsync(ct);
         try
         {
+            // Com o login vencendo, abrir o Claude Code faria ele renovar o login por conta da barra (inclusive na
+            // verificação automática do encaminhador do Codex, a cada 6 h). Usa a lista guardada; o próprio Claude renova
+            // quando a pessoa usar. Login apagado: a conta aparece como desconectada, sem abrir nada.
+            var login = ClaudeCredentials.State();
+            if (login is ClaudeCredentials.LoginState.NeedsRefresh or ClaudeCredentials.LoginState.SignedOut)
+                return Load() is { } saved ? new(saved.Models, login == ClaudeCredentials.LoginState.NeedsRefresh && saved.SignedIn) : null;
             var reading = await ReadFromCliAsync(exe, ct);
             if (reading is not { Models.Count: > 0 }) return reading;
             try
@@ -96,7 +102,9 @@ public static class ClaudeModelList
             }
             return null;
         }
-        finally { try { proc.StandardInput.Close(); if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { } }
+        // Nunca Kill: morto no meio de uma renovação, o Claude Code perde o login novo e depois apaga o login do PC.
+        // Sem a entrada, ele sai sozinho em instantes; se demorar, termina por conta própria.
+        finally { await ClaudeCredentials.LetExitAsync(proc, TimeSpan.FromSeconds(30)); }
     }
 
     /// <summary>Conta conectada: "account" com e-mail ou assinatura; ou uma chave da API da Anthropic no ambiente.</summary>

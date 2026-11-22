@@ -7,6 +7,14 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.1.10] - 2026-11-22 · compilação 20261122102346
+
+### Corrigido
+- Login do Claude Code que caía sozinho (e com ele as cotas do Claude): a verificação automática de modelos do Codex e a renovação pela barra abriam o Claude Code escondido e o encerravam à força. Quando isso acontecia no meio de uma renovação do login, o código novo se perdia e o Claude Code apagava o login do PC no uso seguinte. Agora a barra nunca encerra o Claude Code à força: fecha a entrada e espera ele sair sozinho.
+- Com o login vencendo (até 6 min do fim, a mesma margem em que o Claude Code renova), a barra não abre mais o Claude Code para ler a lista de modelos: usa a lista guardada e deixa o próprio Claude renovar.
+- Login já apagado pelo Claude Code: a cota mostra "Entre novamente" sem abrir o Claude Code a cada 5 minutos.
+- Acompanhamento de tarefas: no máximo uma dedução do roteiro a cada 10 min somando todas as conversas, e nenhuma enquanto uma análise estiver rodando no Editor de Relatórios.
+
 ## [2.1.9] - 2026-11-21 · compilação 20261121164149
 
 ### Corrigido

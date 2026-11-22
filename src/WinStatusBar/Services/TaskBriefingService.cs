@@ -50,6 +50,24 @@ internal sealed class TaskBriefingService : IDisposable
     public event EventHandler? Changed;
     /// <summary>Verdadeiro para sessões cuja dedução por IA deve ficar parada (ex.: Codex com a cota bloqueada).</summary>
     public Func<AgentSession, bool>? SkipInference { get; set; }
+    /// <summary>Pastas das conversas conhecidas, para achar uma análise do Editor de Relatórios em andamento (<see cref="ReportAnalysisLock"/>).</summary>
+    public Func<IEnumerable<string?>>? KnownFolders { get; set; }
+    // A15: última dedução de qualquer conversa (intervalo global) e a conferência da trava da análise do Editor, guardada por 30 s.
+    private DateTimeOffset _lastAnyAttempt, _lockChecked;
+    private bool _analysisRunning;
+
+    private bool ReportAnalysisRunning(AgentSession session)
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (now - _lockChecked < TimeSpan.FromSeconds(30)) return _analysisRunning;
+        _lockChecked = now;
+        bool running = false;
+        try { running = ReportAnalysisLock.FindAlive((KnownFolders?.Invoke() ?? []).Prepend(session.ProjectDir)) is not null; }
+        catch (Exception ex) { App.Log("Acompanhamento: trava da análise do Editor de Relatórios: " + ex.Message); }
+        if (running != _analysisRunning)
+            App.Log(running ? "Acompanhamento: análise do Editor de Relatórios em andamento; a dedução do roteiro fica parada." : "Acompanhamento: análise do Editor de Relatórios encerrada; a dedução do roteiro volta.");
+        return _analysisRunning = running;
+    }
     private Briefing _current
     {
         get => _currentValue;
@@ -192,7 +210,15 @@ internal sealed class TaskBriefingService : IDisposable
         // Modo econômico: primeira dedução logo; depois, só com a conversa parada, 5 min entre chamadas e até 12 por conversa.
         if (!allowed || paused || !InferredPlan.ShouldInfer(DateTimeOffset.UtcNow, changed, entry.Inferred.Count > 0, entry.Calls,
                 entry.Attempt, entry.LastChange, session.State.IsActive(), _interval())) return;
-        entry.Attempt = DateTimeOffset.UtcNow;
+        // A15: no máximo uma dedução a cada 10 min somando todas as conversas, e nenhuma durante uma análise do Editor de Relatórios.
+        if (!InferredPlan.GlobalGapElapsed(DateTimeOffset.UtcNow, _lastAnyAttempt, _interval())) return;
+        if (ReportAnalysisRunning(session))
+        {
+            if (entry.Inferred.Count == 0)
+                _current = new(id, "", "A IA não registrou etapas; a dedução fica parada enquanto houver análise do Editor de Relatórios em andamento.", entry.UpdatedAt) { StartedAt = digest.StartedAt };
+            return;
+        }
+        entry.Attempt = _lastAnyAttempt = DateTimeOffset.UtcNow;
         entry.Calls++;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
         timeout.CancelAfter(TimeSpan.FromSeconds(180));

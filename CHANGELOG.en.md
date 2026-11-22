@@ -7,6 +7,14 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.1.10] - 2026-11-22 · build 20261122102346
+
+### Fixed
+- Claude Code sign-in that kept dropping (taking the Claude quotas with it): the Codex model check and the bar's renewal started a hidden Claude Code and force-killed it. When that happened mid sign-in renewal, the new token was lost and Claude Code wiped the sign-in on its next run. The bar never force-kills Claude Code anymore: it closes its input and lets it exit on its own.
+- While the sign-in is about to expire (within 6 minutes, the window in which Claude Code renews), the bar no longer starts Claude Code to read the model list: it uses the saved list and lets Claude renew by itself.
+- Sign-in already cleared by Claude Code: the quota shows "sign in again" without starting Claude Code every 5 minutes.
+- Task tracking: at most one plan inference every 10 minutes across all conversations, and none while an analysis is running in the report editor.
+
 ## [2.1.9] - 2026-11-21 · build 20261121164149
 
 ### Fixed

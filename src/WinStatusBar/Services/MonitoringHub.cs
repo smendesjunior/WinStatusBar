@@ -68,6 +68,8 @@ public sealed class MonitoringHub : IDisposable
     public NetworkSample? LastNetwork { get; private set; }
     public TimeSpan LastCycleCost { get; private set; }
     public AgentSession? Priority { get; private set; }
+    /// <summary>Pastas das conversas ativas ou recentes (cópia trocada inteira a cada atualização; lida pelo Acompanhamento).</summary>
+    internal volatile string?[] KnownProjectDirs = [];
     private TaskBriefingService? _briefing;
     internal TaskBriefingService Briefing => _briefing ??= new(() => Priority,
         () => _settings.Current.TaskBriefingEnabled, () => _settings.Current.TaskBriefingIntervalSeconds);
@@ -364,6 +366,7 @@ public sealed class MonitoringHub : IDisposable
         if (s.PinnedSession is { } pin && pin.StartsWith("ai:", StringComparison.Ordinal))
             priority = TaskActivityService.ChoosePriority(all.Where(x => x.Kind == AgentKind.Api && x.ProviderId == pin[3..]), "auto", null);
         Priority = priority;
+        KnownProjectDirs = candidates.Select(x => x.ProjectDir).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         BuildAgentOptions(all, s, IconOf, candidates, foreground);
         bool emphasizeAgent = priority?.State.IsActive() == true;
         // Fluent: camada translúcida (LayerFillColorDefault, no XAML; o acrílico de app ficava opaco porque não enxerga

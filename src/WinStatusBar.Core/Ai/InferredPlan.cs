@@ -59,6 +59,15 @@ public static partial class InferredPlan
     public static readonly TimeSpan BusyRefresh = TimeSpan.FromMinutes(15);
     /// <summary>Máximo de deduções por conversa.</summary>
     public const int MaxCallsPerConversation = 12;
+    /// <summary>
+    /// Intervalo mínimo entre deduções de conversas quaisquer (A15, 21/11/2026): numa análise longa do Editor de Relatórios cada etapa abre
+    /// uma conversa nova do Codex, e a "primeira dedução" de cada uma saía a cada 1-2 min (24 chamadas e 409 mil tokens em 40 min).
+    /// </summary>
+    public static readonly TimeSpan GlobalMinInterval = TimeSpan.FromMinutes(10);
+
+    /// <summary>Já passou o intervalo mínimo desde a última dedução, de qualquer conversa? Vale o maior entre 10 min e o configurado.</summary>
+    public static bool GlobalGapElapsed(DateTimeOffset now, DateTimeOffset lastAnyAttempt, int intervalSeconds = 0)
+        => now - lastAnyAttempt >= TimeSpan.FromSeconds(Math.Max(GlobalMinInterval.TotalSeconds, intervalSeconds));
 
     /// <summary>
     /// Pode deduzir agora? A primeira dedução sai logo (o donut precisa de etapas). As seguintes exigem o intervalo

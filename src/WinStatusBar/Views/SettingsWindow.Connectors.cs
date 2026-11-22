@@ -201,7 +201,8 @@ public sealed partial class SettingsWindow
         var stdout = p.StandardOutput.ReadToEndAsync(ct);
         var stderr = p.StandardError.ReadToEndAsync(ct);
         try { await p.WaitForExitAsync(ct); }
-        catch (OperationCanceledException) { try { p.Kill(true); } catch { } throw; }
+        // Sem Kill: a listagem termina sozinha, e matar o Claude Code no meio de uma renovação apaga o login do PC.
+        catch (OperationCanceledException) { throw; }
         string all = (await stdout) + "\n" + (await stderr);
         var lines = all.Split('\n').Select(l => l.TrimEnd('\r').Trim()).Where(l => l.Length > 0 && keep(l)).ToList();
         return lines.Count == 0 ? "Nenhum." : string.Join("\n", lines);

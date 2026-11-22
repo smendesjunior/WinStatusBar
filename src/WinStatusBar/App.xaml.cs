@@ -129,6 +129,7 @@ public partial class App : Application
         Hub.ChatGptChat.CodexThreadTitles = () => Hub.Codex.KnownTitles;
         Hub.ChatGptChat.CodexBlockedReason = () => Hub.Codex.Quota is { } q && q.IsBlocked(DateTimeOffset.Now) ? Core.Ai.Codex.CodexQuotaText.ShortReason(q, DateTimeOffset.Now) : null;
         Hub.Briefing.SkipInference = s => s.Kind == Core.Ai.AgentKind.Codex && Hub.Codex.Quota?.IsBlocked(DateTimeOffset.Now) == true;
+        Hub.Briefing.KnownFolders = () => Hub.KnownProjectDirs;
         // Só as opções antes das barras (quais IAs aparecem: o layout nasce certo). As leituras ligam depois da primeira
         // pintura, em StartDeferredServices.
         Hub.ApplySettings();

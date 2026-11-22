@@ -34,7 +34,7 @@ public class ClaudeUsageTests
     private static string Credentials(bool expired = false)
     {
         string path = Path.GetTempFileName();
-        File.WriteAllText(path, JsonSerializer.Serialize(new { claudeAiOauth = new { accessToken = "fake-test-token",
+        File.WriteAllText(path, JsonSerializer.Serialize(new { claudeAiOauth = new { accessToken = "fake-test-token", refreshToken = "fake-refresh",
             expiresAt = DateTimeOffset.UtcNow.AddHours(expired ? -1 : 1).ToUnixTimeMilliseconds() } }));
         return path;
     }
@@ -82,6 +82,32 @@ public class ClaudeUsageTests
             var result = await client.FetchAsync(default);
             Assert.Null(result.Message); Assert.Contains("expirou", result.Error);
             Assert.Equal(before, File.ReadAllText(path));
+        }
+        finally { File.Delete(path); }
+    }
+    [Fact] public async Task LoginClearedByClaudeCodeAsksToSignInWithoutStartingIt()
+    {
+        string path = Path.GetTempFileName();
+        File.WriteAllText(path, """{"claudeAiOauth":{"accessToken":"","refreshToken":"","expiresAt":0}}""");
+        string before = File.ReadAllText(path);
+        try
+        {
+            using var client = new ClaudeUsageClient(new HttpClient(new Handler(_ => throw new Exception("Must not query"))), path);
+            var result = await client.FetchAsync(default);
+            Assert.Null(result.Message); Assert.Contains("Entre novamente", result.Error);
+            Assert.Equal(before, File.ReadAllText(path));
+        }
+        finally { File.Delete(path); }
+    }
+    [Fact] public async Task ExpiredAccessWithoutRefreshTokenAsksToSignIn()
+    {
+        string path = Path.GetTempFileName();
+        File.WriteAllText(path, JsonSerializer.Serialize(new { claudeAiOauth = new { accessToken = "fake-test-token", expiresAt = 0 } }));
+        try
+        {
+            using var client = new ClaudeUsageClient(new HttpClient(new Handler(_ => throw new Exception("Must not query"))), path);
+            var result = await client.FetchAsync(default);
+            Assert.Null(result.Message); Assert.Contains("Entre novamente", result.Error);
         }
         finally { File.Delete(path); }
     }

@@ -156,6 +156,41 @@ public class TaskStepsTests
         Assert.DoesNotContain("ROTEIRO ANTERIOR", InferredPlan.Prompt("Pedido: x", false));
     }
 
+    [Fact] public void InferenceIsSpacedAcrossConversations()
+    {
+        var t0 = new DateTimeOffset(2026, 11, 21, 12, 0, 0, TimeSpan.Zero);
+        Assert.True(InferredPlan.GlobalGapElapsed(t0, default));                    // nenhuma dedução ainda
+        Assert.False(InferredPlan.GlobalGapElapsed(t0.AddMinutes(9), t0));          // conversa nova não fura os 10 min
+        Assert.True(InferredPlan.GlobalGapElapsed(t0.AddMinutes(10), t0));
+        Assert.False(InferredPlan.GlobalGapElapsed(t0.AddMinutes(20), t0, 1800));   // intervalo configurado maior vale
+        string service = RepoSource.Read("src", "WinStatusBar", "Services", "TaskBriefingService.cs");
+        int gap = service.IndexOf("if (!InferredPlan.GlobalGapElapsed(", StringComparison.Ordinal);
+        int editor = service.IndexOf("if (ReportAnalysisRunning(session))", StringComparison.Ordinal);
+        int infer = service.IndexOf("await InferAsync(", StringComparison.Ordinal);
+        Assert.True(gap >= 0 && gap < editor && editor < infer, $"ordem: gap={gap} editor={editor} infer={infer}");
+    }
+
+    [Fact] public void ReportAnalysisLockIsFoundFromASubfolderOnlyWhileItsProcessLives()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "wsb-editor-" + Guid.NewGuid().ToString("N"));
+        string work = Path.Combine(root, "a", "b");
+        string file = Path.Combine(root, ".kit-ai", "editor", "execucao.lock");
+        try
+        {
+            Directory.CreateDirectory(work);
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            Assert.Null(ReportAnalysisLock.FindAlive([null, "", work]));
+            using var me = System.Diagnostics.Process.GetCurrentProcess();
+            File.WriteAllText(file, $"{{\"pid\":{me.Id},\"provedor\":\"chatgpt\",\"inicio\":\"{DateTimeOffset.UtcNow:o}\",\"selo\":\"x\"}}");
+            Assert.Equal(file, ReportAnalysisLock.FindAlive([work]));
+            Assert.Equal(file, ReportAnalysisLock.FindAlive([root + "\\"]));
+            // Trava mais antiga que o processo dono do pid: o pid foi reaproveitado, a análise já acabou.
+            File.WriteAllText(file, $"{{\"pid\":{me.Id},\"inicio\":\"{me.StartTime.ToUniversalTime().AddHours(-1):o}\"}}");
+            Assert.Null(ReportAnalysisLock.FindAlive([work]));
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
     [Fact] public void InferredPlanCapsTheNumberOfSteps()
     {
         var steps = InferredPlan.Parse(string.Join("\n", Enumerable.Range(1, 25).Select(i => $"p|Etapa {i}")));
