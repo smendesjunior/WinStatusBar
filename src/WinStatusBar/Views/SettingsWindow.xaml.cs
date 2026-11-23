@@ -81,7 +81,7 @@ public sealed partial class SettingsWindow : Window
         _saveTimer.Tick += (_, _) => Save();
         _statusTimer = DispatcherQueue.CreateTimer();
         _statusTimer.Interval = TimeSpan.FromSeconds(2);
-        _statusTimer.Tick += (_, _) => { if (_visiblePage == "gpu") UpdateSensorStatus(); if (_visiblePage == "ai") UpdateClaudeQuotaText(); };
+        _statusTimer.Tick += (_, _) => { if (_visiblePage == "gpu") { UpdateSensorStatus(); UpdateHardwareSensorsStatus(); } if (_visiblePage == "ai") UpdateClaudeQuotaText(); };
         _statusTimer.Start();
         _app.Hub.CpuSampled += RefreshHardwareChoices;
         Closed += (_, _) => { _app.Hub.CpuSampled -= RefreshHardwareChoices; FlushPendingSave(); _saveTimer.Stop(); _statusTimer.Stop(); };
@@ -544,7 +544,7 @@ public sealed partial class SettingsWindow : Window
         if (tag == "clip") UpdateClipStats();
         // O diagnóstico é um grupo de "Sobre e suporte": o relatório é refeito ao entrar na página.
         if (tag == SettingsNavigation.Footer) RefreshDiagnostics();
-        if (tag == "gpu") { _persistentSensorEnabled = SensorPermissionTask.IsEnabled(); UpdateSensorStatus(); }
+        if (tag == "gpu") { _persistentSensorEnabled = SensorPermissionTask.IsEnabled(); UpdateSensorStatus(); UpdateHardwareSensorsStatus(); }
         if (tag == "ai") UpdateClaudeQuotaText();
         if (tag == "connections") _refreshPower?.Invoke();
         PageScroll.ChangeView(null, 0, null, true);

@@ -47,7 +47,8 @@ public class ClaudeCredentialsTests
     [Fact]
     public async Task LetExitAsync_leaves_a_slow_process_running_instead_of_killing_it()
     {
-        var psi = new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "ping.exe"), "-n 4 127.0.0.1")
+        // Processo lento que sai sozinho com código 0, sem depender de rede (o ICMP no loopback pode estar bloqueado).
+        var psi = new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"), "-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 3; exit 0\"")
         { RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
         using var p = System.Diagnostics.Process.Start(psi)!;
         try

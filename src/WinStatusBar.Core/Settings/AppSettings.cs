@@ -202,6 +202,11 @@ public sealed class AppSettings
     public static TimeSpan WebQuotaInterval(int minutes) => TimeSpan.FromMinutes(Math.Max(5, minutes));
 
     public bool ShowTemperatures { get; set; } = true;
+    /// <summary>
+    /// Sensores de hardware (LibreHardwareMonitor + driver PawnIO, pelo leitor protegido): quando ligada, as leituras dele
+    /// substituem as do Windows em CPU, RAM, GPU e temperaturas; o que ele não ler continua vindo do Windows.
+    /// </summary>
+    public bool HardwareSensors { get; set; }
 
     // GPU
     public string? GpuAdapter { get; set; }

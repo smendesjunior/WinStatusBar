@@ -4662,4 +4662,91 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S1CFBB40B5F2FFA02" xml:space="preserve">
     <value>次回の試行は {0:g} 以降です。</value>
   </data>
+  <data name="S7C4D4CDF7B4F1974" xml:space="preserve">
+    <value>PawnIO ドライバーをインストール…</value>
+  </data>
+  <data name="S7D512359AA16EF8C" xml:space="preserve">
+    <value>保護されたリーダーを許可…</value>
+  </data>
+  <data name="S14FD7264DD6C34D5" xml:space="preserve">
+    <value>ハードウェア センサー</value>
+  </data>
+  <data name="S99C92DD7CD0033DC" xml:space="preserve">
+    <value>LibreHardwareMonitor を使用</value>
+  </data>
+  <data name="SFAEA6B819610A746" xml:space="preserve">
+    <value>Lenovo Legion Toolkit と同様に CPU、メモリ、GPU、温度をハードウェアから直接読み取り、Windows の値を置き換えます。表示される周波数はコアの平均で、ピークは最速のコアです。読み取れない項目は引き続き Windows の値を使います。</value>
+  </data>
+  <data name="SF84B879E58E68F97" xml:space="preserve">
+    <value>保護されたリーダーを更新…</value>
+  </data>
+  <data name="S2B621988A6502644" xml:space="preserve">
+    <value>PawnIO ドライバーがあります ({0})。別のプログラムがインストールしたものも再利用します。</value>
+  </data>
+  <data name="S158962BEAF66785C" xml:space="preserve">
+    <value>バージョン不明</value>
+  </data>
+  <data name="SDA0D618EB74E8831" xml:space="preserve">
+    <value>PawnIO ドライバーがありません。CPU の周波数と温度は引き続き Windows の値を使います。</value>
+  </data>
+  <data name="S6A0A7C60D8AFF9E4" xml:space="preserve">
+    <value>Microsoft Store 版では利用できません</value>
+  </data>
+  <data name="S34B1BEDE9ABF2D67" xml:space="preserve">
+    <value>保護されたリーダーには管理者権限が必要ですが、Store 版では使用しません。</value>
+  </data>
+  <data name="S4E9105521E94149A" xml:space="preserve">
+    <value>オフ: Windows の値を使用中</value>
+  </data>
+  <data name="SA09F34C8E7EEC03B" xml:space="preserve">
+    <value>保護されたリーダーを待機中…</value>
+  </data>
+  <data name="SC85343BCD3ACF529" xml:space="preserve">
+    <value>保護されたリーダーが応答しませんでした。WinStatusBar の更新後は、LibreHardwareMonitor を含めるためにリーダーを更新してください。</value>
+  </data>
+  <data name="S77B1E076711D4A8E" xml:space="preserve">
+    <value>LibreHardwareMonitor は保護されたリーダーで動作し、管理者の許可は一度だけ必要です。</value>
+  </data>
+  <data name="SEC4084D1CABAD315" xml:space="preserve">
+    <value>CPU {0}（ピーク {1}）</value>
+  </data>
+  <data name="S499EE302F6884F27" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="S2F234E14F8905304" xml:space="preserve">
+    <value>有効ですが、このコンピューターでは値を読み取れません</value>
+  </data>
+  <data name="S2F1DBFB266E7B3A6" xml:space="preserve">
+    <value>プロセッサーがコアごとの周波数を報告しなかったため、バーは Windows の値を使います。</value>
+  </data>
+  <data name="SD3211E33294283C0" xml:space="preserve">
+    <value>PawnIO ドライバーをインストールしますか?</value>
+  </data>
+  <data name="SA84DB44E651B332B" xml:space="preserve">
+    <value>PawnIO は、LibreHardwareMonitor と Lenovo Legion Toolkit が CPU センサーの読み取りに使うドライバーです。公式の winget パッケージ (namazso.PawnIO) からドライバーのみをインストールします。Windows が管理者の許可を求めます。続行すると PawnIO のライセンスに同意したことになります。</value>
+  </data>
+  <data name="S8E8A1DD486769909" xml:space="preserve">
+    <value>インストール</value>
+  </data>
+  <data name="S2E16BA364A326059" xml:space="preserve">
+    <value>PawnIO ドライバーをインストールしています… Windows の許可を確認してください。</value>
+  </data>
+  <data name="S7C34CD2F21DFA864" xml:space="preserve">
+    <value>この Windows では winget を使用できません。公式ページから PawnIO をインストールしてください: https://github.com/namazso/PawnIO.Setup/releases</value>
+  </data>
+  <data name="S89B959CE62A92B3A" xml:space="preserve">
+    <value>winget を起動できませんでした。</value>
+  </data>
+  <data name="S2A0BA9549187B7FD" xml:space="preserve">
+    <value>PawnIO ドライバーをインストールしました。</value>
+  </data>
+  <data name="S664F9A0106DE4CD5" xml:space="preserve">
+    <value>PawnIO ドライバーはインストールされませんでした (コード {0})。何も変更されていません。</value>
+  </data>
+  <data name="S436DB5BA55F13C9C" xml:space="preserve">
+    <value>PawnIO ドライバーをインストールできませんでした: </value>
+  </data>
+  <data name="S06922897F97671AB" xml:space="preserve">
+    <value>LibreHardwareMonitor を起動しています…</value>
+  </data>
 </root>

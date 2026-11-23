@@ -7,6 +7,12 @@ Notable changes in each released version. The format follows [Keep a Changelog](
 
 The build number (UTC date and time) is what the updater compares; the version is for people.
 
+## [2.2.0] - 2026-11-23 · build 20261123115945
+
+### Added
+- Hardware › Hardware sensors: an option to read CPU, memory, GPU and temperatures with LibreHardwareMonitor and the PawnIO driver, the same pair Lenovo Legion Toolkit uses. When on, it replaces the Windows readings item by item: CPU load, average core clock and fastest core, memory in use, GPU load and memory, and temperatures. Anything it cannot read still comes from Windows. Off by default.
+- Turning it on checks what is missing: it reuses PawnIO if another program already installed it (for example Legion Toolkit), offers to install only the driver from the official winget package, and authorizes or renews the protected reader with one Windows prompt. LibreHardwareMonitor runs in the protected reader only while the option is on.
+
 ## [2.1.10] - 2026-11-22 · build 20261122102346
 
 ### Fixed

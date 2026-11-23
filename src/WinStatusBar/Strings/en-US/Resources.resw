@@ -4662,4 +4662,91 @@ Source: {0} · {1:HH:mm}</value>
   <data name="S1CFBB40B5F2FFA02" xml:space="preserve">
     <value>Next attempt at or after {0:g}.</value>
   </data>
+  <data name="S7C4D4CDF7B4F1974" xml:space="preserve">
+    <value>Install PawnIO driver…</value>
+  </data>
+  <data name="S7D512359AA16EF8C" xml:space="preserve">
+    <value>Authorize protected reader…</value>
+  </data>
+  <data name="S14FD7264DD6C34D5" xml:space="preserve">
+    <value>Hardware sensors</value>
+  </data>
+  <data name="S99C92DD7CD0033DC" xml:space="preserve">
+    <value>Use LibreHardwareMonitor</value>
+  </data>
+  <data name="SFAEA6B819610A746" xml:space="preserve">
+    <value>Reads CPU, memory, GPU and temperatures straight from the hardware, like Lenovo Legion Toolkit, and replaces the Windows readings. The frequency shown is the average of the cores, and the peak is the fastest core. Anything that cannot be read still comes from Windows.</value>
+  </data>
+  <data name="SF84B879E58E68F97" xml:space="preserve">
+    <value>Renew protected reader…</value>
+  </data>
+  <data name="S2B621988A6502644" xml:space="preserve">
+    <value>PawnIO driver present ({0}); it is reused if another program installed it.</value>
+  </data>
+  <data name="S158962BEAF66785C" xml:space="preserve">
+    <value>version not reported</value>
+  </data>
+  <data name="SDA0D618EB74E8831" xml:space="preserve">
+    <value>PawnIO driver missing: without it, CPU frequencies and temperature still come from Windows.</value>
+  </data>
+  <data name="S6A0A7C60D8AFF9E4" xml:space="preserve">
+    <value>Not available in the Microsoft Store version</value>
+  </data>
+  <data name="S34B1BEDE9ABF2D67" xml:space="preserve">
+    <value>The protected reader needs administrator permission, which the Store version does not use.</value>
+  </data>
+  <data name="S4E9105521E94149A" xml:space="preserve">
+    <value>Off: readings come from Windows</value>
+  </data>
+  <data name="SA09F34C8E7EEC03B" xml:space="preserve">
+    <value>Waiting for the protected reader…</value>
+  </data>
+  <data name="SC85343BCD3ACF529" xml:space="preserve">
+    <value>The protected reader did not respond. After a WinStatusBar update, renew it so it includes LibreHardwareMonitor.</value>
+  </data>
+  <data name="S77B1E076711D4A8E" xml:space="preserve">
+    <value>LibreHardwareMonitor runs in the protected reader, which needs administrator authorization only once.</value>
+  </data>
+  <data name="SEC4084D1CABAD315" xml:space="preserve">
+    <value>CPU {0} (peak {1})</value>
+  </data>
+  <data name="S499EE302F6884F27" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="S2F234E14F8905304" xml:space="preserve">
+    <value>Active, but no readings on this computer</value>
+  </data>
+  <data name="S2F1DBFB266E7B3A6" xml:space="preserve">
+    <value>The processor did not report per-core frequencies; the bar uses the Windows ones.</value>
+  </data>
+  <data name="SD3211E33294283C0" xml:space="preserve">
+    <value>Install the PawnIO driver?</value>
+  </data>
+  <data name="SA84DB44E651B332B" xml:space="preserve">
+    <value>PawnIO is the driver LibreHardwareMonitor and Lenovo Legion Toolkit use to read the CPU sensors. Only the driver is installed, from the official winget package (namazso.PawnIO). Windows will ask for administrator authorization. By continuing, you accept the PawnIO license.</value>
+  </data>
+  <data name="S8E8A1DD486769909" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="S2E16BA364A326059" xml:space="preserve">
+    <value>Installing the PawnIO driver… Confirm the Windows authorization.</value>
+  </data>
+  <data name="S7C34CD2F21DFA864" xml:space="preserve">
+    <value>winget is not available on this Windows. Install PawnIO from the official page: https://github.com/namazso/PawnIO.Setup/releases</value>
+  </data>
+  <data name="S89B959CE62A92B3A" xml:space="preserve">
+    <value>Could not start winget.</value>
+  </data>
+  <data name="S2A0BA9549187B7FD" xml:space="preserve">
+    <value>PawnIO driver installed.</value>
+  </data>
+  <data name="S664F9A0106DE4CD5" xml:space="preserve">
+    <value>The PawnIO driver was not installed (code {0}). Nothing was changed.</value>
+  </data>
+  <data name="S436DB5BA55F13C9C" xml:space="preserve">
+    <value>Could not install the PawnIO driver: </value>
+  </data>
+  <data name="S06922897F97671AB" xml:space="preserve">
+    <value>Starting LibreHardwareMonitor…</value>
+  </data>
 </root>

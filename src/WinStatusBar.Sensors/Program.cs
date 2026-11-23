@@ -25,8 +25,17 @@ try
                 try { trace = new NetworkTrace(); trace.Start(); net = NetUsagePipe.RunServerAsync(trace.Read, CancellationToken.None); }
                 catch { trace?.Dispose(); trace = null; } // sem o rastreamento, o sensor de temperatura continua
             }
+            // Sensores de hardware (LibreHardwareMonitor + PawnIO): o canal fica aberto, mas o LibreHardwareMonitor só
+            // é carregado quando a barra pede (opção "Sensores de hardware" ligada) e fecha após um minuto sem pedidos.
+            using var hwSingleton = new Mutex(true, "WinStatusBar.HardwareWorker." + SensorPermissionTask.CurrentSid, out bool hwFirst);
+            HardwareMonitor? hardware = null;
+            if (hwFirst && SensorPermissionTask.IsAdministrator())
+            {
+                hardware = new HardwareMonitor();
+                _ = HardwareSensorPipe.RunServerAsync(hardware.Read, CancellationToken.None);
+            }
             try { await CpuSensorPipe.RunWorkerAsync(CancellationToken.None); }
-            finally { trace?.Dispose(); }
+            finally { trace?.Dispose(); hardware?.Dispose(); }
             return 0;
         }
         default: return 2;

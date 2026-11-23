@@ -7,6 +7,12 @@ As mudanças relevantes de cada versão entregue. O formato segue o [Keep a Chan
 
 A compilação (data e hora UTC) é o que o atualizador compara. A versão é para as pessoas.
 
+## [2.2.0] - 2026-11-23 · compilação 20261123115945
+
+### Adicionado
+- Hardware › Sensores de hardware: opção para ler CPU, memória, GPU e temperaturas pelo LibreHardwareMonitor com o driver PawnIO, o mesmo conjunto do Lenovo Legion Toolkit. Ligada, ela substitui as leituras do Windows item por item: uso, frequência média dos núcleos e núcleo mais rápido da CPU, memória em uso, atividade e memória da GPU e as temperaturas. O que ela não ler continua vindo do Windows. Fica desligada por padrão.
+- Ao ligar, a barra confere o que falta: reaproveita o PawnIO se outro programa já o instalou (por exemplo, o Legion Toolkit), oferece instalar só o driver pelo pacote oficial do winget e autoriza ou renova o leitor protegido, com uma autorização do Windows. O LibreHardwareMonitor roda no leitor protegido, só enquanto a opção está ligada.
+
 ## [2.1.10] - 2026-11-22 · compilação 20261122102346
 
 ### Corrigido

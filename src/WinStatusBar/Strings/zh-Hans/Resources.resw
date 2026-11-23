@@ -4662,4 +4662,91 @@ Claude 5h {4} · 7d {5}</value>
   <data name="S1CFBB40B5F2FFA02" xml:space="preserve">
     <value>下次尝试时间不早于 {0:g}。</value>
   </data>
+  <data name="S7C4D4CDF7B4F1974" xml:space="preserve">
+    <value>安装 PawnIO 驱动程序…</value>
+  </data>
+  <data name="S7D512359AA16EF8C" xml:space="preserve">
+    <value>授权受保护的读取器…</value>
+  </data>
+  <data name="S14FD7264DD6C34D5" xml:space="preserve">
+    <value>硬件传感器</value>
+  </data>
+  <data name="S99C92DD7CD0033DC" xml:space="preserve">
+    <value>使用 LibreHardwareMonitor</value>
+  </data>
+  <data name="SFAEA6B819610A746" xml:space="preserve">
+    <value>像 Lenovo Legion Toolkit 一样直接从硬件读取 CPU、内存、GPU 和温度，并替换 Windows 的读数。显示的频率为各核心的平均值，峰值为最快的核心。无法读取的项目仍使用 Windows 的读数。</value>
+  </data>
+  <data name="SF84B879E58E68F97" xml:space="preserve">
+    <value>更新受保护的读取器…</value>
+  </data>
+  <data name="S2B621988A6502644" xml:space="preserve">
+    <value>已有 PawnIO 驱动程序（{0}）；若由其他程序安装，也会直接复用。</value>
+  </data>
+  <data name="S158962BEAF66785C" xml:space="preserve">
+    <value>版本未知</value>
+  </data>
+  <data name="SDA0D618EB74E8831" xml:space="preserve">
+    <value>缺少 PawnIO 驱动程序：没有它，CPU 频率和温度仍使用 Windows 的读数。</value>
+  </data>
+  <data name="S6A0A7C60D8AFF9E4" xml:space="preserve">
+    <value>Microsoft Store 版本不可用</value>
+  </data>
+  <data name="S34B1BEDE9ABF2D67" xml:space="preserve">
+    <value>受保护的读取器需要管理员权限，而 Store 版本不使用该权限。</value>
+  </data>
+  <data name="S4E9105521E94149A" xml:space="preserve">
+    <value>已关闭：读数来自 Windows</value>
+  </data>
+  <data name="SA09F34C8E7EEC03B" xml:space="preserve">
+    <value>正在等待受保护的读取器…</value>
+  </data>
+  <data name="SC85343BCD3ACF529" xml:space="preserve">
+    <value>受保护的读取器没有响应。WinStatusBar 更新后，请更新读取器，使其包含 LibreHardwareMonitor。</value>
+  </data>
+  <data name="S77B1E076711D4A8E" xml:space="preserve">
+    <value>LibreHardwareMonitor 在受保护的读取器中运行，只需授予一次管理员权限。</value>
+  </data>
+  <data name="SEC4084D1CABAD315" xml:space="preserve">
+    <value>CPU {0}（峰值 {1}）</value>
+  </data>
+  <data name="S499EE302F6884F27" xml:space="preserve">
+    <value>已启用</value>
+  </data>
+  <data name="S2F234E14F8905304" xml:space="preserve">
+    <value>已启用，但此电脑上没有读数</value>
+  </data>
+  <data name="S2F1DBFB266E7B3A6" xml:space="preserve">
+    <value>处理器未报告各核心频率；状态栏使用 Windows 的读数。</value>
+  </data>
+  <data name="SD3211E33294283C0" xml:space="preserve">
+    <value>安装 PawnIO 驱动程序？</value>
+  </data>
+  <data name="SA84DB44E651B332B" xml:space="preserve">
+    <value>PawnIO 是 LibreHardwareMonitor 和 Lenovo Legion Toolkit 用来读取 CPU 传感器的驱动程序。只会通过官方 winget 软件包（namazso.PawnIO）安装驱动程序。Windows 将请求管理员授权。继续即表示你接受 PawnIO 许可证。</value>
+  </data>
+  <data name="S8E8A1DD486769909" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="S2E16BA364A326059" xml:space="preserve">
+    <value>正在安装 PawnIO 驱动程序… 请确认 Windows 授权。</value>
+  </data>
+  <data name="S7C34CD2F21DFA864" xml:space="preserve">
+    <value>此 Windows 上没有 winget。请从官方页面安装 PawnIO：https://github.com/namazso/PawnIO.Setup/releases</value>
+  </data>
+  <data name="S89B959CE62A92B3A" xml:space="preserve">
+    <value>无法启动 winget。</value>
+  </data>
+  <data name="S2A0BA9549187B7FD" xml:space="preserve">
+    <value>已安装 PawnIO 驱动程序。</value>
+  </data>
+  <data name="S664F9A0106DE4CD5" xml:space="preserve">
+    <value>未安装 PawnIO 驱动程序（代码 {0}）。未做任何更改。</value>
+  </data>
+  <data name="S436DB5BA55F13C9C" xml:space="preserve">
+    <value>无法安装 PawnIO 驱动程序：</value>
+  </data>
+  <data name="S06922897F97671AB" xml:space="preserve">
+    <value>正在启动 LibreHardwareMonitor…</value>
+  </data>
 </root>

@@ -48,7 +48,7 @@ public static class CpuSensorPipe
     internal static bool IsFresh(CpuSensorReading value, DateTimeOffset now) => value.ObservedAt <= now.AddSeconds(5)
         && now - value.ObservedAt < TimeSpan.FromSeconds(30) && TemperatureProvider.ValidateTemperature(value.Celsius) is not null;
 
-    private static bool IsProtectedServer(NamedPipeClientStream pipe)
+    internal static bool IsProtectedServer(NamedPipeClientStream pipe)
     {
         if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle.DangerousGetHandle(), out uint pid)) return false;
         IntPtr process = OpenProcess(0x1000, false, pid);

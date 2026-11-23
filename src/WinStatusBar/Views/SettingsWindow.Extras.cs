@@ -25,6 +25,7 @@ public sealed partial class SettingsWindow
         _extrasLoading = true;
         BuildClipboardPage();
         BuildSensorSetup();
+        BuildHardwareSensors();
 
         // Barra e aparência: os botões de atalho ficam logo abaixo dos itens da barra (antes eram uma página à parte).
         ShortcutsHost.Children.Add(GroupTitle(global::WinStatusBar.Services.Localization.T("Botões de atalho")));

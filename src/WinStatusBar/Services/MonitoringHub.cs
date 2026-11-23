@@ -48,6 +48,10 @@ public sealed class MonitoringHub : IDisposable
     public ChatActivityProvider QiraChat { get; }
 
     public TemperatureSample? LastTemperature { get; private set; }
+    /// <summary>Última leitura do LibreHardwareMonitor (opção "Sensores de hardware"); nula com a opção desligada ou sem resposta.</summary>
+    public HardwareReading? LastHardware { get; private set; }
+    private int _hardwareFailures;
+    private readonly Stopwatch _hardwareRetry = Stopwatch.StartNew();
     public CpuSample? LastCpu { get; private set; }
     /// <summary>Histórico por processador lógico (painel da CPU), amostrado junto com a barra.</summary>
     public CpuCoreHistory CoreHistory { get; } = new();
@@ -219,6 +223,9 @@ public sealed class MonitoringHub : IDisposable
             var sw = Stopwatch.StartNew();
             try
             {
+                // Sensores de hardware: lidos antes das amostras do Windows e aplicados por cima delas, item por item.
+                HardwareReading? hw = s.HardwareSensors ? await ReadHardwareAsync(ct) : null;
+                LastHardware = hw;
                 CpuSample cpu; RamSample ram; NetworkSample net; GpuSample? gpu = null;
                 lock (_sampleGate)
                 {
@@ -229,6 +236,12 @@ public sealed class MonitoringHub : IDisposable
                     bool hardwareChanged = Interlocked.Exchange(ref _hardwareChanged, 0) != 0;
                     if (firstGpu || hardwareChanged || gpuClock.ElapsedMilliseconds >= s.GpuIntervalMs) { gpu = Gpu.Sample(); gpuClock.Restart(); firstGpu = false; }
                     if (hardwareChanged) { firstTemperature = true; LastTemperature = null; }
+                }
+                if (hw is not null)
+                {
+                    cpu = HardwareSensors.Apply(cpu, hw);
+                    ram = HardwareSensors.Apply(ram, hw);
+                    if (gpu is not null) gpu = HardwareSensors.Apply(gpu, hw);
                 }
                 LastCpu = cpu; LastRam = ram; LastNetwork = net; if (gpu is not null) LastGpu = gpu;
                 RecordHistories(ram, net, gpu);
@@ -257,6 +270,7 @@ public sealed class MonitoringHub : IDisposable
                     try
                     {
                         var t = s.ShowTemperatures ? await temperatures.SampleAsync(LastGpu?.Adapter, ct) : new TemperatureSample(null, null);
+                        if (s.ShowTemperatures) t = HardwareSensors.Apply(t, LastHardware, LastGpu?.Adapter);
                         LastTemperature = t;
                         _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(t, s.ShowTemperatures));
                     }
@@ -282,10 +296,25 @@ public sealed class MonitoringHub : IDisposable
         }
     }
 
+    /// <summary>
+    /// Leitura do leitor protegido. Uma falha isolada mantém a leitura anterior enquanto ela for recente (sem piscar de
+    /// volta para o Windows); depois de 3 falhas seguidas, tenta só a cada 10 s, para não gastar o tempo do laço.
+    /// </summary>
+    private async Task<HardwareReading?> ReadHardwareAsync(CancellationToken ct)
+    {
+        var previous = LastHardware is { } p && p.IsFresh(DateTimeOffset.UtcNow) ? p : null;
+        if (_hardwareFailures >= 3 && _hardwareRetry.Elapsed < TimeSpan.FromSeconds(10)) return previous;
+        _hardwareRetry.Restart();
+        var hw = await HardwareSensorPipe.ReadAsync(ct);
+        _hardwareFailures = hw is null ? _hardwareFailures + 1 : 0;
+        return hw ?? previous;
+    }
+
     public async Task RefreshTemperaturesAsync()
     {
         using var temperatures = new TemperatureProvider();
         var sample = await Task.Run(() => temperatures.SampleAsync(LastGpu?.Adapter, _cts?.Token ?? CancellationToken.None));
+        sample = HardwareSensors.Apply(sample, LastHardware, LastGpu?.Adapter);
         LastTemperature = sample;
         _ui.TryEnqueue(() => ViewModel.UpdateTemperatures(sample, _settings.Current.ShowTemperatures));
     }
